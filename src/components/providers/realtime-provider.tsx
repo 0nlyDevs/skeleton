@@ -1,0 +1,152 @@
+"use client";
+
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { useSocket, type SocketStatus } from "@/hooks/use-socket";
+import { useTranslation } from "@/components/providers/i18n-provider";
+import { apiFetch } from "@/lib/api/client";
+import { SOCKET_EVENTS, type NotificationPayload } from "@/lib/socket/events";
+import type { ListMeta, NotificationType } from "@/types";
+
+interface RealtimeContextValue {
+  readonly status: SocketStatus;
+  readonly notifications: readonly NotificationPayload[];
+  readonly unreadCount: number;
+  readonly loading: boolean;
+  refresh: () => Promise<void>;
+  markRead: (id: string) => Promise<void>;
+  markAllRead: () => Promise<void>;
+}
+
+const RealtimeContext = createContext<RealtimeContextValue | null>(null);
+
+interface NotificationsResponse {
+  readonly data: NotificationPayload[];
+  readonly meta: ListMeta;
+}
+
+const BELL_LIMIT = 12;
+
+/**
+ * Owns the notification stream for the whole tab.
+ *
+ * One component holds the state and everyone else reads it, so the bell, the
+ * list page and any toast can never disagree about the unread count.
+ *
+ * Delivery has two paths and they are deliberately independent:
+ *   * the socket pushes a frame the moment a notification is created, and
+ *   * a refresh on mount (and on reconnect) reconciles anything missed while the
+ *     tab was closed or the connection was down.
+ *
+ * The second path is what makes the polling fallback sufficient: if WebSockets
+ * are blocked entirely, the bell still fills in on every navigation and refresh.
+ */
+export function RealtimeProvider({ children }: { children: React.ReactNode }) {
+  const { socket, status } = useSocket();
+  const t = useTranslation();
+
+  const [notifications, setNotifications] = useState<readonly NotificationPayload[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const seenIds = useRef(new Set<string>());
+
+  const refresh = useCallback(async () => {
+    try {
+      const all = await apiFetch<NotificationsResponse>(
+        `/api/notifications?limit=${BELL_LIMIT}`,
+      );
+      const unread = await apiFetch<NotificationsResponse>(
+        `/api/notifications?unreadOnly=true&limit=1`,
+      );
+
+      seenIds.current = new Set(all.data.map((item) => item.id));
+      setNotifications(all.data);
+      setUnreadCount(unread.meta.total);
+    } catch {
+      // A failed refresh leaves the previous state in place: stale data is
+      // better than an empty bell.
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  // Reconcile after a reconnect, when frames may have been missed.
+  useEffect(() => {
+    if (status !== "socket") return;
+    void refresh();
+  }, [status, refresh]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const onNew = (payload: NotificationPayload) => {
+      // The socket and the refresh path can race; de-duplicate by id.
+      if (seenIds.current.has(payload.id)) return;
+      seenIds.current.add(payload.id);
+
+      setNotifications((current) => [payload, ...current].slice(0, BELL_LIMIT));
+      if (!payload.read) setUnreadCount((count) => count + 1);
+
+      toast(payload.title, {
+        description: payload.body ?? undefined,
+        action: payload.link
+          ? { label: t("notifications.view_all"), onClick: () => window.location.assign(payload.link as string) }
+          : undefined,
+      });
+    };
+
+    socket.on(SOCKET_EVENTS.notification, onNew);
+    return () => {
+      socket.off(SOCKET_EVENTS.notification, onNew);
+    };
+  }, [socket, t]);
+
+  const markRead = useCallback(async (id: string) => {
+    // Optimistic: the badge responds immediately, and the server call is the
+    // source of truth on the next refresh.
+    setNotifications((current) =>
+      current.map((item) => (item.id === id ? { ...item, read: true } : item)),
+    );
+    setUnreadCount((count) => Math.max(0, count - 1));
+
+    try {
+      await apiFetch("/api/notifications/read", { method: "POST", body: { ids: [id] } });
+    } catch {
+      void refresh();
+    }
+  }, [refresh]);
+
+  const markAllRead = useCallback(async () => {
+    setNotifications((current) => current.map((item) => ({ ...item, read: true })));
+    setUnreadCount(0);
+
+    try {
+      await apiFetch("/api/notifications/read", { method: "POST", body: {} });
+      toast.success(t("notifications.marked_all"));
+    } catch {
+      void refresh();
+    }
+  }, [refresh, t]);
+
+  const value = useMemo<RealtimeContextValue>(
+    () => ({ status, notifications, unreadCount, loading, refresh, markRead, markAllRead }),
+    [status, notifications, unreadCount, loading, refresh, markRead, markAllRead],
+  );
+
+  return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>;
+}
+
+export function useRealtime(): RealtimeContextValue {
+  const context = useContext(RealtimeContext);
+  if (!context) {
+    throw new Error("useRealtime must be used inside a RealtimeProvider.");
+  }
+  return context;
+}
+
+export type { NotificationType };
