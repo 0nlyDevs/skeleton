@@ -1,0 +1,344 @@
+// ============================================================================
+// Webcup Base — Prisma schema (MySQL)
+//
+// Conventions
+//   * Every user-owned row carries an `userId` ownership column.
+//   * Every foreign key is indexed; every filter/sort column is indexed.
+//   * Every row has timestamps.
+//   * Identity tables (User, Session, Account, Verification, TwoFactor) follow
+//     BetterAuth's official layout verbatim — do not rename their fields.
+// ============================================================================
+
+generator client {
+  provider      = "prisma-client-js"
+  // `native` is enough when `prisma generate` runs on the target host (HODi).
+  // Add explicit targets (e.g. "debian-openssl-3.0.x") only when you generate
+  // the client on a different machine than the one that runs it.
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum RoomType {
+  GLOBAL
+  POST
+  DIRECT
+}
+
+enum NotificationType {
+  NEW_MESSAGE
+  MENTION
+  SYSTEM
+  ROLE_CHANGED
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+/// Who may read a stored file. Avatars are PUBLIC; documents are PRIVATE.
+enum UploadVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+// ---------------------------------------------------------------------------
+// Identity (BetterAuth)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String  @id
+  name          String
+  email         String  @unique
+  emailVerified Boolean @default(false)
+  image         String? @db.Text
+
+  // BetterAuth admin plugin fields
+  role       Role      @default(USER)
+  banned     Boolean   @default(false)
+  banReason  String?   @db.Text
+  banExpires DateTime?
+
+  // BetterAuth two-factor plugin field
+  twoFactorEnabled Boolean @default(false)
+
+  // Application profile
+  bio String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions       Session[]
+  accounts       Account[]
+  twoFactors     TwoFactor[]
+  posts          Post[]
+  messages       Message[]
+  notifications  Notification[]
+  preferences    NotificationPreference?
+  auditLogs      AuditLog[]
+  uploads        Upload[]
+  reportsMade    Report[]             @relation("ReportReporter")
+  reportsHandled Report[]             @relation("ReportResolver")
+
+  @@index([role])
+  @@index([banned])
+  @@index([createdAt])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?  @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Set when an admin impersonates this user (BetterAuth admin plugin).
+  impersonatedBy String?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([providerId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@index([expiresAt])
+  @@map("verification")
+}
+
+/// TOTP secret + hashed single-use recovery codes (BetterAuth two-factor).
+model TwoFactor {
+  id                     String    @id
+  secret                 String    @db.Text
+  backupCodes            String    @db.Text
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified               Boolean   @default(true)
+  failedVerificationCount Int      @default(0)
+  lockedUntil            DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("twoFactor")
+}
+
+// ---------------------------------------------------------------------------
+// Domain
+// ---------------------------------------------------------------------------
+
+/// Template entity. Clone this module for every subject-specific resource.
+model Post {
+  id        String    @id @default(cuid())
+  title     String
+  body      String    @db.Text
+  tags      Json?
+  published Boolean   @default(false)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+
+  @@index([userId])
+  @@index([published])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([userId, deletedAt])
+  @@map("post")
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  name       String
+  type       RoomType @default(GLOBAL)
+  entityType String?
+  entityId   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  messages Message[]
+
+  @@index([type])
+  @@index([entityType, entityId])
+  @@map("room")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // Drives the hot path: "latest N messages in this room, newer than X".
+  @@index([roomId, createdAt])
+  @@index([senderId])
+  @@map("message")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String?          @db.Text
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read, createdAt])
+  @@map("notification")
+}
+
+model NotificationPreference {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailOnMessage Boolean @default(false)
+  emailOnMention Boolean @default(true)
+  emailOnSystem  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notificationPreference")
+}
+
+/// Append-only trail of every privileged or state-changing action.
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([targetType, targetId])
+  @@map("auditLog")
+}
+
+model Upload {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename     String           @unique
+  originalName String
+  mime         String
+  size         Int
+  visibility   UploadVisibility @default(PRIVATE)
+  createdAt    DateTime         @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([visibility])
+  @@map("upload")
+}
+
+/// User-submitted flag on a piece of content; feeds the moderation queue.
+/// `targetType`/`targetId` are intentionally generic: moderation must work for
+/// every entity the contest subject introduces, without a schema change.
+/// Targets are soft-deleted, so a report can never dangle.
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  reporter    User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType  String
+  targetId    String
+  reason      String       @db.Text
+  status      ReportStatus @default(OPEN)
+  resolvedById String?
+  resolvedBy  User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolutionNote String?   @db.Text
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@index([resolvedById])
+  @@map("report")
+}
+
+/// Fixed-window counter backing the durable rate-limit store. Keys are
+/// namespaced (e.g. `login:ip:1.2.3.4`) and expiry recycles rows, so the table
+/// holds at most one row per live key instead of one row per request.
+model RateLimitBucket {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("rateLimitBucket")
+}
+
+/// Runtime kill-switch for prepared-but-not-yet-relevant features.
+model FeatureFlag {
+  key         String   @id
+  enabled     Boolean  @default(false)
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("featureFlag")
+}
