@@ -1,0 +1,104 @@
+import { type Prisma } from "@prisma/client";
+
+import { prisma } from "@/lib/db/prisma";
+
+/**
+ * The profile projection. `password` lives on `Account`, not `User`, so there is
+ * no hash to exclude here — but `banReason` and other moderation fields are
+ * still left out of the self-view, because a user does not need the moderator's
+ * notes.
+ */
+export const userProfileSelect = {
+  id: true,
+  name: true,
+  email: true,
+  image: true,
+  bio: true,
+  role: true,
+  emailVerified: true,
+  twoFactorEnabled: true,
+  createdAt: true,
+} satisfies Prisma.UserSelect;
+
+export const adminUserSelect = {
+  ...userProfileSelect,
+  banned: true,
+  banReason: true,
+  banExpires: true,
+  _count: { select: { posts: true } },
+} satisfies Prisma.UserSelect;
+
+export type UserProfileRow = Prisma.UserGetPayload<{ select: typeof userProfileSelect }>;
+
+export type AdminUserRow = Prisma.UserGetPayload<{ select: typeof adminUserSelect }>;
+
+export interface FindUsersArgs {
+  readonly where: Prisma.UserWhereInput;
+  readonly orderBy: Prisma.UserOrderByWithRelationInput;
+  readonly skip: number;
+  readonly take: number;
+}
+
+export async function findUsers(args: FindUsersArgs): Promise<AdminUserRow[]> {
+  return prisma.user.findMany({
+    where: args.where,
+    orderBy: args.orderBy,
+    skip: args.skip,
+    take: args.take,
+    select: adminUserSelect,
+  });
+}
+
+export async function countUsers(where: Prisma.UserWhereInput): Promise<number> {
+  return prisma.user.count({ where });
+}
+
+export async function findUserProfileById(id: string): Promise<UserProfileRow | null> {
+  return prisma.user.findUnique({ where: { id }, select: userProfileSelect });
+}
+
+export async function findAdminUserById(id: string): Promise<AdminUserRow | null> {
+  return prisma.user.findUnique({ where: { id }, select: adminUserSelect });
+}
+
+export async function updateUserProfile(
+  id: string,
+  data: Prisma.UserUncheckedUpdateInput,
+): Promise<UserProfileRow> {
+  return prisma.user.update({ where: { id }, data, select: userProfileSelect });
+}
+
+export async function updateUserRoleAdmin(id: string, role: Prisma.UserUpdateInput["role"]) {
+  return prisma.user.update({ where: { id }, data: { role }, select: adminUserSelect });
+}
+
+export async function updateUserBan(
+  id: string,
+  data: { banned: boolean; banReason: string | null; banExpires: Date | null },
+): Promise<AdminUserRow> {
+  return prisma.user.update({ where: { id }, data, select: adminUserSelect });
+}
+
+/** Used to refuse an action that would leave the platform without an admin. */
+export async function countAdmins(): Promise<number> {
+  return prisma.user.count({ where: { role: "ADMIN", banned: false } });
+}
+
+export async function countUsersByRole(): Promise<Record<string, number>> {
+  const rows = await prisma.user.groupBy({ by: ["role"], _count: { _all: true } });
+  return Object.fromEntries(rows.map((row) => [row.role, row._count._all]));
+}
+
+export async function findRecentUsers(take: number): Promise<AdminUserRow[]> {
+  return prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    take,
+    select: adminUserSelect,
+  });
+}
+
+/** Revoke every session for a user, e.g. immediately after a ban. */
+export async function deleteUserSessions(userId: string): Promise<number> {
+  const { count } = await prisma.session.deleteMany({ where: { userId } });
+  return count;
+}

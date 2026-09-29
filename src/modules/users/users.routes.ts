@@ -1,0 +1,77 @@
+import { headers as nextHeaders } from "next/headers";
+
+import { apiRoute } from "@/lib/api/route";
+import { jsonOk } from "@/lib/api/response";
+import { ADMIN_ROLES } from "@/lib/auth/roles";
+
+import {
+  adminListUsersQuerySchema,
+  changePasswordSchema,
+  updateProfileSchema,
+  updateUserBanSchema,
+  updateUserRoleSchema,
+  userIdParamSchema,
+} from "./users.schema";
+import {
+  changeOwnPassword,
+  changeUserRole,
+  getOwnProfile,
+  getUserForAdmin,
+  listUsersForAdmin,
+  setUserBan,
+  updateOwnProfile,
+} from "./users.service";
+
+// --- Self -------------------------------------------------------------------
+
+export const getMeRoute = apiRoute({
+  handler: async ({ auth }) => jsonOk(await getOwnProfile({ user: auth.user })),
+});
+
+export const updateMeRoute = apiRoute({
+  body: updateProfileSchema,
+  handler: async ({ body, auth }) =>
+    jsonOk(await updateOwnProfile(body, { user: auth.user })),
+});
+
+export const changePasswordRoute = apiRoute({
+  body: changePasswordSchema,
+  handler: async ({ body, auth, ip }) => {
+    await changeOwnPassword(body, {
+      userId: auth.user.id,
+      headers: await nextHeaders(),
+      ip,
+    });
+    return jsonOk({ changed: true });
+  },
+});
+
+// --- Admin ------------------------------------------------------------------
+
+export const listUsersRoute = apiRoute({
+  roles: ADMIN_ROLES,
+  query: adminListUsersQuerySchema,
+  handler: async ({ query }) => jsonOk(await listUsersForAdmin(query)),
+});
+
+export const getUserRoute = apiRoute({
+  roles: ADMIN_ROLES,
+  params: userIdParamSchema,
+  handler: async ({ params }) => jsonOk(await getUserForAdmin(params.id)),
+});
+
+export const updateUserRoleRoute = apiRoute({
+  roles: ADMIN_ROLES,
+  params: userIdParamSchema,
+  body: updateUserRoleSchema,
+  handler: async ({ params, body, auth, ip }) =>
+    jsonOk(await changeUserRole(params.id, body, { user: auth.user, ip })),
+});
+
+export const updateUserBanRoute = apiRoute({
+  roles: ADMIN_ROLES,
+  params: userIdParamSchema,
+  body: updateUserBanSchema,
+  handler: async ({ params, body, auth, ip }) =>
+    jsonOk(await setUserBan(params.id, body, { user: auth.user, ip })),
+});
