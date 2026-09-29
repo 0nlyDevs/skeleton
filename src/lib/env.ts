@@ -47,10 +47,12 @@ const envSchema = z.object({
   MAIL_TRANSPORT: z.enum(["resend", "log"]).default("resend"),
 
   // --- AI -------------------------------------------------------------------
-  OPENROUTER_API_KEY: optionalText,
-  OPENROUTER_MODEL: z.string().min(1).default("google/gemini-2.0-flash-exp:free"),
-  OPENROUTER_FALLBACK_MODEL: optionalText,
-  OPENROUTER_BASE_URL: z.string().min(1).default("https://openrouter.ai/api/v1"),
+  // Generic: works with OpenRouter, xAI, Gemini, or any OpenAI-compatible API.
+  // Backward-compatible: OPENROUTER_API_KEY is still accepted as a fallback.
+  AI_API_KEY: optionalText,
+  AI_BASE_URL: z.string().min(1).default("https://openrouter.ai/api/v1"),
+  AI_MODEL: z.string().min(1).default("google/gemini-2.0-flash-exp:free"),
+  AI_FALLBACK_MODEL: optionalText,
 
   // --- Uploads --------------------------------------------------------------
   UPLOAD_DIR: z.string().min(1).default("./uploads"),
@@ -131,7 +133,7 @@ function parseEnv(): Env {
     databaseLogging: raw.DATABASE_LOG === "1",
     googleOAuthEnabled: Boolean(raw.GOOGLE_CLIENT_ID && raw.GOOGLE_CLIENT_SECRET),
     emailEnabled: Boolean(raw.RESEND_API_KEY) && raw.MAIL_TRANSPORT === "resend",
-    aiEnabled: Boolean(raw.OPENROUTER_API_KEY),
+    aiEnabled: Boolean(raw.AI_API_KEY ?? process.env.OPENROUTER_API_KEY),
   });
 
   return cached;

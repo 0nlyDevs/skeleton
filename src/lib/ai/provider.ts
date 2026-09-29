@@ -1,9 +1,12 @@
 /**
- * OpenRouter client — server only.
+ * AI provider client — server only.
  *
- * The API key exists in exactly one place: the process environment, read here and
- * sent in an `Authorization` header. It is never exposed to the client, never
- * returned by an endpoint, and never logged (the logger redacts it).
+ * Works with any OpenAI-compatible API: OpenRouter, xAI, Gemini (via
+ * OpenAI-compatible endpoints), OpenAI itself, etc.
+ *
+ * The API key exists in exactly one place: the process environment, read here
+ * and sent in an `Authorization` header. It is never exposed to the client,
+ * never returned by an endpoint, and never logged (the logger redacts it).
  *
  * Three behaviours matter more than the happy path:
  *
@@ -36,14 +39,22 @@ export interface CompletionResult {
   readonly usage: { readonly promptTokens: number; readonly completionTokens: number };
 }
 
-interface OpenRouterChoice {
+interface LlmChoice {
   message?: { content?: string };
 }
 
-interface OpenRouterResponse {
-  choices?: OpenRouterChoice[];
+interface LlmResponse {
+  choices?: LlmChoice[];
   usage?: { prompt_tokens?: number; completion_tokens?: number };
   error?: { message?: string };
+}
+
+/**
+ * Resolve the AI API key from the generic var, with backward-compatible
+ * fallback to OPENROUTER_API_KEY for existing deployments.
+ */
+function getApiKey(): string {
+  return env.AI_API_KEY ?? process.env.OPENROUTER_API_KEY ?? "";
 }
 
 export function isAiConfigured(): boolean {
@@ -54,14 +65,14 @@ async function callModel(
   model: string,
   request: CompletionRequest,
 ): Promise<CompletionResult> {
-  const response = await fetch(`${env.OPENROUTER_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${env.AI_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.OPENROUTER_API_KEY ?? ""}`,
+      Authorization: `Bearer ${getApiKey()}`,
       "Content-Type": "application/json",
-      // OpenRouter uses these for attribution; harmless and required by their terms.
-      "HTTP-Referer": env.appUrl,
-      "X-Title": "Webcup Base",
+      ...(process.env.OPENROUTER_BASE_URL
+        ? { "HTTP-Referer": env.appUrl, "X-Title": "Webcup Base" }
+        : {}),
     },
     body: JSON.stringify({
       model,
@@ -70,23 +81,21 @@ async function callModel(
       temperature: request.temperature ?? 0.4,
     }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    // Never cache a completion at the transport layer; the app cache handles it.
     cache: "no-store",
   });
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    // Truncated: a provider error page can be huge, and this is a log line.
     throw new Error(
-      `OpenRouter responded ${response.status}: ${body.slice(0, 300) || response.statusText}`,
+      `AI provider responded ${response.status}: ${body.slice(0, 300) || response.statusText}`,
     );
   }
 
-  const data = (await response.json()) as OpenRouterResponse;
+  const data = (await response.json()) as LlmResponse;
   const text = data.choices?.[0]?.message?.content?.trim();
 
   if (!text) {
-    throw new Error("OpenRouter returned an empty completion.");
+    throw new Error("AI provider returned an empty completion.");
   }
 
   return {
@@ -110,8 +119,8 @@ export async function complete(request: CompletionRequest): Promise<CompletionRe
     );
   }
 
-  const primary = env.OPENROUTER_MODEL;
-  const fallback = env.OPENROUTER_FALLBACK_MODEL;
+  const primary = env.AI_MODEL;
+  const fallback = env.AI_FALLBACK_MODEL;
 
   try {
     return await callModel(primary, request);
@@ -148,19 +157,26 @@ let quotaCache: { value: AiQuota | null; expiresAt: number } | undefined;
 const QUOTA_TTL_MS = 60_000;
 
 /**
- * Remaining credit on the configured key, as reported by OpenRouter.
+ * Remaining credit on the configured key, as reported by the provider.
  *
- * Best-effort by design: this is observability, so a slow or failing quota
- * endpoint must never affect the health check. The result is cached for a minute
- * because the health endpoint may be polled.
+ * OpenRouter exposes a `/api/v1/key` endpoint that returns quota metadata.
+ * Other providers may not, so this is best-effort: a failed or unsupported
+ * quota endpoint returns `null` without affecting the health check.
+ *
+ * The result is cached for one minute because the health endpoint may be polled.
  */
 export async function getAiQuota(): Promise<AiQuota | null> {
   if (!isAiConfigured()) return null;
   if (quotaCache && quotaCache.expiresAt > Date.now()) return quotaCache.value;
 
   try {
-    const response = await fetch(`${env.OPENROUTER_BASE_URL.replace(/\/v1$/, "")}/api/v1/key`, {
-      headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY ?? ""}` },
+    const baseUrl = env.AI_BASE_URL.replace(/\/v1$/, "");
+    const quotaUrl = baseUrl.endsWith("/api/v1")
+      ? `${baseUrl}/key`
+      : `${baseUrl}/api/v1/key`;
+
+    const response = await fetch(quotaUrl, {
+      headers: { Authorization: `Bearer ${getApiKey()}` },
       signal: AbortSignal.timeout(3_000),
       cache: "no-store",
     });

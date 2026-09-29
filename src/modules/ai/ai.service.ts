@@ -18,7 +18,7 @@
  */
 
 import { cacheKey, getOrSet, peek } from "@/lib/cache";
-import { isAiConfigured, complete } from "@/lib/ai/openrouter";
+import { isAiConfigured, complete } from "@/lib/ai/provider";
 import { buildSummarizePrompt, buildTagPrompt, buildAssistantMessages, parseTags } from "@/lib/ai/prompts";
 import { env } from "@/lib/env";
 import { ServiceUnavailableError } from "@/lib/errors";
@@ -59,7 +59,7 @@ export async function chat(input: AiChatInput, actor: AuthUser): Promise<AiChatR
   // The key covers the full conversation and the model, so two different chats
   // can never collide on a shared prefix. It is also scoped to the user: cache
   // entries are process-wide, and an assistant reply may echo user content.
-  const key = cacheKey("ai:chat", actor.id, env.OPENROUTER_MODEL, JSON.stringify(messages));
+  const key = cacheKey("ai:chat", actor.id, env.AI_MODEL, JSON.stringify(messages));
 
   // Determined before the call, so a concurrent request that joins an in-flight
   // computation reports the truth instead of claiming a cache hit.

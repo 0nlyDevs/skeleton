@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { publicRoute } from "@/lib/api/route";
-import { getAiQuota, isAiConfigured } from "@/lib/ai/openrouter";
+import { getAiQuota, isAiConfigured } from "@/lib/ai/provider";
 import { cacheStats } from "@/lib/cache";
 import { isDatabaseReachable } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
