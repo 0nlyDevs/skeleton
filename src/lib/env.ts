@@ -1,0 +1,162 @@
+/**
+ * Environment access.
+ *
+ * Validation is **lazy** on purpose: `next build` imports modules to collect
+ * route metadata, and a build machine legitimately has no runtime secrets.
+ * Parsing on first property access keeps the build green while still failing
+ * fast, with a readable report, the moment the app actually needs a value.
+ *
+ * Import this module from server code only. `NEXT_PUBLIC_*` values that the
+ * browser needs are read in `lib/env.public.ts`.
+ */
+
+import { z } from "zod";
+
+/** Accepts `""` from a shell/`.env` and treats it as "not configured". */
+const optionalText = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? undefined : value));
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  PORT: z.coerce.number().int().positive().max(65535).default(3000),
+
+  // --- Database -------------------------------------------------------------
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  DATABASE_LOG: z.enum(["0", "1"]).default("0"),
+
+  // --- Application ----------------------------------------------------------
+  NEXT_PUBLIC_APP_URL: z.string().min(1).default("http://localhost:3000"),
+
+  // --- BetterAuth -----------------------------------------------------------
+  BETTER_AUTH_SECRET: z
+    .string()
+    .min(16, "BETTER_AUTH_SECRET must be at least 16 characters"),
+  BETTER_AUTH_URL: z.string().min(1).optional(),
+  CORS_ALLOWED_ORIGINS: z.string().default(""),
+
+  // --- OAuth ----------------------------------------------------------------
+  GOOGLE_CLIENT_ID: optionalText,
+  GOOGLE_CLIENT_SECRET: optionalText,
+
+  // --- Email ----------------------------------------------------------------
+  RESEND_API_KEY: optionalText,
+  MAIL_FROM: z.string().min(1).default("noreply@localhost"),
+  MAIL_TRANSPORT: z.enum(["resend", "log"]).default("resend"),
+
+  // --- AI -------------------------------------------------------------------
+  OPENROUTER_API_KEY: optionalText,
+  OPENROUTER_MODEL: z.string().min(1).default("google/gemini-2.0-flash-exp:free"),
+  OPENROUTER_FALLBACK_MODEL: optionalText,
+  OPENROUTER_BASE_URL: z.string().min(1).default("https://openrouter.ai/api/v1"),
+
+  // --- Uploads --------------------------------------------------------------
+  UPLOAD_DIR: z.string().min(1).default("./uploads"),
+  UPLOAD_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(50 * 1024 * 1024)
+    .default(5 * 1024 * 1024),
+
+  // --- Real-time ------------------------------------------------------------
+  NEXT_PUBLIC_REALTIME_MODE: z.enum(["auto", "socket", "polling"]).default("auto"),
+
+  // --- Operations -----------------------------------------------------------
+  CRON_SECRET: optionalText,
+  TRUST_PROXY: z.enum(["0", "1"]).default("0"),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  RATE_LIMIT_STORE: z.enum(["memory", "database"]).default("memory"),
+});
+
+export type RawEnv = z.infer<typeof envSchema>;
+
+export interface Env extends RawEnv {
+  readonly isProduction: boolean;
+  readonly isDevelopment: boolean;
+  readonly isTest: boolean;
+  /** Canonical origin without a trailing slash. */
+  readonly appUrl: string;
+  /** Explicit browser-origin allowlist; never `*`. */
+  readonly corsAllowedOrigins: readonly string[];
+  readonly trustProxy: boolean;
+  readonly databaseLogging: boolean;
+  readonly googleOAuthEnabled: boolean;
+  readonly emailEnabled: boolean;
+  readonly aiEnabled: boolean;
+}
+
+let cached: Env | undefined;
+
+function parseEnv(): Env {
+  if (cached) return cached;
+
+  const result = envSchema.safeParse(process.env);
+
+  if (!result.success) {
+    const report = result.error.issues
+      .map((issue) => `  - ${issue.path.join(".") || "(root)"}: ${issue.message}`)
+      .join("\n");
+    throw new Error(
+      `Invalid environment configuration:\n${report}\n\n` +
+        "Copy .env.example to .env and fill in the missing values.",
+    );
+  }
+
+  const raw = result.data;
+  const appUrl = raw.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
+  const authUrl = (raw.BETTER_AUTH_URL ?? appUrl).replace(/\/+$/, "");
+
+  const corsAllowedOrigins = raw.CORS_ALLOWED_ORIGINS.split(",")
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
+    .filter((origin) => origin.length > 0);
+
+  // The app's own origin is always allowed, but nothing else is implicit.
+  if (!corsAllowedOrigins.includes(appUrl)) {
+    corsAllowedOrigins.push(appUrl);
+  }
+
+  cached = Object.freeze({
+    ...raw,
+    BETTER_AUTH_URL: authUrl,
+    NEXT_PUBLIC_APP_URL: appUrl,
+    isProduction: raw.NODE_ENV === "production",
+    isDevelopment: raw.NODE_ENV === "development",
+    isTest: raw.NODE_ENV === "test",
+    appUrl,
+    corsAllowedOrigins,
+    trustProxy: raw.TRUST_PROXY === "1",
+    databaseLogging: raw.DATABASE_LOG === "1",
+    googleOAuthEnabled: Boolean(raw.GOOGLE_CLIENT_ID && raw.GOOGLE_CLIENT_SECRET),
+    emailEnabled: Boolean(raw.RESEND_API_KEY) && raw.MAIL_TRANSPORT === "resend",
+    aiEnabled: Boolean(raw.OPENROUTER_API_KEY),
+  });
+
+  return cached;
+}
+
+/**
+ * Lazily-validated environment. Accessing any property parses and validates the
+ * whole schema once, then serves the frozen result.
+ */
+export const env: Env = new Proxy({} as Env, {
+  get(_target, property: string | symbol) {
+    if (typeof property === "symbol") return undefined;
+    return parseEnv()[property as keyof Env];
+  },
+  has(_target, property: string | symbol) {
+    return typeof property === "string" && property in parseEnv();
+  },
+});
+
+/** Exposed for tests and for the `/api/health` endpoint. */
+export function validateEnvironment(): { ok: true } | { ok: false; report: string } {
+  try {
+    parseEnv();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, report: error instanceof Error ? error.message : "unknown error" };
+  }
+}
