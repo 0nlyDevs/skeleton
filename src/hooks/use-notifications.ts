@@ -52,6 +52,7 @@ export function useNotifications(options: { limit?: number } = {}): UseNotificat
       setItems(response.data);
       setMeta(response.meta);
     } catch (caught) {
+      if (caught instanceof ApiRequestError && caught.isAuthError) return;
       setError(
         caught instanceof ApiRequestError ? caught.code : "INTERNAL_ERROR",
       );

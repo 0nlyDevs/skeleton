@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { useSocket, type SocketStatus } from "@/hooks/use-socket";
 import { useTranslation } from "@/components/providers/i18n-provider";
-import { apiFetch } from "@/lib/api/client";
+import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { SOCKET_EVENTS, type NotificationPayload } from "@/lib/socket/events";
 import type { ListMeta, NotificationType } from "@/types";
 
@@ -63,7 +63,10 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       seenIds.current = new Set(all.data.map((item) => item.id));
       setNotifications(all.data);
       setUnreadCount(unread.meta.total);
-    } catch {
+    } catch (caught) {
+      // A 401 is expected when the user is not yet authenticated (e.g. on the
+      // login page). Silently ignore it — the bell simply stays empty.
+      if (caught instanceof ApiRequestError && caught.isAuthError) return;
       // A failed refresh leaves the previous state in place: stale data is
       // better than an empty bell.
     } finally {
