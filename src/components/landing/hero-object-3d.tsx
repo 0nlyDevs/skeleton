@@ -54,8 +54,25 @@ async function createHeroScene(
   const innerGeometry = new THREE.IcosahedronGeometry(1.45, detail);
 
   const readAccent = () => {
-    const style = getComputedStyle(canvas);
-    return style.getPropertyValue("--primary").trim() || "#4f46e5";
+    // getComputedStyle resolves `--primary` to `oklch(...)`/`lab(...)` — color
+    // functions THREE.Color cannot parse. Round-trip through a 2D canvas,
+    // which resolves any CSS color string to `#rrggbb`.
+    const raw = getComputedStyle(canvas).getPropertyValue("--primary").trim();
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#000"; // prime the parser (invalid values are ignored)
+      ctx.fillStyle = raw;
+      const parsed = ctx.fillStyle;
+      // A failed parse leaves #000000 in place — fall back to the brand color.
+      if (
+        parsed !== "#000000" ||
+        raw.toLowerCase() === "#000000" ||
+        raw.toLowerCase() === "black"
+      ) {
+        return parsed;
+      }
+    }
+    return "#4f46e5";
   };
 
   const outerMaterial = new THREE.MeshBasicMaterial({
@@ -127,14 +144,16 @@ async function createHeroScene(
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
 
-  const clock = new THREE.Clock();
+  // THREE.Clock is deprecated; Timer is its replacement (same second units).
+  const timer = new THREE.Timer();
 
   const frame = () => {
     if (disposed) return;
     const raf = requestAnimationFrame(frame);
     if (!visible || !inViewport) return raf; // sleep, keep the loop registered
 
-    const elapsed = clock.getElapsedTime();
+    timer.update();
+    const elapsed = timer.getElapsed();
 
     // Pointer easing: the follow is floaty rather than exact, which reads as
     // "alive" rather than "tracking".

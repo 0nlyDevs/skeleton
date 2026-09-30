@@ -44,7 +44,11 @@ export default async function RootLayout({
   const dictionary = getDictionary(locale);
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+    >
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         {/* Keyboard users land here first; the sidebar and header are skippable. */}
         <a
