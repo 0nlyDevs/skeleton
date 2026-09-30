@@ -108,6 +108,24 @@ export async function countMessagesInRoom(roomId: string): Promise<number> {
   return prisma.message.count({ where: { roomId } });
 }
 
+/**
+ * Distinct senders in a room — the closest thing to a membership list this
+ * schema has. Used to decide who gets notified about a new message: if you
+ * have spoken in a conversation, you care about replies to it. The name rides
+ * along so mention detection can match `@name` without a second query.
+ */
+export async function findRoomParticipantIds(
+  roomId: string,
+): Promise<Array<{ id: string; name: string }>> {
+  const rows = await prisma.message.findMany({
+    where: { roomId },
+    select: { sender: { select: { id: true, name: true } } },
+    distinct: ["senderId"],
+    take: 200,
+  });
+  return rows.map((row) => row.sender);
+}
+
 export async function countMessagesBySender(senderId: string): Promise<number> {
   return prisma.message.count({ where: { senderId } });
 }

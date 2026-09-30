@@ -49,6 +49,9 @@ const GUEST_ONLY_PATHS = new Set([
   "/register",
   "/forgot-password",
   "/reset-password",
+  // The 2FA challenge sits between password and session: a visitor who already
+  // holds a session cookie has nothing to verify.
+  "/2fa",
 ]);
 
 /**

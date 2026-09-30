@@ -36,7 +36,7 @@ import {
   type ReadyPayload,
   type ServerToClientEvents,
 } from "./events";
-import { GLOBAL_PRESENCE_ROOM, chatRoom, userRoom } from "./rooms";
+import { GLOBAL_PRESENCE_ROOM, chatRoom, parseRoom, userRoom } from "./rooms";
 
 export interface SocketData {
   identity: SocketIdentity;
@@ -60,20 +60,6 @@ const MAX_ROOM_ID_LENGTH = 120;
 
 function isRoomId(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= MAX_ROOM_ID_LENGTH;
-}
-
-/** Rebuild the minimum `AuthUser` the services need from the handshake identity. */
-function toAuthUser(identity: SocketIdentity, email: string): AuthUser {
-  return {
-    id: identity.userId,
-    email,
-    name: identity.name,
-    image: null,
-    role: identity.role,
-    emailVerified: true,
-    twoFactorEnabled: false,
-    createdAt: new Date().toISOString(),
-  };
 }
 
 export function registerSocketHandlers(io: AppSocketServer): void {
@@ -174,8 +160,21 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
     });
   });
 
+  socket.on("disconnecting", () => {
+    // Socket.IO emits this *before* the socket leaves its rooms, so
+    // `socket.rooms` still lists every conversation it joined. The departing
+    // socket is still a member at this instant, hence the -1: publishing the
+    // raw size would advertise a ghost that is already gone. Any other client
+    // in a post room would otherwise keep seeing the leaver as online until
+    // the next join/leave.
+    for (const roomName of socket.rooms) {
+      const parsed = parseRoom(roomName);
+      if (parsed?.kind !== "room") continue;
+      publishPresence(parsed.id, Math.max(0, roomSize(roomName) - 1));
+    }
+  });
+
   socket.on("disconnect", (reason) => {
-    publishPresence(GLOBAL_ROOM_ID, roomSize(chatRoom(GLOBAL_ROOM_ID)));
     log.info("socket disconnected", { reason });
   });
 }
@@ -207,17 +206,34 @@ async function handle(
 }
 
 async function loadAuthUser(identity: SocketIdentity): Promise<AuthUser | null> {
+  // Everything an `AuthUser` promises — verified email, 2FA state, creation
+  // date — comes from this row. The handshake identity only proves *who* is
+  // connecting; it is not a source of profile truth.
   const row = await prisma.user.findUnique({
     where: { id: identity.userId },
-    select: { id: true, email: true, name: true, image: true, role: true, banned: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      image: true,
+      role: true,
+      banned: true,
+      emailVerified: true,
+      twoFactorEnabled: true,
+      createdAt: true,
+    },
   });
 
   if (!row || row.banned) return null;
 
   return {
-    ...toAuthUser(identity, row.email),
+    id: row.id,
+    email: row.email,
     name: row.name,
     image: row.image,
     role: row.role,
+    emailVerified: row.emailVerified,
+    twoFactorEnabled: row.twoFactorEnabled,
+    createdAt: row.createdAt.toISOString(),
   };
 }

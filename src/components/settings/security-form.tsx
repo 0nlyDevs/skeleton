@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Copy, KeyRound, Monitor, ShieldCheck } from "lucide-react";
+import QRCode from "qrcode";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -60,6 +61,10 @@ export function SecurityForm({
   // --- 2FA --------------------------------------------------------------------
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(initialTwoFactor);
   const [setupUri, setSetupUri] = useState<string | null>(null);
+  // Rendered from `setupUri` so the user scans an image instead of typing a
+  // 60-character otpauth URL. Stays null when rendering fails; the URI text
+  // below is the fallback, never removed.
+  const [setupQr, setSetupQr] = useState<string | null>(null);
   const [setupCode, setSetupCode] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [disablePassword, setDisablePassword] = useState("");
@@ -107,7 +112,16 @@ export function SecurityForm({
         return;
       }
       const data = result.data as { totpURI?: string } | undefined;
-      setSetupUri(data?.totpURI ?? null);
+      const uri = data?.totpURI ?? null;
+      setSetupUri(uri);
+      setSetupQr(null);
+      if (uri) {
+        try {
+          setSetupQr(await QRCode.toDataURL(uri, { margin: 1, width: 200 }));
+        } catch {
+          // The URI text below remains the manual-entry fallback.
+        }
+      }
     } catch {
       toast.error(t("feedback.error.body"));
     } finally {
@@ -132,6 +146,7 @@ export function SecurityForm({
       setBackupCodes(codes.data?.backupCodes ?? []);
       setTwoFactorEnabled(true);
       setSetupUri(null);
+      setSetupQr(null);
       setSetupCode("");
       toast.success(t("settings.security.twofa_enabled"));
     } catch {
@@ -271,8 +286,16 @@ export function SecurityForm({
 
           {setupUri ? (
             <form onSubmit={confirmTwoFactor} className="flex max-w-md flex-col gap-4" noValidate>
-              <div className="flex items-start gap-3 rounded-xl bg-surface-muted px-4 py-3">
-                <span className="break-all font-mono text-[12px] leading-relaxed text-muted-foreground">
+              <div className="flex flex-col items-start gap-3 rounded-xl bg-surface-muted px-4 py-3">
+                {setupQr ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- data URL from qrcode; an <img> is the only way to render it without a canvas.
+                  <img
+                    src={setupQr}
+                    alt={t("settings.security.twofa_scan")}
+                    className="size-40 rounded-lg bg-white p-2"
+                  />
+                ) : null}
+                <span className="break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
                   {setupUri}
                 </span>
               </div>

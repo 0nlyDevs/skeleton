@@ -51,6 +51,9 @@ export function ProfileForm({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      // An avatar is rendered for every viewer of a post, so it must be
+      // PUBLIC — the upload endpoint defaults to PRIVATE.
+      formData.append("visibility", "PUBLIC");
 
       const response = await apiFetch<{ data: { url: string } }>("/api/upload", {
         method: "POST",

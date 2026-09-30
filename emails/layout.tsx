@@ -102,11 +102,11 @@ export function EmailLayout({ preview, heading, children, appUrl }: EmailLayoutP
           <Hr style={styles.hr} />
           <Section>
             <Text style={styles.footer}>
-              This is an automated message from{" "}
+              Ceci est un message automatique de{" "}
               <Link href={appUrl} style={{ color: colors.accent }}>
                 Webcup Base
               </Link>
-              . If you did not request it, you can safely ignore it.
+              . Si vous ne l&apos;avez pas demandé, ignorez-le.
             </Text>
           </Section>
         </Container>

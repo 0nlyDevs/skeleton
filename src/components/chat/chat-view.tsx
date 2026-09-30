@@ -178,16 +178,38 @@ export function ChatView({ user }: { readonly user: AuthUser }) {
       if (payload.roomId === activeRoom) setOnlineCount(payload.online);
     };
 
+    // The server rejects socket events (rate limit, forbidden room, invalid
+    // payload) with an error frame instead of dropping the connection. Without
+    // this listener those failures are silent: the message simply never
+    // appears. Codes are localized, the raw message is only a fallback.
+    const onError = (payload: { code: string; message: string }) => {
+      if (payload.code === "RATE_LIMITED") {
+        toast.error(t("chat.rate_limited"));
+        return;
+      }
+      if (payload.code === "FORBIDDEN") {
+        toast.error(t("feedback.forbidden.body"));
+        return;
+      }
+      if (payload.code === "UNAUTHENTICATED") {
+        toast.error(t("feedback.network"));
+        return;
+      }
+      toast.error(payload.message || t("feedback.error.title"));
+    };
+
     socket.on(SOCKET_EVENTS.message, onMessage);
     socket.on(SOCKET_EVENTS.typingUpdate, onTyping);
     socket.on(SOCKET_EVENTS.presence, onPresence);
+    socket.on(SOCKET_EVENTS.error, onError);
 
     return () => {
       socket.off(SOCKET_EVENTS.message, onMessage);
       socket.off(SOCKET_EVENTS.typingUpdate, onTyping);
       socket.off(SOCKET_EVENTS.presence, onPresence);
+      socket.off(SOCKET_EVENTS.error, onError);
     };
-  }, [socket, activeRoom, user.id]);
+  }, [socket, activeRoom, user.id, t]);
 
   // --- Polling fallback ------------------------------------------------------
   useEffect(() => {

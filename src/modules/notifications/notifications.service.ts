@@ -119,8 +119,8 @@ export async function notifyRoleChanged(userId: string, role: string): Promise<v
   await createNotification({
     userId,
     type: "ROLE_CHANGED",
-    title: "Your role has changed",
-    body: `Your account is now ${role.toLowerCase()}. Sign out and back in if the change is not visible yet.`,
+    title: "Votre rôle a changé",
+    body: `Votre compte est maintenant ${role.toLowerCase()}. Déconnectez-vous puis reconnectez-vous si le changement n'est pas encore visible.`,
     link: "/dashboard",
     email: true,
   });
@@ -135,7 +135,7 @@ export async function notifyNewMessage(input: {
   await createNotification({
     userId: input.userId,
     type: "NEW_MESSAGE",
-    title: `New message from ${input.senderName}`,
+    title: `Nouveau message de ${input.senderName}`,
     body: truncate(input.preview, 140),
     link: `/chat?room=${encodeURIComponent(input.roomId)}`,
     email: true,
@@ -151,7 +151,7 @@ export async function notifyMention(input: {
   await createNotification({
     userId: input.userId,
     type: "MENTION",
-    title: `${input.senderName} mentioned you`,
+    title: `${input.senderName} vous a mentionné`,
     body: truncate(input.preview, 140),
     link: `/chat?room=${encodeURIComponent(input.roomId)}`,
     email: true,

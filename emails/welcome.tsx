@@ -10,25 +10,27 @@ export interface WelcomeProps {
 export default function Welcome({ name, appUrl }: WelcomeProps) {
   return (
     <EmailLayout
-      preview="Your account is ready"
-      heading={`Your account is ready, ${name}`}
+      preview="Votre compte est prêt"
+      heading={`Votre compte est prêt, ${name}`}
       appUrl={appUrl}
     >
       <Text style={paragraph}>
-        Thanks for joining. Your account is created — if we also sent you a
-        confirmation link, please open it before signing in.
+        Merci pour votre inscription. Votre compte est créé — si nous vous avons
+        aussi envoyé un lien de confirmation, ouvrez-le avant de vous connecter.
       </Text>
 
-      <Text style={paragraph}>A few things worth trying first:</Text>
+      <Text style={paragraph}>Quelques pistes pour commencer :</Text>
       <Text style={{ ...paragraph, paddingLeft: "16px" }}>
-        • Create a post from the dashboard — it is the template every module follows.
-        <br />• Turn on two-factor authentication under Settings → Security.
-        <br />• Say hello in the chat room.
+        • Créez une publication depuis le tableau de bord — c&apos;est le modèle que
+        tous les modules suivent.
+        <br />• Activez l&apos;authentification à deux facteurs dans Réglages →
+        Sécurité.
+        <br />• Dites bonjour dans le salon de chat.
       </Text>
 
       <Section style={{ margin: "28px 0" }}>
         <Button href={`${appUrl}/dashboard`} style={button}>
-          Open my dashboard
+          Ouvrir mon tableau de bord
         </Button>
       </Section>
     </EmailLayout>

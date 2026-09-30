@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SecurityForm } from "@/components/settings/security-form";
 import { auth } from "@/lib/auth/auth";
 import { getAuthContext } from "@/lib/auth/session";
+import { env } from "@/lib/env";
 import { headers } from "next/headers";
 
 export const metadata: Metadata = { title: "Sécurité" };
@@ -25,7 +26,7 @@ export default async function SecuritySettingsPage() {
   return (
     <SecurityForm
       twoFactorEnabled={context.user.twoFactorEnabled}
-      googleEnabled={false}
+      googleEnabled={env.googleOAuthEnabled}
       currentSessionToken={context.session.id}
       sessions={sessions.map((session) => ({
         token: session.token,

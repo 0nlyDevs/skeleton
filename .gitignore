@@ -24,8 +24,11 @@ server.cjs
 .env.development
 
 # --- Secrets / runtime state ------------------------------------------------
-uploads
-.uploads
+# Anchored: these are runtime storage folders at the repo root (UPLOAD_DIR
+# default "./uploads"). An unanchored "uploads" also matched source folders
+# such as src/modules/uploads/ and silently dropped them from the repo.
+/uploads
+/.uploads
 .mail-outbox
 
 # --- Logs -------------------------------------------------------------------

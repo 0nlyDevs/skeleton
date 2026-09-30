@@ -231,7 +231,7 @@ export function PostList({
                         <Badge variant="warning">{t("posts.status.draft")}</Badge>
                       ) : null}
                       {post.deletedAt ? (
-                        <Badge variant="error">{t("posts.status.draft")}</Badge>
+                        <Badge variant="error">{t("posts.status.deleted")}</Badge>
                       ) : null}
                       {post.tags.slice(0, 3).map((tag) => (
                         <Badge key={tag} variant="neutral">

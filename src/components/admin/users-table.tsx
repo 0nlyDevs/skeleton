@@ -218,8 +218,8 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
         ) : rows.length === 0 ? (
           <EmptyState
             icon={ShieldCheck}
-            title={t("admin.audit.empty.title")}
-            description={t("admin.audit.empty.body")}
+            title={t("admin.users.empty.title")}
+            description={t("admin.users.empty.body")}
             className="m-4 border-0 bg-transparent"
           />
         ) : (

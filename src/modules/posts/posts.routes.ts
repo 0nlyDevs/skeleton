@@ -34,19 +34,19 @@ export const listPostsRoute = apiRoute({
 export const createPostRoute = apiRoute({
   body: createPostSchema,
   handler: async ({ body, auth, ip }) =>
-    jsonCreated(await createPostForActor(body, { user: auth.user, ip })),
+    jsonCreated({ data: await createPostForActor(body, { user: auth.user, ip }) }),
 });
 
 export const getPostRoute = apiRoute({
   params: postIdParamSchema,
-  handler: async ({ params, auth }) => jsonOk(await getPostForActor(params.id, auth.user)),
+  handler: async ({ params, auth }) => jsonOk({ data: await getPostForActor(params.id, auth.user) }),
 });
 
 export const updatePostRoute = apiRoute({
   params: postIdParamSchema,
   body: updatePostSchema,
   handler: async ({ params, body, auth, ip }) =>
-    jsonOk(await updatePostForActor(params.id, body, { user: auth.user, ip })),
+    jsonOk({ data: await updatePostForActor(params.id, body, { user: auth.user, ip }) }),
 });
 
 export const deletePostRoute = apiRoute({
@@ -61,5 +61,5 @@ export const restorePostRoute = apiRoute({
   params: postIdParamSchema,
   roles: STAFF_ROLES,
   handler: async ({ params, auth, ip }) =>
-    jsonOk(await restorePostForActor(params.id, { user: auth.user, ip })),
+    jsonOk({ data: await restorePostForActor(params.id, { user: auth.user, ip }) }),
 });

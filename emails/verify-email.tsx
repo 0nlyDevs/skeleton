@@ -24,23 +24,24 @@ export default function VerifyEmail({
 }: VerifyEmailProps) {
   return (
     <EmailLayout
-      preview="Confirm your email address to activate your account"
-      heading={`Welcome, ${name}`}
+      preview="Confirmez votre adresse e-mail pour activer votre compte"
+      heading={`Bienvenue, ${name}`}
       appUrl={appUrl}
     >
       <Text style={paragraph}>
-        Confirm this email address to activate your account. The link below is valid for{" "}
-        {expiresInMinutes} minutes and can only be used once.
+        Confirmez cette adresse e-mail pour activer votre compte. Le lien ci-dessous
+        est valable {expiresInMinutes} minutes et ne peut être utilisé qu&apos;une seule
+        fois.
       </Text>
 
       <Section style={{ margin: "28px 0" }}>
         <Button href={url} style={button}>
-          Verify my email
+          Vérifier mon adresse
         </Button>
       </Section>
 
       <Text style={helperText}>
-        Button not working? Copy this address into your browser:
+        Le bouton ne fonctionne pas ? Copiez cette adresse dans votre navigateur :
       </Text>
       <Text style={emailStyles.fallbackLink}>{url}</Text>
     </EmailLayout>

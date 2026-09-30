@@ -74,19 +74,29 @@ export function PostEditor({ post }: { readonly post?: PostDto }) {
           })
         : await apiFetch<{ data: PostDto }>("/api/posts", { method: "POST", body: payload });
 
-      // Replace, not push: the editor must not survive the back button.
-      router.replace(`/posts/${response.data.id}`);
-      router.refresh();
-    } catch (caught) {
-      setPending(false);
-
-      if (caught instanceof ApiRequestError) {
-        if (caught.fields) setFieldErrors(caught.fields);
-        setFormError(caught.code);
+      const createdId = response.data?.id;
+      if (!createdId) {
+        // The server accepted the write but the body did not match the
+        // contract; unlocking is the only safe move — navigating blind would
+        // land on /posts/undefined.
+        setPending(false);
+        setFormError("INTERNAL_ERROR");
         return;
       }
 
-      setFormError("NETWORK_ERROR");
+      // Replace, not push: the editor must not survive the back button.
+      // `pending` intentionally stays true through the navigation so the
+      // submit button cannot fire twice; the component unmounts on success.
+      router.replace(`/posts/${createdId}`);
+      router.refresh();
+    } catch (caught) {
+      if (caught instanceof ApiRequestError) {
+        if (caught.fields) setFieldErrors(caught.fields);
+        setFormError(caught.code);
+      } else {
+        setFormError("NETWORK_ERROR");
+      }
+      setPending(false);
     }
   };
 

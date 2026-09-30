@@ -23,25 +23,25 @@ export default function ResetPassword({
 }: ResetPasswordProps) {
   return (
     <EmailLayout
-      preview="Reset your password"
-      heading={`Reset your password, ${name}`}
+      preview="Réinitialisation de votre mot de passe"
+      heading={`Réinitialisez votre mot de passe, ${name}`}
       appUrl={appUrl}
     >
       <Text style={paragraph}>
-        Someone requested a password reset for your account. The link below is valid for{" "}
-        {expiresInMinutes} minutes, works once, and signs out your other devices when
-        used.
+        Une réinitialisation de mot de passe a été demandée pour votre compte. Le
+        lien ci-dessous est valable {expiresInMinutes} minutes, fonctionne une seule
+        fois et déconnecte vos autres appareils lors de son utilisation.
       </Text>
 
       <Section style={{ margin: "28px 0" }}>
         <Button href={url} style={button}>
-          Choose a new password
+          Choisir un nouveau mot de passe
         </Button>
       </Section>
 
       <Text style={helperText}>
-        If you did not ask for this, no action is needed — your password stays
-        unchanged and this link will expire on its own.
+        Si vous n&apos;êtes pas à l&apos;origine de cette demande, aucune action n&apos;est
+        nécessaire — votre mot de passe reste inchangé et ce lien expirera de lui-même.
       </Text>
       <Text style={emailStyles.fallbackLink}>{url}</Text>
     </EmailLayout>

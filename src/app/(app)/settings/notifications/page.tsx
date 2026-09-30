@@ -16,8 +16,10 @@ export default async function NotificationSettingsPage() {
   return (
     <NotificationPreferences
       initial={{
-        // A missing row falls back to the same defaults the signup hook creates.
-        emailOnMessage: prefs?.emailOnMessage ?? true,
+        // Matches the Prisma column defaults, so a user who never saved the
+        // form sees exactly what `deliverEmail` enforces (email on message off
+        // until explicitly enabled).
+        emailOnMessage: prefs?.emailOnMessage ?? false,
         emailOnMention: prefs?.emailOnMention ?? true,
         emailOnSystem: prefs?.emailOnSystem ?? true,
       }}

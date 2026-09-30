@@ -39,8 +39,10 @@ export interface ActorContext {
  * File a report.
  *
  * Duplicate reports of the same target by the same user are rejected by a
- * database unique constraint rather than a read-then-write check, so two
- * simultaneous taps cannot both succeed.
+ * database unique constraint on `duplicateKey` rather than a read-then-write
+ * check, so two simultaneous taps cannot both succeed. The key only exists
+ * while the report is OPEN: resolving it frees the reporter to flag the same
+ * target again.
  */
 export async function createReportForActor(
   input: CreateReportInput,
@@ -63,10 +65,11 @@ export async function createReportForActor(
       targetType: input.targetType,
       targetId: input.targetId,
       reason: input.reason,
+      duplicateKey: `${actor.user.id}:${input.targetType}:${input.targetId}`,
     });
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") {
-      throw new ConflictError("You have already reported this content.");
+      throw new ConflictError("You already have an open report for this content.");
     }
     throw error;
   }
@@ -147,6 +150,10 @@ export async function resolveReport(
     status: input.resolution === "remove" ? "RESOLVED" : "DISMISSED",
     resolvedById: actor.user.id,
     resolutionNote: input.note ?? null,
+    // Releasing the duplicate key is what makes a later re-report of the same
+    // target possible; leaving it set would keep the reporter locked out
+    // forever, which is the bug this column replaces.
+    duplicateKey: null,
   });
 
   await recordAudit({

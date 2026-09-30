@@ -14,19 +14,19 @@ export const aiChatRoute = apiRoute({
   body: aiChatSchema,
   rateLimit: RATE_LIMITS.ai,
   rateLimitScope: "ai:chat",
-  handler: async ({ body, auth }) => jsonOk(await chat(body, auth.user)),
+  handler: async ({ body, auth }) => jsonOk({ data: await chat(body, auth.user) }),
 });
 
 export const aiSummarizeRoute = apiRoute({
   body: aiPostActionSchema,
   rateLimit: RATE_LIMITS.ai,
   rateLimitScope: "ai:summarize",
-  handler: async ({ body, auth }) => jsonOk(await summarizePost(body, auth.user)),
+  handler: async ({ body, auth }) => jsonOk({ data: await summarizePost(body, auth.user) }),
 });
 
 export const aiTagsRoute = apiRoute({
   body: aiPostActionSchema,
   rateLimit: RATE_LIMITS.ai,
   rateLimitScope: "ai:tags",
-  handler: async ({ body, auth }) => jsonOk(await generateTags(body, auth.user)),
+  handler: async ({ body, auth }) => jsonOk({ data: await generateTags(body, auth.user) }),
 });

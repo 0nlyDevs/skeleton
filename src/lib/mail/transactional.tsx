@@ -24,7 +24,7 @@ export async function sendVerificationEmail(input: {
 }): Promise<MailResult> {
   return sendMail({
     to: input.to,
-    subject: "Confirm your email address",
+    subject: "Confirmez votre adresse e-mail",
     previewUrl: input.url,
     react: (
       <VerifyEmail
@@ -44,7 +44,7 @@ export async function sendPasswordResetEmail(input: {
 }): Promise<MailResult> {
   return sendMail({
     to: input.to,
-    subject: "Reset your password",
+    subject: "Réinitialisez votre mot de passe",
     previewUrl: input.url,
     react: (
       <ResetPassword
@@ -63,7 +63,7 @@ export async function sendWelcomeEmail(input: {
 }): Promise<MailResult> {
   return sendMail({
     to: input.to,
-    subject: "Your Webcup Base account is ready",
+    subject: "Votre compte Webcup Base est prêt",
     react: <Welcome name={input.name} appUrl={env.appUrl} />,
   });
 }

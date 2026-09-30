@@ -9,6 +9,7 @@
  */
 
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { isStaff } from "@/lib/auth/guards";
 import { parseDateInput } from "@/lib/utils";
@@ -16,6 +17,7 @@ import type { AuthUser } from "@/types";
 
 import { publishMessage } from "@/lib/socket/emit";
 
+import { notifyMention, notifyNewMessage } from "../notifications/notifications.service";
 import { findPostById } from "../posts/posts.repository";
 import {
   GLOBAL_ROOM_ID,
@@ -32,6 +34,7 @@ import {
   findLatestMessages,
   findMessagesSince,
   findRoomById,
+  findRoomParticipantIds,
   findRooms,
   globalRoomId,
   upsertRoom,
@@ -174,7 +177,57 @@ export async function sendMessage(
   // message does not arrive.
   publishMessage(message.roomId, message);
 
+  // Notifications are best-effort: a failed bell entry must never roll back a
+  // message that is already visible to everyone in the room.
+  void notifyRoomAboutMessage(message, actor.user).catch((error: unknown) => {
+    logger.warn("message notification failed", {
+      roomId: message.roomId,
+      error,
+    });
+  });
+
   return message;
+}
+
+/**
+ * Tell everyone who has spoken in this room that a new message arrived.
+ *
+ * A participant named in the text gets the `MENTION` notification instead of
+ * the generic one — one bell entry per person, never both. The match requires
+ * `@name` to end at a word boundary, so `@ada` does not fire for `@adaline`.
+ */
+async function notifyRoomAboutMessage(
+  message: MessageDto,
+  sender: AuthUser,
+): Promise<void> {
+  const participants = await findRoomParticipantIds(message.roomId);
+
+  for (const participant of participants) {
+    if (participant.id === sender.id) continue;
+
+    const notify = mentionsName(message.content, participant.name)
+      ? notifyMention
+      : notifyNewMessage;
+
+    await notify({
+      userId: participant.id,
+      senderName: sender.name,
+      roomId: message.roomId,
+      preview: message.content,
+    });
+  }
+}
+
+function mentionsName(content: string, name: string): boolean {
+  const needle = name.trim().toLowerCase();
+  if (needle.length === 0) return false;
+
+  const haystack = content.toLowerCase();
+  const at = haystack.indexOf(`@${needle}`);
+  if (at === -1) return false;
+
+  const after = haystack[at + 1 + needle.length];
+  return after === undefined || !/[a-z0-9]/.test(after);
 }
 
 export async function getRoomStats(roomId = GLOBAL_ROOM_ID): Promise<{ messages: number }> {

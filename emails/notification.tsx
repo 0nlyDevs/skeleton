@@ -20,18 +20,18 @@ export default function NotificationEmail({
 }: NotificationEmailProps) {
   return (
     <EmailLayout preview={title} heading={title} appUrl={appUrl}>
-      <Text style={paragraph}>Hello {name},</Text>
+      <Text style={paragraph}>Bonjour {name},</Text>
       {body ? <Text style={paragraph}>{body}</Text> : null}
 
       <Section style={{ margin: "28px 0" }}>
         <Button href={url} style={button}>
-          Open in the app
+          Ouvrir dans l&apos;application
         </Button>
       </Section>
 
       <Text style={{ ...paragraph, fontSize: "13px", color: "#71717a" }}>
-        You are receiving this because email notifications are enabled in your
-        account settings. You can turn them off at any time.
+        Vous recevez cet e-mail car les notifications par e-mail sont activées dans
+        les réglages de votre compte. Vous pouvez les désactiver à tout moment.
       </Text>
     </EmailLayout>
   );
