@@ -1,41 +1,47 @@
 #!/usr/bin/env bash
-# Deploy script for webcup-skeleton.
 #
-# Usage: ./scripts/deploy.sh
+# Deploy script.
 #
-# Performs a zero-downtime deploy:
-#   1. Pull latest code
-#   2. Install dependencies
-#   3. Run migrations
-#   4. Build the Next.js app + server bundle
-#   5. Restart via PM2
+# Usage:  ./scripts/deploy.sh [branch]
+#
+# Order matters: dependencies first (the bundler and Next must exist), then
+# migrations (the new code may expect new columns), then the build, then the
+# restart. Seeding is idempotent and runs after the build so a failing seed can
+# never leave the running app without its previous data.
+#
+# The branch defaults to the one that is checked out — passing "main" while the
+# server tracks "preprod" is how a deploy quietly reverts a release.
 set -euo pipefail
 
-APP_DIR="/home/cocofioren/webcup-skeleton"
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$APP_DIR"
 
-echo "==> Pulling latest code..."
-git pull origin main
+BRANCH="${1:-$(git rev-parse --abbrev-ref HEAD)}"
+
+echo "==> Fetching $BRANCH..."
+git fetch origin "$BRANCH"
+git pull --ff-only origin "$BRANCH"
 
 echo "==> Installing dependencies..."
+# `npm ci` needs the lockfile to match package.json exactly; a mismatch here is
+# a build problem, not something to paper over.
 npm ci --prefer-offline
 
-echo "==> Running database migrations..."
-npx prisma migrate deploy || {
-  echo "Migration failed — rolling back"
-  exit 1
-}
+echo "==> Applying database migrations..."
+npm run db:deploy
 
-echo "==> Seeding database (idempotent)..."
-npx tsx --env-file=.env prisma/seed.ts || true
+echo "==> Generating the Prisma client and building..."
+npm run build
 
-echo "==> Building Next.js app..."
-npx next build
-
-echo "==> Building server bundle..."
-npm run build:server
+echo "==> Seeding (idempotent)..."
+npm run db:seed
 
 echo "==> Restarting PM2..."
-pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
+if pm2 describe webcup-base >/dev/null 2>&1; then
+  pm2 reload ecosystem.config.js --update-env
+else
+  pm2 start ecosystem.config.js
+fi
+pm2 save
 
 echo "==> Deploy complete."

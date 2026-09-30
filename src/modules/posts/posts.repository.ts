@@ -9,7 +9,7 @@
  * produced without a second query and without over-fetching password material.
  */
 
-import { type Prisma } from "@prisma/client";
+import { type Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 

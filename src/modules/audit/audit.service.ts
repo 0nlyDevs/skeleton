@@ -8,7 +8,7 @@
  * `error` so they are visible in monitoring.
  */
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 import { logger } from "@/lib/logger";
 import { paginate, resolveSortField, type Paginated } from "@/lib/pagination";

@@ -10,11 +10,11 @@
  * twice neither duplicates nor destroys.
  */
 
-import { PrismaClient } from "@prisma/client";
-
 import { hashPassword } from "../src/lib/auth/password";
-
-const prisma = new PrismaClient();
+// The shared client, not a fresh one: Prisma 7 needs a driver adapter to
+// construct it, and `lib/db/prisma.ts` is the single place that knows how to
+// turn DATABASE_URL into driver pool options.
+import { prisma } from "../src/lib/db/prisma";
 
 const JURY_PASSWORD = "Webcup-2026!jury";
 
@@ -132,7 +132,11 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
   if (existing) {
     await prisma.account.updateMany({
       where: { userId: existing.id, providerId: "credential" },
-      data: { password: passwordHash },
+      // `accountId` is not decoration: BetterAuth's email/password sign-in
+      // requires `accountId === user.id` for the credential provider and
+      // reports "Invalid email or password" otherwise. Rows seeded before that
+      // was true are repaired here rather than left for someone to debug.
+      data: { password: passwordHash, accountId: existing.id },
     });
     return prisma.user.update({
       where: { id: existing.id },
@@ -140,9 +144,11 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
     });
   }
 
+  const id = crypto.randomUUID();
+
   return prisma.user.create({
     data: {
-      id: crypto.randomUUID(),
+      id,
       email: account.email,
       name: account.name,
       role: account.role,
@@ -151,7 +157,8 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
       accounts: {
         create: {
           id: crypto.randomUUID(),
-          accountId: account.email,
+          // Must match the user id — see the note above.
+          accountId: id,
           providerId: "credential",
           password: passwordHash,
         },

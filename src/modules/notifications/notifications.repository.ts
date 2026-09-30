@@ -7,7 +7,7 @@
  * forgets a guard — the ownership predicate is part of the query.
  */
 
-import { type Prisma } from "@prisma/client";
+import { type Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 

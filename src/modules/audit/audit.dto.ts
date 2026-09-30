@@ -7,7 +7,7 @@
  * back.
  */
 
-import type { AuditLog } from "@prisma/client";
+import type { AuditLog } from "@/generated/prisma/client";
 
 const SENSITIVE_KEY = /pass(word)?|secret|token|authorization|cookie|api[-_]?key/i;
 

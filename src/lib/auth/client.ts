@@ -19,6 +19,10 @@ export const authClient = createAuthClient({
   plugins: [
     twoFactorClient({
       onTwoFactorRedirect: () => {
+        // A hard navigation, not `router.push`: the session was just replaced
+        // server-side, and only a full document load guarantees the /2fa page
+        // is rendered from that new session rather than from cached RSC data.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/2fa";
       },
     }),

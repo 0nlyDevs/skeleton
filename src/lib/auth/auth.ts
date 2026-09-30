@@ -25,6 +25,7 @@ import { twoFactor } from "better-auth/plugins";
 
 import { prisma } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
+import { normalizeIp, UNKNOWN_IP } from "@/lib/http/client-ip";
 import { logger } from "@/lib/logger";
 import {
   sendPasswordResetEmail,
@@ -63,6 +64,26 @@ export const auth = betterAuth({
   trustedOrigins: [...env.corsAllowedOrigins],
 
   database: prismaAdapter(prisma, { provider: "mysql" }),
+
+  /*
+   * The columns this application adds to BetterAuth's `user` table.
+   *
+   * This is not optional bookkeeping. BetterAuth builds its `SELECT` from these
+   * declarations, so a column that is missing here is missing from
+   * `session.user` — and a missing `role` reads as "no role", which quietly
+   * turns every staff and admin route into a 403. `input: false` keeps all of
+   * them out of request bodies: role changes, bans and profile edits go through
+   * this app's own audited service layer, never through a sign-up payload.
+   */
+  user: {
+    additionalFields: {
+      role: { type: "string", required: false, defaultValue: "USER", input: false },
+      bio: { type: "string", required: false, input: false },
+      banned: { type: "boolean", required: false, defaultValue: false, input: false },
+      banReason: { type: "string", required: false, input: false },
+      banExpires: { type: "date", required: false, input: false },
+    },
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -166,7 +187,11 @@ export const auth = betterAuth({
         after: async (session) => {
           // A session exists, so the credentials were correct: release the
           // brute-force counters for both the account and the source IP.
-          const keys = [rateLimitKey("auth:/sign-in/email:ip", session.ipAddress ?? "unknown")];
+          //
+          // The IP is normalised exactly as the guard normalises it (see
+          // `normalizeIp`) — otherwise this clears a different key than the one
+          // that was incremented and every client stays throttled forever.
+          const keys = [rateLimitKey("auth:/sign-in/email:ip", normalizeIp(session.ipAddress ?? UNKNOWN_IP))];
 
           const user = await prisma.user.findUnique({
             where: { id: String(session.userId) },

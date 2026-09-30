@@ -5,7 +5,7 @@
  * reporter) but their email address is not: name only.
  */
 
-import type { ReportStatus } from "@prisma/client";
+import type { ReportStatus } from "@/generated/prisma/client";
 
 import type { ReportWithActors } from "./reports.repository";
 

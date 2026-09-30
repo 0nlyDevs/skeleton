@@ -1,15 +1,15 @@
 # Webcup — 24H Sprint Guide
 
-> Production-grade Next.js 15 scaffold for the **24H by Webcup** hackathon.
+> Production-grade Next.js 16 scaffold for the **24H by Webcup** hackathon.
 
 ## What's Included
 
 | Category | Stack |
 |---|---|
-| Framework | Next.js 15 App Router + React 19 |
+| Framework | Next.js 16 App Router + React 19 |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 + shadcn/ui |
-| Database | Prisma ORM → MySQL/MariaDB |
+| Database | Prisma 7 → MySQL/MariaDB (MariaDB driver adapter) |
 | Auth | BetterAuth + RBAC + 2FA + Argon2 |
 | Realtime | Socket.IO v4 with polling fallback |
 | AI | OpenRouter (Gemini / Llama 3.3) |
@@ -27,21 +27,25 @@
 mysql -u root -p -e "CREATE DATABASE webcup CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # Apply migrations
-npx prisma migrate deploy
+npm run db:deploy
 
-# Seed demo accounts
-npx tsx --env-file=.env prisma/seed.ts
+# Seed jury accounts and demo data
+npm run db:seed
 ```
 
-Demo accounts:
-- `admin@webcup.demo` / `admin123`
-- `moderator@webcup.demo` / `mod123`
-- `user@webcup.demo` / `user123`
+Jury accounts — all four use the password `Webcup-2026!jury`:
+
+| Account | Role |
+|---|---|
+| `admin@webcup.demo` | ADMIN |
+| `moderator@webcup.demo` | MODERATOR |
+| `user@webcup.demo` | USER |
+| `user2@webcup.demo` | USER (for testing access control between accounts) |
 
 ### 2. Run the server
 
 ```bash
-# Development (hot reload via tsx)
+# Development (Next.js dev server + Socket.IO on one port)
 npm run dev
 
 # Production (bundled CJS server)
@@ -49,7 +53,7 @@ npm run build       # builds Next.js + server.cjs
 npm start           # or: pm2 start ecosystem.config.js
 ```
 
-> **Note on NixOS:** The Prisma query engine is loaded from the Nix store. See `scripts/dev-start.sh` for the engine path, which is automatically detected.
+> **Note on NixOS:** Prisma publishes no prebuilt schema engine for `linux-nixos`, so the CLI would fail while fetching it. `prisma.config.ts` finds the engine nixpkgs already provides and points the CLI at it. Prisma 7 needs no *query* engine — the MariaDB driver adapter does the talking — so nothing else has to be configured.
 
 ### 3. Verify
 
@@ -77,7 +81,7 @@ Next.js standalone can't host WebSockets. The project uses a custom `node:http` 
 2. Attaches a Socket.IO server for realtime
 3. Handles graceful shutdown
 
-In production, `server.ts` is bundled to `server.cjs` via esbuild to avoid the tsx/Next 15 AsyncLocalStorage incompatibility.
+`server.ts` is bundled to `server.cjs` with esbuild, in development and in production alike. TypeScript loaders such as tsx rewrite Next's module resolution and its request handler then fails with `Invariant: AsyncLocalStorage accessed in runtime where it is not available`; plain `node` on esbuild's CJS output does not have that problem.
 
 ### Layers
 

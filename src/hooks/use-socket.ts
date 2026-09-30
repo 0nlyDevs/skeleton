@@ -104,13 +104,11 @@ export function useSocket(): { socket: AppClientSocket | null; status: SocketSta
   useEffect(() => {
     consumers += 1;
     listeners.add(setStatus);
-    const instance = ensureSocket();
-    setStatus(currentStatus);
+    ensureSocket();
 
     return () => {
       listeners.delete(setStatus);
       releaseSocket();
-      void instance;
     };
   }, []);
 

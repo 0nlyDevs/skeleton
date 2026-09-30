@@ -29,6 +29,13 @@ const cases: TestCase[] = [
   { name: "login page renders", path: "/login", expectedStatus: 200 },
 ];
 
+/**
+ * The first request to a page in development compiles it on demand, which can
+ * take far longer than a warm request. A short timeout here reports a false
+ * failure — "login page renders — timeout" — rather than a real problem.
+ */
+const REQUEST_TIMEOUT_MS = 30_000;
+
 function fetchStatus(path: string): Promise<number> {
   return new Promise((resolve, reject) => {
     const req = request(`${BASE_URL}${path}`, (res) => {
@@ -36,9 +43,9 @@ function fetchStatus(path: string): Promise<number> {
       resolve(res.statusCode ?? 0);
     });
     req.on("error", reject);
-    req.setTimeout(5000, () => {
+    req.setTimeout(REQUEST_TIMEOUT_MS, () => {
       req.destroy();
-      reject(new Error(`timeout on ${path}`));
+      reject(new Error(`timeout on ${path} after ${REQUEST_TIMEOUT_MS}ms`));
     });
     req.end();
   });

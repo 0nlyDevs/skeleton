@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { enterPanel } from "@/styles/animations";
+import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -120,9 +121,9 @@ export interface DashboardViewProps {
     readonly id: string;
     readonly action: string;
     readonly targetType: string | null;
+    /** ISO-8601, used for `<time dateTime>` and formatted here for display. */
     readonly createdAt: string;
   }[];
-  readonly formatDateTime: (iso: string) => string;
 }
 
 /**
@@ -139,7 +140,6 @@ export function DashboardView({
   unreadNotifications,
   storage,
   recentActivity,
-  formatDateTime,
 }: DashboardViewProps) {
   const t = useTranslation();
 

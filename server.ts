@@ -34,6 +34,21 @@ async function main(): Promise<void> {
   const handle = app.getRequestHandler();
 
   const server = createServer((request, response) => {
+    /*
+     * Publish the socket address to the application.
+     *
+     * A direct connection has no `X-Forwarded-For`, so without this the app
+     * cannot tell clients apart and every rate limit collapses onto one shared
+     * "unknown" bucket — five sign-ins from anyone locks out everyone.
+     *
+     * Assigned, never defaulted: this process is the trusted source of the
+     * socket address, so a client-sent `x-connection-ip` must be discarded
+     * rather than believed.
+     */
+    if (request.socket.remoteAddress) {
+      request.headers["x-connection-ip"] = request.socket.remoteAddress;
+    }
+
     // A rejected request handler must not take the process down with it.
     void handle(request, response).catch((error: unknown) => {
       logger.error("request handler failed", { error, url: request.url });

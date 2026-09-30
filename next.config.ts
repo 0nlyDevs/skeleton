@@ -6,7 +6,7 @@ const isProduction = process.env.NODE_ENV === "production";
  * Hardening headers applied to every response.
  *
  * The `Content-Security-Policy` is deliberately **not** here: it is generated
- * per request in `middleware.ts` so that it can carry a fresh nonce. Setting a
+ * per request in `src/proxy.ts` so that it can carry a fresh nonce. Setting a
  * second CSP here would intersect with the nonced one and break the app.
  */
 const securityHeaders = [
@@ -46,8 +46,14 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
-  // Native / engine-bearing packages must stay outside the bundler.
-  serverExternalPackages: ["@prisma/client", "qrcode", "@node-rs/argon2"],
+  /*
+   * Packages that must stay outside the bundler.
+   *
+   * Prisma 7 generates its client into `src/generated/prisma` — that is
+   * application code and *is* bundled — but the MariaDB driver it now depends on
+   * opens sockets and does runtime `require`, so it stays external.
+   */
+  serverExternalPackages: ["@prisma/adapter-mariadb", "mariadb", "qrcode", "@node-rs/argon2"],
 
   async headers() {
     return [
