@@ -13,7 +13,7 @@
  * notification that fails the whole operation is a lost message.
  */
 
-import type { NotificationType } from "@prisma/client";
+import type { NotificationType } from "@/generated/prisma/client";
 
 import { logger } from "@/lib/logger";
 import { sendNotificationEmail } from "@/lib/mail/transactional";

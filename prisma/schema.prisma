@@ -9,17 +9,31 @@
 //     BetterAuth's official layout verbatim — do not rename their fields.
 // ============================================================================
 
+/*
+ * Prisma 7 generates TypeScript into the source tree instead of `node_modules`,
+ * which is why `output` is required and why imports read
+ * `@/generated/prisma/client` rather than `@prisma/client`.
+ *
+ * `moduleFormat = "cjs"` keeps the generated client requireable: the custom
+ * server is bundled to CommonJS and PM2 loads a CJS ecosystem file, so an
+ * ESM-only client would force `"type": "module"` on the whole project.
+ *
+ * There is no `binaryTargets` here on purpose — the Rust query engine is gone in
+ * v7 (the driver adapter does the talking), so the per-platform binary tuning
+ * that v6 needed is no longer required.
+ */
 generator client {
-  provider      = "prisma-client-js"
-  // `native` is enough when `prisma generate` runs on the target host (HODi).
-  // Add explicit targets (e.g. "debian-openssl-3.0.x") only when you generate
-  // the client on a different machine than the one that runs it.
-  binaryTargets = ["native"]
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
+/*
+ * The connection URL lives in `prisma.config.ts` (v7 moved it there so the CLI
+ * reads it from one typed place). `url` here would be a deprecated duplicate.
+ */
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 // ---------------------------------------------------------------------------

@@ -1,40 +1,110 @@
 /**
  * Prisma client singleton.
  *
- * Next.js hot-reloads modules in development, and the custom server may be
- * restarted by PM2; without the global cache every reload would open a fresh
- * connection pool and exhaust MySQL's `max_connections` within minutes.
+ * Prisma 7 has no Rust query engine: the client talks to MySQL through the
+ * MariaDB driver (`@prisma/adapter-mariadb`). Two consequences worth knowing:
+ *
+ *   * **Pool settings come from the driver.** v6 read `connection_limit` from
+ *     the URL; the adapter reads `connectionLimit` from its own options, so the
+ *     URL is parsed once here and translated explicitly rather than silently
+ *     ignored.
+ *   * **The Rust engine binary is gone.** The NixOS-specific engine paths that
+ *     v6 deployments needed no longer apply.
+ *
+ * The instance is cached on `globalThis` because Next.js hot-reloads modules in
+ * development and PM2 may restart a worker; without the cache every reload opens
+ * another pool and MySQL's `max_connections` runs out within minutes.
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaClient } from "@/generated/prisma/client";
 
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
+/** Shared hosting enforces a hard per-account connection cap (cPanel/LVE). */
+const DEFAULT_CONNECTION_LIMIT = 5;
+const DEFAULT_POOL_TIMEOUT_SECONDS = 15;
+
+interface MariaDbPoolOptions {
+  host: string;
+  port: number;
+  user?: string;
+  password?: string;
+  database?: string;
+  connectionLimit: number;
+  acquireTimeout: number;
+  /** Set only when the server requires TLS; the driver defaults to plain TCP. */
+  ssl?: { rejectUnauthorized: boolean };
+}
+
 /**
- * Shared hosting enforces a hard per-account connection cap (cPanel/LVE), and a
- * Passenger worker is one process among several. A small, explicit pool is
- * safer than Prisma's default of `num_cpus * 2 + 1`.
+ * Translate a `mysql://user:pass@host:port/db?…` URL into driver options.
+ *
+ * Recognised query parameters:
+ *   * `connection_limit` → `connectionLimit` (v6 name kept so existing
+ *     deployments and `.env` files keep working unchanged)
+ *   * `pool_timeout`     → `acquireTimeout` (seconds)
+ *   * `sslaccept` / `ssl` → TLS
+ *
+ * Anything else is ignored rather than forwarded: the driver would reject
+ * unknown options, and a URL that fails to parse should surface as Prisma's own
+ * connection error, not as a crash inside this function.
  */
-function withPoolDefaults(url: string): string {
+function toPoolOptions(url: string): MariaDbPoolOptions {
+  const fallback: MariaDbPoolOptions = {
+    host: "localhost",
+    port: 3306,
+    connectionLimit: DEFAULT_CONNECTION_LIMIT,
+    acquireTimeout: DEFAULT_POOL_TIMEOUT_SECONDS * 1000,
+  };
+
+  let parsed: URL;
   try {
-    const parsed = new URL(url);
-    if (!parsed.searchParams.has("connection_limit")) {
-      parsed.searchParams.set("connection_limit", "5");
-    }
-    if (!parsed.searchParams.has("pool_timeout")) {
-      parsed.searchParams.set("pool_timeout", "15");
-    }
-    return parsed.toString();
+    parsed = new URL(url);
   } catch {
-    // Leave a malformed URL untouched so Prisma reports the real problem.
-    return url;
+    logger.warn("DATABASE_URL could not be parsed; using driver defaults", { url });
+    return fallback;
   }
+
+  const connectionLimit = Number(parsed.searchParams.get("connection_limit"));
+  const poolTimeout = Number(parsed.searchParams.get("pool_timeout"));
+  const sslAccept = parsed.searchParams.get("sslaccept") ?? parsed.searchParams.get("ssl");
+
+  return {
+    host: parsed.hostname || fallback.host,
+    port: parsed.port ? Number(parsed.port) : fallback.port,
+    ...(parsed.username ? { user: decodeURIComponent(parsed.username) } : {}),
+    ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
+    ...(parsed.pathname.length > 1 ? { database: decodeURIComponent(parsed.pathname.slice(1)) } : {}),
+    connectionLimit:
+      Number.isFinite(connectionLimit) && connectionLimit > 0
+        ? connectionLimit
+        : DEFAULT_CONNECTION_LIMIT,
+    acquireTimeout:
+      Number.isFinite(poolTimeout) && poolTimeout > 0
+        ? poolTimeout * 1000
+        : DEFAULT_POOL_TIMEOUT_SECONDS * 1000,
+    ...(sslAccept && /require|strict/i.test(sslAccept)
+      ? { ssl: { rejectUnauthorized: sslAccept !== "accept" } }
+      : {}),
+  };
 }
 
 function createPrismaClient(): PrismaClient {
+  const options = toPoolOptions(env.DATABASE_URL);
+
+  if (env.databaseLogging) {
+    logger.debug("prisma pool configured", {
+      host: options.host,
+      port: options.port,
+      database: options.database,
+      connectionLimit: options.connectionLimit,
+    });
+  }
+
   const client = new PrismaClient({
-    datasourceUrl: withPoolDefaults(env.DATABASE_URL),
+    adapter: new PrismaMariaDb(options),
     log: env.databaseLogging
       ? [
           { emit: "event", level: "query" },

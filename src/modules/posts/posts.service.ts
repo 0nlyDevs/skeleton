@@ -12,7 +12,7 @@
  *     trail entry carrying the changed field names — never the content itself.
  */
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 import { assertOwnerOrStaff, isStaff } from "@/lib/auth/guards";
 import { NotFoundError } from "@/lib/errors";

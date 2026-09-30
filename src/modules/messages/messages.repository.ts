@@ -6,7 +6,7 @@
  * would be a full scan of a table that grows for the whole contest.
  */
 
-import { type Prisma } from "@prisma/client";
+import { type Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 

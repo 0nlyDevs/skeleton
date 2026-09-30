@@ -1,5 +1,11 @@
 /**
- * Edge middleware.
+ * Request proxy (Next.js 16's replacement for `middleware.ts`).
+ *
+ * It sits at `src/proxy.ts` — the same level as `app` — because that is the only
+ * location Next 16 registers for a project that keeps its routes under `src/`.
+ * A root-level `middleware.ts` is no longer picked up in development, which
+ * meant the file ran in production and not in dev: precisely the situation in
+ * which its bugs stay invisible until deploy.
  *
  * Three jobs, in order of importance:
  *
@@ -12,12 +18,13 @@
  *      stamps it onto its own inline bootstrap scripts.
  *   3. **Redirect unauthenticated traffic away from the app area.**
  *
- * On that last point: this middleware *cannot* authorize. It runs on the edge
- * runtime and has no database, so it only checks that a session cookie exists.
- * It is a redirect for humans, not a security boundary — every protected page
- * re-resolves the session server-side and every API route enforces roles in
- * `lib/api/route.ts`. Deleting this file would make the app less pleasant, not
- * less safe.
+ * On that last point: this proxy *cannot* authorize. It only checks that a
+ * session cookie is present, and it deliberately does not touch `/api/*` — the
+ * correct answer to an unauthenticated API call is the JSON `401` from
+ * `lib/api/route.ts`, not a redirect to an HTML login page. Redirecting API
+ * routes also breaks the endpoints that legitimately have no session at all:
+ * sign-in, sign-up, password reset and the secret-authenticated cron job.
+ * Every protected page re-resolves the session server-side.
  */
 
 import { getSessionCookie } from "better-auth/cookies";
@@ -43,6 +50,14 @@ const GUEST_ONLY_PATHS = new Set([
   "/forgot-password",
   "/reset-password",
 ]);
+
+/**
+ * Prefixes that are always passed straight through.
+ *
+ * `/api` is authenticated (or not) by the route wrapper; `/api/auth/*` must stay
+ * reachable with no session or nobody could ever sign in.
+ */
+const PASS_THROUGH_PREFIXES = ["/api/", "/_next/"];
 
 /**
  * Paths that must never be served, whatever the host configuration.
@@ -76,6 +91,10 @@ function isSensitivePath(pathname: string): boolean {
   return SENSITIVE_PATH_PATTERNS.some((pattern) => pattern.test(decoded));
 }
 
+function isPassThrough(pathname: string): boolean {
+  return PASS_THROUGH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 function buildContentSecurityPolicy(nonce: string, isDev: boolean): string {
   const scriptSrc = [
     "'self'",
@@ -105,7 +124,7 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean): string {
   ].join("; ");
 }
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const isDev = process.env.NODE_ENV !== "production";
 
@@ -124,6 +143,12 @@ export function middleware(request: NextRequest): NextResponse {
   requestHeaders.set("x-nonce", nonce);
   // Next reads the policy from the *request* to pick up the nonce.
   requestHeaders.set("Content-Security-Policy", csp);
+
+  if (isPassThrough(pathname)) {
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
+  }
 
   const hasSession = Boolean(getSessionCookie(request));
 
@@ -153,8 +178,8 @@ export const config = {
   matcher: [
     /*
      * Everything except Next's static output and the favicon. API routes are
-     * included: they benefit from the probe blocking, and their own headers come
-     * from `next.config.ts`.
+     * included so they still get probe blocking and a CSP header; they return
+     * from `isPassThrough` before any session check.
      */
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],

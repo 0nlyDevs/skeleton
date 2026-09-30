@@ -1,4 +1,4 @@
-import type { Notification, NotificationPreference } from "@prisma/client";
+import type { Notification, NotificationPreference } from "@/generated/prisma/client";
 
 import type { NotificationPayload } from "@/lib/socket/events";
 

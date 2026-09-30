@@ -6,17 +6,30 @@ Engineering rules and conventions for the Webcup Base scaffold.
 
 ### Server (server.ts)
 - Custom Node.js HTTP server wrapping Next.js — required for Socket.IO sharing
-- Bundled to `server.cjs` via esbuild for production (avoids tsx/Next 15
-  AsyncLocalStorage incompatibility)
+- Bundled to `server.cjs` via esbuild (dev and production). A TypeScript loader
+  such as tsx breaks Next's module resolution and its request handler then
+  throws `Invariant: AsyncLocalStorage accessed in runtime where it is not
+  available`
+- `npm run dev` (`scripts/dev.mjs`) bundles, runs, and restarts only when a file
+  inside the bundle changes
 - `NODE_ENV=production` required for production builds
 
 ### Database
-- Prisma ORM with MySQL connection pooling (`connection_limit=5`)
-- Migrations applied via `prisma migrate deploy`
-- Seed script (`prisma/seed.ts`) creates demo accounts:
-  - `admin@webcup.demo` (Admin) / `admin123`
-  - `moderator@webcup.demo` (Moderator) / `mod123`
-  - `user@webcup.demo` (User) / `user123`
+- Prisma 7 with the MariaDB driver adapter. The Rust query engine is gone, so
+  there are no `PRISMA_*_ENGINE_*` paths to configure
+- The client is generated into `src/generated/prisma` (gitignored) and imported
+  as `@/generated/prisma/client`, never from `@prisma/client`
+- `prisma.config.ts` holds the schema path, migration path, seed command and
+  datasource URL; it also locates a Nix-provided schema engine on NixOS, where
+  Prisma publishes no prebuilt binary
+- Connection pooling comes from the driver: `connection_limit` and
+  `pool_timeout` in `DATABASE_URL` are translated into driver options in
+  `src/lib/db/prisma.ts`
+- Seed script (`prisma/seed.ts`) creates the jury accounts, all with password
+  `Webcup-2026!jury`: `admin@webcup.demo` (ADMIN), `moderator@webcup.demo`
+  (MODERATOR), `user@webcup.demo` (USER), `user2@webcup.demo` (USER)
+- A credential `Account` row must have `accountId === user.id`; BetterAuth
+  rejects anything else as "Invalid email or password"
 
 ### Auth
 - BetterAuth with RBAC extension
@@ -72,13 +85,13 @@ npm test              # Vitest
 
 ### Local Development
 ```bash
-./scripts/dev-start.sh
+npm run dev               # Next.js + Socket.IO on one port
 ```
 
 ### Production
 ```bash
-npm run build
-node scripts/start.js    # or: pm2 start ecosystem.config.js
+npm run build             # prisma generate + next build + server.cjs
+npm start                 # or: pm2 start ecosystem.config.js
 ```
 
 ### PM2

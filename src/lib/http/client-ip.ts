@@ -22,8 +22,16 @@ export function isIpAddress(value: string): boolean {
   return isValidIpv4(value) || IPV6.test(value);
 }
 
-/** Strip an IPv6-mapped IPv4 prefix and any port suffix. */
-function normalize(value: string): string {
+/**
+ * Strip an IPv6-mapped IPv4 prefix and any port suffix.
+ *
+ * Exported because two modules must agree on the result: the rate-limit hook
+ * derives a key from the request headers, and the sign-in completion hook clears
+ * that same key from `session.ipAddress`. If they normalise differently the
+ * counter is never cleared and a legitimate user is locked out by their own
+ * successful sign-ins.
+ */
+export function normalizeIp(value: string): string {
   let candidate = value.trim();
   if (candidate.startsWith("::ffff:")) candidate = candidate.slice("::ffff:".length);
   // `1.2.3.4:5678` — only strip when the tail is a port, never from bare IPv6.
@@ -45,22 +53,26 @@ export function resolveClientIp(headers: Headers, trustProxy: boolean): string {
     const forwarded = headers.get("x-forwarded-for");
     if (forwarded) {
       for (const entry of forwarded.split(",")) {
-        const candidate = normalize(entry);
+        const candidate = normalizeIp(entry);
         if (isIpAddress(candidate)) return candidate;
       }
     }
 
     const realIp = headers.get("x-real-ip");
     if (realIp) {
-      const candidate = normalize(realIp);
+      const candidate = normalizeIp(realIp);
       if (isIpAddress(candidate)) return candidate;
     }
   }
 
-  // Some runtimes expose the socket address on the request object.
+  /*
+   * The socket address, injected by the HTTP server (see `server.ts`). It is
+   * always overwritten there, never merely defaulted, so a client cannot spoof
+   * it and escape an IP-keyed limit.
+   */
   const connectionIp = headers.get("x-connection-ip");
   if (connectionIp) {
-    const candidate = normalize(connectionIp);
+    const candidate = normalizeIp(connectionIp);
     if (isIpAddress(candidate)) return candidate;
   }
 

@@ -9,8 +9,12 @@ node_modules
 out
 build
 dist
+# Prisma 7 generates its client into the source tree; it is a build product of
+# `prisma generate`, which `npm run build` runs before Next compiles.
+src/generated
 next-env.d.ts
 server.cjs
+.dev
 
 # --- Environment ------------------------------------------------------------
 .env

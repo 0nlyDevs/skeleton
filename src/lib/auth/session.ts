@@ -13,6 +13,7 @@
 
 import { headers } from "next/headers";
 
+import { logger } from "@/lib/logger";
 import type { AuthContext, AuthUser, Role } from "@/types";
 
 import { resolveBanState } from "./ban";
@@ -41,15 +42,37 @@ interface RawSession {
   userAgent?: string | null;
 }
 
+/**
+ * A session without a role means the column is not in BetterAuth's field list,
+ * which fails closed but silently — an admin simply sees 403s. Warn once so the
+ * cause is visible instead of guessed at.
+ */
+let warnedAboutMissingRole = false;
+
+function resolveRole(raw: string | null | undefined): Role {
+  if (isRole(raw)) return raw;
+
+  if (!warnedAboutMissingRole) {
+    warnedAboutMissingRole = true;
+    logger.warn(
+      "session user has no usable role; defaulting to USER. Every staff route will answer 403 — " +
+        "check that `role` is declared in `user.additionalFields` in lib/auth/auth.ts.",
+      { receivedRole: raw ?? null },
+    );
+  }
+
+  return "USER";
+}
+
 function toAuthUser(raw: RawSessionUser): AuthUser {
   return {
     id: String(raw.id),
     email: String(raw.email),
     name: String(raw.name),
     image: raw.image ?? null,
-    // An unrecognised role in the database degrades to the least privilege
-    // level rather than being trusted.
-    role: (isRole(raw.role) ? raw.role : "USER") satisfies Role,
+    // An unrecognised role degrades to the least privilege level rather than
+    // being trusted.
+    role: resolveRole(raw.role) satisfies Role,
     emailVerified: raw.emailVerified === true,
     twoFactorEnabled: raw.twoFactorEnabled === true,
     createdAt: raw.createdAt.toISOString(),

@@ -45,6 +45,18 @@ const envSchema = z.object({
   RESEND_API_KEY: optionalText,
   MAIL_FROM: z.string().min(1).default("noreply@localhost"),
   MAIL_TRANSPORT: z.enum(["resend", "log"]).default("resend"),
+  /**
+   * Where undelivered messages are written. Every auth link lands here, which
+   * is what keeps verification and reset usable without a mailbox.
+   */
+  MAIL_OUTBOX_DIR: z.string().min(1).default("./.mail-outbox"),
+
+  // --- Networking -----------------------------------------------------------
+  /**
+   * Node resolves hostnames in "verbatim" order, which breaks every outbound
+   * request on a host with no working IPv6 route. See `lib/net/dns.ts`.
+   */
+  DNS_RESULT_ORDER: z.enum(["ipv4first", "verbatim"]).default("ipv4first"),
 
   // --- AI -------------------------------------------------------------------
   // Generic: works with OpenRouter, xAI, Gemini, or any OpenAI-compatible API.
