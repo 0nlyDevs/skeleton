@@ -75,7 +75,7 @@ export function PostDetail({
   };
 
   const handleReport = async () => {
-    if (reporting || reportReason.trim().length === 0) return;
+    if (reporting || reportReason.trim().length < 5) return;
     setReporting(true);
     try {
       await apiFetch("/api/reports", {
@@ -252,7 +252,9 @@ export function PostDetail({
             value={reportReason}
             onChange={(event) => setReportReason(event.target.value)}
             rows={4}
-            maxLength={500}
+            minLength={5}
+            maxLength={1000}
+            required
           />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setReportOpen(false)} disabled={reporting}>
@@ -260,7 +262,7 @@ export function PostDetail({
             </Button>
             <Button
               onClick={() => void handleReport()}
-              disabled={reporting || reportReason.trim().length === 0}
+              disabled={reporting || reportReason.trim().length < 5}
             >
               {reporting ? t("common.loading") : t("posts.report.submit")}
             </Button>

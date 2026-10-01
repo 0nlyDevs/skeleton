@@ -50,6 +50,7 @@ enum RoomType {
   GLOBAL
   POST
   DIRECT
+  GROUP
 }
 
 enum NotificationType {
@@ -133,6 +134,9 @@ model User {
   uploads        Upload[]
   reportsMade    Report[]             @relation("ReportReporter")
   reportsHandled Report[]             @relation("ReportResolver")
+  roomMembers    RoomMember[]
+  followers      Follow[]             @relation("UserFollowers")
+  following      Follow[]             @relation("UserFollowing")
 
   @@index([role])
   @@index([banned])
@@ -294,10 +298,42 @@ model Room {
   updatedAt  DateTime @updatedAt
 
   messages Message[]
+  members  RoomMember[]
 
   @@index([type])
   @@index([entityType, entityId])
   @@map("room")
+}
+
+model RoomMember {
+  id         String   @id @default(cuid())
+  roomId     String
+  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       String   @default("MEMBER")
+  lastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@index([roomId])
+  @@map("roomMember")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follow")
 }
 
 model Message {
@@ -307,6 +343,7 @@ model Message {
   senderId  String
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content   String   @db.Text
+  deletedAt DateTime?
   createdAt DateTime @default(now())
 
   // Drives the hot path: "latest N messages in this room, newer than X".

@@ -216,6 +216,7 @@ export async function deleteComment(id: string, actor: ActorContext): Promise<vo
 
 /** Moderation entry point used when resolving a report on a comment. */
 export async function removeCommentAsStaff(id: string, actor: ActorContext, reason: string | null): Promise<void> {
+  if (!isStaff(actor.user)) throw new NotFoundError();
   const existing = await findCommentById(id);
   if (!existing || existing.deletedAt) return;
 
@@ -223,6 +224,14 @@ export async function removeCommentAsStaff(id: string, actor: ActorContext, reas
   const row = await softDeleteComment(id, existing.postId);
   publishComment({ kind: "deleted", postId: row.postId, comment: toCommentDto(row) });
   void broadcastEngagement(row.postId, isPublicPost(post));
+  await recordAudit({
+    actorId: actor.user.id,
+    action: auditActions.commentDeleted,
+    targetType: "comment",
+    targetId: id,
+    metadata: { postId: row.postId, authorId: existing.userId, source: "moderation_report" },
+    ip: actor.ip ?? null,
+  });
   notifyInBackground(
     notifyModeration({ userId: existing.userId, what: "commentaire", reason }),
     { commentId: id },

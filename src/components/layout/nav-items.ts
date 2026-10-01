@@ -1,6 +1,7 @@
 import {
   Bell,
   FileText,
+  Heart,
   LayoutDashboard,
   MessagesSquare,
   ScrollText,
@@ -9,6 +10,7 @@ import {
   Sparkles,
   SlidersHorizontal,
   Users,
+  UserSearch,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -33,6 +35,8 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
+  { href: "/feed", labelKey: "nav.feed", icon: Heart, group: "main" },
+  { href: "/search", labelKey: "nav.search", icon: UserSearch, group: "main" },
   {
     href: "/dashboard",
     labelKey: "nav.dashboard",

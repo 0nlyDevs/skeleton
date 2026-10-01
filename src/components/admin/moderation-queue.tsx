@@ -19,6 +19,9 @@ interface ReportDto {
   readonly id: string;
   readonly targetType: string;
   readonly targetId: string;
+  readonly targetLabel: string | null;
+  readonly targetSummary: string | null;
+  readonly targetHref: string | null;
   readonly reason: string;
   readonly status: string;
   readonly createdAt: string;
@@ -28,11 +31,9 @@ interface ReportDto {
 /**
  * Moderation queue.
  *
- * Resolving never deletes anything directly: "remove" soft-deletes the reported
- * post through the posts service (so the author's data stays recoverable and the
- * action is audited twice — once as a moderation event, once as a post deletion),
- * and "dismiss" just closes the report. Both refresh the list from the server
- * rather than mutating local state, because two moderators can act concurrently.
+ * "Remove" applies the matching moderation action to the reported target and
+ * "dismiss" closes the claim. Both refresh from the server so the queue reflects
+ * the persisted resolution and its audit trail.
  */
 export function ModerationQueue() {
   const t = useTranslation();
@@ -66,7 +67,7 @@ export function ModerationQueue() {
     try {
       await apiFetch(`/api/reports/${report.id}`, {
         method: "PATCH",
-        body: { action },
+        body: { resolution: action },
       });
       toast.success(action === "remove" ? t("admin.moderation.resolved") : t("admin.moderation.dismissed"));
       await load();
@@ -107,8 +108,10 @@ export function ModerationQueue() {
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="warning">{report.targetType}</Badge>
-                    <span className="truncate text-[13.5px] font-medium">{report.reason}</span>
+                    <span className="truncate text-[13.5px] font-medium">{report.targetLabel ?? report.targetId}</span>
                   </div>
+                  {report.targetSummary ? <p className="line-clamp-2 text-[12px] text-foreground/80">{report.targetSummary}</p> : null}
+                  <p className="text-[12px] text-muted-foreground">{t("admin.moderation.reason")}: {report.reason}</p>
                   <span className="text-[12px] text-muted-foreground">
                     {t("admin.moderation.reporter")}: {report.reporter?.name ?? "—"} ·{" "}
                     {formatRelative(report.createdAt)}
@@ -116,9 +119,9 @@ export function ModerationQueue() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {report.targetType === "POST" ? (
+                  {report.targetHref ? (
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={`/posts/${report.targetId}`}>{t("admin.moderation.target")}</Link>
+                      <Link href={report.targetHref}>{t("admin.moderation.target")}</Link>
                     </Button>
                   ) : null}
                   <Button
@@ -128,7 +131,7 @@ export function ModerationQueue() {
                     onClick={() => void resolve(report, "remove")}
                   >
                     <X />
-                    {t("admin.moderation.remove")}
+                    {report.targetType === "user" ? t("admin.moderation.suspend") : t("admin.moderation.remove")}
                   </Button>
                   <Button
                     variant="secondary"

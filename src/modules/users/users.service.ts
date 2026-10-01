@@ -15,17 +15,19 @@
  *     waiting for the token to expire.
  */
 
-import { assertCanAssignRole } from "@/lib/auth/guards";
+import { assertCanAssignRole, isStaff } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth/auth";
 import type { Prisma } from "@/generated/prisma/client";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, fromPrismaError } from "@/lib/errors";
 import { composeDisplayName } from "@/lib/validation/profile";
 import { paginate, resolveSortField, toPagination, type Paginated } from "@/lib/pagination";
 import { parseDateInput } from "@/lib/utils";
+import { disconnectUserSockets } from "@/lib/socket/emit";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
+import { notifyInBackground } from "../notifications/notifications.service";
 import { notifyRoleChanged, notifySystemMessage } from "../notifications/notifications.service";
 import { toAdminUserDto, toUserProfileDto, type AdminUserDto, type UserProfileDto } from "./users.dto";
 import {
@@ -137,6 +139,7 @@ export async function changeUserRole(
   if (before.role === input.role) return toAdminUserDto(before);
 
   const updated = await updateUserRoleAdmin(id, input.role);
+  disconnectUserSockets(id);
 
   // A role change must apply to an already-open session. Sessions are keyed by
   // the same user row, so the authoritative check in `getAuthContext` picks the
@@ -182,6 +185,7 @@ export async function setUserBan(
   if (input.banned) {
     // Cut existing sessions immediately rather than waiting for expiry.
     const revoked = await deleteUserSessions(id);
+    disconnectUserSockets(id);
     await recordAudit({
       actorId: actor.user.id,
       action: auditActions.userBanned,
@@ -207,6 +211,50 @@ export async function setUserBan(
   }
 
   return toAdminUserDto(updated);
+}
+
+/** Apply the profile action from the staff moderation queue. */
+export async function removeUserProfileAsStaff(
+  id: string,
+  actor: ActorContext,
+  note: string | null,
+): Promise<void> {
+  if (!isStaff(actor.user)) throw new ForbiddenError();
+  if (id === actor.user.id) throw new ForbiddenError("You cannot suspend your own account.");
+
+  const target = await findAdminUserById(id);
+  if (!target) throw new NotFoundError("That profile does not exist.");
+  if (actor.user.role === "MODERATOR" && target.role === "ADMIN") {
+    throw new ForbiddenError("Moderators cannot suspend an admin account.");
+  }
+  if (target.banned) return;
+
+  await guardLastAdmin(id, "suspend this account");
+  await updateUserBan(id, {
+    banned: true,
+    banReason: note?.trim() || "Profile removed after moderation review.",
+    banExpires: null,
+  });
+  const revokedSessions = await deleteUserSessions(id);
+  disconnectUserSockets(id);
+
+  await recordAudit({
+    actorId: actor.user.id,
+    action: auditActions.userBanned,
+    targetType: "user",
+    targetId: id,
+    metadata: { source: "moderation_report", revokedSessions },
+    ip: actor.ip ?? null,
+  });
+  notifyInBackground(
+    notifySystemMessage({
+      userId: id,
+      title: "Your profile was suspended",
+      body: note?.trim() || "Your profile was removed after a moderation review.",
+      link: "/",
+    }),
+    { userId: id, action: "profile_suspended" },
+  );
 }
 
 // --- Self service -----------------------------------------------------------

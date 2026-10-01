@@ -20,6 +20,8 @@ import {
   type PostEngagementPayload,
   type NotificationPayload,
   type PresencePayload,
+  type RoomUnreadPayload,
+  type RoomMembersPayload,
   type TypingPayload,
 } from "./events";
 import { getSocketServer } from "./registry";
@@ -47,6 +49,30 @@ export function publishTyping(roomId: string, payload: TypingPayload): void {
 export function publishPresence(roomId: string, online: number): void {
   const payload: PresencePayload = { roomId, online };
   publish(chatRoom(roomId), SOCKET_EVENTS.presence, payload);
+}
+
+/** Keep each user's room list unread badge in sync across open tabs. */
+export function publishRoomUnread(userId: string, payload: RoomUnreadPayload): void {
+  publish(userRoom(userId), SOCKET_EVENTS.roomUnread, payload);
+}
+
+/** Refresh member lists for participants already connected to a group. */
+export function publishRoomMembers(payload: RoomMembersPayload): void {
+  publish(chatRoom(payload.roomId), SOCKET_EVENTS.roomMembers, payload);
+}
+
+/** Remove every open device for a user from a room after access is revoked. */
+export function revokeRoomMembership(userId: string, roomId: string): void {
+  const server = getSocketServer();
+  if (!server) return;
+  const room = chatRoom(roomId);
+  server.in(userRoom(userId)).socketsLeave(room);
+  publishPresence(roomId, Math.max(0, roomSize(room)));
+}
+
+/** Force a fresh authenticated handshake after a ban or privileged role change. */
+export function disconnectUserSockets(userId: string): void {
+  getSocketServer()?.in(userRoom(userId)).disconnectSockets(true);
 }
 
 /** A published post appeared, changed or disappeared from the public feed. */

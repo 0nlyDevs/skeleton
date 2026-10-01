@@ -45,6 +45,12 @@ overstates is worse than a short one.
 - Filtering (scope, published, free text), sorting and pagination
 - Explicit DTOs — responses are whitelisted, never raw database rows
 - Tags per post
+- Public community feed at `/feed`, with a live socket stream, cursor-based
+  paging, and a composer for published posts
+- Public post pages at `/feed/[id]` with threaded comments, replies, reactions,
+  live comment and engagement updates, and reporting
+- Follow and unfollow accounts, browse public profiles at `/u/[username]`, and
+  search users by public name or handle
 
 ## Realtime
 
@@ -52,13 +58,18 @@ overstates is worse than a short one.
   one port is proxied on shared hosting)
 - Automatic fallback to HTTP polling, with the active transport shown in the UI
 - Typing indicators and presence in chat rooms
+- Socket-first direct messages and groups, including member roles, invites,
+  unread counts, and HTTP fallback only when Socket.IO has degraded
+- Date plus id-tie-break cursors for chat history and polling; deleted messages
+  are retained as moderation placeholders
 - Live notifications with read/unread state, deduplicated by id
 - The unread count has a single source of truth shared by the bell and the list
 
 ## Admin panel
 
 - User management: role changes and bans, both written to the audit log
-- Content moderation queue fed by user reports
+- Content moderation queue for reports on posts, comments, messages, and public
+  profiles; staff removals are audited and notify affected authors
 - Audit log with filters, including actor and before/after metadata
 - Feature flags toggled from the settings screen
 - Platform statistics: users by role, content, storage, verification rate

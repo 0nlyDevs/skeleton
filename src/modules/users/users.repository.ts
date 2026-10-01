@@ -37,6 +37,28 @@ export type UserProfileRow = Prisma.UserGetPayload<{ select: typeof userProfileS
 
 export type AdminUserRow = Prisma.UserGetPayload<{ select: typeof adminUserSelect }>;
 
+export const publicProfileSelect = {
+  id: true,
+  name: true,
+  username: true,
+  displayUsername: true,
+  image: true,
+  bio: true,
+  createdAt: true,
+  _count: { select: { followers: true, following: true } },
+} satisfies Prisma.UserSelect;
+
+export type PublicProfileRow = Prisma.UserGetPayload<{ select: typeof publicProfileSelect }>;
+
+export const publicUserSelect = {
+  id: true,
+  name: true,
+  username: true,
+  image: true,
+} satisfies Prisma.UserSelect;
+
+export type PublicUserRow = Prisma.UserGetPayload<{ select: typeof publicUserSelect }>;
+
 export interface FindUsersArgs {
   readonly where: Prisma.UserWhereInput;
   readonly orderBy: Prisma.UserOrderByWithRelationInput;
@@ -87,6 +109,70 @@ export async function updateUserBan(
 export async function findUserIdByUsername(username: string): Promise<string | null> {
   const row = await prisma.user.findUnique({ where: { username }, select: { id: true } });
   return row?.id ?? null;
+}
+
+export async function findActiveUserById(id: string): Promise<PublicUserRow | null> {
+  return prisma.user.findFirst({
+    where: { id, banned: false },
+    select: publicUserSelect,
+  });
+}
+
+export async function findActiveUsersByIds(ids: readonly string[]): Promise<PublicUserRow[]> {
+  if (ids.length === 0) return [];
+  return prisma.user.findMany({
+    where: { id: { in: [...ids] }, banned: false },
+    select: publicUserSelect,
+  });
+}
+
+export async function findActivePublicProfileByUsername(username: string): Promise<PublicProfileRow | null> {
+  return prisma.user.findFirst({
+    where: { username, banned: false },
+    select: publicProfileSelect,
+  });
+}
+
+/** Search public identities only; emails are intentionally not searchable here. */
+export async function searchActivePublicUsers(
+  query: string,
+  excludedUserId: string,
+  take: number,
+): Promise<PublicUserRow[]> {
+  return prisma.user.findMany({
+    where: {
+      banned: false,
+      id: { not: excludedUserId },
+      username: { not: null },
+      OR: [
+        { name: { contains: query } },
+        { username: { contains: query } },
+        { displayUsername: { contains: query } },
+      ],
+    },
+    orderBy: [{ username: "asc" }, { id: "asc" }],
+    take,
+    select: publicUserSelect,
+  });
+}
+
+export async function findFollowingIds(userId: string): Promise<string[]> {
+  const rows = await prisma.follow.findMany({
+    where: { followerId: userId, following: { banned: false } },
+    select: { followingId: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 500,
+  });
+  return rows.map((row) => row.followingId);
+}
+
+export async function findFollowingTargetIds(userId: string, targetIds: readonly string[]): Promise<string[]> {
+  if (targetIds.length === 0) return [];
+  const rows = await prisma.follow.findMany({
+    where: { followerId: userId, followingId: { in: [...targetIds] } },
+    select: { followingId: true },
+  });
+  return rows.map((row) => row.followingId);
 }
 
 /** Resolve mentioned handles to active accounts in one query. */

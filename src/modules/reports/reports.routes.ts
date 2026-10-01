@@ -21,7 +21,7 @@ export const createReportRoute = apiRoute({
 export const listReportsRoute = apiRoute({
   roles: STAFF_ROLES,
   query: listReportsQuerySchema,
-  handler: async ({ query }) => jsonOk(await listReports(query)),
+  handler: async ({ query, auth }) => jsonOk(await listReports(query, auth.user)),
 });
 
 export const resolveReportRoute = apiRoute({

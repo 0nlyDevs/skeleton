@@ -202,14 +202,15 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
     });
   });
 
-  socket.on(SOCKET_EVENTS.sendMessage, (payload) => {
+  socket.on(SOCKET_EVENTS.sendMessage, (payload, acknowledge) => {
     void handle(socket, log, async () => {
       const parsed = sendMessageSchema.safeParse(payload);
       if (!parsed.success) throw new Error("Invalid message.");
 
       // The service persists *and* fans the message out to the room, so the
       // socket path and the HTTP path behave identically for other clients.
-      await sendMessage(parsed.data, { user });
+      const message = await sendMessage(parsed.data, { user });
+      acknowledge?.(message);
     });
   });
 

@@ -33,6 +33,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /** Reachable without a session. Everything else requires one. */
 const PUBLIC_PATHS = new Set([
   "/",
+  "/feed",
   "/privacy",
   "/terms",
   "/login",
@@ -42,6 +43,10 @@ const PUBLIC_PATHS = new Set([
   "/reset-password",
   "/2fa",
 ]);
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/u/");
+}
 
 /** Redirected away from when a session already exists. */
 const GUEST_ONLY_PATHS = new Set([
@@ -162,7 +167,7 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.redirect(url);
   }
 
-  if (!hasSession && !PUBLIC_PATHS.has(pathname)) {
+  if (!hasSession && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";

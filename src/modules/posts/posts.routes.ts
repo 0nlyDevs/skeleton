@@ -10,6 +10,9 @@
 import { apiRoute, publicRoute } from "@/lib/api/route";
 import { jsonCreated, jsonOk, noContent } from "@/lib/api/response";
 import { STAFF_ROLES } from "@/lib/auth/roles";
+import { UnauthenticatedError } from "@/lib/errors";
+
+import { getFollowingIds } from "../follows/follows.service";
 
 import {
   createPostSchema,
@@ -70,7 +73,14 @@ export const restorePostRoute = apiRoute({
 /** Public: guests read the feed; signed-in viewers also see their own reactions. */
 export const listFeedRoute = publicRoute({
   query: feedQuerySchema,
-  handler: async ({ query, auth }) => jsonOk(await listFeed(query, auth?.user ?? null)),
+  handler: async ({ query, auth }) => {
+    if (query.scope === "following") {
+      if (!auth) throw new UnauthenticatedError();
+      const followingIds = await getFollowingIds(auth.user.id);
+      return jsonOk(await listFeed(query, auth.user, followingIds));
+    }
+    return jsonOk(await listFeed(query, auth?.user ?? null));
+  },
 });
 
 export const getFeedItemRoute = publicRoute({

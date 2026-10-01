@@ -30,7 +30,7 @@ export type ReactionType = (typeof REACTION_TYPES)[number];
 /** Per-type reaction totals; a missing key means zero. */
 export type ReactionCounts = Partial<Record<ReactionType, number>>;
 
-export const ROOM_TYPES = ["GLOBAL", "POST", "DIRECT"] as const;
+export const ROOM_TYPES = ["GLOBAL", "POST", "DIRECT", "GROUP"] as const;
 export type RoomType = (typeof ROOM_TYPES)[number];
 
 /**
