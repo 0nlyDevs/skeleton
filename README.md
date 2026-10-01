@@ -83,7 +83,7 @@ Copy `.env.example` to `.env` and fill in values. Key variables:
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | MySQL connection string. Append `?ssl-mode=REQUIRED` for managed hosts; `ssl-ca`, `connection_limit` and `pool_timeout` are also read — see `lib/db/pool-options.ts` |
+| `DATABASE_URL` | MySQL connection string |
 | `BETTER_AUTH_SECRET` | Session encryption key (32+ chars) |
 | `AI_API_KEY` | OpenAI-compatible API key (optional — disables AI if empty) |
 | `RESEND_API_KEY` | Email API key (optional — messages go to `.mail-outbox/` if empty) |
