@@ -80,7 +80,7 @@ export function PostDetail({
     try {
       await apiFetch("/api/reports", {
         method: "POST",
-        body: { targetType: "POST", targetId: post.id, reason: reportReason.trim() },
+        body: { targetType: "post", targetId: post.id, reason: reportReason.trim() },
       });
       toast.success(t("posts.report.sent"));
       setReportOpen(false);
