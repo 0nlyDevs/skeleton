@@ -13,7 +13,7 @@ export interface FeedPageResponse {
 }
 
 export interface FeedScope {
-  readonly scope?: "all" | "following";
+  readonly scope?: "all" | "following" | "for_you";
   readonly authorId?: string;
   readonly group?: { readonly id: string; readonly slug: string };
 }
@@ -46,7 +46,7 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
         cursor,
         authorId: filter.authorId,
         groupSlug: filter.group?.slug,
-        scope: filter.scope === "following" ? "following" : undefined,
+        scope: filter.scope && filter.scope !== "all" ? filter.scope : undefined,
       })}`,
     [filter.authorId, filter.group?.slug, filter.scope],
   );

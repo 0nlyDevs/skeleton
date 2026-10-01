@@ -87,6 +87,8 @@ const envSchema = z.object({
   AI_BASE_URL: z.string().min(1).default("https://openrouter.ai/api/v1"),
   AI_MODEL: z.string().min(1).default("google/gemini-2.0-flash-exp:free"),
   AI_FALLBACK_MODEL: optionalText,
+  /** Provider embedding model (e.g. `text-embedding-3-small`); unset = local embedding. */
+  AI_EMBEDDING_MODEL: optionalText,
 
   // --- Uploads --------------------------------------------------------------
   UPLOAD_DIR: z.string().min(1).default("./uploads"),

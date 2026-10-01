@@ -12,6 +12,7 @@ import { findActiveGroupIds } from "../groups/groups.repository";
 import { listGroups } from "../groups/groups.service";
 import type { GroupSummaryDto } from "../groups/groups.dto";
 import { listFeed } from "../posts/posts.service";
+import { semanticSearch } from "../recommendations/recommendations.service";
 import type { FeedItemDto } from "../posts/posts.dto";
 
 export interface ContactDto {
@@ -94,7 +95,7 @@ export async function searchEverything(q: string, viewer: AuthUser | null): Prom
   const term = q.trim();
   if (term.length < 2) return { people: [], groups: [], posts: [] };
 
-  const [people, groups, posts] = await Promise.all([
+  const [people, groups, keyword, semantic] = await Promise.all([
     prisma.user.findMany({
       where: {
         banned: false,
@@ -106,8 +107,12 @@ export async function searchEverything(q: string, viewer: AuthUser | null): Prom
     }),
     listGroups({ scope: "discover", q: term, limit: 5 }, viewer),
     listFeed({ q: term, limit: 8, scope: "all" }, viewer),
+    semanticSearch(term, viewer, 8).catch(() => [] as FeedItemDto[]),
   ]);
-  return { people, groups, posts: posts.data };
+  // Exact matches first, then meaning-based neighbours ("vacances" finds "plage").
+  const seen = new Set<string>();
+  const posts = [...keyword.data, ...semantic].filter((post) => !seen.has(post.id) && seen.add(post.id)).slice(0, 12);
+  return { people, groups, posts };
 }
 
 export interface ShellRailDto {

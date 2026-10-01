@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { FeedView } from "@/components/social/feed-view";
 import { getAuthContext } from "@/lib/auth/session";
 import { listFeed } from "@/modules/posts/posts.service";
+import { rankForYou } from "@/modules/recommendations/recommendations.service";
 
 export const metadata: Metadata = { title: "Fil d'actualité" };
 
@@ -10,7 +11,8 @@ export const metadata: Metadata = { title: "Fil d'actualité" };
 export default async function FeedPage() {
   const context = await getAuthContext();
   const viewer = context?.user ?? null;
-  const initial = await listFeed({ limit: 10, scope: "all" }, viewer);
+  // Members land on "Pour vous" (KNN-ranked); guests on the newest posts.
+  const initial = viewer ? await rankForYou(viewer, 0, 10) : await listFeed({ limit: 10, scope: "all" }, null);
 
   return (
     <div className="mx-auto w-full max-w-[680px]">

@@ -531,6 +531,8 @@ export const fr = {
   "security.alert.action": "Ce n'était pas moi — sécuriser mon compte",
   "security.alert.done": "Toutes les autres sessions ont été fermées. Changez maintenant votre mot de passe.",
   "auth.password.breached": "Ce mot de passe apparaît dans des fuites de données connues. Choisissez-en un autre.",
+  "feed.tab.recent": "Récents",
+  "feed.similar": "Publications similaires",
   "auth.password.rules_title": "Votre mot de passe doit contenir :",
   "auth.password.rule.length": "Au moins {min} caractères",
   "auth.password.rule.lower": "Une lettre minuscule",

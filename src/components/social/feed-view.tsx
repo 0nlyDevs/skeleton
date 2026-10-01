@@ -47,7 +47,7 @@ export function FeedView({
   readonly emptyBody?: string;
 }) {
   const t = useTranslation();
-  const [scope, setScope] = useState<"all" | "following">(filter.scope ?? "all");
+  const [scope, setScope] = useState<"all" | "following" | "for_you">(filter.scope ?? (showTabs && viewer ? "for_you" : "all"));
   const feed = useFeed({ initial, viewerId: viewer?.id ?? null, filter: { ...filter, scope } });
   const [commentsFor, setCommentsFor] = useState<FeedItemDto | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
@@ -72,7 +72,7 @@ export function FeedView({
 
       {showTabs && viewer ? (
         <div role="tablist" aria-label={t("feed.title")} className="flex gap-1 rounded-2xl bg-card p-1 shadow-panel">
-          {(["all", "following"] as const).map((value) => (
+          {(["for_you", "following", "all"] as const).map((value) => (
             <button
               key={value}
               role="tab"
@@ -84,7 +84,7 @@ export function FeedView({
                 scope === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-muted",
               )}
             >
-              {value === "all" ? t("feed.tab.for_you") : t("feed.scope.following")}
+              {value === "for_you" ? t("feed.tab.for_you") : value === "following" ? t("feed.scope.following") : t("feed.tab.recent")}
             </button>
           ))}
         </div>

@@ -528,6 +528,8 @@ export const en: Dictionary = {
   "security.alert.action": "It wasn't me — secure my account",
   "security.alert.done": "Every other session was signed out. Now change your password.",
   "auth.password.breached": "This password appears in known data breaches. Choose a different one.",
+  "feed.tab.recent": "Recent",
+  "feed.similar": "Similar posts",
   "auth.password.rules_title": "Your password must contain:",
   "auth.password.rule.length": "At least {min} characters",
   "auth.password.rule.lower": "A lowercase letter",

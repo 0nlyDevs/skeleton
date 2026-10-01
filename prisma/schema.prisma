@@ -291,6 +291,7 @@ model Post {
   reactions PostReaction[]
   media     PostMedia[]
   mentions  Mention[]
+  embedding PostEmbedding?
 
   @@index([userId])
   @@index([published])
@@ -302,6 +303,22 @@ model Post {
   @@index([groupId, deletedAt, createdAt])
   @@index([repostOfId])
   @@map("post")
+}
+
+/// Semantic vector of a post (search, "similar posts", "Pour vous" ranking).
+/// Kept out of `post` so feed queries never read the blob.
+model PostEmbedding {
+  postId    String   @id
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// Embedding source, e.g. `local-hash-v1` or a provider model id. Vectors
+  /// from different models are never compared.
+  model     String   @db.VarChar(120)
+  /// Little-endian Float32 array, L2-normalised.
+  vector    Bytes
+  updatedAt DateTime @updatedAt
+
+  @@index([model])
+  @@map("postEmbedding")
 }
 
 /// Ordered images attached to a post. Each upload belongs to one post at most.

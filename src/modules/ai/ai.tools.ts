@@ -23,6 +23,7 @@ import { listGroups } from "../groups/groups.service";
 import { listNotifications } from "../notifications/notifications.service";
 import type { FeedItemDto } from "../posts/posts.dto";
 import { getFeedItem, listFeed } from "../posts/posts.service";
+import { semanticSearch } from "../recommendations/recommendations.service";
 
 const MAX_TEXT = 1_200;
 
@@ -75,6 +76,22 @@ export const AI_TOOLS: readonly ToolDefinition[] = [
           limit: { type: "integer", minimum: 1, maximum: 10, default: 5 },
         },
         required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_posts_by_meaning",
+      description:
+        "Semantic search: posts about a topic even when they use other words (e.g. 'vacances' finds beach photos). Prefer this for 'what are people saying about X'.",
+      parameters: {
+        type: "object",
+        properties: {
+          topic: { type: "string", maxLength: 200 },
+          limit: { type: "integer", minimum: 1, maximum: 10, default: 5 },
+        },
+        required: ["topic"],
       },
     },
   },
@@ -136,6 +153,7 @@ const schemas = {
   }),
   search_posts: z.object({ query: z.string().trim().min(1).max(80), limit: limitField(10, 5) }),
   get_post: z.object({ post_id: idSchema }),
+  search_posts_by_meaning: z.object({ topic: z.string().trim().min(2).max(200), limit: limitField(10, 5) }),
   list_group_posts: z.object({
     group_slug: z.string().trim().toLowerCase().max(60).regex(/^[a-z0-9-]+$/),
     limit: limitField(10, 5),
@@ -160,6 +178,11 @@ export function createToolExecutor(actor: AuthUser) {
         const args = schemas.search_posts.parse(rawArgs ?? {});
         const page = await listFeed({ limit: args.limit, q: args.query, scope: "all" }, actor);
         return { posts: page.data.map(describePost) };
+      }
+      case "search_posts_by_meaning": {
+        const args = schemas.search_posts_by_meaning.parse(rawArgs ?? {});
+        const posts = await semanticSearch(args.topic, actor, args.limit);
+        return { posts: posts.map(describePost) };
       }
       case "get_post": {
         const args = schemas.get_post.parse(rawArgs ?? {});

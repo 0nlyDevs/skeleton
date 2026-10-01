@@ -311,6 +311,34 @@ export async function listFeed(
   };
 }
 
+/**
+ * Posts the viewer may see in the home feed — live timeline posts plus posts
+ * of their groups — as a Prisma condition. Shared by ranking and search so
+ * those can never surface anything the chronological feed would hide.
+ */
+export async function homeVisibility(viewer: AuthUser | null): Promise<Prisma.PostWhereInput> {
+  const myGroups = viewer ? await findActiveGroupIds(viewer.id) : [];
+  return {
+    published: true,
+    deletedAt: null,
+    OR: [{ groupId: null }, ...(myGroups.length > 0 ? [{ groupId: { in: myGroups } }] : [])],
+  };
+}
+
+/** Feed items for ids (in the given order), filtered by home visibility. */
+export async function getFeedItemsByIds(ids: readonly string[], viewer: AuthUser | null): Promise<FeedItemDto[]> {
+  if (ids.length === 0) return [];
+  const rows = await findPosts({
+    where: { AND: [await homeVisibility(viewer), { id: { in: [...ids] } }] },
+    orderBy: { createdAt: "desc" },
+    skip: 0,
+    take: ids.length,
+  });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const ordered = ids.map((id) => byId.get(id)).filter((row): row is PostWithAuthor => row !== undefined);
+  return toFeedItems(ordered, viewer);
+}
+
 export async function getFeedItem(id: string, viewer: AuthUser | null): Promise<FeedItemDto> {
   const row = await loadReadablePost(id, viewer);
   const [item] = await toFeedItems([row], viewer);
@@ -337,6 +365,13 @@ async function announce(row: PostWithAuthor, before: string[]): Promise<void> {
   } catch (error) {
     logger.warn("feed announcement failed", { postId: row.id, error });
   }
+}
+
+/** Semantic indexing runs after the response; loaded lazily (no import cycle). */
+function scheduleIndexing(postId: string): void {
+  void import("../recommendations/recommendations.service")
+    .then((module) => module.indexPost(postId))
+    .catch(() => undefined);
 }
 
 /** First line of the text, for lists and search, when no title is given. */
@@ -442,6 +477,7 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
 
   const saved = (await findPostById(row.id)) ?? row;
   void announce(saved, []);
+  scheduleIndexing(saved.id);
 
   const [item] = await toFeedItems([saved], actor.user);
   return item as FeedItemDto;
@@ -514,6 +550,7 @@ export async function updatePostForActor(
 
   const saved = (await findPostById(row.id)) ?? row;
   void announce(saved, before);
+  if (changed.includes("body") || changed.includes("tags")) scheduleIndexing(saved.id);
 
   const [item] = await toFeedItems([saved], actor.user);
   return item as FeedItemDto;

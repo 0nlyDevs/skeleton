@@ -96,7 +96,8 @@ export const feedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(10),
   authorId: z.string().trim().max(64).optional(),
   q: z.string().trim().max(120).optional(),
-  scope: z.enum(["all", "following"]).default("all"),
+  /** `for_you` = KNN-ranked, `all` = newest first, `following` = people you follow. */
+  scope: z.enum(["all", "following", "for_you"]).default("all"),
   /** Restrict to one group's posts (access-checked). */
   groupSlug: z.string().trim().max(60).regex(/^[a-z0-9-]+$/).optional(),
 });

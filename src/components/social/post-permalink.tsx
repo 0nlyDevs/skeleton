@@ -12,6 +12,7 @@ import { SOCKET_EVENTS, type PostEngagementPayload } from "@/lib/socket/events";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
 import { CommentThread, type ThreadViewer } from "./comment-thread";
+import { SimilarPosts } from "./similar-posts";
 import { PostCard } from "./post-card";
 
 /** A post with its full thread inline (the permalink view). */
@@ -59,6 +60,7 @@ export function PostPermalink({ post: initial, viewer }: { readonly post: FeedIt
           className="max-h-[70dvh]"
         />
       </Card>
+      <SimilarPosts postId={post.id} />
     </div>
   );
 }
