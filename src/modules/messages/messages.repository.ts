@@ -69,7 +69,13 @@ export async function findRoomsForUser(userId: string): Promise<RoomListRow[]> {
     where: { OR: [{ id: globalRoomId() }, { members: { some: { userId } } }] },
     orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
     take: 100,
-    include: roomListInclude,
+    include: {
+      messages: {
+        ...roomListInclude.messages,
+        // The preview never shows a message the user deleted for themselves.
+        where: { hiddenFor: { none: { userId } } },
+      },
+    },
   });
 }
 

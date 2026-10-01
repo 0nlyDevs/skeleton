@@ -184,7 +184,9 @@ export async function listRooms(actor: AuthUser): Promise<RoomDto[]> {
             id: latestMsg.id,
             content: latestMsg.deletedAt ? "" : latestMsg.content,
             deleted: latestMsg.deletedAt !== null,
+            senderId: latestMsg.sender.id,
             senderName: latestMsg.sender.name,
+            hasImage: latestMsg.uploadId !== null && latestMsg.deletedAt === null,
             createdAt: latestMsg.createdAt.toISOString(),
           }
         : null;
@@ -505,6 +507,7 @@ export async function createGroup(
   if (!trimmedName) {
     throw new BadRequestError("Please provide a group name.");
   }
+  await enforceThenRecord([{ key: rateLimitKey("chat:group", actor.id), rule: RATE_LIMITS.conversation }]);
 
   const uniqueIds = [...new Set(memberIds)].filter((id) => id !== actor.id);
   if (uniqueIds.length > 50) throw new BadRequestError("A group can have at most 51 members.");
@@ -624,4 +627,17 @@ export async function removeMessageAsStaff(
     notifyModeration({ userId: existing.senderId, what: "message", reason }),
     { messageId: id },
   );
+}
+
+/** Unread counts per private conversation, for the header badge. */
+export async function getUnreadSummary(actor: AuthUser): Promise<{ total: number; rooms: Record<string, number> }> {
+  const counts = await findUnreadCountsForUser(actor.id);
+  const rooms: Record<string, number> = {};
+  let total = 0;
+  for (const [roomId, count] of counts) {
+    if (roomId === GLOBAL_ROOM_ID) continue;
+    rooms[roomId] = count;
+    total += count;
+  }
+  return { total, rooms };
 }

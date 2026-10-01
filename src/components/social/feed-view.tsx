@@ -1,87 +1,148 @@
 "use client";
 
-import { Loader2, Radio, UsersRound } from "lucide-react";
-import Link from "next/link";
+import { ArrowUp, Loader2, Newspaper } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { useTranslation } from "@/components/providers/i18n-provider";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FeedCard } from "@/components/social/feed-card";
-import { FeedComposer } from "@/components/social/feed-composer";
-import { useFeed, type FeedPageResponse } from "@/components/social/use-feed";
+import { describeApiError } from "@/lib/api/error-message";
+import { cn } from "@/lib/utils";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
-import type { AuthUser } from "@/types";
 
+import { CommentsDialog } from "./comments-dialog";
+import { PostCard } from "./post-card";
+import { PostComposer } from "./post-composer";
+import { useFeed, type FeedPageResponse, type FeedScope } from "./use-feed";
+
+export interface FeedViewer {
+  readonly id: string;
+  readonly name: string;
+  readonly image: string | null;
+}
+
+/**
+ * A feed (home, profile or group): optional composer, scope tabs on home,
+ * infinite scroll, live "new posts" pill, and comments in a modal so the
+ * reader never loses their place.
+ */
 export function FeedView({
   initial,
   viewer,
-  scope = "all",
-  authorId,
-  followedIds,
-  profileHeader,
+  filter = {},
+  showTabs = false,
+  composer = false,
+  composerGroup = null,
+  emptyTitle,
+  emptyBody,
 }: {
   readonly initial: FeedPageResponse;
-  readonly viewer: AuthUser | null;
-  readonly scope?: "all" | "following";
-  readonly authorId?: string;
-  readonly followedIds?: readonly string[];
-  readonly profileHeader?: React.ReactNode;
+  readonly viewer: FeedViewer | null;
+  readonly filter?: FeedScope;
+  readonly showTabs?: boolean;
+  readonly composer?: boolean;
+  readonly composerGroup?: { readonly id: string; readonly name: string } | null;
+  readonly emptyTitle?: string;
+  readonly emptyBody?: string;
 }) {
   const t = useTranslation();
-  const feed = useFeed({ initial, viewerId: viewer?.id ?? null, scope, authorId, followedIds });
-  const addPost = (post: FeedItemDto) => feed.insert(post);
+  const [scope, setScope] = useState<"all" | "following">(filter.scope ?? "all");
+  const feed = useFeed({ initial, viewerId: viewer?.id ?? null, filter: { ...filter, scope } });
+  const [commentsFor, setCommentsFor] = useState<FeedItemDto | null>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
+  const { loadMore } = feed;
+
+  // Infinite scroll: fetch the next page shortly before the end is visible.
+  useEffect(() => {
+    const element = sentinel.current;
+    if (!element) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+    }, { rootMargin: "800px 0px" });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  const current = commentsFor ? (feed.items.find((item) => item.id === commentsFor.id) ?? commentsFor) : null;
 
   return (
-    <main id="content" className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 px-4 py-8 sm:py-10">
-      {profileHeader}
-      {!authorId ? (
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="mb-1 flex items-center gap-2"><h1 className="text-2xl font-semibold tracking-tight">{t("feed.title")}</h1><Badge variant="success"><Radio className="size-3" />{t("feed.live")}</Badge></div>
-            <p className="text-sm text-muted-foreground">{t("feed.subtitle")}</p>
-          </div>
-          <nav className="flex gap-1 rounded-lg bg-surface-muted p-1" aria-label={t("feed.title")}>
-            <Link href="/feed" aria-current={scope === "all" ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-sm ${scope === "all" ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>{t("feed.scope.all")}</Link>
-            <Link href="/feed?scope=following" aria-current={scope === "following" ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-sm ${scope === "following" ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>{t("feed.scope.following")}</Link>
-          </nav>
-        </header>
+    <div className="flex flex-col gap-4">
+      {composer && viewer ? <PostComposer viewer={viewer} group={composerGroup} onPublished={feed.insert} /> : null}
+
+      {showTabs && viewer ? (
+        <div role="tablist" aria-label={t("feed.title")} className="flex gap-1 rounded-2xl bg-card p-1 shadow-panel">
+          {(["all", "following"] as const).map((value) => (
+            <button
+              key={value}
+              role="tab"
+              type="button"
+              aria-selected={scope === value}
+              onClick={() => setScope(value)}
+              className={cn(
+                "flex-1 rounded-xl px-3 py-2 text-[13.5px] font-semibold transition-colors",
+                scope === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-muted",
+              )}
+            >
+              {value === "all" ? t("feed.tab.for_you") : t("feed.scope.following")}
+            </button>
+          ))}
+        </div>
       ) : null}
 
-      {!authorId && viewer ? <FeedComposer user={viewer} onPublished={addPost} /> : null}
-      {!authorId && !viewer ? <Card className="flex items-center justify-between gap-3 p-4"><p className="text-sm text-muted-foreground">{t("feed.guest.cta")}</p><Button asChild size="sm"><Link href="/login">{t("auth.login.submit")}</Link></Button></Card> : null}
-
-      {scope === "following" && !viewer ? (
-        <EmptyState icon={UsersRound} title={t("feed.following_empty.title")} description={t("feed.following_login")} />
-      ) : feed.items.length === 0 ? (
-        <EmptyState
-          title={scope === "following" ? t("feed.following_empty.title") : t("feed.empty.title")}
-          description={scope === "following" ? t("feed.following_empty") : t("feed.empty.body")}
-        />
-      ) : (
-        <div className="flex flex-col gap-4">
-          {feed.pendingCount > 0 ? (
-            <Button variant="secondary" className="mx-auto" onClick={feed.showPending}>
-              {t("feed.new_posts", { count: feed.pendingCount })}
-            </Button>
-          ) : null}
-          {feed.items.map((item) => (
-            <FeedCard
-              key={item.id}
-              item={item}
-              signedIn={Boolean(viewer)}
-              viewerId={viewer?.id ?? null}
-              onReaction={(postId, next) => feed.patch(postId, next)}
-            />
-          ))}
-          {feed.nextCursor ? (
-            <Button variant="secondary" disabled={feed.loadingMore} onClick={() => void feed.loadMore()}>
-              {feed.loadingMore ? <Loader2 className="animate-spin" /> : null}{t("feed.load_more")}
-            </Button>
-          ) : <p className="py-3 text-center text-xs text-muted-foreground">{t("feed.end")}</p>}
+      {feed.pending.length > 0 ? (
+        <div className="sticky top-20 z-20 flex justify-center">
+          <Button size="sm" className="rounded-full shadow-float" onClick={feed.showPending}>
+            <ArrowUp />
+            {t("feed.new_posts", { count: feed.pending.length })}
+          </Button>
         </div>
-      )}
-    </main>
+      ) : null}
+
+      {feed.items.length === 0 && !feed.loadingMore ? (
+        <Card>
+          <EmptyState
+            icon={Newspaper}
+            title={emptyTitle ?? (scope === "following" ? t("feed.scope.following") : t("feed.empty.title"))}
+            description={emptyBody ?? (scope === "following" ? t("feed.following_empty") : t("feed.empty.body"))}
+            className="border-0 bg-transparent"
+          />
+        </Card>
+      ) : null}
+
+      {feed.items.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          viewer={viewer}
+          onChange={feed.replace}
+          onRemoved={feed.remove}
+          onOpenComments={setCommentsFor}
+        />
+      ))}
+
+      <div ref={sentinel} aria-hidden />
+      {feed.loadingMore ? (
+        <div className="flex justify-center py-4">
+          <Loader2 className="size-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : feed.loadError ? (
+        <div className="flex flex-col items-center gap-2 py-4 text-center">
+          <p className="text-[13px] text-muted-foreground">{describeApiError(feed.loadError, t)}</p>
+          <Button size="sm" variant="secondary" onClick={() => void feed.loadMore()}>
+            {t("common.retry")}
+          </Button>
+        </div>
+      ) : feed.items.length > 0 && !feed.nextCursor ? (
+        <p className="py-4 text-center text-[12.5px] text-muted-foreground">{t("feed.end")}</p>
+      ) : null}
+
+      <CommentsDialog
+        post={current}
+        viewer={viewer}
+        canComment={current?.viewerCanInteract ?? false}
+        onOpenChange={(open) => !open && setCommentsFor(null)}
+      />
+    </div>
   );
 }

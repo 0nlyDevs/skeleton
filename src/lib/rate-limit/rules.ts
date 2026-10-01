@@ -55,6 +55,9 @@ export const RATE_LIMITS = {
   /** Password change attempts per signed-in account. */
   passwordChange: { limit: 5, windowMs: 15 * 60_000 },
 
+  /** Conversations opened or created per user. */
+  openConversation: { limit: 120, windowMs: 10 * 60_000 },
+
   /** Groups created per user. */
   groupCreate: { limit: 5, windowMs: 60 * 60_000 },
 

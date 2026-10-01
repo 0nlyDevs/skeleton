@@ -11,10 +11,12 @@ export function FollowButton({
   userId,
   initialFollowing,
   compact = false,
+  onChange,
 }: {
   readonly userId: string;
   readonly initialFollowing: boolean;
   readonly compact?: boolean;
+  readonly onChange?: (following: boolean) => void;
 }) {
   const t = useTranslation();
   const [following, setFollowing] = useState(initialFollowing);
@@ -29,6 +31,7 @@ export function FollowButton({
       await apiFetch(`/api/users/${encodeURIComponent(userId)}/follow`, {
         method: previous ? "DELETE" : "PUT",
       });
+      onChange?.(!previous);
     } catch {
       setFollowing(previous);
       toast.error(t("feedback.error.body"));
@@ -39,7 +42,7 @@ export function FollowButton({
 
   return (
     <Button type="button" variant={following ? "secondary" : "primary"} size={compact ? "sm" : "md"} disabled={busy} onClick={() => void toggle()}>
-      {following ? t("profile.public.unfollow") : t("profile.public.follow")}
+      {following ? (compact ? "✓" : t("profile.public.unfollow")) : t("profile.public.follow")}
     </Button>
   );
 }

@@ -46,7 +46,13 @@ export const publicProfileSelect = {
   image: true,
   bio: true,
   createdAt: true,
-  _count: { select: { followers: true, following: true } },
+  _count: {
+    select: {
+      followers: true,
+      following: true,
+      posts: { where: { published: true, deletedAt: null, groupId: null } },
+    },
+  },
 } satisfies Prisma.UserSelect;
 
 export type PublicProfileRow = Prisma.UserGetPayload<{ select: typeof publicProfileSelect }>;

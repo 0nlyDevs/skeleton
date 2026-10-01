@@ -28,6 +28,7 @@ import {
   createGroup,
   deleteMessage,
   editMessage,
+  getUnreadSummary,
   getOrCreateDirectRoom,
   getRoomMembersList,
   leaveGroupRoom,
@@ -48,7 +49,9 @@ export const listRoomsRoute = apiRoute({
 
 export const createRoomRoute = apiRoute({
   body: createRoomSchema,
-  rateLimit: RATE_LIMITS.conversation,
+  // Opening an existing direct conversation goes through here too, so the
+  // budget is generous; group creation is bounded separately in the service.
+  rateLimit: RATE_LIMITS.openConversation,
   rateLimitScope: "messages:create-room",
   handler: async ({ body, auth }) => {
     if (body.type === "DIRECT") {
@@ -122,4 +125,8 @@ export const deleteMessageRoute = apiRoute({
     await deleteMessage(params.id, query.scope, { user: auth.user, ip });
     return noContent();
   },
+});
+
+export const unreadSummaryRoute = apiRoute({
+  handler: async ({ auth }) => jsonOk({ data: await getUnreadSummary(auth.user) }),
 });

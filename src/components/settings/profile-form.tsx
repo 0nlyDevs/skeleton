@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { UsernameField, type UsernameState } from "@/components/forms/username-field";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import type { MessageKey } from "@/lib/i18n";
 import {
@@ -46,6 +47,7 @@ export function ProfileForm({
   const [firstName, setFirstName] = useState(profile.firstName ?? "");
   const [lastName, setLastName] = useState(profile.lastName ?? "");
   const [username, setUsername] = useState(profile.displayUsername ?? profile.username ?? "");
+  const [usernameState, setUsernameState] = useState<UsernameState>("idle");
   const [birthDate, setBirthDate] = useState(profile.birthDate ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [image, setImage] = useState(profile.image);
@@ -55,7 +57,7 @@ export function ProfileForm({
   const invalid = {
     firstName: personNameViolation(firstName) !== null,
     lastName: personNameViolation(lastName) !== null,
-    username: usernameViolation(username) !== null,
+    username: usernameViolation(username) !== null || usernameState === "taken",
     // Optional for accounts created before it existed or through OAuth.
     birthDate: birthDate !== "" && birthDateViolation(birthDate) !== null,
   };
@@ -241,28 +243,19 @@ export function ProfileForm({
               label={t("profile.username")}
               hint={t("profile.username_hint")}
               required
-              {...errorFor("username", "profile.error.username")}
+              {...(serverErrors.username ? { error: t(serverErrors.username) } : {})}
             >
               {(field) => (
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground">
-                    @
-                  </span>
-                  <Input
-                    {...field}
-                    value={username}
-                    onChange={(event) => {
-                      setServerErrors((current) => ({ ...current, username: undefined }));
-                      setUsername(event.target.value.replace(/\s/g, ""));
-                    }}
-                    maxLength={30}
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    autoComplete="username"
-                    className="pl-7"
-                    required
-                  />
-                </div>
+                <UsernameField
+                  inputProps={field}
+                  value={username}
+                  current={profile.username}
+                  onStateChange={setUsernameState}
+                  onChange={(value) => {
+                    setServerErrors((current) => ({ ...current, username: undefined }));
+                    setUsername(value);
+                  }}
+                />
               )}
             </FormField>
 

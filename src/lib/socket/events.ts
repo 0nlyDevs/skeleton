@@ -80,6 +80,11 @@ export interface FeedPostPayload {
 
 export type PostEngagementPayload = PostEngagementDto;
 
+/** Every socket send is acknowledged, with the message or the reason. */
+export type SendMessageAck =
+  | { readonly ok: true; readonly message: MessagePayload }
+  | { readonly ok: false; readonly code: string; readonly message: string };
+
 export interface RoomReadPayload {
   readonly roomId: string;
   readonly userId: string;
@@ -158,8 +163,8 @@ export interface ClientToServerEvents {
   [SOCKET_EVENTS.leaveRoom]: (roomId: string) => void;
   [SOCKET_EVENTS.notificationRead]: (notificationId: string) => void;
   [SOCKET_EVENTS.sendMessage]: (
-    payload: { roomId: string; content: string },
-    acknowledge?: (message: MessagePayload) => void,
+    payload: { roomId: string; content: string; uploadId?: string },
+    acknowledge: (result: SendMessageAck) => void,
   ) => void;
   [SOCKET_EVENTS.typing]: (payload: { roomId: string; typing: boolean }) => void;
   [SOCKET_EVENTS.presenceWatch]: (userIds: string[], ack?: (snapshot: PresenceStatePayload[]) => void) => void;

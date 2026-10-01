@@ -41,7 +41,9 @@ export interface RoomLastMessageDto {
   readonly id: string;
   readonly content: string;
   readonly deleted: boolean;
+  readonly senderId: string;
   readonly senderName: string;
+  readonly hasImage: boolean;
   readonly createdAt: string;
 }
 

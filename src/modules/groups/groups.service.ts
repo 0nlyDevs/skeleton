@@ -172,7 +172,7 @@ export async function joinGroup(slug: string, actor: ActorContext): Promise<Grou
           userId: managerId,
           title: `${actor.user.name} demande à rejoindre « ${group.name} »`,
           groupSlug: group.slug,
-          path: `/groups/${encodeURIComponent(group.slug)}/members?status=PENDING`,
+          path: `/groups/${encodeURIComponent(group.slug)}?tab=members`,
         }),
         { groupId: group.id },
       );

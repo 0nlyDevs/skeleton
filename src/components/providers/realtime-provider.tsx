@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useSocket, type SocketStatus } from "@/hooks/use-socket";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
-import { SOCKET_EVENTS, type NotificationPayload, type ReadyPayload } from "@/lib/socket/events";
+import { SOCKET_EVENTS, type NotificationPayload, type ReadyPayload, type RoomReadPayload } from "@/lib/socket/events";
 import type { ListMeta, NotificationType } from "@/types";
 
 interface RealtimeContextValue {
@@ -14,6 +14,11 @@ interface RealtimeContextValue {
   readonly notifications: readonly NotificationPayload[];
   readonly unreadCount: number;
   readonly loading: boolean;
+  /** Unread messages per private conversation, live. */
+  readonly messageUnread: Readonly<Record<string, number>>;
+  readonly messageUnreadTotal: number;
+  readonly viewerId: string | null;
+  clearRoomUnread: (roomId: string) => void;
   refresh: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
@@ -108,6 +113,49 @@ export function RealtimeProvider({
     }
   }, []);
 
+  // --- unread messages -----------------------------------------------------
+  const [messageUnread, setMessageUnread] = useState<Readonly<Record<string, number>>>({});
+  const refreshMessageUnread = useCallback(async () => {
+    try {
+      const response = await apiFetch<{ data: { rooms: Record<string, number> } }>("/api/messages/unread");
+      setMessageUnread(response.data.rooms);
+    } catch {
+      // Keep the previous counts; the next reconnect reconciles.
+    }
+  }, []);
+  const clearRoomUnread = useCallback((roomId: string) => {
+    setMessageUnread((current) => (current[roomId] ? { ...current, [roomId]: 0 } : current));
+  }, []);
+
+  useEffect(() => {
+    if (!viewerId) {
+      setMessageUnread({});
+      return;
+    }
+    void refreshMessageUnread();
+  }, [viewerId, refreshMessageUnread, status]);
+
+  useEffect(() => {
+    if (!socket || !viewerId) return;
+    const onUnread = (payload: { roomId: string; increment: number }) => {
+      setMessageUnread((current) => ({ ...current, [payload.roomId]: (current[payload.roomId] ?? 0) + payload.increment }));
+    };
+    const onRead = (payload: RoomReadPayload) => {
+      if (payload.userId === viewerId) clearRoomUnread(payload.roomId);
+    };
+    socket.on(SOCKET_EVENTS.roomUnread, onUnread);
+    socket.on(SOCKET_EVENTS.roomRead, onRead);
+    return () => {
+      socket.off(SOCKET_EVENTS.roomUnread, onUnread);
+      socket.off(SOCKET_EVENTS.roomRead, onRead);
+    };
+  }, [socket, viewerId, clearRoomUnread]);
+
+  const messageUnreadTotal = useMemo(
+    () => Object.values(messageUnread).reduce((sum, count) => sum + count, 0),
+    [messageUnread],
+  );
+
   // Guests have no notifications: skip the request instead of collecting 401s.
   useEffect(() => {
     if (!viewerId) {
@@ -135,6 +183,9 @@ export function RealtimeProvider({
 
       setNotifications((current) => [payload, ...current].slice(0, BELL_LIMIT));
       if (!payload.read) setUnreadCount((count) => count + 1);
+
+      // A message notification while the inbox is open is noise.
+      if (payload.type === "NEW_MESSAGE" && window.location.pathname.startsWith("/messages")) return;
 
       toast(payload.title, {
         description: payload.body ?? undefined,
@@ -178,8 +229,32 @@ export function RealtimeProvider({
   }, [refresh, t]);
 
   const value = useMemo<RealtimeContextValue>(
-    () => ({ status, notifications, unreadCount, loading, refresh, markRead, markAllRead }),
-    [status, notifications, unreadCount, loading, refresh, markRead, markAllRead],
+    () => ({
+      status,
+      notifications,
+      unreadCount,
+      loading,
+      messageUnread,
+      messageUnreadTotal,
+      viewerId,
+      clearRoomUnread,
+      refresh,
+      markRead,
+      markAllRead,
+    }),
+    [
+      status,
+      notifications,
+      unreadCount,
+      loading,
+      messageUnread,
+      messageUnreadTotal,
+      viewerId,
+      clearRoomUnread,
+      refresh,
+      markRead,
+      markAllRead,
+    ],
   );
 
   return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>;

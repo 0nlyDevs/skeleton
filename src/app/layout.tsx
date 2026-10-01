@@ -11,12 +11,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.appUrl),
   title: {
-    default: "Webcup Base",
-    template: "%s · Webcup Base",
+    default: "Skeleton",
+    template: "%s · Skeleton",
   },
   description:
-    "Production-grade Next.js foundation for the 24H by Webcup sprint: authentication, roles, modular CRUD, realtime and audit trail.",
-  applicationName: "Webcup Base",
+    "Skeleton — a social network to share posts, talk in real time and gather in groups.",
+  applicationName: "Skeleton",
   // The app is authenticated; there is nothing here for a crawler to index.
   robots: { index: false, follow: false },
 };

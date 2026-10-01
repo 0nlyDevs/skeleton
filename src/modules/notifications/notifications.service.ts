@@ -123,7 +123,7 @@ export async function notifyRoleChanged(userId: string, role: string): Promise<v
     type: "ROLE_CHANGED",
     title: "Votre rôle a changé",
     body: `Votre compte est maintenant ${role.toLowerCase()}. Déconnectez-vous puis reconnectez-vous si le changement n'est pas encore visible.`,
-    link: "/dashboard",
+    link: "/feed",
     email: true,
   });
 }
@@ -139,7 +139,7 @@ export async function notifyNewMessage(input: {
     type: "NEW_MESSAGE",
     title: `Nouveau message de ${input.senderName}`,
     body: truncate(input.preview, 140),
-    link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    link: `/messages?room=${encodeURIComponent(input.roomId)}`,
     email: true,
   });
 }
@@ -155,7 +155,7 @@ export async function notifyMention(input: {
     type: "MENTION",
     title: `${input.senderName} vous a mentionné`,
     body: truncate(input.preview, 140),
-    link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    link: `/messages?room=${encodeURIComponent(input.roomId)}`,
     email: true,
   });
 }
@@ -257,7 +257,7 @@ export async function notifyGroupInvite(input: {
     userId: input.userId,
     type: "GROUP_INVITE",
     title: `${actorHandle(input.actor)} vous a ajouté au groupe « ${truncate(input.groupName, 60)} »`,
-    link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    link: `/messages?room=${encodeURIComponent(input.roomId)}`,
     email: true,
   });
 }

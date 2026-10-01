@@ -261,15 +261,29 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
   });
 
   socket.on(SOCKET_EVENTS.sendMessage, (payload, acknowledge) => {
-    void handle(socket, log, async () => {
-      const parsed = sendMessageSchema.safeParse(payload);
-      if (!parsed.success) throw new Error("Invalid message.");
-
-      // The service persists *and* fans the message out to the room, so the
-      // socket path and the HTTP path behave identically for other clients.
-      const message = await sendMessage(parsed.data, { user });
-      acknowledge?.(message);
-    });
+    void (async () => {
+      const ack = typeof acknowledge === "function" ? acknowledge : undefined;
+      try {
+        const parsed = sendMessageSchema.safeParse(payload);
+        if (!parsed.success) {
+          ack?.({ ok: false, code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Invalid message." });
+          return;
+        }
+        // The service persists *and* fans the message out to the room, so the
+        // socket path and the HTTP path behave identically for other clients.
+        const message = await sendMessage(parsed.data, { user });
+        ack?.({ ok: true, message });
+      } catch (error) {
+        const code = (error as { code?: unknown }).code;
+        const exposed = error instanceof Error && (error as { expose?: boolean }).expose === true;
+        log.warn("socket message rejected", { code: typeof code === "string" ? code : "UNKNOWN" });
+        ack?.({
+          ok: false,
+          code: typeof code === "string" ? code : "INTERNAL_ERROR",
+          message: exposed ? (error as Error).message : "The message could not be sent.",
+        });
+      }
+    })();
   });
 
   socket.on(SOCKET_EVENTS.typing, (payload) => {

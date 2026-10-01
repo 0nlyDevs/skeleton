@@ -9,7 +9,7 @@ export const publicUsernameParamsSchema = z.object({
 export const followUserParamsSchema = z.object({ id: idSchema });
 
 export const searchUsersQuerySchema = z.object({
-  q: z.string().trim().min(2).max(60),
+  q: z.string().trim().min(1).max(60),
   limit: z.coerce.number().int().min(1).max(20).default(10),
 });
 

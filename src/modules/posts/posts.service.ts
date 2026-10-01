@@ -216,9 +216,15 @@ async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Pro
 
   return rows.map((row) => {
     const staff = viewer !== null && isStaff(viewer);
-    const groupModerator =
-      row.group !== null && resolveGroupAccess(row.group, viewer, memberships.get(row.group.id) ?? null).canModerate;
-    return toFeedItemDto(row, counts.get(row.id) ?? {}, mine.get(row.id) ?? null, staff || groupModerator);
+    const access = row.group ? resolveGroupAccess(row.group, viewer, memberships.get(row.group.id) ?? null) : null;
+    const canInteract = viewer !== null && isPublicPost(row) && (access === null || access.canPost);
+    return toFeedItemDto(
+      row,
+      counts.get(row.id) ?? {},
+      mine.get(row.id) ?? null,
+      staff || access?.canModerate === true,
+      canInteract,
+    );
   });
 }
 

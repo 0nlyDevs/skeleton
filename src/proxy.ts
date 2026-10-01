@@ -44,8 +44,11 @@ const PUBLIC_PATHS = new Set([
   "/2fa",
 ]);
 
+/** Readable without an account (content-level rules still apply server-side). */
+const PUBLIC_PREFIXES = ["/feed/", "/profile/", "/groups", "/u/", "/search"];
+
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/u/");
+  return PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 /** Redirected away from when a session already exists. */
@@ -162,7 +165,7 @@ export function proxy(request: NextRequest): NextResponse {
 
   if (hasSession && GUEST_ONLY_PATHS.has(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/feed";
     url.search = "";
     return NextResponse.redirect(url);
   }
