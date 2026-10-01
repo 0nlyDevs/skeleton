@@ -330,6 +330,11 @@ model Report {
   /// resolution clears it (MySQL treats each NULL as distinct), so the reporter
   /// can flag the target again if staff got it wrong or the content reoffends.
   duplicateKey String? @unique
+  /// Standalone index for the `reporterId` FK: InnoDB otherwise borrows the
+  /// leftmost prefix of whichever index happens to start with that column, and
+  /// dropping such an index fails with "needed in a foreign key constraint"
+  /// (MySQL 1553).
+  @@index([reporterId])
   @@index([status, createdAt])
   @@index([targetType, targetId])
   @@index([resolvedById])

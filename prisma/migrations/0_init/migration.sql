@@ -215,11 +215,13 @@ CREATE TABLE `report` (
     `resolutionNote` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `duplicateKey` VARCHAR(191) NULL,
 
+    UNIQUE INDEX `report_duplicateKey_key`(`duplicateKey`),
+    INDEX `report_reporterId_idx`(`reporterId`),
     INDEX `report_status_createdAt_idx`(`status`, `createdAt`),
     INDEX `report_targetType_targetId_idx`(`targetType`, `targetId`),
     INDEX `report_resolvedById_idx`(`resolvedById`),
-    UNIQUE INDEX `report_reporterId_targetType_targetId_key`(`reporterId`, `targetType`, `targetId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -281,4 +283,3 @@ ALTER TABLE `report` ADD CONSTRAINT `report_reporterId_fkey` FOREIGN KEY (`repor
 
 -- AddForeignKey
 ALTER TABLE `report` ADD CONSTRAINT `report_resolvedById_fkey` FOREIGN KEY (`resolvedById`) REFERENCES `user`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
