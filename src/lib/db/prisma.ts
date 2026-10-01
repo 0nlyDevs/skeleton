@@ -6,8 +6,9 @@
  *
  *   * **Pool settings come from the driver.** v6 read `connection_limit` from
  *     the URL; the adapter reads `connectionLimit` from its own options, so the
- *     URL is parsed once here and translated explicitly rather than silently
- *     ignored.
+ *     URL is parsed once — in `pool-options.ts` — and translated explicitly
+ *     rather than silently ignored. Pool size, timeouts and TLS all cross that
+ *     same boundary.
  *   * **The Rust engine binary is gone.** The NixOS-specific engine paths that
  *     v6 deployments needed no longer apply.
  *
@@ -19,88 +20,50 @@
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
 
+import { describePoolOptions, toPoolOptions } from "@/lib/db/pool-options";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
-/** Shared hosting enforces a hard per-account connection cap (cPanel/LVE). */
-const DEFAULT_CONNECTION_LIMIT = 5;
-const DEFAULT_POOL_TIMEOUT_SECONDS = 15;
-
-interface MariaDbPoolOptions {
-  host: string;
-  port: number;
-  user?: string;
-  password?: string;
-  database?: string;
-  connectionLimit: number;
-  acquireTimeout: number;
-  /** Set only when the server requires TLS; the driver defaults to plain TCP. */
-  ssl?: { rejectUnauthorized: boolean };
-}
-
 /**
- * Translate a `mysql://user:pass@host:port/db?…` URL into driver options.
+ * Flatten an error and everything it wraps, outermost first.
  *
- * Recognised query parameters:
- *   * `connection_limit` → `connectionLimit` (v6 name kept so existing
- *     deployments and `.env` files keep working unchanged)
- *   * `pool_timeout`     → `acquireTimeout` (seconds)
- *   * `sslaccept` / `ssl` → TLS
- *
- * Anything else is ignored rather than forwarded: the driver would reject
- * unknown options, and a URL that fails to parse should surface as Prisma's own
- * connection error, not as a crash inside this function.
+ * The reason a connection failed — `ER_CANNOT_RETRIEVE_RSA_KEY`, a self-signed
+ * chain, `failed to create socket after 1003ms` — is chained under the pool's
+ * generic complaint, and no printer here shows it: `logger` walks `cause` but not
+ * Prisma's `meta`, where the driver adapter parks its own error. The deepest
+ * entry is the diagnosis.
  */
-function toPoolOptions(url: string): MariaDbPoolOptions {
-  const fallback: MariaDbPoolOptions = {
-    host: "localhost",
-    port: 3306,
-    connectionLimit: DEFAULT_CONNECTION_LIMIT,
-    acquireTimeout: DEFAULT_POOL_TIMEOUT_SECONDS * 1000,
+function errorChain(error: unknown): string[] {
+  const messages: string[] = [];
+  const seen = new Set<unknown>();
+
+  const visit = (candidate: unknown, depth: number): void => {
+    if (candidate === null || candidate === undefined || depth > 5 || seen.has(candidate)) return;
+    seen.add(candidate);
+
+    if (candidate instanceof Error) {
+      messages.push(`${candidate.name}: ${candidate.message}`);
+      visit(candidate.cause, depth + 1);
+      return;
+    }
+
+    // Prisma's own errors carry the adapter failure in `meta` rather than `cause`.
+    const meta = (candidate as { meta?: unknown }).meta;
+    if (meta) {
+      visit(meta, depth + 1);
+      visit((meta as { driverAdapterError?: unknown }).driverAdapterError, depth + 1);
+    }
   };
 
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    logger.warn("DATABASE_URL could not be parsed; using driver defaults", { url });
-    return fallback;
-  }
-
-  const connectionLimit = Number(parsed.searchParams.get("connection_limit"));
-  const poolTimeout = Number(parsed.searchParams.get("pool_timeout"));
-  const sslAccept = parsed.searchParams.get("sslaccept") ?? parsed.searchParams.get("ssl");
-
-  return {
-    host: parsed.hostname || fallback.host,
-    port: parsed.port ? Number(parsed.port) : fallback.port,
-    ...(parsed.username ? { user: decodeURIComponent(parsed.username) } : {}),
-    ...(parsed.password ? { password: decodeURIComponent(parsed.password) } : {}),
-    ...(parsed.pathname.length > 1 ? { database: decodeURIComponent(parsed.pathname.slice(1)) } : {}),
-    connectionLimit:
-      Number.isFinite(connectionLimit) && connectionLimit > 0
-        ? connectionLimit
-        : DEFAULT_CONNECTION_LIMIT,
-    acquireTimeout:
-      Number.isFinite(poolTimeout) && poolTimeout > 0
-        ? poolTimeout * 1000
-        : DEFAULT_POOL_TIMEOUT_SECONDS * 1000,
-    ...(sslAccept && /require|strict/i.test(sslAccept)
-      ? { ssl: { rejectUnauthorized: sslAccept !== "accept" } }
-      : {}),
-  };
+  visit(error, 0);
+  return messages;
 }
 
 function createPrismaClient(): PrismaClient {
   const options = toPoolOptions(env.DATABASE_URL);
 
   if (env.databaseLogging) {
-    logger.debug("prisma pool configured", {
-      host: options.host,
-      port: options.port,
-      database: options.database,
-      connectionLimit: options.connectionLimit,
-    });
+    logger.debug("prisma pool configured", describePoolOptions(options));
   }
 
   const client = new PrismaClient({
@@ -108,10 +71,13 @@ function createPrismaClient(): PrismaClient {
     log: env.databaseLogging
       ? [
           { emit: "event", level: "query" },
-          { emit: "stdout", level: "warn" },
-          { emit: "stdout", level: "error" },
+          { emit: "event", level: "warn" },
+          { emit: "event", level: "error" },
         ]
-      : [{ emit: "stdout", level: "error" }],
+      : [
+          { emit: "event", level: "warn" },
+          { emit: "event", level: "error" },
+        ],
   });
 
   if (env.databaseLogging) {
@@ -120,6 +86,24 @@ function createPrismaClient(): PrismaClient {
       logger.debug("sql", { durationMs: event.duration, query: event.query });
     });
   }
+
+  // Routed through the logger in every build: a warning that only exists when
+  // `DATABASE_LOG=1` is a warning nobody reads. The event carries no `error`, so
+  // there is no chain to unwrap here.
+  const listeners = client as unknown as {
+    $on(
+      level: "warn" | "error",
+      handler: (event: { message: string; target: string }) => void,
+    ): unknown;
+  };
+
+  listeners.$on("warn", (event) => {
+    logger.warn("prisma warning", { target: event.target, message: event.message });
+  });
+
+  listeners.$on("error", (event) => {
+    logger.error("prisma query failed", { target: event.target, message: event.message });
+  });
 
   return client;
 }
@@ -140,7 +124,13 @@ export async function isDatabaseReachable(): Promise<boolean> {
     await prisma.$queryRaw`SELECT 1`;
     return true;
   } catch (error) {
-    logger.error("database health check failed", { error });
+    // `active=0 idle=0` means nothing ever connected; log the cause and the pool
+    // settings that produced it.
+    logger.error("database health check failed", {
+      error,
+      chain: errorChain(error),
+      pool: describePoolOptions(toPoolOptions(env.DATABASE_URL)),
+    });
     return false;
   }
 }
