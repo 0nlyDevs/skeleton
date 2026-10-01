@@ -74,7 +74,8 @@ if (env.githubOAuthEnabled) {
 
 if (!env.emailEnabled && env.isProduction) {
   logger.warn(
-    "RESEND_API_KEY is not configured: verification emails are logged instead of sent, " +
+    "No mail transport is configured (MAIL_TRANSPORT=resend needs RESEND_API_KEY, smtp needs SMTP_HOST): " +
+      "verification emails are logged instead of sent, " +
       "and email verification is not required to sign in",
   );
 }

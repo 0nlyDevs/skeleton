@@ -89,7 +89,17 @@ export function LoginForm({
       {errorKey ? (
         <Alert variant="error">
           <AlertCircle />
-          <AlertDescription className="text-foreground">{t(errorKey)}</AlertDescription>
+          <AlertDescription className="text-foreground">
+            {t(errorKey)}
+            {errorKey === "auth.login.unverified" ? (
+              <>
+                {" "}
+                <Link href="/verify-email" className="font-medium text-primary underline-offset-4 hover:underline">
+                  {t("auth.verify.resend")}
+                </Link>
+              </>
+            ) : null}
+          </AlertDescription>
         </Alert>
       ) : null}
 

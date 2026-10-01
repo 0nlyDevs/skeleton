@@ -46,7 +46,18 @@ const envSchema = z.object({
   // --- Email ----------------------------------------------------------------
   RESEND_API_KEY: optionalText,
   MAIL_FROM: z.string().min(1).default("noreply@localhost"),
-  MAIL_TRANSPORT: z.enum(["resend", "log"]).default("resend"),
+  /**
+   * `resend` needs a verified sending domain to reach anyone but the account
+   * owner; `smtp` works with any relay and no domain setup; `log` only writes
+   * the outbox.
+   */
+  MAIL_TRANSPORT: z.enum(["resend", "smtp", "log"]).default("resend"),
+  SMTP_HOST: optionalText,
+  SMTP_PORT: z.coerce.number().int().positive().max(65535).default(587),
+  SMTP_USER: optionalText,
+  SMTP_PASS: optionalText,
+  /** Refuse to send credentials without STARTTLS. Only a local relay may disable it. */
+  SMTP_REQUIRE_TLS: z.enum(["0", "1"]).default("1"),
   /**
    * Where undelivered messages are written. Every auth link lands here, which
    * is what keeps verification and reset usable without a mailbox.
@@ -148,7 +159,9 @@ function parseEnv(): Env {
     databaseLogging: raw.DATABASE_LOG === "1",
     googleOAuthEnabled: Boolean(raw.GOOGLE_CLIENT_ID && raw.GOOGLE_CLIENT_SECRET),
     githubOAuthEnabled: Boolean(raw.GITHUB_CLIENT_ID && raw.GITHUB_CLIENT_SECRET),
-    emailEnabled: Boolean(raw.RESEND_API_KEY) && raw.MAIL_TRANSPORT === "resend",
+    emailEnabled:
+      (raw.MAIL_TRANSPORT === "resend" && Boolean(raw.RESEND_API_KEY)) ||
+      (raw.MAIL_TRANSPORT === "smtp" && Boolean(raw.SMTP_HOST)),
     aiEnabled: Boolean(raw.AI_API_KEY ?? process.env.OPENROUTER_API_KEY),
   });
 

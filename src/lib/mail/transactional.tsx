@@ -13,7 +13,7 @@ import Welcome from "@emails/welcome";
 
 import { env } from "@/lib/env";
 
-import { sendMail, type MailResult } from "./resend";
+import { sendMail, type MailResult } from "./mailer";
 
 const TOKEN_TTL_MINUTES = 60;
 
