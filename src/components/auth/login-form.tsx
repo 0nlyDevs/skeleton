@@ -16,7 +16,7 @@ import { signIn } from "@/lib/auth/client";
 import type { MessageKey } from "@/lib/i18n";
 
 import { isNetworkFailure, loginErrorMessageKey } from "./auth-errors";
-import { GoogleButton, OrDivider } from "./oauth-buttons";
+import { OAuthButtons, type OAuthAvailability } from "./oauth-buttons";
 
 /**
  * Sign-in form.
@@ -34,10 +34,10 @@ import { GoogleButton, OrDivider } from "./oauth-buttons";
  *    "complete" by the UI.
  */
 export function LoginForm({
-  googleEnabled,
+  oauth,
   initialError,
 }: {
-  readonly googleEnabled: boolean;
+  readonly oauth: OAuthAvailability;
   readonly initialError?: string;
 }) {
   const t = useTranslation();
@@ -155,12 +155,7 @@ export function LoginForm({
         {pending ? t("common.loading") : t("auth.login.submit")}
       </Button>
 
-      {googleEnabled ? (
-        <>
-          <OrDivider />
-          <GoogleButton callbackURL="/dashboard" />
-        </>
-      ) : null}
+      <OAuthButtons availability={oauth} callbackURL="/dashboard" />
     </form>
   );
 }

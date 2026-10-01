@@ -26,7 +26,7 @@ export default async function SecuritySettingsPage() {
   return (
     <SecurityForm
       twoFactorEnabled={context.user.twoFactorEnabled}
-      googleEnabled={env.googleOAuthEnabled}
+      oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }}
       currentSessionToken={context.session.id}
       sessions={sessions.map((session) => ({
         token: session.token,

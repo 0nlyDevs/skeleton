@@ -40,6 +40,8 @@ const envSchema = z.object({
   // --- OAuth ----------------------------------------------------------------
   GOOGLE_CLIENT_ID: optionalText,
   GOOGLE_CLIENT_SECRET: optionalText,
+  GITHUB_CLIENT_ID: optionalText,
+  GITHUB_CLIENT_SECRET: optionalText,
 
   // --- Email ----------------------------------------------------------------
   RESEND_API_KEY: optionalText,
@@ -98,6 +100,7 @@ export interface Env extends RawEnv {
   readonly trustProxy: boolean;
   readonly databaseLogging: boolean;
   readonly googleOAuthEnabled: boolean;
+  readonly githubOAuthEnabled: boolean;
   readonly emailEnabled: boolean;
   readonly aiEnabled: boolean;
 }
@@ -144,6 +147,7 @@ function parseEnv(): Env {
     trustProxy: raw.TRUST_PROXY === "1",
     databaseLogging: raw.DATABASE_LOG === "1",
     googleOAuthEnabled: Boolean(raw.GOOGLE_CLIENT_ID && raw.GOOGLE_CLIENT_SECRET),
+    githubOAuthEnabled: Boolean(raw.GITHUB_CLIENT_ID && raw.GITHUB_CLIENT_SECRET),
     emailEnabled: Boolean(raw.RESEND_API_KEY) && raw.MAIL_TRANSPORT === "resend",
     aiEnabled: Boolean(raw.AI_API_KEY ?? process.env.OPENROUTER_API_KEY),
   });

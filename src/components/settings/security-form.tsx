@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { FormField } from "@/components/forms/form-field";
 import { PasswordRequirements, PasswordStrength } from "@/components/auth/password-strength";
 import { isPasswordAcceptable } from "@/lib/auth/password-policy";
+import type { OAuthAvailability } from "@/components/auth/oauth-buttons";
+import { LinkedAccounts } from "@/components/settings/linked-accounts";
 import { useTranslation } from "@/components/providers/i18n-provider";
 
 import { Badge } from "@/components/ui/badge";
@@ -45,12 +47,12 @@ export function SecurityForm({
   twoFactorEnabled: initialTwoFactor,
   sessions: initialSessions,
   currentSessionToken,
-  googleEnabled,
+  oauth,
 }: {
   readonly twoFactorEnabled: boolean;
   readonly sessions: SessionInfo[];
   readonly currentSessionToken: string;
-  readonly googleEnabled: boolean;
+  readonly oauth: OAuthAvailability;
 }) {
   const t = useTranslation();
 
@@ -448,9 +450,7 @@ export function SecurityForm({
         </div>
       ) : null}
 
-      {googleEnabled ? (
-        <p className="text-[12.5px] text-muted-foreground">{t("auth.login.with_google")}</p>
-      ) : null}
+      <LinkedAccounts availability={oauth} />
     </div>
   );
 }

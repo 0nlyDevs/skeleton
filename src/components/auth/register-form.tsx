@@ -17,7 +17,7 @@ import type { MessageKey } from "@/lib/i18n";
 import { isNetworkFailure, registerErrorMessageKey } from "./auth-errors";
 import { PasswordRequirements, PasswordStrength } from "./password-strength";
 import { isPasswordAcceptable } from "@/lib/auth/password-policy";
-import { GoogleButton, OrDivider } from "./oauth-buttons";
+import { OAuthButtons, type OAuthAvailability } from "./oauth-buttons";
 
 type Status = "idle" | "submitting" | "sent";
 
@@ -35,7 +35,7 @@ type Status = "idle" | "submitting" | "sent";
  * reset flow covers the forgotten-password case, so the cost is small next to the
  * information leak it prevents.
  */
-export function RegisterForm({ googleEnabled }: { readonly googleEnabled: boolean }) {
+export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
   const t = useTranslation();
 
   const [name, setName] = useState("");
@@ -197,12 +197,7 @@ export function RegisterForm({ googleEnabled }: { readonly googleEnabled: boolea
         {status === "submitting" ? t("common.loading") : t("auth.register.submit")}
       </Button>
 
-      {googleEnabled ? (
-        <>
-          <OrDivider />
-          <GoogleButton callbackURL="/dashboard" />
-        </>
-      ) : null}
+      <OAuthButtons availability={oauth} callbackURL="/dashboard" />
     </form>
   );
 }

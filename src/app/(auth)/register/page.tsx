@@ -24,7 +24,7 @@ export default async function RegisterPage() {
         </>
       }
     >
-      <RegisterForm googleEnabled={env.googleOAuthEnabled} />
+      <RegisterForm oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }} />
     </AuthCard>
   );
 }

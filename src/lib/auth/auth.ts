@@ -44,10 +44,24 @@ const SESSION_REFRESH_SECONDS = 60 * 60 * 24; // refresh at most once a day
 const TOKEN_TTL_SECONDS = 60 * 60; // 1 hour, for reset and verification tokens
 
 const socialProviders: BetterAuthOptions["socialProviders"] = {};
+/*
+ * Each provider's redirect URI is `${BETTER_AUTH_URL}/api/auth/callback/<id>`
+ * and must be registered, character for character, in the provider console —
+ * a mismatch is the usual reason OAuth "works locally but not in production".
+ */
 if (env.googleOAuthEnabled) {
   socialProviders.google = {
     clientId: env.GOOGLE_CLIENT_ID ?? "",
     clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
+    // Always show the account chooser, so a shared machine never silently
+    // signs into whichever Google account happens to be active.
+    prompt: "select_account",
+  };
+}
+if (env.githubOAuthEnabled) {
+  socialProviders.github = {
+    clientId: env.GITHUB_CLIENT_ID ?? "",
+    clientSecret: env.GITHUB_CLIENT_SECRET ?? "",
   };
 }
 
@@ -136,13 +150,19 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      // Google verifies email ownership, so linking on it is safe. Any other
-      // provider would let an attacker claim an existing account.
+      // Google verifies email ownership, so linking on it is safe. GitHub is
+      // deliberately not trusted: it links only when GitHub itself reports the
+      // address as verified, so an unverified GitHub email cannot claim an
+      // existing account.
       trustedProviders: ["google"],
     },
   },
 
   socialProviders,
+
+  // OAuth failures land on the sign-in page with `?error=<code>`, where the
+  // code is translated, instead of BetterAuth's untranslated error page.
+  onAPIError: { errorURL: `${env.appUrl}/login` },
 
   advanced: {
     useSecureCookies: env.isProduction,
