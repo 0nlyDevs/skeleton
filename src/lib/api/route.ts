@@ -31,7 +31,7 @@ import { logger, newRequestId, type Logger } from "@/lib/logger";
 import {
   RATE_LIMITS,
   consumeBurstLimit,
-  enforceLimits,
+  enforceThenRecord,
   rateLimitKey,
   type RateLimitRule,
 } from "@/lib/rate-limit";
@@ -144,7 +144,7 @@ async function run<TBody, TQuery, TParams>(
 
     if (auth && options.rateLimit) {
       const scope = options.rateLimitScope ?? pathname;
-      await enforceLimits([
+      await enforceThenRecord([
         { key: rateLimitKey(`route:${scope}`, auth.user.id), rule: options.rateLimit },
       ]);
     }

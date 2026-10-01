@@ -8,6 +8,9 @@
  * Nothing in this module may import a server or browser API: it is shared.
  */
 
+import type { CommentDto } from "@/modules/comments/comments.dto";
+import type { FeedItemDto, PostEngagementDto } from "@/modules/posts/posts.dto";
+
 /** Socket.IO event names. */
 export const SOCKET_EVENTS = {
   /** Server → client: the connection is authenticated and ready. */
@@ -30,18 +33,50 @@ export const SOCKET_EVENTS = {
   typingUpdate: "typing:state",
   /** Server → client: room occupancy changed. */
   presence: "presence:update",
+  /** Server → client: unread messages changed for the current user. */
+  roomUnread: "room:unread",
+  /** Server → client: membership or roles changed in a conversation. */
+  roomMembers: "room:members",
   /** Server → client: something went wrong handling a client event. */
   error: "session:error",
+  /** Client → server: start/stop receiving public feed updates. */
+  feedSubscribe: "feed:subscribe",
+  feedUnsubscribe: "feed:unsubscribe",
+  /** Client → server: start/stop receiving one post's thread. */
+  postSubscribe: "post:subscribe",
+  postUnsubscribe: "post:unsubscribe",
+  /** Server → client: a published post appeared, changed or disappeared. */
+  feedPost: "feed:post",
+  /** Server → client: a post's comment/reaction counters changed. */
+  postEngagement: "post:engagement",
+  /** Server → client: a comment was added, edited or removed. */
+  comment: "comment:event",
 } as const;
 
 export type SocketEventName = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
 
 // --- Payloads ---------------------------------------------------------------
 
+export interface FeedPostPayload {
+  readonly kind: "created" | "updated" | "deleted";
+  readonly postId: string;
+  /** Absent for `deleted`. Viewer-specific fields are reset to neutral. */
+  readonly post?: FeedItemDto;
+}
+
+export type PostEngagementPayload = PostEngagementDto;
+
+export interface CommentEventPayload {
+  readonly kind: "created" | "updated" | "deleted";
+  readonly postId: string;
+  readonly comment: CommentDto;
+}
+
 export interface MessagePayload {
   readonly id: string;
   readonly roomId: string;
   readonly content: string;
+  readonly deleted: boolean;
   readonly createdAt: string;
   readonly sender: {
     readonly id: string;
@@ -72,11 +107,21 @@ export interface PresencePayload {
   readonly online: number;
 }
 
+export interface RoomUnreadPayload {
+  readonly roomId: string;
+  readonly increment: number;
+}
+
+export interface RoomMembersPayload {
+  readonly roomId: string;
+}
+
 export interface ReadyPayload {
+  /** `null` on a guest (read-only) connection. */
   readonly user: {
     readonly id: string;
     readonly name: string;
-  };
+  } | null;
   readonly serverTime: string;
 }
 
@@ -90,8 +135,15 @@ export interface ClientToServerEvents {
   [SOCKET_EVENTS.joinRoom]: (roomId: string) => void;
   [SOCKET_EVENTS.leaveRoom]: (roomId: string) => void;
   [SOCKET_EVENTS.notificationRead]: (notificationId: string) => void;
-  [SOCKET_EVENTS.sendMessage]: (payload: { roomId: string; content: string }) => void;
+  [SOCKET_EVENTS.sendMessage]: (
+    payload: { roomId: string; content: string },
+    acknowledge?: (message: MessagePayload) => void,
+  ) => void;
   [SOCKET_EVENTS.typing]: (payload: { roomId: string; typing: boolean }) => void;
+  [SOCKET_EVENTS.feedSubscribe]: () => void;
+  [SOCKET_EVENTS.feedUnsubscribe]: () => void;
+  [SOCKET_EVENTS.postSubscribe]: (postId: string) => void;
+  [SOCKET_EVENTS.postUnsubscribe]: (postId: string) => void;
 }
 
 /** Events the server may emit, with their payload shapes. */
@@ -101,5 +153,10 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.message]: (payload: MessagePayload) => void;
   [SOCKET_EVENTS.typingUpdate]: (payload: TypingPayload) => void;
   [SOCKET_EVENTS.presence]: (payload: PresencePayload) => void;
+  [SOCKET_EVENTS.roomUnread]: (payload: RoomUnreadPayload) => void;
+  [SOCKET_EVENTS.roomMembers]: (payload: RoomMembersPayload) => void;
   [SOCKET_EVENTS.error]: (payload: SocketErrorPayload) => void;
+  [SOCKET_EVENTS.feedPost]: (payload: FeedPostPayload) => void;
+  [SOCKET_EVENTS.postEngagement]: (payload: PostEngagementPayload) => void;
+  [SOCKET_EVENTS.comment]: (payload: CommentEventPayload) => void;
 }

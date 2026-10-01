@@ -14,7 +14,7 @@ import { type Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
 export const postAuthorSelect = {
-  user: { select: { id: true, name: true, image: true } },
+  user: { select: { id: true, name: true, username: true, image: true } },
 } satisfies Prisma.PostInclude;
 
 export type PostWithAuthor = Prisma.PostGetPayload<{ include: typeof postAuthorSelect }>;
@@ -84,4 +84,30 @@ export async function countPostsByUser(userId: string): Promise<{
   ]);
 
   return { total, published, drafts: total - published };
+}
+
+/**
+ * Keyset page of the public feed: newest first, `(createdAt, id)` as the
+ * cursor so inserts at the head never shift or duplicate rows across pages.
+ */
+export async function findFeedPage(args: {
+  readonly where: Prisma.PostWhereInput;
+  readonly cursor: { createdAt: Date; id: string } | null;
+  readonly take: number;
+}): Promise<PostWithAuthor[]> {
+  const after: Prisma.PostWhereInput | undefined = args.cursor
+    ? {
+        OR: [
+          { createdAt: { lt: args.cursor.createdAt } },
+          { createdAt: args.cursor.createdAt, id: { lt: args.cursor.id } },
+        ],
+      }
+    : undefined;
+
+  return prisma.post.findMany({
+    where: after ? { AND: [args.where, after] } : args.where,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: args.take,
+    include: postAuthorSelect,
+  });
 }

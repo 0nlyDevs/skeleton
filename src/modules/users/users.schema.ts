@@ -1,12 +1,13 @@
 import { z } from "zod";
 
+import { passwordSchema } from "@/lib/auth/password-policy";
 import { roleSchema } from "@/lib/auth/roles";
+import { birthDateSchema, personNameSchema, usernameSchema } from "@/lib/validation/profile";
 import { paginationQuerySchema, sortOrderSchema } from "@/lib/pagination";
 import {
   booleanQuerySchema,
   hasAtLeastOneDefined,
   idSchema,
-  nameSchema,
 } from "@/lib/validate";
 
 /** Local upload path only — an external URL here would be a tracking beacon. */
@@ -18,7 +19,12 @@ const avatarPathSchema = z
 
 export const updateProfileSchema = z
   .object({
-    name: nameSchema.optional(),
+    // The display name is derived from first + last name; it is not editable
+    // on its own, so the two can never disagree.
+    username: usernameSchema.optional(),
+    firstName: personNameSchema.optional(),
+    lastName: personNameSchema.optional(),
+    birthDate: birthDateSchema.nullable().optional(),
     bio: z
       .string()
       .transform((value) => value.trim())
@@ -43,6 +49,8 @@ export const adminListUsersQuerySchema = paginationQuerySchema.extend({
 export type AdminListUsersQuery = z.infer<typeof adminListUsersQuerySchema>;
 
 export const userIdParamSchema = z.object({ id: idSchema });
+
+export const sessionIdParamSchema = z.object({ id: idSchema });
 
 export const updateUserRoleSchema = z.object({
   role: roleSchema,
@@ -70,7 +78,7 @@ export type UpdateUserBanInput = z.infer<typeof updateUserBanSchema>;
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Enter your current password.").max(128),
-  newPassword: z.string().min(8, "Use at least 8 characters.").max(128),
+  newPassword: passwordSchema,
 });
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

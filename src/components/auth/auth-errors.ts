@@ -35,6 +35,8 @@ export function loginErrorMessageKey(error: AuthErrorLike): MessageKey {
 
   const code = codeOf(error);
   if (code.includes("NOT_VERIFIED")) return "auth.login.unverified";
+  // Username sign-in rejects malformed handles with their own codes; they must
+  // read exactly like a wrong password.
   if (code.includes("BANNED")) return "auth.login.banned";
 
   return "auth.login.failed";
@@ -52,6 +54,11 @@ export function registerErrorMessageKey(error: AuthErrorLike): MessageKey | null
 
   const code = codeOf(error);
   if (code.includes("ALREADY_EXISTS")) return null;
+  if (code === "PASSWORD_TOO_WEAK") return "auth.password.too_weak";
+  if (code === "USERNAME_IS_ALREADY_TAKEN") return "profile.error.username_taken";
+  if (code.includes("USERNAME")) return "profile.error.username";
+  if (code === "INVALID_FIRST_NAME" || code === "INVALID_LAST_NAME") return "profile.error.name";
+  if (code === "INVALID_BIRTH_DATE") return "profile.error.birth_date";
   if (code.includes("INVALID_EMAIL")) return "error.VALIDATION_ERROR";
   if (code.includes("PASSWORD") || code.includes("INVALID_PASSWORD")) {
     return "error.VALIDATION_ERROR";
@@ -74,6 +81,7 @@ export function resetPasswordErrorMessageKey(error: AuthErrorLike): MessageKey {
   if (code.includes("INVALID_TOKEN") || code.includes("TOKEN_EXPIRED")) {
     return "auth.verify.failed";
   }
+  if (code === "PASSWORD_TOO_WEAK") return "auth.password.too_weak";
   if (code.includes("PASSWORD")) return "error.VALIDATION_ERROR";
 
   return "error.INTERNAL_ERROR";

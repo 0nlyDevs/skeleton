@@ -7,9 +7,9 @@
  * proxied to the application.
  *
  * `transports` lists `websocket` first and `polling` second: when a reverse proxy
- * strips the `Upgrade` header the client silently degrades to long-polling
- * instead of failing, and the application-level polling fallback in
- * `/api/messages?since=` covers a hard block.
+ * strips the `Upgrade` header the client degrades to Socket.IO long-polling,
+ * which is still a push channel. Application-level polling of the HTTP API is
+ * only the last resort for a hard block.
  */
 
 import type { Server as HttpServer } from "node:http";
@@ -47,6 +47,19 @@ export function attachRealtimeServer(httpServer: HttpServer): AppSocketServer {
     cors: {
       origin: [...env.corsAllowedOrigins],
       credentials: true,
+    },
+    // A client that drops for under two minutes gets its rooms back and the
+    // events it missed replayed, instead of silently losing them. The handshake
+    // middleware still runs on recovery, so a revoked session is not restored.
+    connectionStateRecovery: {
+      maxDisconnectionDuration: 2 * 60 * 1000,
+      skipMiddlewares: false,
+    },
+    // Reject cross-site WebSocket hijacking: a page on another origin must not
+    // ride the visitor's cookie into an authenticated socket.
+    allowRequest: (request, callback) => {
+      const origin = request.headers.origin;
+      callback(null, !origin || env.corsAllowedOrigins.includes(origin.replace(/\/+$/, "")));
     },
   });
 

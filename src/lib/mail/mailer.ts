@@ -1,5 +1,5 @@
 /**
- * Transactional email transport.
+ * Transactional email delivery, over Resend or SMTP (`MAIL_TRANSPORT`).
  *
  * Three properties matter more than throughput here:
  *
@@ -18,6 +18,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { render, toPlainText } from "@react-email/render";
 import { Resend } from "resend";
 import type { ReactElement } from "react";
 
@@ -26,6 +27,8 @@ import { logger } from "@/lib/logger";
 // Importing the module applies the DNS order; the call documents that this file
 // is the one that depends on it.
 import { preferIpv4 } from "@/lib/net/dns";
+
+import { sendViaSmtp } from "./smtp";
 
 preferIpv4();
 
@@ -117,8 +120,8 @@ function explainProviderError(message: string): string | undefined {
   ) {
     return (
       "Resend is in test mode: an account without a verified domain only delivers to the " +
-      "account owner's own address. Verify a domain at https://resend.com/domains, or read " +
-      "the action link from the outbox."
+      "account owner's own address. Verify a domain at https://resend.com/domains, switch to " +
+      "MAIL_TRANSPORT=smtp, or read the action link from the outbox."
     );
   }
 
@@ -192,21 +195,50 @@ async function recordUndelivered(
     to: message.to,
     subject: message.subject,
     reason,
-    // The single most useful line in the log for anyone testing auth.
-    actionUrl: message.previewUrl,
+    // The single most useful line in the log for anyone testing auth. In
+    // production it is a live credential (reset/verify token), so it stays in
+    // the server-side outbox file and out of log aggregation.
+    ...(env.isProduction ? {} : { actionUrl: message.previewUrl }),
     outboxFile,
     ...extra,
   });
 }
 
-export async function sendMail(message: MailMessage): Promise<MailResult> {
-  const client = getClient();
+/** One delivery attempt; both transports report failure the same way. */
+type Attempt = () => Promise<
+  { ok: true; id?: string } | { ok: false; message: string; statusCode: number | null }
+>;
 
-  if (!env.emailEnabled || !client) {
-    await recordUndelivered(message, "email delivery is disabled (MAIL_TRANSPORT=log or no RESEND_API_KEY)");
-    return { delivered: false };
-  }
+async function smtpAttempt(message: MailMessage): Promise<Attempt> {
+  // Rendered once, outside the retry loop.
+  const html = await render(message.react);
+  const text = toPlainText(html);
 
+  return async () => {
+    try {
+      const id = await sendViaSmtp({
+        from: env.MAIL_FROM,
+        to: message.to,
+        subject: message.subject,
+        html,
+        text,
+        ...(message.replyTo ? { replyTo: message.replyTo } : {}),
+      });
+      return { ok: true, ...(id ? { id } : {}) };
+    } catch (error) {
+      const responseCode = (error as { responseCode?: unknown }).responseCode;
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+        // 4xx SMTP replies are temporary by definition; map them onto the
+        // HTTP-style "retry me" range the retry rule understands.
+        statusCode: typeof responseCode === "number" && responseCode >= 400 && responseCode < 500 ? 503 : null,
+      };
+    }
+  };
+}
+
+function resendAttempt(message: MailMessage, client: Resend): Attempt {
   const payload = {
     from: env.MAIL_FROM,
     to: message.to,
@@ -215,50 +247,70 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
     ...(message.replyTo ? { replyTo: message.replyTo } : {}),
   };
 
+  return async () => {
+    try {
+      const { data, error } = await client.emails.send(payload);
+      if (!error) return { ok: true, ...(data?.id ? { id: data.id } : {}) };
+      return { ok: false, message: error.message, statusCode: error.statusCode ?? null };
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : String(error), statusCode: null };
+    }
+  };
+}
+
+export async function sendMail(message: MailMessage): Promise<MailResult> {
+  if (!env.emailEnabled) {
+    await recordUndelivered(
+      message,
+      "email delivery is disabled (MAIL_TRANSPORT=log, or the selected transport is not configured)",
+    );
+    return { delivered: false };
+  }
+
+  const client = env.MAIL_TRANSPORT === "resend" ? getClient() : null;
+  const attempt =
+    env.MAIL_TRANSPORT === "smtp"
+      ? await smtpAttempt(message)
+      : client
+        ? resendAttempt(message, client)
+        : null;
+
+  if (!attempt) {
+    await recordUndelivered(message, "no mail client could be created");
+    return { delivered: false };
+  }
+
   let lastFailure = "unknown error";
   let lastStatusCode: number | null = null;
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-    try {
-      const { data, error } = await client.emails.send(payload);
+  for (let attemptNumber = 1; attemptNumber <= MAX_ATTEMPTS; attemptNumber += 1) {
+    const result = await attempt();
 
-      if (!error) {
-        logger.info("email accepted by provider", {
-          to: message.to,
-          subject: message.subject,
-          providerMessageId: data?.id,
-          attempts: attempt,
-        });
-
-        return { delivered: true, ...(data?.id ? { id: data.id } : {}) };
-      }
-
-      lastFailure = error.message;
-      lastStatusCode = error.statusCode ?? null;
-
-      if (attempt < MAX_ATTEMPTS && isTransientFailure(error.message, error.statusCode)) {
-        logger.warn("email attempt failed; retrying", {
-          to: message.to,
-          attempt,
-          providerError: error.message,
-        });
-        await sleep(backoffDelayMs(attempt));
-        continue;
-      }
-
-      break;
-    } catch (error) {
-      lastFailure = error instanceof Error ? error.message : String(error);
-      lastStatusCode = null;
-
-      if (attempt < MAX_ATTEMPTS && isTransientFailure(lastFailure)) {
-        logger.warn("email attempt threw; retrying", { to: message.to, attempt, error: lastFailure });
-        await sleep(backoffDelayMs(attempt));
-        continue;
-      }
-
-      break;
+    if (result.ok) {
+      logger.info("email accepted by provider", {
+        to: message.to,
+        subject: message.subject,
+        transport: env.MAIL_TRANSPORT,
+        providerMessageId: result.id,
+        attempts: attemptNumber,
+      });
+      return { delivered: true, ...(result.id ? { id: result.id } : {}) };
     }
+
+    lastFailure = result.message;
+    lastStatusCode = result.statusCode;
+
+    if (attemptNumber < MAX_ATTEMPTS && isTransientFailure(result.message, result.statusCode)) {
+      logger.warn("email attempt failed; retrying", {
+        to: message.to,
+        attempt: attemptNumber,
+        providerError: result.message,
+      });
+      await sleep(backoffDelayMs(attemptNumber));
+      continue;
+    }
+
+    break;
   }
 
   const hint = explainProviderError(lastFailure);

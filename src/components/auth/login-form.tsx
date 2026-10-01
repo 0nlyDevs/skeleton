@@ -16,7 +16,7 @@ import { signIn } from "@/lib/auth/client";
 import type { MessageKey } from "@/lib/i18n";
 
 import { isNetworkFailure, loginErrorMessageKey } from "./auth-errors";
-import { GoogleButton, OrDivider } from "./oauth-buttons";
+import { OAuthButtons, type OAuthAvailability } from "./oauth-buttons";
 
 /**
  * Sign-in form.
@@ -34,10 +34,10 @@ import { GoogleButton, OrDivider } from "./oauth-buttons";
  *    "complete" by the UI.
  */
 export function LoginForm({
-  googleEnabled,
+  oauth,
   initialError,
 }: {
-  readonly googleEnabled: boolean;
+  readonly oauth: OAuthAvailability;
   readonly initialError?: string;
 }) {
   const t = useTranslation();
@@ -60,12 +60,13 @@ export function LoginForm({
     setErrorKey(null);
 
     try {
-      const result = await signIn.email({
-        email: email.trim(),
-        password,
-        rememberMe,
-        callbackURL: "/dashboard",
-      });
+      // One field, two doors: an address goes to the email endpoint, anything
+      // else is a username. Both are rate-limited and answer identically on a
+      // wrong identifier or a wrong password.
+      const identifier = email.trim();
+      const result = identifier.includes("@")
+        ? await signIn.email({ email: identifier, password, rememberMe, callbackURL: "/dashboard" })
+        : await signIn.username({ username: identifier, password, rememberMe, callbackURL: "/dashboard" });
 
       if (result.error) {
         setErrorKey(loginErrorMessageKey(result.error));
@@ -88,18 +89,29 @@ export function LoginForm({
       {errorKey ? (
         <Alert variant="error">
           <AlertCircle />
-          <AlertDescription className="text-foreground">{t(errorKey)}</AlertDescription>
+          <AlertDescription className="text-foreground">
+            {t(errorKey)}
+            {errorKey === "auth.login.unverified" ? (
+              <>
+                {" "}
+                <Link href="/verify-email" className="font-medium text-primary underline-offset-4 hover:underline">
+                  {t("auth.verify.resend")}
+                </Link>
+              </>
+            ) : null}
+          </AlertDescription>
         </Alert>
       ) : null}
 
-      <FormField label={t("auth.login.email")} required>
+      <FormField label={t("auth.login.identifier")} required>
         {(field) => (
           <Input
             {...field}
-            type="email"
-            name="email"
-            autoComplete="email"
-            inputMode="email"
+            type="text"
+            name="username"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             placeholder="nom@exemple.fr"
             required
             value={email}
@@ -155,12 +167,7 @@ export function LoginForm({
         {pending ? t("common.loading") : t("auth.login.submit")}
       </Button>
 
-      {googleEnabled ? (
-        <>
-          <OrDivider />
-          <GoogleButton callbackURL="/dashboard" />
-        </>
-      ) : null}
+      <OAuthButtons availability={oauth} callbackURL="/dashboard" />
     </form>
   );
 }

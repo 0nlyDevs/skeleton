@@ -22,6 +22,14 @@ import type { BetterAuthOptions } from "better-auth";
 
 import { env } from "@/lib/env";
 import { resolveClientIp } from "@/lib/http/client-ip";
+import { findPasswordViolation } from "@/lib/auth/password-policy";
+import {
+  birthDateViolation,
+  composeDisplayName,
+  parseBirthDate,
+  personNameViolation,
+  usernameViolation,
+} from "@/lib/validation/profile";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey, type RateLimitRule } from "@/lib/rate-limit";
 
 type AuthBeforeMiddleware = NonNullable<NonNullable<BetterAuthOptions["hooks"]>["before"]>;
@@ -41,6 +49,7 @@ interface GuardedPath {
  */
 export const GUARDED_AUTH_PATHS: readonly GuardedPath[] = [
   { path: "/sign-in/email", rule: RATE_LIMITS.login, byAccount: true },
+  { path: "/sign-in/username", rule: RATE_LIMITS.login, byAccount: true },
   { path: "/sign-up/email", rule: RATE_LIMITS.register, byAccount: true },
   { path: "/request-password-reset", rule: RATE_LIMITS.passwordReset, byAccount: true },
   { path: "/send-verification-email", rule: RATE_LIMITS.emailVerification, byAccount: true },
@@ -90,6 +99,115 @@ function readSubmittedEmail(ctx: unknown): string | undefined {
   return typeof email === "string" && email.length > 0 ? email : undefined;
 }
 
+/** The account identifier a sign-in names: the email, or the username. */
+function readSubmittedAccount(ctx: unknown): string | undefined {
+  const email = readSubmittedEmail(ctx);
+  if (email) return email;
+
+  const body = (ctx as HookContextView).body;
+  if (typeof body !== "object" || body === null) return undefined;
+  const username = (body as { username?: unknown }).username;
+  return typeof username === "string" && username.length > 0 ? username : undefined;
+}
+
+function readBodyString(ctx: unknown, key: string): string | undefined {
+  const body = (ctx as HookContextView).body;
+  if (typeof body !== "object" || body === null) return undefined;
+
+  const value = (body as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * Endpoints that accept a new password, and the body field carrying it.
+ * BetterAuth only knows a length rule, so the full policy is applied here — on
+ * the pipeline itself, so calling `/api/auth/*` directly cannot skip it.
+ */
+export const PASSWORD_FIELDS: Readonly<Record<string, string>> = {
+  "/sign-up/email": "password",
+  "/reset-password": "newPassword",
+  "/change-password": "newPassword",
+  "/set-password": "newPassword",
+};
+
+function enforcePasswordPolicy(ctx: unknown, path: string): void {
+  const field = PASSWORD_FIELDS[path];
+  if (!field) return;
+
+  const password = readBodyString(ctx, field);
+  // A missing field is BetterAuth's own 400 to raise.
+  if (password === undefined) return;
+
+  const violation = findPasswordViolation(password, {
+    email: readSubmittedEmail(ctx),
+    username: readBodyString(ctx, "username"),
+  });
+
+  if (violation) {
+    throw new APIError("BAD_REQUEST", { message: violation, code: "PASSWORD_TOO_WEAK" });
+  }
+}
+
+function badRequest(field: string, message: string): never {
+  throw new APIError("BAD_REQUEST", { message, code: `INVALID_${field.toUpperCase()}` });
+}
+
+/**
+ * Sign-up requires the full identity: username, first and last name, birth
+ * date. The display `name` is derived from the two name parts here, so a
+ * client cannot submit a display name that disagrees with them.
+ */
+function enforceSignUpProfile(ctx: unknown): void {
+  const body = (ctx as HookContextView).body;
+  if (typeof body !== "object" || body === null) return;
+  const fields = body as Record<string, unknown>;
+
+  const username = typeof fields.username === "string" ? fields.username : "";
+  const firstName = typeof fields.firstName === "string" ? fields.firstName : "";
+  const lastName = typeof fields.lastName === "string" ? fields.lastName : "";
+  const birthDate = typeof fields.birthDate === "string" ? fields.birthDate : "";
+
+  const usernameError = usernameViolation(username);
+  if (usernameError) badRequest("username", usernameError);
+  const firstNameError = personNameViolation(firstName);
+  if (firstNameError) badRequest("first_name", firstNameError);
+  const lastNameError = personNameViolation(lastName);
+  if (lastNameError) badRequest("last_name", lastNameError);
+  const birthDateError = birthDateViolation(birthDate);
+  if (birthDateError) badRequest("birth_date", birthDateError);
+
+  fields.firstName = firstName.trim().replace(/\s+/g, " ");
+  fields.lastName = lastName.trim().replace(/\s+/g, " ");
+  fields.name = composeDisplayName(firstName, lastName);
+  fields.birthDate = parseBirthDate(birthDate);
+  // Casing is kept for display; the plugin stores the lowercase handle.
+  fields.displayUsername = username.trim();
+}
+
+/**
+ * BetterAuth endpoints this application replaces with its own audited,
+ * validated API. Left open, `/update-user` would accept an arbitrary-length
+ * name or an external image URL (a tracking beacon) straight from the client.
+ */
+const DISABLED_PATHS = new Set(["/update-user"]);
+
+/**
+ * The single `hooks.before` entry: disabled endpoints, then input policy (a
+ * typo must not burn the sign-up budget), then the brute-force limiter.
+ */
+export const authBeforeHook: AuthBeforeMiddleware = async (ctx) => {
+  const path = readPath(ctx);
+  if (!path) return;
+
+  if (DISABLED_PATHS.has(path)) {
+    throw new APIError("NOT_FOUND", { message: "Not found.", code: "NOT_FOUND" });
+  }
+
+  if (path === "/sign-up/email") enforceSignUpProfile(ctx);
+  enforcePasswordPolicy(ctx, path);
+  await authRateLimitHook(ctx);
+};
+
 export const authRateLimitHook: AuthBeforeMiddleware = async (ctx) => {
   const path = readPath(ctx);
   if (!path) return;
@@ -102,7 +220,7 @@ export const authRateLimitHook: AuthBeforeMiddleware = async (ctx) => {
 
   const checks = [{ key: rateLimitKey(`auth:${path}:ip`, ip), rule: guard.rule }];
 
-  const email = guard.byAccount ? readSubmittedEmail(ctx) : undefined;
+  const email = guard.byAccount ? readSubmittedAccount(ctx) : undefined;
   if (email) {
     checks.push({
       key: rateLimitKey(`auth:${path}:account`, email.trim().toLowerCase()),

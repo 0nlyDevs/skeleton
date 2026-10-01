@@ -1,14 +1,20 @@
 "use client";
 
+import { Check, X } from "lucide-react";
+
 import { useTranslation } from "@/components/providers/i18n-provider";
+import {
+  PASSWORD_MIN_LENGTH,
+  checkPasswordRules,
+  type PasswordRuleId,
+} from "@/lib/auth/password-policy";
+import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /**
  * Rough password strength meter.
  *
- * Deliberately conservative: it rewards *length* over symbol soup, because length
- * is what actually raises the cost of an offline attack and because a rule that
- * demands punctuation pushes people towards `Password1!`. Nothing here is used for
+ * Rewards length and character variety. Nothing here is used for
  * authorization — the server validates the policy independently and is the only
  * thing that decides whether a password is acceptable.
  */
@@ -16,7 +22,7 @@ export function scorePassword(password: string): number {
   if (password.length === 0) return 0;
 
   let score = 0;
-  if (password.length >= 8) score += 1;
+  if (password.length >= 10) score += 1;
   if (password.length >= 12) score += 1;
   if (password.length >= 16) score += 1;
 
@@ -70,6 +76,52 @@ export function PasswordStrength({
       <span className="w-[4.5rem] shrink-0 text-right text-[11.5px] font-medium text-muted-foreground">
         {t(level.key)}
       </span>
+    </div>
+  );
+}
+
+const RULE_KEYS: Record<PasswordRuleId, MessageKey> = {
+  length: "auth.password.rule.length",
+  lower: "auth.password.rule.lower",
+  upper: "auth.password.rule.upper",
+  digit: "auth.password.rule.digit",
+  symbol: "auth.password.rule.symbol",
+  repeat: "auth.password.rule.repeat",
+  common: "auth.password.rule.common",
+};
+
+/**
+ * Live checklist of the password policy, driven by the same rules the server
+ * enforces, so a user never discovers a rule from a rejected submit.
+ */
+export function PasswordRequirements({
+  password,
+  className,
+}: {
+  readonly password: string;
+  readonly className?: string;
+}) {
+  const t = useTranslation();
+  const results = checkPasswordRules(password);
+
+  return (
+    <div className={cn("flex flex-col gap-1.5", className)}>
+      <p className="text-[12px] font-medium text-muted-foreground">{t("auth.password.rules_title")}</p>
+      <ul className="grid grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-2" aria-live="polite">
+        {results.map((rule) => (
+          <li
+            key={rule.id}
+            className={cn(
+              "flex items-center gap-1.5 text-[12px] transition-colors",
+              rule.ok ? "text-success" : "text-muted-foreground",
+            )}
+          >
+            {rule.ok ? <Check className="size-3.5 shrink-0" aria-hidden /> : <X className="size-3.5 shrink-0 opacity-60" aria-hidden />}
+            <span>{t(RULE_KEYS[rule.id], { min: PASSWORD_MIN_LENGTH })}</span>
+            <span className="sr-only">{rule.ok ? "✓" : "✗"}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

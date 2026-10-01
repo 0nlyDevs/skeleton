@@ -15,22 +15,29 @@
  *     waiting for the token to expire.
  */
 
-import { assertCanAssignRole } from "@/lib/auth/guards";
+import { assertCanAssignRole, isStaff } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth/auth";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import type { Prisma } from "@/generated/prisma/client";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, fromPrismaError } from "@/lib/errors";
+import { composeDisplayName } from "@/lib/validation/profile";
 import { paginate, resolveSortField, toPagination, type Paginated } from "@/lib/pagination";
 import { parseDateInput } from "@/lib/utils";
+import { disconnectUserSockets } from "@/lib/socket/emit";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
+import { notifyInBackground } from "../notifications/notifications.service";
 import { notifyRoleChanged, notifySystemMessage } from "../notifications/notifications.service";
 import { toAdminUserDto, toUserProfileDto, type AdminUserDto, type UserProfileDto } from "./users.dto";
 import {
   countAdmins,
   countUsers,
+  deleteOtherSessions,
+  deleteOwnSession,
   deleteUserSessions,
   findAdminUserById,
+  findUserIdByUsername,
   findUserProfileById,
   findUsers,
   updateUserBan,
@@ -132,6 +139,7 @@ export async function changeUserRole(
   if (before.role === input.role) return toAdminUserDto(before);
 
   const updated = await updateUserRoleAdmin(id, input.role);
+  disconnectUserSockets(id);
 
   // A role change must apply to an already-open session. Sessions are keyed by
   // the same user row, so the authoritative check in `getAuthContext` picks the
@@ -177,6 +185,7 @@ export async function setUserBan(
   if (input.banned) {
     // Cut existing sessions immediately rather than waiting for expiry.
     const revoked = await deleteUserSessions(id);
+    disconnectUserSockets(id);
     await recordAudit({
       actorId: actor.user.id,
       action: auditActions.userBanned,
@@ -204,6 +213,50 @@ export async function setUserBan(
   return toAdminUserDto(updated);
 }
 
+/** Apply the profile action from the staff moderation queue. */
+export async function removeUserProfileAsStaff(
+  id: string,
+  actor: ActorContext,
+  note: string | null,
+): Promise<void> {
+  if (!isStaff(actor.user)) throw new ForbiddenError();
+  if (id === actor.user.id) throw new ForbiddenError("You cannot suspend your own account.");
+
+  const target = await findAdminUserById(id);
+  if (!target) throw new NotFoundError("That profile does not exist.");
+  if (actor.user.role === "MODERATOR" && target.role === "ADMIN") {
+    throw new ForbiddenError("Moderators cannot suspend an admin account.");
+  }
+  if (target.banned) return;
+
+  await guardLastAdmin(id, "suspend this account");
+  await updateUserBan(id, {
+    banned: true,
+    banReason: note?.trim() || "Profile removed after moderation review.",
+    banExpires: null,
+  });
+  const revokedSessions = await deleteUserSessions(id);
+  disconnectUserSockets(id);
+
+  await recordAudit({
+    actorId: actor.user.id,
+    action: auditActions.userBanned,
+    targetType: "user",
+    targetId: id,
+    metadata: { source: "moderation_report", revokedSessions },
+    ip: actor.ip ?? null,
+  });
+  notifyInBackground(
+    notifySystemMessage({
+      userId: id,
+      title: "Your profile was suspended",
+      body: note?.trim() || "Your profile was removed after a moderation review.",
+      link: "/",
+    }),
+    { userId: id, action: "profile_suspended" },
+  );
+}
+
 // --- Self service -----------------------------------------------------------
 
 export async function getOwnProfile(actor: ActorContext): Promise<UserProfileDto> {
@@ -216,13 +269,40 @@ export async function updateOwnProfile(
   input: UpdateProfileInput,
   actor: ActorContext,
 ): Promise<UserProfileDto> {
-  const data: { name?: string; bio?: string; image?: string | null } = {};
+  const current = await findUserProfileById(actor.user.id);
+  if (!current) throw new NotFoundError("Your account could not be loaded.");
 
-  if (input.name !== undefined) data.name = input.name;
+  const data: Prisma.UserUncheckedUpdateInput = {};
+
+  if (input.username !== undefined && input.username !== current.username) {
+    const holder = await findUserIdByUsername(input.username);
+    if (holder && holder !== actor.user.id) {
+      throw new ConflictError("This username is already taken.", {
+        username: "This username is already taken.",
+      });
+    }
+    data.username = input.username;
+    data.displayUsername = input.username;
+  }
+  if (input.firstName !== undefined) data.firstName = input.firstName;
+  if (input.lastName !== undefined) data.lastName = input.lastName;
+  if (input.firstName !== undefined || input.lastName !== undefined) {
+    data.name = composeDisplayName(
+      input.firstName ?? current.firstName ?? "",
+      input.lastName ?? current.lastName ?? "",
+    );
+  }
+  if (input.birthDate !== undefined) data.birthDate = input.birthDate;
   if (input.bio !== undefined) data.bio = input.bio;
   if (input.image !== undefined) data.image = input.image;
 
-  const row = await updateUserProfile(actor.user.id, data);
+  let row;
+  try {
+    row = await updateUserProfile(actor.user.id, data);
+  } catch (error) {
+    // Two users racing for the same handle: the unique index decides.
+    throw fromPrismaError(error, "This username is already taken.") ?? error;
+  }
 
   await recordAudit({
     actorId: actor.user.id,
@@ -234,6 +314,53 @@ export async function updateOwnProfile(
   });
 
   return toUserProfileDto(row);
+}
+
+/**
+ * Sign out one device.
+ *
+ * Sessions are addressed by id, never by token: the token *is* the credential,
+ * so it must never be sent to the browser — not even the user's own other
+ * tokens, which any XSS on the settings page could otherwise collect.
+ */
+export async function revokeOwnSession(
+  sessionId: string,
+  context: { readonly userId: string; readonly currentSessionId: string; readonly ip?: string },
+): Promise<void> {
+  if (sessionId === context.currentSessionId) {
+    throw new BadRequestError("Use sign out to end the current session.");
+  }
+
+  const revoked = await deleteOwnSession(context.userId, sessionId);
+  if (revoked === 0) throw new NotFoundError("That session does not exist.");
+
+  await recordAudit({
+    actorId: context.userId,
+    action: auditActions.userSessionsRevoked,
+    targetType: "user",
+    targetId: context.userId,
+    metadata: { revoked },
+    ip: context.ip ?? null,
+  });
+}
+
+export async function revokeOtherOwnSessions(context: {
+  readonly userId: string;
+  readonly currentSessionId: string;
+  readonly ip?: string;
+}): Promise<number> {
+  const revoked = await deleteOtherSessions(context.userId, context.currentSessionId);
+
+  await recordAudit({
+    actorId: context.userId,
+    action: auditActions.userSessionsRevoked,
+    targetType: "user",
+    targetId: context.userId,
+    metadata: { revoked },
+    ip: context.ip ?? null,
+  });
+
+  return revoked;
 }
 
 /**

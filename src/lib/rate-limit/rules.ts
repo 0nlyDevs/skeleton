@@ -34,6 +34,21 @@ export const RATE_LIMITS = {
   /** Chat messages per user: one per second. */
   chatMessage: { limit: 1, windowMs: 1_000 },
 
+  /** Reactions per user: generous for scrolling, fatal for a like-bot. */
+  reaction: { limit: 60, windowMs: 60_000 },
+
+  /** Comments per user. */
+  comment: { limit: 10, windowMs: 60_000 },
+
+  /** Follow/unfollow toggles per user. */
+  follow: { limit: 30, windowMs: 60_000 },
+
+  /** New conversations and group membership changes per user. */
+  conversation: { limit: 20, windowMs: 60 * 60_000 },
+
+  /** User directory searches per user. */
+  userSearch: { limit: 60, windowMs: 60_000 },
+
   /** Content reports per user. */
   report: { limit: 10, windowMs: 60 * 60_000 },
 

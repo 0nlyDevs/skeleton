@@ -7,22 +7,31 @@
  * fine" is exactly the kind of decision an audit trail exists to prove.
  */
 
-import { ConflictError, NotFoundError } from "@/lib/errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { isStaff } from "@/lib/auth/guards";
 import { paginate, toPagination, type Paginated } from "@/lib/pagination";
 import type { AuthUser } from "@/types";
 import { logger } from "@/lib/logger";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
-import { findPostById, softDeletePost } from "../posts/posts.repository";
+import { deletePostForActor, loadReadablePost } from "../posts/posts.service";
+import { findPostById } from "../posts/posts.repository";
+import { removeCommentAsStaff } from "../comments/comments.service";
+import { findCommentById } from "../comments/comments.repository";
+import { assertRoomAccess, findMessageForModeration, removeMessageAsStaff } from "../messages/messages.service";
+import { findActiveUserById } from "../users/users.repository";
+import { removeUserProfileAsStaff } from "../users/users.service";
 import { toReportDto, type ReportDto } from "./reports.dto";
 import {
   countReports,
+  claimReportResolution,
+  completeReportResolution,
   createReport,
   findReportById,
-  findReportedPostTitles,
+  findReportedTargetSummaries,
   findReports,
-  updateReport,
+  releaseReportResolution,
 } from "./reports.repository";
 import type {
   CreateReportInput,
@@ -51,11 +60,26 @@ export async function createReportForActor(
   if (input.targetType === "post") {
     const post = await findPostById(input.targetId);
     if (!post || post.deletedAt) throw new NotFoundError();
+    await loadReadablePost(input.targetId, actor.user);
 
     // Reporting your own content is nonsense and would only pollute the queue.
     if (post.userId === actor.user.id) {
       throw new ConflictError("You cannot report your own content.");
     }
+  } else if (input.targetType === "comment") {
+    const comment = await findCommentById(input.targetId);
+    if (!comment || comment.deletedAt) throw new NotFoundError();
+    await loadReadablePost(comment.postId, actor.user);
+    if (comment.userId === actor.user.id) throw new ConflictError("You cannot report your own content.");
+  } else if (input.targetType === "message") {
+    const message = await findMessageForModeration(input.targetId);
+    if (!message || message.deletedAt) throw new NotFoundError();
+    await assertRoomAccess(message.roomId, actor.user);
+    if (message.senderId === actor.user.id) throw new ConflictError("You cannot report your own content.");
+  } else if (input.targetType === "user") {
+    if (input.targetId === actor.user.id) throw new ConflictError("You cannot report your own profile.");
+    const user = await findActiveUserById(input.targetId);
+    if (!user?.username) throw new NotFoundError("That profile does not exist.");
   }
 
   let row;
@@ -85,18 +109,20 @@ export async function createReportForActor(
   return toReportDto(row);
 }
 
-async function attachLabels(rows: Awaited<ReturnType<typeof findReports>>): Promise<ReportDto[]> {
-  const postIds = rows
-    .filter((row) => row.targetType === "post")
-    .map((row) => row.targetId);
-
-  const titles = await findReportedPostTitles(postIds);
-
-  return rows.map((row) => toReportDto(row, titles.get(row.targetId) ?? null));
+async function attachTargetDetails(rows: Awaited<ReturnType<typeof findReports>>): Promise<ReportDto[]> {
+  const summaries = await findReportedTargetSummaries(rows);
+  return rows.map((row) =>
+    toReportDto(row, summaries.get(`${row.targetType}:${row.targetId}`) ?? {
+      label: null,
+      summary: null,
+      href: null,
+    }),
+  );
 }
 
 /** Staff-only view of the queue. */
-export async function listReports(query: ListReportsQuery): Promise<Paginated<ReportDto>> {
+export async function listReports(query: ListReportsQuery, actor: AuthUser): Promise<Paginated<ReportDto>> {
+  if (!isStaff(actor)) throw new ForbiddenError();
   const pagination = toPagination(query);
   const where = {
     ...(query.status ? { status: query.status } : {}),
@@ -108,7 +134,7 @@ export async function listReports(query: ListReportsQuery): Promise<Paginated<Re
     countReports(where),
   ]);
 
-  return paginate(await attachLabels(rows), {
+  return paginate(await attachTargetDetails(rows), {
     page: pagination.page,
     limit: pagination.limit,
     total,
@@ -118,53 +144,61 @@ export async function listReports(query: ListReportsQuery): Promise<Paginated<Re
 /**
  * Close a report.
  *
- * `remove` applies a soft delete to the reported post; `dismiss` leaves the
- * content alone. Either way the report becomes terminal, and a second attempt to
- * resolve it is a conflict rather than a silent no-op.
+ * `remove` applies the matching moderation action to the reported target;
+ * `dismiss` leaves it alone. A report becomes terminal either way.
  */
 export async function resolveReport(
   id: string,
   input: ResolveReportInput,
   actor: ActorContext,
 ): Promise<ReportDto> {
+  if (!isStaff(actor.user)) throw new ForbiddenError();
   const report = await findReportById(id);
   if (!report) throw new NotFoundError();
   if (report.status !== "OPEN") {
     throw new ConflictError("This report has already been handled.");
   }
 
-  if (input.resolution === "remove" && report.targetType === "post") {
-    const post = await findPostById(report.targetId);
+  if (!(await claimReportResolution(id, actor.user.id))) {
+    throw new ConflictError("Another staff member is already handling this report.");
+  }
 
-    if (post && !post.deletedAt) {
-      await softDeletePost(post.id, new Date());
+  try {
+    if (input.resolution === "remove") {
+      const context = { user: actor.user, ip: actor.ip };
+      if (report.targetType === "post") await deletePostForActor(report.targetId, context);
+      else if (report.targetType === "comment") await removeCommentAsStaff(report.targetId, context, input.note ?? null);
+      else if (report.targetType === "message") await removeMessageAsStaff(report.targetId, context, input.note ?? null);
+      else if (report.targetType === "user") await removeUserProfileAsStaff(report.targetId, context, input.note ?? null);
+
       logger.info("moderation removed content", {
         reportId: report.id,
-        targetId: post.id,
+        targetId: report.targetId,
+        targetType: report.targetType,
         moderatorId: actor.user.id,
       });
     }
+
+    const updated = await completeReportResolution(id, actor.user.id, {
+      status: input.resolution === "remove" ? "RESOLVED" : "DISMISSED",
+      resolutionNote: input.note ?? null,
+    });
+    if (!updated) throw new ConflictError("This report is no longer assigned to you.");
+
+    await recordAudit({
+      actorId: actor.user.id,
+      action:
+        input.resolution === "remove" ? auditActions.reportResolved : auditActions.reportDismissed,
+      targetType: report.targetType,
+      targetId: report.targetId,
+      metadata: { reportId: report.id, resolution: input.resolution },
+      ip: actor.ip ?? null,
+    });
+
+    const [resolved] = await attachTargetDetails([updated]);
+    return resolved ?? toReportDto(updated);
+  } catch (error) {
+    await releaseReportResolution(id, actor.user.id);
+    throw error;
   }
-
-  const updated = await updateReport(id, {
-    status: input.resolution === "remove" ? "RESOLVED" : "DISMISSED",
-    resolvedById: actor.user.id,
-    resolutionNote: input.note ?? null,
-    // Releasing the duplicate key is what makes a later re-report of the same
-    // target possible; leaving it set would keep the reporter locked out
-    // forever, which is the bug this column replaces.
-    duplicateKey: null,
-  });
-
-  await recordAudit({
-    actorId: actor.user.id,
-    action:
-      input.resolution === "remove" ? auditActions.reportResolved : auditActions.reportDismissed,
-    targetType: report.targetType,
-    targetId: report.targetId,
-    metadata: { reportId: report.id, resolution: input.resolution },
-    ip: actor.ip ?? null,
-  });
-
-  return toReportDto(updated);
 }

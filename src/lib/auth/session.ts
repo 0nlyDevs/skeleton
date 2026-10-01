@@ -24,6 +24,7 @@ interface RawSessionUser {
   id: string;
   email: string;
   name: string;
+  username?: string | null;
   image?: string | null;
   role?: string | null;
   emailVerified?: boolean | null;
@@ -69,6 +70,7 @@ function toAuthUser(raw: RawSessionUser): AuthUser {
     id: String(raw.id),
     email: String(raw.email),
     name: String(raw.name),
+    username: raw.username ?? null,
     image: raw.image ?? null,
     // An unrecognised role degrades to the least privilege level rather than
     // being trusted.

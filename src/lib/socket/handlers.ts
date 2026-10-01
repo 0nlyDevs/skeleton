@@ -12,12 +12,18 @@
  *   * **Errors are reported, not thrown.** A rejected event emits a typed error
  *     frame and leaves the connection alive, so one bad message cannot drop the
  *     socket.
+ *   * **Guests are read-only.** A socket without a session may only follow the
+ *     public feed and threads of published posts; every write event and every
+ *     chat room requires an identity.
  */
 
 import type { Server, Socket } from "socket.io";
 
 import { prisma } from "@/lib/db/prisma";
+import { env } from "@/lib/env";
+import { resolveClientIp } from "@/lib/http/client-ip";
 import { logger } from "@/lib/logger";
+import { loadReadablePost } from "@/modules/posts/posts.service";
 import { GLOBAL_ROOM_ID } from "@/modules/messages/messages.constants";
 import { sendMessageSchema } from "@/modules/messages/messages.schema";
 import {
@@ -36,11 +42,24 @@ import {
   type ReadyPayload,
   type ServerToClientEvents,
 } from "./events";
-import { GLOBAL_PRESENCE_ROOM, chatRoom, parseRoom, userRoom } from "./rooms";
+import { FEED_ROOM, GLOBAL_PRESENCE_ROOM, chatRoom, parseRoom, postRoom, userRoom } from "./rooms";
 
 export interface SocketData {
-  identity: SocketIdentity;
+  /** `null` for a guest: read-only access to public content. */
+  identity: SocketIdentity | null;
+  ip: string;
 }
+
+/**
+ * Sockets per client IP. A guest needs no account to connect, so this is what
+ * stops one machine from opening thousands of idle connections. Generous
+ * enough for a classroom behind one NAT.
+ */
+const MAX_SOCKETS_PER_IP = 60;
+const socketsPerIp = new Map<string, number>();
+
+/** Post threads a single socket may follow at once. */
+const MAX_POST_SUBSCRIPTIONS = 50;
 
 export type AppSocketServer = Server<
   ClientToServerEvents,
@@ -64,17 +83,28 @@ function isRoomId(value: unknown): value is string {
 
 export function registerSocketHandlers(io: AppSocketServer): void {
   io.use(async (socket, next) => {
-    const identity = await authenticateHandshake(socket.handshake.headers);
-    if (!identity) {
-      logger.warn("socket connection rejected", { socketId: socket.id });
-      next(new Error("UNAUTHENTICATED"));
+    const ip = handshakeIp(socket);
+    const open = socketsPerIp.get(ip) ?? 0;
+    if (open >= MAX_SOCKETS_PER_IP) {
+      logger.warn("socket connection refused: per-IP limit", { ip });
+      next(new Error("RATE_LIMITED"));
       return;
     }
-    socket.data.identity = identity;
+
+    socket.data.ip = ip;
+    socket.data.identity = await authenticateHandshake(socket.handshake.headers);
     next();
   });
 
   io.on("connection", (socket) => {
+    const ip = socket.data.ip;
+    socketsPerIp.set(ip, (socketsPerIp.get(ip) ?? 0) + 1);
+    socket.on("disconnect", () => {
+      const remaining = (socketsPerIp.get(ip) ?? 1) - 1;
+      if (remaining <= 0) socketsPerIp.delete(ip);
+      else socketsPerIp.set(ip, remaining);
+    });
+
     void onConnection(io, socket).catch((error: unknown) => {
       logger.error("socket connection setup failed", { socketId: socket.id, error });
       socket.disconnect(true);
@@ -82,13 +112,59 @@ export function registerSocketHandlers(io: AppSocketServer): void {
   });
 }
 
+/**
+ * The client IP for a handshake. WebSocket upgrades never pass through the
+ * HTTP handler in `server.ts`, so a client-sent `x-connection-ip` would survive
+ * untouched — it is replaced here with the real socket address before the
+ * shared resolver (which also honours `TRUST_PROXY`) reads it.
+ */
+function handshakeIp(socket: AppSocket): string {
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(socket.handshake.headers)) {
+    if (typeof value === "string") headers.set(name, value);
+    else if (Array.isArray(value)) headers.set(name, value.join(", "));
+  }
+  headers.delete("x-connection-ip");
+  if (socket.handshake.address) headers.set("x-connection-ip", socket.handshake.address);
+  return resolveClientIp(headers, env.trustProxy);
+}
+
+/** Feed and post-thread subscriptions: open to guests, gated by post visibility. */
+function registerPublicHandlers(socket: AppSocket, user: AuthUser | null, log: ReturnType<typeof logger.child>): void {
+  socket.on(SOCKET_EVENTS.feedSubscribe, () => {
+    void socket.join(FEED_ROOM);
+  });
+
+  socket.on(SOCKET_EVENTS.feedUnsubscribe, () => {
+    void socket.leave(FEED_ROOM);
+  });
+
+  socket.on(SOCKET_EVENTS.postSubscribe, (postId) => {
+    void handle(socket, log, async () => {
+      if (!isRoomId(postId)) throw new Error("Invalid post id.");
+      const following = [...socket.rooms].filter((room) => room.startsWith("post:")).length;
+      if (following >= MAX_POST_SUBSCRIPTIONS) return;
+      // Same rule as the HTTP API: a draft's thread is not a public channel.
+      await loadReadablePost(postId, user);
+      await socket.join(postRoom(postId));
+    });
+  });
+
+  socket.on(SOCKET_EVENTS.postUnsubscribe, (postId) => {
+    if (isRoomId(postId)) void socket.leave(postRoom(postId));
+  });
+}
+
 async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<void> {
   const { identity } = socket.data;
-  const log = logger.child({ socketId: socket.id, userId: identity.userId });
+  const log = logger.child({ socketId: socket.id, userId: identity?.userId ?? "guest" });
 
-  const user = await loadAuthUser(identity);
-  if (!user) {
-    socket.disconnect(true);
+  const user = identity ? await loadAuthUser(identity) : null;
+  registerPublicHandlers(socket, user, log);
+
+  if (!identity || !user) {
+    socket.emit(SOCKET_EVENTS.ready, { user: null, serverTime: new Date().toISOString() });
+    log.debug("guest socket connected");
     return;
   }
 
@@ -126,14 +202,15 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
     });
   });
 
-  socket.on(SOCKET_EVENTS.sendMessage, (payload) => {
+  socket.on(SOCKET_EVENTS.sendMessage, (payload, acknowledge) => {
     void handle(socket, log, async () => {
       const parsed = sendMessageSchema.safeParse(payload);
       if (!parsed.success) throw new Error("Invalid message.");
 
       // The service persists *and* fans the message out to the room, so the
       // socket path and the HTTP path behave identically for other clients.
-      await sendMessage(parsed.data, { user });
+      const message = await sendMessage(parsed.data, { user });
+      acknowledge?.(message);
     });
   });
 
@@ -215,6 +292,7 @@ async function loadAuthUser(identity: SocketIdentity): Promise<AuthUser | null> 
       id: true,
       email: true,
       name: true,
+      username: true,
       image: true,
       role: true,
       banned: true,
@@ -230,6 +308,7 @@ async function loadAuthUser(identity: SocketIdentity): Promise<AuthUser | null> 
     id: row.id,
     email: row.email,
     name: row.name,
+    username: row.username,
     image: row.image,
     role: row.role,
     emailVerified: row.emailVerified,

@@ -20,6 +20,8 @@ export interface ReportDto {
   readonly targetId: string;
   /** Best-effort label of the reported content, resolved by the service. */
   readonly targetLabel: string | null;
+  readonly targetSummary: string | null;
+  readonly targetHref: string | null;
   readonly reason: string;
   readonly status: ReportStatus;
   readonly reporter: ReportActorDto | null;
@@ -31,13 +33,19 @@ export interface ReportDto {
 
 export function toReportDto(
   row: ReportWithActors,
-  targetLabel: string | null = null,
+  target: { readonly label: string | null; readonly summary: string | null; readonly href: string | null } = {
+    label: null,
+    summary: null,
+    href: null,
+  },
 ): ReportDto {
   return {
     id: row.id,
     targetType: row.targetType,
     targetId: row.targetId,
-    targetLabel,
+    targetLabel: target.label,
+    targetSummary: target.summary,
+    targetHref: target.href,
     reason: row.reason,
     status: row.status,
     reporter: row.reporter ? { id: row.reporter.id, name: row.reporter.name } : null,

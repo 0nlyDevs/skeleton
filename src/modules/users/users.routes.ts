@@ -1,12 +1,13 @@
 import { headers as nextHeaders } from "next/headers";
 
 import { apiRoute } from "@/lib/api/route";
-import { jsonOk } from "@/lib/api/response";
+import { jsonOk, noContent } from "@/lib/api/response";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 
 import {
   adminListUsersQuerySchema,
   changePasswordSchema,
+  sessionIdParamSchema,
   updateProfileSchema,
   updateUserBanSchema,
   updateUserRoleSchema,
@@ -18,6 +19,8 @@ import {
   getOwnProfile,
   getUserForAdmin,
   listUsersForAdmin,
+  revokeOtherOwnSessions,
+  revokeOwnSession,
   setUserBan,
   updateOwnProfile,
 } from "./users.service";
@@ -44,6 +47,29 @@ export const changePasswordRoute = apiRoute({
     });
     return jsonOk({ changed: true });
   },
+});
+
+export const revokeSessionRoute = apiRoute({
+  params: sessionIdParamSchema,
+  handler: async ({ params, auth, ip }) => {
+    await revokeOwnSession(params.id, {
+      userId: auth.user.id,
+      currentSessionId: auth.session.id,
+      ip,
+    });
+    return noContent();
+  },
+});
+
+export const revokeOtherSessionsRoute = apiRoute({
+  handler: async ({ auth, ip }) =>
+    jsonOk({
+      revoked: await revokeOtherOwnSessions({
+        userId: auth.user.id,
+        currentSessionId: auth.session.id,
+        ip,
+      }),
+    }),
 });
 
 // --- Admin ------------------------------------------------------------------

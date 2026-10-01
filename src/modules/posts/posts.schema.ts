@@ -63,3 +63,13 @@ export const listPostsQuerySchema = paginationQuerySchema.extend({
 });
 
 export type ListPostsQuery = z.infer<typeof listPostsQuerySchema>;
+
+export const feedQuerySchema = z.object({
+  cursor: z.string().trim().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  authorId: z.string().trim().max(64).optional(),
+  q: z.string().trim().max(120).optional(),
+  scope: z.enum(["all", "following"]).default("all"),
+});
+
+export type FeedQuery = z.infer<typeof feedQuerySchema>;

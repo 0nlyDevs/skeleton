@@ -25,6 +25,18 @@ export async function SiteHeader() {
 
         <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label={t["landing.nav_label"]}>
           <Link
+            href="/feed"
+            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+          >
+            {t["nav.feed"]}
+          </Link>
+          <Link
+            href="/search"
+            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+          >
+            {t["nav.search"]}
+          </Link>
+          <Link
             href="/#features"
             className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
@@ -45,6 +57,9 @@ export async function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
+          <Button asChild variant="ghost" size="sm" className="md:hidden">
+            <Link href="/feed">{t["nav.feed"]}</Link>
+          </Button>
           <LocaleToggle />
           <ThemeToggle />
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">

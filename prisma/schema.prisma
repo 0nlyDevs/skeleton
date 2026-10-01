@@ -50,6 +50,7 @@ enum RoomType {
   GLOBAL
   POST
   DIRECT
+  GROUP
 }
 
 enum NotificationType {
@@ -57,6 +58,21 @@ enum NotificationType {
   MENTION
   SYSTEM
   ROLE_CHANGED
+  POST_COMMENT
+  COMMENT_REPLY
+  POST_REACTION
+  NEW_FOLLOWER
+  GROUP_INVITE
+  MODERATION
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
 }
 
 enum ReportStatus {
@@ -91,8 +107,16 @@ model User {
   // BetterAuth two-factor plugin field
   twoFactorEnabled Boolean @default(false)
 
+  // BetterAuth username plugin: `username` is the normalised (lowercase)
+  // public handle, `displayUsername` keeps the casing the user typed.
+  username        String? @unique @db.VarChar(30)
+  displayUsername String? @db.VarChar(30)
+
   // Application profile
-  bio String? @db.Text
+  firstName String?   @db.VarChar(50)
+  lastName  String?   @db.VarChar(50)
+  birthDate DateTime? @db.Date
+  bio       String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -101,6 +125,8 @@ model User {
   accounts       Account[]
   twoFactors     TwoFactor[]
   posts          Post[]
+  comments       Comment[]
+  reactions      PostReaction[]
   messages       Message[]
   notifications  Notification[]
   preferences    NotificationPreference?
@@ -108,6 +134,9 @@ model User {
   uploads        Upload[]
   reportsMade    Report[]             @relation("ReportReporter")
   reportsHandled Report[]             @relation("ReportResolver")
+  roomMembers    RoomMember[]
+  followers      Follow[]             @relation("UserFollowers")
+  following      Follow[]             @relation("UserFollowing")
 
   @@index([role])
   @@index([banned])
@@ -202,13 +231,61 @@ model Post {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+  /// Denormalised counters, maintained in the same transaction as the row
+  /// they count, so a feed page never needs a COUNT per post.
+  commentCount  Int @default(0)
+  reactionCount Int @default(0)
+
+  comments  Comment[]
+  reactions PostReaction[]
 
   @@index([userId])
   @@index([published])
   @@index([createdAt])
   @@index([deletedAt])
   @@index([userId, deletedAt])
+  // The public feed: published, not deleted, newest first.
+  @@index([published, deletedAt, createdAt])
   @@map("post")
+}
+
+/// One level of threading: a reply points at a top-level comment.
+model Comment {
+  id        String    @id @default(cuid())
+  postId    String
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  body      String    @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  editedAt  DateTime?
+  deletedAt DateTime?
+
+  @@index([postId, createdAt])
+  @@index([parentId])
+  @@index([userId])
+  @@map("comment")
+}
+
+/// One reaction per user per post; changing it updates the row in place.
+model PostReaction {
+  id        String       @id @default(cuid())
+  postId    String
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([postId, userId])
+  @@index([postId, type])
+  @@index([userId])
+  @@map("postReaction")
 }
 
 model Room {
@@ -221,10 +298,42 @@ model Room {
   updatedAt  DateTime @updatedAt
 
   messages Message[]
+  members  RoomMember[]
 
   @@index([type])
   @@index([entityType, entityId])
   @@map("room")
+}
+
+model RoomMember {
+  id         String   @id @default(cuid())
+  roomId     String
+  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       String   @default("MEMBER")
+  lastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@index([roomId])
+  @@map("roomMember")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follow")
 }
 
 model Message {
@@ -234,6 +343,7 @@ model Message {
   senderId  String
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content   String   @db.Text
+  deletedAt DateTime?
   createdAt DateTime @default(now())
 
   // Drives the hot path: "latest N messages in this room, newer than X".

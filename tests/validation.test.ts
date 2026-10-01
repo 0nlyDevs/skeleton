@@ -13,6 +13,7 @@ import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   estimatePasswordStrength,
+  findPasswordViolation,
   passwordSchema,
 } from "@/lib/auth/password-policy";
 import {
@@ -26,15 +27,29 @@ import {
 } from "@/lib/pagination";
 
 describe("password policy", () => {
-  it("accepts a long passphrase", () => {
-    expect(passwordSchema.safeParse("correct horse battery staple").success).toBe(true);
+  it("accepts a password with every character class", () => {
+    expect(passwordSchema.safeParse("Correct-Horse-42").success).toBe(true);
+    expect(passwordSchema.safeParse("Webcup-2026!jury").success).toBe(true);
   });
 
-  it("rejects short passwords and the ones used in credential stuffing", () => {
-    expect(passwordSchema.safeParse("a".repeat(PASSWORD_MIN_LENGTH - 1)).success).toBe(false);
-    expect(passwordSchema.safeParse("password123").success).toBe(false);
-    // Case must not be an escape hatch.
-    expect(passwordSchema.safeParse("PassWord123").success).toBe(false);
+  it("requires lower, upper, digit and symbol", () => {
+    expect(passwordSchema.safeParse("correct horse battery staple").success).toBe(false);
+    expect(passwordSchema.safeParse("CORRECT-HORSE-42").success).toBe(false);
+    expect(passwordSchema.safeParse("Correct-Horse-xx").success).toBe(false);
+    expect(passwordSchema.safeParse("CorrectHorse42x").success).toBe(false);
+  });
+
+  it("rejects short passwords and decorated common ones", () => {
+    expect(passwordSchema.safeParse("Ab1!".padEnd(PASSWORD_MIN_LENGTH - 1, "x")).success).toBe(false);
+    // Case and decoration must not be an escape hatch.
+    expect(passwordSchema.safeParse("Password123!").success).toBe(false);
+    expect(passwordSchema.safeParse("!Azerty2024").success).toBe(false);
+    expect(passwordSchema.safeParse("Aaaaaaaa1!").success).toBe(false);
+  });
+
+  it("refuses a password built from the account identity", () => {
+    expect(findPasswordViolation("Jdupont-2026!", { email: "jdupont@example.com" })).not.toBeNull();
+    expect(findPasswordViolation("Tr4in-Station!", { email: "jdupont@example.com" })).toBeNull();
   });
 
   it("rejects whitespace-only input and anything past the ceiling", () => {
