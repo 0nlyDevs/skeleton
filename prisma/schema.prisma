@@ -57,6 +57,21 @@ enum NotificationType {
   MENTION
   SYSTEM
   ROLE_CHANGED
+  POST_COMMENT
+  COMMENT_REPLY
+  POST_REACTION
+  NEW_FOLLOWER
+  GROUP_INVITE
+  MODERATION
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
 }
 
 enum ReportStatus {
@@ -109,6 +124,8 @@ model User {
   accounts       Account[]
   twoFactors     TwoFactor[]
   posts          Post[]
+  comments       Comment[]
+  reactions      PostReaction[]
   messages       Message[]
   notifications  Notification[]
   preferences    NotificationPreference?
@@ -210,13 +227,61 @@ model Post {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+  /// Denormalised counters, maintained in the same transaction as the row
+  /// they count, so a feed page never needs a COUNT per post.
+  commentCount  Int @default(0)
+  reactionCount Int @default(0)
+
+  comments  Comment[]
+  reactions PostReaction[]
 
   @@index([userId])
   @@index([published])
   @@index([createdAt])
   @@index([deletedAt])
   @@index([userId, deletedAt])
+  // The public feed: published, not deleted, newest first.
+  @@index([published, deletedAt, createdAt])
   @@map("post")
+}
+
+/// One level of threading: a reply points at a top-level comment.
+model Comment {
+  id        String    @id @default(cuid())
+  postId    String
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  body      String    @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  editedAt  DateTime?
+  deletedAt DateTime?
+
+  @@index([postId, createdAt])
+  @@index([parentId])
+  @@index([userId])
+  @@map("comment")
+}
+
+/// One reaction per user per post; changing it updates the row in place.
+model PostReaction {
+  id        String       @id @default(cuid())
+  postId    String
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([postId, userId])
+  @@index([postId, type])
+  @@index([userId])
+  @@map("postReaction")
 }
 
 model Room {

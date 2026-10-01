@@ -39,6 +39,10 @@ export const auditActions = {
   reportDismissed: "report.dismissed",
   uploadCreated: "upload.created",
   featureFlagToggled: "feature_flag.toggled",
+  commentDeleted: "comment.deleted",
+  messageDeleted: "message.deleted",
+  conversationCreated: "conversation.created",
+  conversationMembersChanged: "conversation.members_changed",
 } as const;
 
 export type AuditAction = (typeof auditActions)[keyof typeof auditActions];

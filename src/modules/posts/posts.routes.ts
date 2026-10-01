@@ -7,12 +7,13 @@
  * the App Router surface free of logic.
  */
 
-import { apiRoute } from "@/lib/api/route";
+import { apiRoute, publicRoute } from "@/lib/api/route";
 import { jsonCreated, jsonOk, noContent } from "@/lib/api/response";
 import { STAFF_ROLES } from "@/lib/auth/roles";
 
 import {
   createPostSchema,
+  feedQuerySchema,
   listPostsQuerySchema,
   postIdParamSchema,
   updatePostSchema,
@@ -20,7 +21,9 @@ import {
 import {
   createPostForActor,
   deletePostForActor,
+  getFeedItem,
   getPostForActor,
+  listFeed,
   listPosts,
   restorePostForActor,
   updatePostForActor,
@@ -62,4 +65,15 @@ export const restorePostRoute = apiRoute({
   roles: STAFF_ROLES,
   handler: async ({ params, auth, ip }) =>
     jsonOk({ data: await restorePostForActor(params.id, { user: auth.user, ip }) }),
+});
+
+/** Public: guests read the feed; signed-in viewers also see their own reactions. */
+export const listFeedRoute = publicRoute({
+  query: feedQuerySchema,
+  handler: async ({ query, auth }) => jsonOk(await listFeed(query, auth?.user ?? null)),
+});
+
+export const getFeedItemRoute = publicRoute({
+  params: postIdParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await getFeedItem(params.id, auth?.user ?? null) }),
 });

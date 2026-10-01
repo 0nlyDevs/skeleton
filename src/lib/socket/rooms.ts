@@ -22,8 +22,16 @@ export function chatRoom(roomId: string): string {
 /** Room holding every connected client, for global presence announcements. */
 export const GLOBAL_PRESENCE_ROOM = "presence:global";
 
+/** Public feed: new, edited and removed published posts, plus their counters. */
+export const FEED_ROOM = "feed:public";
+
+/** One post's live thread: comments and reaction counters. */
+export function postRoom(postId: string): string {
+  return `post:${postId}`;
+}
+
 export interface ParsedRoom {
-  readonly kind: "user" | "room" | "presence";
+  readonly kind: "user" | "room" | "presence" | "post";
   readonly id: string;
 }
 
@@ -38,6 +46,7 @@ export function parseRoom(name: string): ParsedRoom | undefined {
 
   if (kind === "user") return { kind, id };
   if (kind === "room") return { kind, id };
+  if (kind === "post") return { kind, id };
   if (name === GLOBAL_PRESENCE_ROOM) return { kind: "presence", id: "global" };
 
   return undefined;

@@ -14,13 +14,16 @@
 
 import {
   SOCKET_EVENTS,
+  type CommentEventPayload,
+  type FeedPostPayload,
   type MessagePayload,
+  type PostEngagementPayload,
   type NotificationPayload,
   type PresencePayload,
   type TypingPayload,
 } from "./events";
 import { getSocketServer } from "./registry";
-import { chatRoom, userRoom } from "./rooms";
+import { FEED_ROOM, chatRoom, postRoom, userRoom } from "./rooms";
 
 function publish(room: string, event: string, payload: unknown): void {
   getSocketServer()?.to(room).emit(event, payload);
@@ -44,6 +47,26 @@ export function publishTyping(roomId: string, payload: TypingPayload): void {
 export function publishPresence(roomId: string, online: number): void {
   const payload: PresencePayload = { roomId, online };
   publish(chatRoom(roomId), SOCKET_EVENTS.presence, payload);
+}
+
+/** A published post appeared, changed or disappeared from the public feed. */
+export function publishFeedPost(payload: FeedPostPayload): void {
+  publish(FEED_ROOM, SOCKET_EVENTS.feedPost, payload);
+}
+
+/**
+ * New counters for a post, to its open thread and — when the post is public —
+ * to every feed card showing it. One emit per room, whatever the audience size.
+ */
+export function publishEngagement(payload: PostEngagementPayload, isPublic: boolean): void {
+  const server = getSocketServer();
+  if (!server) return;
+  const rooms = isPublic ? [postRoom(payload.postId), FEED_ROOM] : [postRoom(payload.postId)];
+  server.to(rooms).emit(SOCKET_EVENTS.postEngagement, payload);
+}
+
+export function publishComment(payload: CommentEventPayload): void {
+  publish(postRoom(payload.postId), SOCKET_EVENTS.comment, payload);
 }
 
 /** Current number of sockets in a room, straight from the adapter. */

@@ -84,10 +84,12 @@ async function deliverEmail(input: CreateNotificationInput): Promise<void> {
 
   const preferences = recipient.preferences ?? (await findPreferences(input.userId));
 
+  // Conversation-style activity (mentions, comments, replies) follows the
+  // mention switch; direct messages and group invites follow the message one.
   const wantsEmail =
-    input.type === "MENTION"
+    input.type === "MENTION" || input.type === "POST_COMMENT" || input.type === "COMMENT_REPLY"
       ? (preferences?.emailOnMention ?? true)
-      : input.type === "NEW_MESSAGE"
+      : input.type === "NEW_MESSAGE" || input.type === "GROUP_INVITE"
         ? (preferences?.emailOnMessage ?? false)
         : (preferences?.emailOnSystem ?? true);
 
@@ -154,6 +156,124 @@ export async function notifyMention(input: {
     title: `${input.senderName} vous a mentionné`,
     body: truncate(input.preview, 140),
     link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    email: true,
+  });
+}
+
+/** Fire-and-forget wrapper: a failed bell entry must never fail the action. */
+export function notifyInBackground(task: Promise<unknown>, context: Record<string, unknown>): void {
+  void task.catch((error: unknown) => {
+    logger.warn("notification failed", { ...context, error });
+  });
+}
+
+function actorHandle(actor: { name: string }): string {
+  return actor.name;
+}
+
+export async function notifyPostComment(input: {
+  userId: string;
+  actor: { name: string };
+  postId: string;
+  postTitle: string;
+  preview: string;
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "POST_COMMENT",
+    title: `${actorHandle(input.actor)} a commenté « ${truncate(input.postTitle, 60)} »`,
+    body: truncate(input.preview, 140),
+    link: `/feed/${encodeURIComponent(input.postId)}`,
+    email: true,
+  });
+}
+
+export async function notifyCommentReply(input: {
+  userId: string;
+  actor: { name: string };
+  postId: string;
+  preview: string;
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "COMMENT_REPLY",
+    title: `${actorHandle(input.actor)} a répondu à votre commentaire`,
+    body: truncate(input.preview, 140),
+    link: `/feed/${encodeURIComponent(input.postId)}`,
+    email: true,
+  });
+}
+
+export async function notifyContentMention(input: {
+  userId: string;
+  actor: { name: string };
+  postId: string;
+  preview: string;
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "MENTION",
+    title: `${actorHandle(input.actor)} vous a mentionné`,
+    body: truncate(input.preview, 140),
+    link: `/feed/${encodeURIComponent(input.postId)}`,
+    email: true,
+  });
+}
+
+export async function notifyPostReaction(input: {
+  userId: string;
+  actor: { name: string };
+  postId: string;
+  postTitle: string;
+}): Promise<void> {
+  // In-app only: an email per like is the fastest way to get unsubscribed.
+  await createNotification({
+    userId: input.userId,
+    type: "POST_REACTION",
+    title: `${actorHandle(input.actor)} a réagi à « ${truncate(input.postTitle, 60)} »`,
+    link: `/feed/${encodeURIComponent(input.postId)}`,
+  });
+}
+
+export async function notifyNewFollower(input: {
+  userId: string;
+  actor: { name: string; username: string | null };
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "NEW_FOLLOWER",
+    title: `${actorHandle(input.actor)} vous suit désormais`,
+    link: input.actor.username ? `/u/${encodeURIComponent(input.actor.username)}` : null,
+  });
+}
+
+export async function notifyGroupInvite(input: {
+  userId: string;
+  actor: { name: string };
+  roomId: string;
+  groupName: string;
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "GROUP_INVITE",
+    title: `${actorHandle(input.actor)} vous a ajouté au groupe « ${truncate(input.groupName, 60)} »`,
+    link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    email: true,
+  });
+}
+
+/** Staff removed something the user wrote; they deserve to know, and why. */
+export async function notifyModeration(input: {
+  userId: string;
+  what: string;
+  reason?: string | null;
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "MODERATION",
+    title: `Votre ${input.what} a été retiré par la modération`,
+    body: input.reason ? truncate(input.reason, 200) : "Il ne respectait pas les règles de la communauté.",
+    link: "/notifications",
     email: true,
   });
 }

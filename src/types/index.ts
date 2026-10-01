@@ -15,8 +15,20 @@ export const NOTIFICATION_TYPES = [
   "MENTION",
   "SYSTEM",
   "ROLE_CHANGED",
+  "POST_COMMENT",
+  "COMMENT_REPLY",
+  "POST_REACTION",
+  "NEW_FOLLOWER",
+  "GROUP_INVITE",
+  "MODERATION",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+export const REACTION_TYPES = ["LIKE", "LOVE", "HAHA", "WOW", "SAD", "ANGRY"] as const;
+export type ReactionType = (typeof REACTION_TYPES)[number];
+
+/** Per-type reaction totals; a missing key means zero. */
+export type ReactionCounts = Partial<Record<ReactionType, number>>;
 
 export const ROOM_TYPES = ["GLOBAL", "POST", "DIRECT"] as const;
 export type RoomType = (typeof ROOM_TYPES)[number];

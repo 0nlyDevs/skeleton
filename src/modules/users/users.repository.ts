@@ -89,6 +89,17 @@ export async function findUserIdByUsername(username: string): Promise<string | n
   return row?.id ?? null;
 }
 
+/** Resolve mentioned handles to active accounts in one query. */
+export async function findActiveUsersByUsernames(
+  usernames: readonly string[],
+): Promise<Array<{ id: string; username: string | null }>> {
+  if (usernames.length === 0) return [];
+  return prisma.user.findMany({
+    where: { username: { in: [...usernames] }, banned: false },
+    select: { id: true, username: true },
+  });
+}
+
 /** Used to refuse an action that would leave the platform without an admin. */
 export async function countAdmins(): Promise<number> {
   return prisma.user.count({ where: { role: "ADMIN", banned: false } });

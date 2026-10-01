@@ -15,25 +15,31 @@
 import type { Prisma } from "@/generated/prisma/client";
 
 import { assertOwnerOrStaff, isStaff } from "@/lib/auth/guards";
-import { NotFoundError } from "@/lib/errors";
+import { BadRequestError, NotFoundError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
+import { publishFeedPost } from "@/lib/socket/emit";
 import { paginate, resolveSortField, toPagination, type Paginated } from "@/lib/pagination";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
-import { toPostDto, toPostDtos, type PostDto } from "./posts.dto";
+import { countReactionsByType, findViewerReactions } from "../reactions/reactions.repository";
+import { toFeedItemDto, toPostDto, toPostDtos, type FeedItemDto, type PostDto } from "./posts.dto";
 import {
   countPosts,
   countPostsByUser,
   createPost,
+  findFeedPage,
   findPostById,
   findPosts,
   restorePost,
   softDeletePost,
   updatePost,
+  type PostWithAuthor,
 } from "./posts.repository";
 import type {
   CreatePostInput,
+  FeedQuery,
   ListPostsQuery,
   UpdatePostInput,
 } from "./posts.schema";
@@ -123,6 +129,124 @@ export async function getPostForActor(id: string, actor: AuthUser): Promise<Post
   return toPostDto(row);
 }
 
+/**
+ * Load a post `viewer` may read (guests: published only), or raise 404.
+ * The single visibility rule shared by pages, comments, reactions and sockets.
+ */
+export async function loadReadablePost(id: string, viewer: AuthUser | null): Promise<PostWithAuthor> {
+  const row = await findPostById(id);
+  if (!row) throw new NotFoundError();
+
+  const staff = viewer !== null && isStaff(viewer);
+  if (row.deletedAt && !staff) throw new NotFoundError();
+  if (!row.published && !staff && row.userId !== viewer?.id) throw new NotFoundError();
+
+  return row;
+}
+
+/** Interaction (comment, react) requires a live, published post. */
+export async function loadInteractivePost(id: string, viewer: AuthUser): Promise<PostWithAuthor> {
+  const row = await loadReadablePost(id, viewer);
+  if (!row.published || row.deletedAt) {
+    throw new BadRequestError("This post is not open for interaction.");
+  }
+  return row;
+}
+
+export function isPublicPost(row: { published: boolean; deletedAt: Date | null }): boolean {
+  return row.published && row.deletedAt === null;
+}
+
+async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Promise<FeedItemDto[]> {
+  const ids = rows.map((row) => row.id);
+  const [counts, mine] = await Promise.all([
+    countReactionsByType(ids),
+    viewer ? findViewerReactions(ids, viewer.id) : Promise.resolve(new Map<string, never>()),
+  ]);
+  return rows.map((row) => toFeedItemDto(row, counts.get(row.id) ?? {}, mine.get(row.id) ?? null));
+}
+
+function encodeCursor(row: { createdAt: Date; id: string }): string {
+  return Buffer.from(`${row.createdAt.toISOString()}|${row.id}`, "utf8").toString("base64url");
+}
+
+function decodeCursor(cursor: string | undefined): { createdAt: Date; id: string } | null {
+  if (!cursor) return null;
+  try {
+    const [iso, id] = Buffer.from(cursor, "base64url").toString("utf8").split("|");
+    const createdAt = new Date(iso ?? "");
+    if (!id || Number.isNaN(createdAt.getTime())) throw new Error("bad cursor");
+    return { createdAt, id };
+  } catch {
+    throw new BadRequestError("Invalid cursor.");
+  }
+}
+
+export interface FeedPage {
+  readonly data: FeedItemDto[];
+  /** Pass back as `cursor` for the next page; `null` at the end. */
+  readonly nextCursor: string | null;
+}
+
+/**
+ * The public feed. Keyset-paginated (stable under concurrent inserts, O(page)
+ * regardless of depth) and assembled with a fixed three queries per page:
+ * posts, reaction breakdown, viewer reactions — never one per post.
+ */
+export async function listFeed(
+  query: FeedQuery,
+  viewer: AuthUser | null,
+  followingIds?: readonly string[],
+): Promise<FeedPage> {
+  const conditions: Prisma.PostWhereInput[] = [{ published: true, deletedAt: null }];
+  if (query.authorId) conditions.push({ userId: query.authorId });
+  if (followingIds) conditions.push({ userId: { in: [...followingIds] } });
+  if (query.q) {
+    conditions.push({ OR: [{ title: { contains: query.q } }, { body: { contains: query.q } }] });
+  }
+
+  const rows = await findFeedPage({
+    where: { AND: conditions },
+    cursor: decodeCursor(query.cursor),
+    take: query.limit + 1,
+  });
+
+  const page = rows.slice(0, query.limit);
+  const last = page[page.length - 1];
+
+  return {
+    data: await toFeedItems(page, viewer),
+    nextCursor: rows.length > query.limit && last ? encodeCursor(last) : null,
+  };
+}
+
+export async function getFeedItem(id: string, viewer: AuthUser | null): Promise<FeedItemDto> {
+  const row = await loadReadablePost(id, viewer);
+  const [item] = await toFeedItems([row], viewer);
+  return item as FeedItemDto;
+}
+
+/**
+ * Keep every open feed in step with a post's public state. The payload is
+ * viewer-neutral (no "you reacted"): it goes to everyone.
+ */
+async function announce(row: PostWithAuthor, wasPublic: boolean): Promise<void> {
+  try {
+    const nowPublic = isPublicPost(row);
+    if (!wasPublic && !nowPublic) return;
+
+    if (!nowPublic) {
+      publishFeedPost({ kind: "deleted", postId: row.id });
+      return;
+    }
+
+    const [item] = await toFeedItems([row], null);
+    publishFeedPost({ kind: wasPublic ? "updated" : "created", postId: row.id, ...(item ? { post: item } : {}) });
+  } catch (error) {
+    logger.warn("feed announcement failed", { postId: row.id, error });
+  }
+}
+
 export async function createPostForActor(
   input: CreatePostInput,
   actor: ActorContext,
@@ -146,6 +270,8 @@ export async function createPostForActor(
     ip: actor.ip ?? null,
   });
 
+  void announce(row, false);
+
   return toPostDto(row);
 }
 
@@ -154,7 +280,7 @@ export async function updatePostForActor(
   input: UpdatePostInput,
   actor: ActorContext,
 ): Promise<PostDto> {
-  const _existing = assertOwnerOrStaff(await findPostById(id), actor.user);
+  const existing = assertOwnerOrStaff(await findPostById(id), actor.user);
 
   const data: Prisma.PostUncheckedUpdateInput = {};
   const changed: string[] = [];
@@ -189,12 +315,15 @@ export async function updatePostForActor(
     ip: actor.ip ?? null,
   });
 
+  void announce(row, isPublicPost(existing));
+
   return toPostDto(row);
 }
 
 export async function deletePostForActor(id: string, actor: ActorContext): Promise<void> {
   const existing = assertOwnerOrStaff(await findPostById(id), actor.user);
-  await softDeletePost(existing.id, new Date());
+  const deleted = await softDeletePost(existing.id, new Date());
+  void announce(deleted, isPublicPost(existing));
 
   await recordAudit({
     actorId: actor.user.id,
@@ -211,6 +340,7 @@ export async function restorePostForActor(id: string, actor: ActorContext): Prom
   if (!existing) throw new NotFoundError();
 
   const row = await restorePost(id);
+  void announce(row, isPublicPost(existing));
 
   await recordAudit({
     actorId: actor.user.id,
