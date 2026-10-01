@@ -14,7 +14,8 @@ import { resetPassword } from "@/lib/auth/client";
 import type { MessageKey } from "@/lib/i18n";
 
 import { isNetworkFailure, resetPasswordErrorMessageKey } from "./auth-errors";
-import { PasswordStrength } from "./password-strength";
+import { PasswordRequirements, PasswordStrength } from "./password-strength";
+import { isPasswordAcceptable } from "@/lib/auth/password-policy";
 
 /**
  * Choose a new password.
@@ -95,11 +96,12 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
               name="new-password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={10}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
             <PasswordStrength password={password} />
+            <PasswordRequirements password={password} />
           </div>
         )}
       </FormField>
@@ -125,7 +127,7 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
       <Button
         type="submit"
         size="lg"
-        disabled={pending || password.length < 8 || mismatch || confirmation.length === 0}
+        disabled={pending || !isPasswordAcceptable(password) || mismatch || confirmation.length === 0}
       >
         {pending ? <Spinner className="size-4" /> : null}
         {pending ? t("common.loading") : t("auth.reset.submit")}

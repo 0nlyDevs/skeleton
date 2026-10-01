@@ -52,6 +52,7 @@ export function registerErrorMessageKey(error: AuthErrorLike): MessageKey | null
 
   const code = codeOf(error);
   if (code.includes("ALREADY_EXISTS")) return null;
+  if (code === "PASSWORD_TOO_WEAK") return "auth.password.too_weak";
   if (code.includes("INVALID_EMAIL")) return "error.VALIDATION_ERROR";
   if (code.includes("PASSWORD") || code.includes("INVALID_PASSWORD")) {
     return "error.VALIDATION_ERROR";
@@ -74,6 +75,7 @@ export function resetPasswordErrorMessageKey(error: AuthErrorLike): MessageKey {
   if (code.includes("INVALID_TOKEN") || code.includes("TOKEN_EXPIRED")) {
     return "auth.verify.failed";
   }
+  if (code === "PASSWORD_TOO_WEAK") return "auth.password.too_weak";
   if (code.includes("PASSWORD")) return "error.VALIDATION_ERROR";
 
   return "error.INTERNAL_ERROR";

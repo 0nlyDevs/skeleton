@@ -6,7 +6,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { FormField } from "@/components/forms/form-field";
-import { PasswordStrength } from "@/components/auth/password-strength";
+import { PasswordRequirements, PasswordStrength } from "@/components/auth/password-strength";
+import { isPasswordAcceptable } from "@/lib/auth/password-policy";
 import { useTranslation } from "@/components/providers/i18n-provider";
 
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +89,11 @@ export function SecurityForm({
 
       if (result.error) {
         toast.error(
-          result.error.status === 401 ? t("auth.login.failed") : t("error.VALIDATION_ERROR"),
+          result.error.status === 401
+            ? t("auth.login.failed")
+            : result.error.code === "PASSWORD_TOO_WEAK"
+              ? t("auth.password.too_weak")
+              : t("error.VALIDATION_ERROR"),
         );
         return;
       }
@@ -243,11 +248,12 @@ export function SecurityForm({
                     type="password"
                     autoComplete="new-password"
                     required
-                    minLength={8}
+                    minLength={10}
                     value={newPassword}
                     onChange={(event) => setNewPassword(event.target.value)}
                   />
                   <PasswordStrength password={newPassword} />
+                  <PasswordRequirements password={newPassword} />
                 </div>
               )}
             </FormField>
@@ -255,7 +261,7 @@ export function SecurityForm({
             <Button
               type="submit"
               className="w-fit"
-              disabled={changingPassword || newPassword.length < 8 || currentPassword.length === 0}
+              disabled={changingPassword || !isPasswordAcceptable(newPassword) || currentPassword.length === 0}
             >
               {changingPassword ? <Spinner className="size-4" /> : null}
               {t("settings.security.change")}

@@ -140,7 +140,7 @@ export const fr = {
   "auth.register.name": "Nom complet",
   "auth.register.email": "Adresse e-mail",
   "auth.register.password": "Mot de passe",
-  "auth.register.password_hint": "Au moins 8 caractères. Une phrase longue vaut mieux qu'un symbole.",
+  "auth.register.password_hint": "Majuscule, minuscule, chiffre et symbole, 10 caractères minimum.",
   "auth.register.terms": "J'accepte les conditions d'utilisation et la politique de confidentialité.",
   "auth.register.submit": "Créer mon compte",
   "auth.register.have_account": "Vous avez déjà un compte ?",
@@ -178,6 +178,16 @@ export const fr = {
   "auth.password.fair": "Moyen",
   "auth.password.strong": "Fort",
   "auth.password.very_strong": "Très fort",
+  "auth.password.rules_title": "Votre mot de passe doit contenir :",
+  "auth.password.rule.length": "Au moins {min} caractères",
+  "auth.password.rule.lower": "Une lettre minuscule",
+  "auth.password.rule.upper": "Une lettre majuscule",
+  "auth.password.rule.digit": "Un chiffre",
+  "auth.password.rule.symbol": "Un symbole (! ? # - …)",
+  "auth.password.rule.repeat": "Pas 4 caractères identiques à la suite",
+  "auth.password.rule.common": "Pas un mot de passe courant",
+  "auth.password.too_weak":
+    "Ce mot de passe ne respecte pas les règles de sécurité, ou contient votre e-mail ou nom d'utilisateur.",
   "auth.signout": "Se déconnecter",
 
   // --- Dashboard ---

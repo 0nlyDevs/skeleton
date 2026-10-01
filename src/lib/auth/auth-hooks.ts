@@ -22,6 +22,7 @@ import type { BetterAuthOptions } from "better-auth";
 
 import { env } from "@/lib/env";
 import { resolveClientIp } from "@/lib/http/client-ip";
+import { findPasswordViolation } from "@/lib/auth/password-policy";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey, type RateLimitRule } from "@/lib/rate-limit";
 
 type AuthBeforeMiddleware = NonNullable<NonNullable<BetterAuthOptions["hooks"]>["before"]>;
@@ -89,6 +90,56 @@ function readSubmittedEmail(ctx: unknown): string | undefined {
   const email = (body as { email?: unknown }).email;
   return typeof email === "string" && email.length > 0 ? email : undefined;
 }
+
+function readBodyString(ctx: unknown, key: string): string | undefined {
+  const body = (ctx as HookContextView).body;
+  if (typeof body !== "object" || body === null) return undefined;
+
+  const value = (body as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * Endpoints that accept a new password, and the body field carrying it.
+ * BetterAuth only knows a length rule, so the full policy is applied here — on
+ * the pipeline itself, so calling `/api/auth/*` directly cannot skip it.
+ */
+export const PASSWORD_FIELDS: Readonly<Record<string, string>> = {
+  "/sign-up/email": "password",
+  "/reset-password": "newPassword",
+  "/change-password": "newPassword",
+  "/set-password": "newPassword",
+};
+
+function enforcePasswordPolicy(ctx: unknown, path: string): void {
+  const field = PASSWORD_FIELDS[path];
+  if (!field) return;
+
+  const password = readBodyString(ctx, field);
+  // A missing field is BetterAuth's own 400 to raise.
+  if (password === undefined) return;
+
+  const violation = findPasswordViolation(password, {
+    email: readSubmittedEmail(ctx),
+    username: readBodyString(ctx, "username"),
+  });
+
+  if (violation) {
+    throw new APIError("BAD_REQUEST", { message: violation, code: "PASSWORD_TOO_WEAK" });
+  }
+}
+
+/**
+ * The single `hooks.before` entry: password policy first (a typo must not burn
+ * the sign-up budget), then the brute-force limiter.
+ */
+export const authBeforeHook: AuthBeforeMiddleware = async (ctx) => {
+  const path = readPath(ctx);
+  if (!path) return;
+
+  enforcePasswordPolicy(ctx, path);
+  await authRateLimitHook(ctx);
+};
 
 export const authRateLimitHook: AuthBeforeMiddleware = async (ctx) => {
   const path = readPath(ctx);

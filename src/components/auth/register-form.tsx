@@ -15,7 +15,8 @@ import { signUp } from "@/lib/auth/client";
 import type { MessageKey } from "@/lib/i18n";
 
 import { isNetworkFailure, registerErrorMessageKey } from "./auth-errors";
-import { PasswordStrength } from "./password-strength";
+import { PasswordRequirements, PasswordStrength } from "./password-strength";
+import { isPasswordAcceptable } from "@/lib/auth/password-policy";
 import { GoogleButton, OrDivider } from "./oauth-buttons";
 
 type Status = "idle" | "submitting" | "sent";
@@ -153,11 +154,12 @@ export function RegisterForm({ googleEnabled }: { readonly googleEnabled: boolea
               name="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={10}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
             <PasswordStrength password={password} />
+            <PasswordRequirements password={password} />
           </div>
         )}
       </FormField>
@@ -188,7 +190,7 @@ export function RegisterForm({ googleEnabled }: { readonly googleEnabled: boolea
           !accepted ||
           name.trim().length === 0 ||
           email.trim().length === 0 ||
-          password.length < 8
+          !isPasswordAcceptable(password)
         }
       >
         {status === "submitting" ? <Spinner className="size-4" /> : null}

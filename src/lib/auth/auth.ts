@@ -34,9 +34,10 @@ import {
 } from "@/lib/mail/transactional";
 import { clearLimits, rateLimitKey } from "@/lib/rate-limit";
 
-import { authRateLimitHook } from "./auth-hooks";
+import { authBeforeHook } from "./auth-hooks";
 import { resolveBanState } from "./ban";
 import { hashPassword, verifyPassword } from "./password";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./password-policy";
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const SESSION_REFRESH_SECONDS = 60 * 60 * 24; // refresh at most once a day
@@ -90,8 +91,10 @@ export const auth = betterAuth({
     // Do not auto sign-in after registration: the user must confirm the address
     // first, which also keeps the registration response free of session data.
     autoSignIn: false,
-    minPasswordLength: 8,
-    maxPasswordLength: 128,
+    // The full composition policy runs in `authBeforeHook`; these bounds keep
+    // BetterAuth's own check consistent with it.
+    minPasswordLength: PASSWORD_MIN_LENGTH,
+    maxPasswordLength: PASSWORD_MAX_LENGTH,
     // Requiring verification only makes sense when mail actually works.
     requireEmailVerification: env.emailEnabled,
     resetPasswordTokenExpiresIn: TOKEN_TTL_SECONDS,
@@ -157,9 +160,9 @@ export const auth = betterAuth({
   },
 
   hooks: {
-    // One limiter for the whole pipeline — see `auth-hooks.ts` for why this
-    // lives inside BetterAuth rather than in front of it.
-    before: authRateLimitHook,
+    // Password policy and the one limiter for the whole pipeline — see
+    // `auth-hooks.ts` for why these live inside BetterAuth rather than in front.
+    before: authBeforeHook,
   },
 
   databaseHooks: {

@@ -137,7 +137,7 @@ export const en: Dictionary = {
   "auth.register.name": "Full name",
   "auth.register.email": "Email address",
   "auth.register.password": "Password",
-  "auth.register.password_hint": "At least 8 characters. A long passphrase beats a symbol.",
+  "auth.register.password_hint": "Upper and lower case, a digit and a symbol, 10 characters minimum.",
   "auth.register.terms": "I accept the terms of use and the privacy policy.",
   "auth.register.submit": "Create my account",
   "auth.register.have_account": "Already have an account?",
@@ -175,6 +175,16 @@ export const en: Dictionary = {
   "auth.password.fair": "Fair",
   "auth.password.strong": "Strong",
   "auth.password.very_strong": "Very strong",
+  "auth.password.rules_title": "Your password must contain:",
+  "auth.password.rule.length": "At least {min} characters",
+  "auth.password.rule.lower": "A lowercase letter",
+  "auth.password.rule.upper": "An uppercase letter",
+  "auth.password.rule.digit": "A digit",
+  "auth.password.rule.symbol": "A symbol (! ? # - …)",
+  "auth.password.rule.repeat": "No character repeated 4 times in a row",
+  "auth.password.rule.common": "Not a common password",
+  "auth.password.too_weak":
+    "This password does not meet the security rules, or contains your email or username.",
   "auth.signout": "Sign out",
 
   // --- Dashboard ---

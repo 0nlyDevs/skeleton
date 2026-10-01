@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { passwordSchema } from "@/lib/auth/password-policy";
 import { roleSchema } from "@/lib/auth/roles";
 import { paginationQuerySchema, sortOrderSchema } from "@/lib/pagination";
 import {
@@ -70,7 +71,7 @@ export type UpdateUserBanInput = z.infer<typeof updateUserBanSchema>;
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Enter your current password.").max(128),
-  newPassword: z.string().min(8, "Use at least 8 characters.").max(128),
+  newPassword: passwordSchema,
 });
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
