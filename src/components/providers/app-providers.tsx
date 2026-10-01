@@ -22,17 +22,22 @@ import { ThemeProvider } from "./theme-provider";
 export function AppProviders({
   locale,
   dictionary,
+  viewerId,
+  nonce,
   children,
 }: {
   locale: Locale;
   dictionary: Dictionary;
+  /** The signed-in user, resolved on the server; `null` for guests. */
+  viewerId: string | null;
+  nonce?: string;
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
+    <ThemeProvider {...(nonce ? { nonce } : {})}>
       <I18nProvider locale={locale} dictionary={dictionary}>
         <TooltipProvider delayDuration={300}>
-          <RealtimeProvider>
+          <RealtimeProvider viewerId={viewerId}>
             {children}
             <Toaster />
           </RealtimeProvider>

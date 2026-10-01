@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 
 import { AppProviders } from "@/components/providers/app-providers";
+import { getCurrentUser } from "@/lib/auth/session";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { publicEnv } from "@/lib/env.public";
 
@@ -40,8 +42,15 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const locale = await getLocale();
+  const [locale, requestHeaders, viewer] = await Promise.all([
+    getLocale(),
+    headers(),
+    getCurrentUser().catch(() => null),
+  ]);
   const dictionary = getDictionary(locale);
+  // Per-request CSP nonce minted by `src/proxy.ts`; inline scripts injected by
+  // providers (the theme bootstrap) must carry it or the browser blocks them.
+  const nonce = requestHeaders.get("x-nonce") ?? undefined;
 
   return (
     <html
@@ -58,7 +67,12 @@ export default async function RootLayout({
           {dictionary["nav.skip_to_content"]}
         </a>
 
-        <AppProviders locale={locale} dictionary={dictionary}>
+        <AppProviders
+          locale={locale}
+          dictionary={dictionary}
+          viewerId={viewer?.id ?? null}
+          {...(nonce ? { nonce } : {})}
+        >
           {children}
         </AppProviders>
       </body>

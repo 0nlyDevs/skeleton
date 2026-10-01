@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useSocket, type SocketStatus } from "@/hooks/use-socket";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
-import { SOCKET_EVENTS, type NotificationPayload } from "@/lib/socket/events";
+import { SOCKET_EVENTS, type NotificationPayload, type ReadyPayload } from "@/lib/socket/events";
 import type { ListMeta, NotificationType } from "@/types";
 
 interface RealtimeContextValue {
@@ -42,8 +42,42 @@ const BELL_LIMIT = 12;
  * The second path is what makes the polling fallback sufficient: if WebSockets
  * are blocked entirely, the bell still fills in on every navigation and refresh.
  */
-export function RealtimeProvider({ children }: { children: React.ReactNode }) {
+export function RealtimeProvider({
+  children,
+  viewerId,
+}: {
+  children: React.ReactNode;
+  readonly viewerId: string | null;
+}) {
   const { socket, status } = useSocket();
+
+  /*
+   * The socket is authenticated once, at handshake. A tab that signs in or out
+   * through client-side navigation keeps the same socket, which would then speak
+   * for the previous identity (a guest socket after sign-in: every chat event is
+   * refused). The server announces who it thinks we are in `session:ready`; when
+   * that disagrees with the session the page was rendered for, re-handshake.
+   */
+  const handshakeUser = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!socket) return;
+    const onReady = (payload: ReadyPayload) => {
+      handshakeUser.current = payload.user?.id ?? null;
+      if (handshakeUser.current !== viewerId) {
+        socket.disconnect();
+        socket.connect();
+      }
+    };
+    socket.on(SOCKET_EVENTS.ready, onReady);
+    // The identity may already be known from an earlier handshake.
+    if (handshakeUser.current !== undefined && handshakeUser.current !== viewerId && socket.connected) {
+      socket.disconnect();
+      socket.connect();
+    }
+    return () => {
+      socket.off(SOCKET_EVENTS.ready, onReady);
+    };
+  }, [socket, viewerId]);
   const t = useTranslation();
 
   const [notifications, setNotifications] = useState<readonly NotificationPayload[]>([]);
@@ -74,15 +108,22 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Guests have no notifications: skip the request instead of collecting 401s.
   useEffect(() => {
+    if (!viewerId) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
     void refresh();
-  }, [refresh]);
+  }, [refresh, viewerId]);
 
   // Reconcile after a reconnect, when frames may have been missed.
   useEffect(() => {
-    if (status !== "socket") return;
+    if (status !== "socket" || !viewerId) return;
     void refresh();
-  }, [status, refresh]);
+  }, [status, refresh, viewerId]);
 
   useEffect(() => {
     if (!socket) return;
