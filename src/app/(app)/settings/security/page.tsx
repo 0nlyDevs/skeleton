@@ -13,8 +13,8 @@ export const metadata: Metadata = { title: "Sécurité" };
  * Security settings.
  *
  * Sessions come from BetterAuth's own list endpoint logic (called server-side, so
- * no extra HTTP hop), and the current session is identified by its token — the
- * only field the client needs to distinguish "this device" from the others.
+ * no extra HTTP hop). Only session ids reach the client; revocation goes through
+ * `/api/users/me/sessions`, which scopes every delete to the caller.
  */
 export default async function SecuritySettingsPage() {
   const context = await getAuthContext();
@@ -27,9 +27,10 @@ export default async function SecuritySettingsPage() {
     <SecurityForm
       twoFactorEnabled={context.user.twoFactorEnabled}
       oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }}
-      currentSessionToken={context.session.id}
+      currentSessionId={context.session.id}
+      // Ids only: a session token is a bearer credential and stays server-side.
       sessions={sessions.map((session) => ({
-        token: session.token,
+        id: session.id,
         expiresAt: session.expiresAt.toISOString(),
         ipAddress: session.ipAddress ?? null,
         userAgent: session.userAgent ?? null,

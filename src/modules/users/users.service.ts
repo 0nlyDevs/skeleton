@@ -29,6 +29,8 @@ import { toAdminUserDto, toUserProfileDto, type AdminUserDto, type UserProfileDt
 import {
   countAdmins,
   countUsers,
+  deleteOtherSessions,
+  deleteOwnSession,
   deleteUserSessions,
   findAdminUserById,
   findUserProfileById,
@@ -234,6 +236,53 @@ export async function updateOwnProfile(
   });
 
   return toUserProfileDto(row);
+}
+
+/**
+ * Sign out one device.
+ *
+ * Sessions are addressed by id, never by token: the token *is* the credential,
+ * so it must never be sent to the browser — not even the user's own other
+ * tokens, which any XSS on the settings page could otherwise collect.
+ */
+export async function revokeOwnSession(
+  sessionId: string,
+  context: { readonly userId: string; readonly currentSessionId: string; readonly ip?: string },
+): Promise<void> {
+  if (sessionId === context.currentSessionId) {
+    throw new BadRequestError("Use sign out to end the current session.");
+  }
+
+  const revoked = await deleteOwnSession(context.userId, sessionId);
+  if (revoked === 0) throw new NotFoundError("That session does not exist.");
+
+  await recordAudit({
+    actorId: context.userId,
+    action: auditActions.userSessionsRevoked,
+    targetType: "user",
+    targetId: context.userId,
+    metadata: { revoked },
+    ip: context.ip ?? null,
+  });
+}
+
+export async function revokeOtherOwnSessions(context: {
+  readonly userId: string;
+  readonly currentSessionId: string;
+  readonly ip?: string;
+}): Promise<number> {
+  const revoked = await deleteOtherSessions(context.userId, context.currentSessionId);
+
+  await recordAudit({
+    actorId: context.userId,
+    action: auditActions.userSessionsRevoked,
+    targetType: "user",
+    targetId: context.userId,
+    metadata: { revoked },
+    ip: context.ip ?? null,
+  });
+
+  return revoked;
 }
 
 /**

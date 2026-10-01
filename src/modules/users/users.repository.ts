@@ -97,6 +97,23 @@ export async function findRecentUsers(take: number): Promise<AdminUserRow[]> {
   });
 }
 
+/**
+ * Revoke one of the caller's own sessions. Ownership is part of the `where`
+ * clause, so another user's session id simply matches nothing.
+ */
+export async function deleteOwnSession(userId: string, sessionId: string): Promise<number> {
+  const { count } = await prisma.session.deleteMany({ where: { id: sessionId, userId } });
+  return count;
+}
+
+/** Revoke every session of the user except the one making the request. */
+export async function deleteOtherSessions(userId: string, keepSessionId: string): Promise<number> {
+  const { count } = await prisma.session.deleteMany({
+    where: { userId, id: { not: keepSessionId } },
+  });
+  return count;
+}
+
 /** Revoke every session for a user, e.g. immediately after a ban. */
 export async function deleteUserSessions(userId: string): Promise<number> {
   const { count } = await prisma.session.deleteMany({ where: { userId } });

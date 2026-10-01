@@ -17,11 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { apiFetch } from "@/lib/api/client";
 import { authClient } from "@/lib/auth/client";
 import { formatDateTime } from "@/lib/format";
 
 interface SessionInfo {
-  readonly token: string;
+  readonly id: string;
   readonly expiresAt: string;
   readonly ipAddress: string | null;
   readonly userAgent: string | null;
@@ -46,12 +47,12 @@ interface SessionInfo {
 export function SecurityForm({
   twoFactorEnabled: initialTwoFactor,
   sessions: initialSessions,
-  currentSessionToken,
+  currentSessionId,
   oauth,
 }: {
   readonly twoFactorEnabled: boolean;
   readonly sessions: SessionInfo[];
-  readonly currentSessionToken: string;
+  readonly currentSessionId: string;
   readonly oauth: OAuthAvailability;
 }) {
   const t = useTranslation();
@@ -182,13 +183,13 @@ export function SecurityForm({
     }
   };
 
-  const revokeSession = async (token: string) => {
-    setRevokingId(token);
+  const revokeSession = async (id: string) => {
+    setRevokingId(id);
     try {
-      // BetterAuth keys a session by its token, which is what `list-sessions`
-      // returns — the internal id is never exposed to the client.
-      await authClient.revokeSession({ token });
-      setSessions((current) => current.filter((session) => session.token !== token));
+      // Sessions are addressed by id: the token is the credential itself and
+      // never reaches the browser.
+      await apiFetch(`/api/users/me/sessions/${encodeURIComponent(id)}`, { method: "DELETE" });
+      setSessions((current) => current.filter((session) => session.id !== id));
       toast.success(t("settings.security.revoked"));
     } catch {
       toast.error(t("feedback.error.body"));
@@ -200,8 +201,8 @@ export function SecurityForm({
   const revokeOthers = async () => {
     setRevokingId("*");
     try {
-      await authClient.revokeOtherSessions();
-      setSessions((current) => current.filter((session) => session.token === currentSessionToken));
+      await apiFetch("/api/users/me/sessions", { method: "DELETE" });
+      setSessions((current) => current.filter((session) => session.id === currentSessionId));
       toast.success(t("settings.security.revoked"));
     } catch {
       toast.error(t("feedback.error.body"));
@@ -376,7 +377,7 @@ export function SecurityForm({
         <CardContent>
           <ul className="flex flex-col divide-y divide-border/60">
             {sessions.map((session) => (
-              <li key={session.token} className="flex items-center gap-3 py-3">
+              <li key={session.id} className="flex items-center gap-3 py-3">
                 <Monitor className="size-4 shrink-0 text-muted-foreground" />
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-[13.5px] font-medium">
@@ -386,7 +387,7 @@ export function SecurityForm({
                     {session.ipAddress ?? "—"} · {formatDateTime(session.createdAt)}
                   </span>
                 </div>
-                {session.token === currentSessionToken ? (
+                {session.id === currentSessionId ? (
                   <Badge variant="success">{t("settings.security.current")}</Badge>
                 ) : (
                   <Button
@@ -394,9 +395,9 @@ export function SecurityForm({
                     size="sm"
                     className="text-error"
                     disabled={revokingId !== null}
-                    onClick={() => void revokeSession(session.token)}
+                    onClick={() => void revokeSession(session.id)}
                   >
-                    {revokingId === session.token ? <Spinner className="size-3.5" /> : null}
+                    {revokingId === session.id ? <Spinner className="size-3.5" /> : null}
                     {t("settings.security.revoke")}
                   </Button>
                 )}

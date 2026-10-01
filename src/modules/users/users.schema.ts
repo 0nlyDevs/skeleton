@@ -45,6 +45,8 @@ export type AdminListUsersQuery = z.infer<typeof adminListUsersQuerySchema>;
 
 export const userIdParamSchema = z.object({ id: idSchema });
 
+export const sessionIdParamSchema = z.object({ id: idSchema });
+
 export const updateUserRoleSchema = z.object({
   role: roleSchema,
 });
