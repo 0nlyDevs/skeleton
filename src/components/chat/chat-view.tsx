@@ -34,7 +34,7 @@ interface MessagesResponse {
 }
 
 const MESSAGE_PAGE = 30;
-const POLL_INTERVAL_MS = 4_000;
+const POLL_INTERVAL_MS = 8_000;
 const TYPING_DEBOUNCE_MS = 2_500;
 
 /**
@@ -213,7 +213,9 @@ export function ChatView({ user }: { readonly user: AuthUser }) {
 
   // --- Polling fallback ------------------------------------------------------
   useEffect(() => {
-    if (status === "socket" || !activeRoom) return;
+    // Socket first: the HTTP API is only polled once the socket has failed
+    // repeatedly, never while it is merely (re)connecting.
+    if (status !== "polling" || !activeRoom) return;
 
     const interval = setInterval(async () => {
       const lastId = messages[messages.length - 1]?.id;

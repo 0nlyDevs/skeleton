@@ -1,27 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 
 import { publicEnv } from "@/lib/env.public";
 import type { ClientToServerEvents, ServerToClientEvents } from "@/lib/socket/events";
 
+/**
+ * `socket`     — connected; every update is pushed.
+ * `connecting` — first handshake or a reconnect in progress; nothing to do yet.
+ * `polling`    — the socket has failed repeatedly; consumers may poll the HTTP
+ *                API slowly until it comes back (it keeps retrying meanwhile).
+ * `offline`    — the browser reports no network at all.
+ */
 export type SocketStatus = "idle" | "connecting" | "socket" | "polling" | "offline";
 
 export type AppClientSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
+/** Consecutive failed handshakes before consumers are told to fall back. */
+const FAILURES_BEFORE_FALLBACK = 3;
+
 /**
- * One socket per tab, shared by every consumer.
+ * One socket per tab, shared by every consumer — socket first, always.
  *
- * A module-level singleton avoids the classic bug where three components each
- * mount their own connection and the server sees three sessions for one user.
- * Reference counting closes the connection only when the last consumer unmounts,
- * so navigating between pages does not churn the transport.
- *
- * Failure handling is explicit: the first failed handshake or connection drops
- * the status to `polling`, and consumers switch to `GET /api/messages?since=`.
- * Reconnection keeps being retried in the background, so a transient proxy hiccup
- * recovers on its own.
+ *  * WebSocket is tried first; if a proxy blocks it, Socket.IO's own HTTP
+ *    long-polling transport takes over (`tryAllTransports`). That is still a
+ *    push channel, so the app keeps receiving events without polling the API.
+ *  * Reconnection never gives up. It backs off to 10s with jitter, so a fleet of
+ *    tabs coming back after a deploy does not reconnect in lockstep.
+ *  * Only after several consecutive failures does the status become `polling`,
+ *    and it flips back to `socket` the moment a reconnect succeeds.
+ *  * The server keeps a short connection-state recovery window, so a brief
+ *    network blip replays the events missed instead of losing them.
  */
 let socket: AppClientSocket | null = null;
 let consumers = 0;
@@ -36,6 +46,16 @@ function setStatus(next: SocketStatus): void {
   for (const listener of listeners) listener(next);
 }
 
+function onBrowserOffline(): void {
+  setStatus("offline");
+}
+
+function onBrowserOnline(): void {
+  if (!socket) return;
+  setStatus(socket.connected ? "socket" : "connecting");
+  if (!socket.connected) socket.connect();
+}
+
 function ensureSocket(): AppClientSocket | null {
   if (typeof window === "undefined") return null;
   if (publicEnv.realtimeMode === "polling") {
@@ -44,19 +64,19 @@ function ensureSocket(): AppClientSocket | null {
   }
   if (socket) return socket;
 
-  setStatus("connecting");
+  setStatus(navigator.onLine === false ? "offline" : "connecting");
 
   socket = io({
     path: "/api/socket",
-    // Same origin, so no CORS and no credentials dance: the session cookie rides
-    // along with the handshake.
+    // Same origin: the session cookie rides along with the handshake.
     withCredentials: true,
-    transports: ["websocket", "polling"],
-    // Bounded reconnection: after a few attempts we stop hammering and stay on
-    // the polling fallback until the tab is reloaded.
-    reconnectionAttempts: 6,
+    transports: publicEnv.realtimeMode === "socket" ? ["websocket"] : ["websocket", "polling"],
+    tryAllTransports: publicEnv.realtimeMode !== "socket",
+    reconnection: true,
+    reconnectionAttempts: Infinity,
     reconnectionDelay: 1_000,
     reconnectionDelayMax: 10_000,
+    randomizationFactor: 0.5,
     timeout: 10_000,
   });
 
@@ -66,13 +86,25 @@ function ensureSocket(): AppClientSocket | null {
   });
 
   socket.on("disconnect", (reason) => {
-    setStatus(reason === "io client disconnect" ? "idle" : "polling");
+    if (reason === "io client disconnect") {
+      setStatus("idle");
+      return;
+    }
+    setStatus(navigator.onLine === false ? "offline" : "connecting");
+    // A server-side disconnect (e.g. the session was revoked) is not retried
+    // automatically by Socket.IO; reconnect explicitly so a new handshake
+    // decides what this tab may still do.
+    if (reason === "io server disconnect") socket?.connect();
   });
 
   socket.on("connect_error", () => {
     failures += 1;
-    setStatus(failures >= 2 ? "polling" : "connecting");
+    if (navigator.onLine === false) setStatus("offline");
+    else setStatus(failures >= FAILURES_BEFORE_FALLBACK ? "polling" : "connecting");
   });
+
+  window.addEventListener("offline", onBrowserOffline);
+  window.addEventListener("online", onBrowserOnline);
 
   return socket;
 }
@@ -84,6 +116,8 @@ function releaseSocket(): void {
   socket.removeAllListeners();
   socket.disconnect();
   socket = null;
+  window.removeEventListener("offline", onBrowserOffline);
+  window.removeEventListener("online", onBrowserOnline);
   setStatus("idle");
 }
 
@@ -95,22 +129,56 @@ export function getSocket(): AppClientSocket | null {
 /**
  * Subscribe to the shared connection.
  *
- * Returns the status so a component can render the transport indicator and, when
- * it is `polling`, use the HTTP fallback instead of waiting for events.
+ * Returns the status so a component can render the transport indicator and,
+ * only when it is `polling`, use the HTTP fallback.
  */
 export function useSocket(): { socket: AppClientSocket | null; status: SocketStatus } {
-  const [status, setStatus] = useState<SocketStatus>(currentStatus);
+  const [status, setLocalStatus] = useState<SocketStatus>(currentStatus);
 
   useEffect(() => {
     consumers += 1;
-    listeners.add(setStatus);
+    listeners.add(setLocalStatus);
+    // Creating the socket moves the status off `idle`, which re-renders this
+    // consumer — that render reads the now-populated module instance below.
     ensureSocket();
 
     return () => {
-      listeners.delete(setStatus);
+      listeners.delete(setLocalStatus);
       releaseSocket();
     };
   }, []);
 
-  return { socket: socket, status };
+  // `status` is in the dependency chain of every consumer, so reading the
+  // module-level instance here always reflects the latest connection.
+  return { socket: status === "idle" ? null : socket, status };
+}
+
+/**
+ * Keep a server-side subscription alive for as long as the component is
+ * mounted, re-sending it after every reconnect (a new connection starts with
+ * no rooms unless the recovery window restored them; joining twice is a no-op).
+ */
+export function useSocketSubscription(
+  subscribe: ((socket: AppClientSocket) => void) | null,
+  unsubscribe: ((socket: AppClientSocket) => void) | null,
+  key: string | null,
+): void {
+  const { socket: instance } = useSocket();
+  const handlers = useRef({ subscribe, unsubscribe });
+  useEffect(() => {
+    handlers.current = { subscribe, unsubscribe };
+  });
+
+  useEffect(() => {
+    if (!instance || key === null) return;
+
+    const join = () => handlers.current.subscribe?.(instance);
+    if (instance.connected) join();
+    instance.on("connect", join);
+
+    return () => {
+      instance.off("connect", join);
+      if (instance.connected) handlers.current.unsubscribe?.(instance);
+    };
+  }, [instance, key]);
 }
