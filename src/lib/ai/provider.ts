@@ -40,7 +40,8 @@ export interface CompletionResult {
 }
 
 interface LlmChoice {
-  message?: { content?: string };
+  // Most providers send a string; some send typed content parts.
+  message?: { content?: string | Array<{ type?: string; text?: string }> | null };
 }
 
 interface LlmResponse {
@@ -48,6 +49,37 @@ interface LlmResponse {
   usage?: { prompt_tokens?: number; completion_tokens?: number };
   error?: { message?: string };
 }
+
+/** A non-2xx answer from the provider, with its status kept for routing. */
+class AiProviderError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "AiProviderError";
+  }
+
+  /** The key itself was refused: no other model on the same key can succeed. */
+  get isCredentialError(): boolean {
+    return this.status === 401 || this.status === 403;
+  }
+}
+
+function extractText(content: NonNullable<LlmChoice["message"]>["content"]): string | undefined {
+  if (typeof content === "string") return content.trim() || undefined;
+  if (Array.isArray(content)) {
+    const joined = content
+      .map((part) => (typeof part.text === "string" ? part.text : ""))
+      .join("")
+      .trim();
+    return joined || undefined;
+  }
+  return undefined;
+}
+
+const KEY_REJECTED_MESSAGE =
+  "The assistant is misconfigured on this deployment (its API key was refused). Everything else works as usual.";
 
 /**
  * Resolve the AI API key from the generic var, with backward-compatible
@@ -86,13 +118,14 @@ async function callModel(
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(
+    throw new AiProviderError(
+      response.status,
       `AI provider responded ${response.status}: ${body.slice(0, 300) || response.statusText}`,
     );
   }
 
   const data = (await response.json()) as LlmResponse;
-  const text = data.choices?.[0]?.message?.content?.trim();
+  const text = extractText(data.choices?.[0]?.message?.content);
 
   if (!text) {
     throw new Error("AI provider returned an empty completion.");
@@ -125,6 +158,15 @@ export async function complete(request: CompletionRequest): Promise<CompletionRe
   try {
     return await callModel(primary, request);
   } catch (primaryError) {
+    if (primaryError instanceof AiProviderError && primaryError.isCredentialError) {
+      // Retrying with the fallback model would use the same refused key.
+      logger.error("AI provider rejected AI_API_KEY; check the key and AI_BASE_URL", {
+        status: primaryError.status,
+        baseUrl: env.AI_BASE_URL,
+      });
+      throw new ServiceUnavailableError(KEY_REJECTED_MESSAGE);
+    }
+
     logger.warn("primary AI model failed", { model: primary, error: primaryError });
 
     if (!fallback || fallback === primary) {
