@@ -50,7 +50,11 @@ export async function buildServer({ dev = false, outfile, metafile = false } = {
 
   const banner = [
     // Loads .env before any bundled module reads process.env.
-    "require('dotenv').config({ quiet: true });",
+    // Optional on purpose: on Hodifly the release has no .env file (the
+    // platform injects the variables directly) and no `dotenv` inside the
+    // traced standalone node_modules, so a bare require would crash the
+    // worker before the banner's second line ever runs.
+    "try{require('dotenv').config({ quiet: true });}catch{}",
     // Next reads `globalThis.AsyncLocalStorage` rather than importing it, and
     // only its own CLI installs it. Without this the request handler throws
     // "Invariant: AsyncLocalStorage accessed in runtime where it is not

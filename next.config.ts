@@ -55,6 +55,45 @@ const nextConfig: NextConfig = {
    */
   serverExternalPackages: ["@prisma/adapter-mariadb", "mariadb", "qrcode", "@node-rs/argon2", "sharp"],
 
+  /*
+   * The build tracer copies a fraction of what the runtime needs (next
+   * 985/8586 with no root shims like headers.js, @swc/helpers 5/438,
+   * react-dom 12/43, prisma packages 2/7...), which crashes the custom
+   * server at boot with MODULE_NOT_FOUND and would break SSR. Force the
+   * full runtime closure into the standalone output. Keys are route globs
+   * (`/*` = all routes); values are project-root-relative globs.
+   */
+  outputFileTracingIncludes: {
+    "/*": [
+      "./node_modules/next/**",
+      "./node_modules/react/**",
+      "./node_modules/react-dom/**",
+      "./node_modules/styled-jsx/**",
+      "./node_modules/@swc/helpers/**",
+      "./node_modules/client-only/**",
+      "./node_modules/@next/env/**",
+      "./node_modules/@prisma/adapter-mariadb/**",
+      "./node_modules/@prisma/client-runtime-utils/**",
+      "./node_modules/@prisma/driver-adapter-utils/**",
+      "./node_modules/@prisma/debug/**",
+      "./node_modules/mariadb/**",
+      "./node_modules/@node-rs/**",
+      "./node_modules/iconv-lite/**",
+      "./node_modules/safer-buffer/**",
+      "./node_modules/denque/**",
+      "./node_modules/lru-cache/**",
+      "./node_modules/sharp/**",
+      "./node_modules/@img/**",
+      "./node_modules/@emnapi/**",
+      "./node_modules/detect-libc/**",
+      "./node_modules/semver/**",
+      "./node_modules/color/**",
+      "./node_modules/pngjs/**",
+      "./node_modules/qrcode/**",
+      "./node_modules/dijkstrajs/**",
+    ],
+  },
+
   async headers() {
     return [
       {
