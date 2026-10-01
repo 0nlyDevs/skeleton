@@ -2,6 +2,7 @@
 
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { Brand } from "@/components/layout/brand";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
@@ -26,7 +27,9 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
         <Brand href={viewer ? "/feed" : "/"} className="shrink-0" compact={false} />
 
         <div className="mx-auto hidden flex-1 justify-center md:flex">
-          <GlobalSearch />
+          <Suspense fallback={<div className="h-10 w-full max-w-md rounded-full bg-surface-muted" />}>
+            <GlobalSearch />
+          </Suspense>
         </div>
 
         <div className="ml-auto flex items-center gap-1 md:ml-0">
@@ -40,7 +43,7 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
                 aria-label={
                   messageUnreadTotal > 0 ? `${t("nav.messages")} (${messageUnreadTotal})` : t("nav.messages")
                 }
-                className="relative inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+                className="relative inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground lg:hidden"
               >
                 <MessageCircle className="size-[18px]" />
                 {messageUnreadTotal > 0 ? (
@@ -52,9 +55,11 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
                   </span>
                 ) : null}
               </Link>
-              <NotificationBell />
+              {/* On large screens the left rail carries Messages and Notifications;
+                  the top bar keeps them only where the rail is hidden. */}
+              <NotificationBell className="lg:hidden" />
               <span className="ml-1">
-                <UserMenu name={viewer.name} email={viewer.email} image={viewer.image} role={viewer.role} />
+                <UserMenu id={viewer.id} username={viewer.username} name={viewer.name} email={viewer.email} image={viewer.image} role={viewer.role} />
               </span>
             </>
           ) : (
@@ -70,7 +75,9 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
         </div>
       </div>
       <div className="px-3 pb-2.5 md:hidden">
-        <GlobalSearch className="max-w-none" />
+        <Suspense fallback={<div className="h-10 w-full rounded-full bg-surface-muted" />}>
+          <GlobalSearch className="max-w-none" />
+        </Suspense>
       </div>
     </header>
   );

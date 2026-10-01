@@ -28,7 +28,7 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
   return (
     <>
       <nav
-        aria-label="Navigation"
+        aria-label={t("nav.label")}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
       >
         <ul className="grid grid-cols-5">

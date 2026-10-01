@@ -22,7 +22,7 @@ export function MessagesView({ viewer }: { readonly viewer: { id: string; name: 
   const t = useTranslation();
   const router = useRouter();
   const params = useSearchParams();
-  const { rooms, upsert, refresh } = useConversations();
+  const { rooms, upsert, refresh, typingRooms } = useConversations();
   const [activeId, setActiveId] = useState<string | null>(params.get("room"));
   const [dialog, setDialog] = useState<"direct" | "group" | null>(null);
   const openedTarget = useRef<string | null>(null);
@@ -61,6 +61,7 @@ export function MessagesView({ viewer }: { readonly viewer: { id: string; name: 
           onSelect={select}
           onNew={() => setDialog("direct")}
           onNewGroup={() => setDialog("group")}
+          typingRooms={typingRooms}
         />
       </aside>
       <section className={cn("min-h-0", active ? "block" : "hidden md:block")}>

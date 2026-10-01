@@ -81,6 +81,22 @@ export function ConversationThread({
 
   const receipts = useMemo(() => receiptsByMessage(thread.messages, thread.members, viewer.id), [thread.messages, thread.members, viewer.id]);
 
+  // Delivery of my newest message: sending → sent → delivered (someone was
+  // online or has been since) → seen (their read cursor passed it).
+  const others = useMemo(() => thread.members.filter((member) => member.userId !== viewer.id), [thread.members, viewer.id]);
+  const othersPresence = usePresence(useMemo(() => others.map((member) => member.userId), [others]));
+  const lastMine = [...thread.messages].reverse().find((message) => message.sender.id === viewer.id && !message.deleted);
+  const deliveryStatus = (() => {
+    if (!lastMine || lastMine.failed) return null;
+    if (lastMine.pending) return t("messages.status.sending");
+    if (others.some((member) => member.lastReadAt && member.lastReadAt >= lastMine.createdAt)) return t("messages.status.seen");
+    const delivered = others.some((member) => {
+      const state = othersPresence.get(member.userId);
+      return state?.online || (state?.lastSeenAt !== null && state?.lastSeenAt !== undefined && state.lastSeenAt >= lastMine.createdAt);
+    });
+    return delivered ? t("messages.status.delivered") : t("messages.status.sent");
+  })();
+
   const submit = async () => {
     const content = draft.trim();
     if (editing) {
@@ -159,7 +175,7 @@ export function ConversationThread({
         </Button>
         {peer ? (
           <Link href={peer.username ? `/profile/${peer.username}` : "#"} className="flex min-w-0 items-center gap-3">
-            <UserAvatar name={peer.name} image={peer.image} size="md" online={presence?.online ?? false} />
+            <UserAvatar userId={peer.id} name={peer.name} image={peer.image} size="md" online={presence?.online ?? false} />
             <span className="min-w-0">
               <span className="block truncate text-[15px] font-semibold">{room.name}</span>
               {status ? <span className={presence?.online ? "block text-[12px] text-success" : "block text-[12px] text-muted-foreground"}>{status}</span> : null}
@@ -241,6 +257,7 @@ export function ConversationThread({
                   showAuthor={room.type === "GROUP" && !sameAsPrevious}
                   showAvatar={!sameAsNext}
                   readers={receipts.get(message.id) ?? []}
+                  status={message.id === lastMine?.id ? deliveryStatus : null}
                   onEdit={() => {
                     setEditing(message);
                     setDraft(message.content);

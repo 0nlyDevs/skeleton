@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Loader2, PartyPopper } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UsernameField, type UsernameState } from "@/components/forms/username-field";
+import { patchProfile } from "@/hooks/use-profile-overrides";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import type { MessageKey } from "@/lib/i18n";
 import {
@@ -41,6 +43,7 @@ export function ProfileForm({
   readonly welcome?: boolean;
 }) {
   const t = useTranslation();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const email = profile.email;
 
@@ -86,12 +89,16 @@ export function ProfileForm({
       });
 
       // Persist the choice immediately so a refresh does not revert it.
-      await apiFetch("/api/users/me", {
+      const saved = await apiFetch<UserProfileDto>("/api/users/me", {
         method: "PATCH",
         body: { image: response.data.url },
       });
 
       setImage(response.data.url);
+      // Every avatar on screen (shell, feed, chat) switches now; the server
+      // broadcast does the same for everyone else's open tabs.
+      patchProfile({ userId: saved.id, name: saved.name, username: saved.username, image: saved.image });
+      router.refresh();
       toast.success(t("settings.profile.saved"));
     } catch (caught) {
       if (caught instanceof ApiRequestError) {
@@ -114,7 +121,7 @@ export function ProfileForm({
     setSaving(true);
     setServerErrors({});
     try {
-      await apiFetch("/api/users/me", {
+      const saved = await apiFetch<UserProfileDto>("/api/users/me", {
         method: "PATCH",
         body: {
           firstName: firstName.trim(),
@@ -124,6 +131,8 @@ export function ProfileForm({
           bio: bio.trim(),
         },
       });
+      patchProfile({ userId: saved.id, name: saved.name, username: saved.username, image: saved.image });
+      router.refresh();
       toast.success(t("settings.profile.saved"));
     } catch (caught) {
       if (caught instanceof ApiRequestError && caught.status === 409) {

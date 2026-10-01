@@ -24,6 +24,7 @@ export async function getEngagement(postId: string): Promise<PostEngagementDto |
     postId,
     commentCount: counters.commentCount,
     reactionCount: counters.reactionCount,
+    shareCount: counters.shareCount,
     reactions: byType.get(postId) ?? ({} as ReactionCounts),
   };
 }

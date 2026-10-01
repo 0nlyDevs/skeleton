@@ -128,7 +128,7 @@ function Lightbox({
                 <button
                   type="button"
                   onClick={() => step(-1)}
-                  aria-label="Previous"
+                  aria-label={t("common.previous")}
                   className="absolute left-3 grid size-10 place-items-center rounded-full bg-white/15 text-white hover:bg-white/25"
                 >
                   <ChevronLeft className="size-5" />
@@ -136,7 +136,7 @@ function Lightbox({
                 <button
                   type="button"
                   onClick={() => step(1)}
-                  aria-label="Next"
+                  aria-label={t("common.next")}
                   className="absolute right-3 grid size-10 place-items-center rounded-full bg-white/15 text-white hover:bg-white/25"
                 >
                   <ChevronRight className="size-5" />

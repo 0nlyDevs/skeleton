@@ -65,6 +65,8 @@ enum NotificationType {
   GROUP_INVITE
   MODERATION
   GROUP_ACTIVITY
+  POST_SHARE
+  SECURITY
 }
 
 /// Who can see a group's posts and member list.
@@ -274,6 +276,13 @@ model Post {
   groupId String?
   group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
+  /// A share of another post (always the original, never a share of a share).
+  /// SetNull keeps the sharer's caption if the original is hard-deleted.
+  repostOfId String?
+  repostOf   Post?   @relation("Reposts", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts    Post[]  @relation("Reposts")
+  shareCount Int     @default(0)
+
   comments  Comment[]
   reactions PostReaction[]
   media     PostMedia[]
@@ -287,6 +296,7 @@ model Post {
   // The public feed: published, not deleted, newest first.
   @@index([published, deletedAt, createdAt])
   @@index([groupId, deletedAt, createdAt])
+  @@index([repostOfId])
   @@map("post")
 }
 

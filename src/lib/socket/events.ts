@@ -65,6 +65,8 @@ export const SOCKET_EVENTS = {
   /** Client → server: follow a community group's live feed. */
   groupSubscribe: "group:subscribe",
   groupUnsubscribe: "group:unsubscribe",
+  /** Server → everyone: a user's public identity (name/avatar/handle) changed. */
+  profileUpdated: "profile:updated",
 } as const;
 
 export type SocketEventName = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
@@ -84,6 +86,13 @@ export type PostEngagementPayload = PostEngagementDto;
 export type SendMessageAck =
   | { readonly ok: true; readonly message: MessagePayload }
   | { readonly ok: false; readonly code: string; readonly message: string };
+
+export interface ProfileUpdatedPayload {
+  readonly userId: string;
+  readonly name: string;
+  readonly username: string | null;
+  readonly image: string | null;
+}
 
 export interface RoomReadPayload {
   readonly roomId: string;
@@ -193,4 +202,5 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.messageHidden]: (payload: MessageHiddenPayload) => void;
   [SOCKET_EVENTS.roomRead]: (payload: RoomReadPayload) => void;
   [SOCKET_EVENTS.presenceState]: (payload: PresenceStatePayload) => void;
+  [SOCKET_EVENTS.profileUpdated]: (payload: ProfileUpdatedPayload) => void;
 }

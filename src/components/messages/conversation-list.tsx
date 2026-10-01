@@ -20,6 +20,7 @@ export function ConversationList({
   onSelect,
   onNew,
   onNewGroup,
+  typingRooms,
 }: {
   readonly rooms: readonly RoomDto[] | null;
   readonly activeId: string | null;
@@ -27,6 +28,7 @@ export function ConversationList({
   readonly onSelect: (roomId: string) => void;
   readonly onNew: () => void;
   readonly onNewGroup: () => void;
+  readonly typingRooms?: ReadonlyMap<string, string>;
 }) {
   const t = useTranslation();
   const { messageUnread } = useRealtime();
@@ -94,7 +96,7 @@ export function ConversationList({
                   )}
                 >
                   {peer ? (
-                    <UserAvatar name={peer.name} image={peer.image} size="md" online={presence.get(peer.id)?.online ?? false} />
+                    <UserAvatar userId={peer.id} name={peer.name} image={peer.image} size="md" online={presence.get(peer.id)?.online ?? false} />
                   ) : (
                     <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.62_0.2_310)] text-primary-foreground">
                       <UsersRound className="size-5" />
@@ -106,7 +108,19 @@ export function ConversationList({
                       {last ? <span className="shrink-0 text-[11px] text-muted-foreground">{formatRelative(last.createdAt)}</span> : null}
                     </span>
                     <span className="flex items-center gap-2">
-                      <span className={cn("truncate text-[12.5px]", unread > 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>{text}</span>
+                      {typingRooms?.has(room.id) ? (
+                        <span className="flex items-center gap-1 truncate text-[12.5px] font-medium text-primary">
+                          <span className="flex gap-0.5" aria-hidden>
+                            <span className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.2s]" />
+                            <span className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.1s]" />
+                            <span className="size-1 animate-bounce rounded-full bg-primary" />
+                          </span>
+                          {room.type === "GROUP" ? `${typingRooms.get(room.id)?.split(" ")[0] ?? ""} ` : ""}
+                          {t("messages.list_typing")}
+                        </span>
+                      ) : (
+                        <span className={cn("truncate text-[12.5px]", unread > 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>{text}</span>
+                      )}
                       {unread > 0 ? (
                         <span className="ml-auto grid min-w-5 shrink-0 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-5 text-primary-foreground">
                           {unread > 99 ? "99+" : unread}

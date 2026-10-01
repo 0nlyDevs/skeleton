@@ -71,7 +71,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
     <div className="flex flex-col gap-4">
       <Card className="p-4">
         <Link href={profileHref} className="flex items-center gap-3 rounded-xl p-1 hover:bg-surface-muted">
-          <UserAvatar name={viewer.name} image={viewer.image} size="md" />
+          <UserAvatar userId={viewer.id} name={viewer.name} image={viewer.image} size="md" />
           <span className="min-w-0">
             <span className="block truncate text-[14.5px] font-semibold">{viewer.name}</span>
             {viewer.username ? (
@@ -98,7 +98,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
       </Card>
 
       <Card className="p-2">
-        <nav aria-label="Navigation" className="flex flex-col gap-0.5">
+        <nav aria-label={t("nav.label")} className="flex flex-col gap-0.5">
           {MAIN_NAV.map((item) => (
             <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
           ))}

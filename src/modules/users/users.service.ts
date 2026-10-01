@@ -20,6 +20,7 @@ import { auth } from "@/lib/auth/auth";
 import type { Prisma } from "@/generated/prisma/client";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, ValidationError, fromPrismaError } from "@/lib/errors";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
+import { publishProfileUpdated } from "@/lib/socket/emit";
 import { composeDisplayName, normalizeUsername, usernameViolation } from "@/lib/validation/profile";
 import { paginate, resolveSortField, toPagination, type Paginated } from "@/lib/pagination";
 import { parseDateInput } from "@/lib/utils";
@@ -306,6 +307,10 @@ export async function updateOwnProfile(
   } catch (error) {
     // Two users racing for the same handle: the unique index decides.
     throw fromPrismaError(error, "This username is already taken.") ?? error;
+  }
+
+  if (data.name !== undefined || data.image !== undefined || data.username !== undefined) {
+    publishProfileUpdated({ userId: row.id, name: row.name, username: row.username, image: row.image });
   }
 
   await recordAudit({

@@ -262,6 +262,15 @@ export async function notifyGroupInvite(input: {
   });
 }
 
+export async function notifyPostShare(input: { userId: string; actor: { name: string }; postId: string }): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "POST_SHARE",
+    title: `${input.actor.name} a partagé votre publication`,
+    link: `/feed/${encodeURIComponent(input.postId)}`,
+  });
+}
+
 /** Membership events in a community group (request, approval, role change). */
 export async function notifyGroupActivity(input: {
   userId: string;

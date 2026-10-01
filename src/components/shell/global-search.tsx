@@ -2,7 +2,7 @@
 
 import { Loader2, Search } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -18,7 +18,11 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
   const t = useTranslation();
   const router = useRouter();
   const listId = useId();
-  const [q, setQ] = useState("");
+  const pathname = usePathname();
+  const params = useSearchParams();
+  // On the results page the box shows the current query, so it is obvious
+  // where the results live and that typing refines them.
+  const [q, setQ] = useState(() => (pathname === "/search" ? (params.get("q") ?? "") : ""));
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<SearchResultsDto | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +53,7 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
 
   const go = (href: string) => {
     setOpen(false);
-    setQ("");
+    if (!href.startsWith("/search")) setQ("");
     router.push(href);
   };
 
@@ -87,6 +91,11 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
         ) : null}
       </form>
 
+      {open && q.trim().length > 0 && q.trim().length < 2 ? (
+        <div className="absolute left-0 right-0 top-12 z-50 rounded-2xl border border-border/70 bg-popover px-4 py-3 text-[13px] text-muted-foreground shadow-float">
+          {t("search.hint")}
+        </div>
+      ) : null}
       {open && term.length >= 2 && results ? (
         <div
           id={listId}

@@ -16,6 +16,33 @@ interface Suggestion {
   readonly image: string | null;
 }
 
+const HIGHLIGHT = /(^|[^a-z0-9_.@])(@[a-z0-9][a-z0-9_.]{1,28}[a-z0-9])/gi;
+
+/**
+ * The backdrop text: identical to the textarea's, with `@handles` coloured.
+ * Only colour and background change (never weight or size), so glyph
+ * positions stay identical and the caret stays aligned.
+ */
+function highlighted(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  for (const match of text.matchAll(HIGHLIGHT)) {
+    const start = (match.index ?? 0) + (match[1]?.length ?? 0);
+    const handle = match[2] ?? "";
+    if (start > last) parts.push(text.slice(last, start));
+    parts.push(
+      <mark key={start} className="rounded-sm bg-primary/15 text-primary">
+        {handle}
+      </mark>,
+    );
+    last = start + handle.length;
+  }
+  parts.push(text.slice(last));
+  // A trailing newline needs a character after it to occupy a line.
+  parts.push("\u200b");
+  return parts;
+}
+
 /** The `@handle` being typed right before the caret, if any. */
 function activeMention(text: string, caret: number): { start: number; query: string } | null {
   const before = text.slice(0, caret);
@@ -52,14 +79,17 @@ export const MentionInput = forwardRef<
     readonly ariaLabel?: string;
     /** Enter (without Shift) submits when provided and no suggestion is open. */
     readonly onSubmit?: () => void;
+    /** Where suggestions open: below (top-of-page composers) or above (pinned footers). */
+    readonly suggestions?: "below" | "above";
   }
 >(function MentionInput(
-  { value, onChange, placeholder, maxLength, minRows = 1, maxRows = 10, autoFocus, disabled, className, ariaLabel, onSubmit },
+  { value, onChange, placeholder, maxLength, minRows = 1, maxRows = 10, autoFocus, disabled, className, ariaLabel, onSubmit, suggestions = "below" },
   ref,
 ) {
   const t = useTranslation();
   const listId = useId();
   const area = useRef<HTMLTextAreaElement>(null);
+  const backdrop = useRef<HTMLDivElement>(null);
   const [mention, setMention] = useState<{ start: number; query: string } | null>(null);
   const [items, setItems] = useState<Suggestion[]>([]);
   const [active, setActive] = useState(0);
@@ -115,6 +145,13 @@ export const MentionInput = forwardRef<
 
   return (
     <div className={cn("relative w-full", className)}>
+      <div
+        ref={backdrop}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-3 py-2 text-[14.5px] leading-6 text-foreground [overflow-wrap:anywhere]"
+      >
+        {highlighted(value)}
+      </div>
       <textarea
         ref={area}
         value={value}
@@ -133,6 +170,9 @@ export const MentionInput = forwardRef<
         }}
         onClick={(event) => setMention(activeMention(value, event.currentTarget.selectionStart))}
         onBlur={() => setTimeout(() => setMention(null), 150)}
+        onScroll={(event) => {
+          if (backdrop.current) backdrop.current.scrollTop = event.currentTarget.scrollTop;
+        }}
         onKeyDown={(event) => {
           if (open && items.length > 0) {
             if (event.key === "ArrowDown") {
@@ -161,13 +201,16 @@ export const MentionInput = forwardRef<
             onSubmit();
           }
         }}
-        className="block w-full resize-none bg-transparent px-3 py-2 text-[14.5px] leading-6 outline-none placeholder:text-muted-foreground disabled:opacity-60"
+        className="relative block w-full resize-none bg-transparent px-3 py-2 text-[14.5px] leading-6 text-transparent caret-foreground outline-none [overflow-wrap:anywhere] placeholder:text-muted-foreground selection:bg-primary/25 disabled:opacity-60"
       />
       {open ? (
         <ul
           id={listId}
           role="listbox"
-          className="absolute bottom-full left-0 z-50 mb-1 w-72 max-w-[90vw] overflow-hidden rounded-xl border border-border/70 bg-popover p-1 shadow-float"
+          className={cn(
+            "absolute left-0 z-50 w-72 max-w-[90vw] overflow-hidden rounded-xl border border-border/70 bg-popover p-1 shadow-float",
+            suggestions === "above" ? "bottom-full mb-1" : "top-full mt-1",
+          )}
         >
           {loading && items.length === 0 ? (
             <li className="flex items-center gap-2 px-3 py-2 text-[12.5px] text-muted-foreground">

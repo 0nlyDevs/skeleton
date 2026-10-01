@@ -23,6 +23,21 @@ export const postAuthorSelect = {
   mentions: {
     select: { mentionedUser: { select: { id: true, username: true, name: true, banned: true } } },
   },
+  repostOf: {
+    select: {
+      id: true,
+      body: true,
+      published: true,
+      deletedAt: true,
+      createdAt: true,
+      user: { select: { id: true, name: true, username: true, image: true } },
+      group: { select: { id: true, slug: true, name: true, privacy: true, deletedAt: true } },
+      media: { orderBy: { position: "asc" }, select: { upload: { select: { id: true, width: true, height: true } } } },
+      mentions: {
+        select: { mentionedUser: { select: { id: true, username: true, name: true, banned: true } } },
+      },
+    },
+  },
 } satisfies Prisma.PostInclude;
 
 export type PostWithAuthor = Prisma.PostGetPayload<{ include: typeof postAuthorSelect }>;
@@ -127,6 +142,9 @@ export async function createPostWithMedia(
 ): Promise<PostWithAuthor> {
   return prisma.$transaction(async (tx) => {
     const post = await tx.post.create({ data, select: { id: true } });
+    if (data.repostOfId) {
+      await tx.post.update({ where: { id: data.repostOfId }, data: { shareCount: { increment: 1 } } });
+    }
     if (mediaIds.length > 0) {
       await tx.postMedia.createMany({
         data: mediaIds.map((uploadId, position) => ({ postId: post.id, uploadId, position })),
@@ -153,4 +171,9 @@ export async function replacePostMedia(postId: string, mediaIds: readonly string
 export async function currentMediaIds(postId: string): Promise<string[]> {
   const rows = await prisma.postMedia.findMany({ where: { postId }, select: { uploadId: true } });
   return rows.map((row) => row.uploadId);
+}
+
+/** A share was removed: its original loses one from its counter (never below 0). */
+export async function decrementShareCount(postId: string): Promise<void> {
+  await prisma.post.updateMany({ where: { id: postId, shareCount: { gt: 0 } }, data: { shareCount: { decrement: 1 } } });
 }

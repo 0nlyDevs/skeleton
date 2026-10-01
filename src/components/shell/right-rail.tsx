@@ -81,7 +81,7 @@ export function RightRail() {
                     href={`/messages?to=${encodeURIComponent(contact.id)}`}
                     className="flex items-center gap-3 rounded-xl px-1.5 py-1.5 hover:bg-surface-muted"
                   >
-                    <UserAvatar name={contact.name} image={contact.image} size="sm" online={state?.online ?? false} />
+                    <UserAvatar userId={contact.id} name={contact.name} image={contact.image} size="sm" online={state?.online ?? false} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-medium">{contact.name}</span>
                       {status ? (

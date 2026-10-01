@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Copy, Loader2, MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, Copy, MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
 import { useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -31,6 +31,7 @@ export function MessageBubble({
   showAuthor,
   showAvatar,
   readers,
+  status,
   onEdit,
   onDeleteForMe,
   onDeleteForEveryone,
@@ -42,6 +43,8 @@ export function MessageBubble({
   readonly showAuthor: boolean;
   readonly showAvatar: boolean;
   readonly readers: readonly RoomMemberDto[];
+  /** Delivery state, shown under the newest of one's own messages only. */
+  readonly status?: string | null;
   readonly onEdit: () => void;
   readonly onDeleteForMe: () => void;
   readonly onDeleteForEveryone: () => void;
@@ -58,7 +61,7 @@ export function MessageBubble({
       {showAuthor && !mine ? <span className="mb-0.5 ml-11 text-[11.5px] font-medium text-muted-foreground">{message.sender.name}</span> : null}
       <div className={cn("flex max-w-[85%] items-end gap-2 sm:max-w-[70%]", mine && "flex-row-reverse")}>
         {!mine ? (
-          <span className="w-9 shrink-0">{showAvatar ? <UserAvatar name={message.sender.name} image={message.sender.image} size="sm" /> : null}</span>
+          <span className="w-9 shrink-0">{showAvatar ? <UserAvatar userId={message.sender.id} name={message.sender.name} image={message.sender.image} size="sm" /> : null}</span>
         ) : null}
 
         <div className={cn("flex min-w-0 flex-col gap-1", mine ? "items-end" : "items-start")}>
@@ -80,7 +83,6 @@ export function MessageBubble({
                   className={cn(
                     "whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-[14.5px] leading-snug [overflow-wrap:anywhere]",
                     mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-surface-muted text-foreground",
-                    message.pending && "opacity-70",
                   )}
                 >
                   {message.content}
@@ -128,7 +130,6 @@ export function MessageBubble({
       </div>
 
       <div className={cn("mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground", mine ? "mr-1" : "ml-11")}>
-        {message.pending ? <Loader2 className="size-3 animate-spin" aria-label="sending" /> : null}
         {message.failed ? (
           <button type="button" onClick={onDiscard} className="inline-flex items-center gap-1 text-error hover:underline">
             <AlertCircle className="size-3" />
@@ -136,10 +137,11 @@ export function MessageBubble({
           </button>
         ) : null}
         {message.editedAt && !message.deleted ? <span>{t("messages.edited")}</span> : null}
+        {status && readers.length === 0 ? <span aria-live="polite">{status}</span> : null}
         {readers.length > 0 ? (
           <span className="flex -space-x-1" aria-label={t("messages.seen_by", { names: readers.map((reader) => reader.name).join(", ") })} title={t("messages.seen_by", { names: readers.map((reader) => reader.name).join(", ") })}>
             {readers.slice(0, 5).map((reader) => (
-              <UserAvatar key={reader.userId} name={reader.name} image={reader.image} size="2xs" className="ring-2 ring-card" />
+              <UserAvatar key={reader.userId} userId={reader.userId} name={reader.name} image={reader.image} size="2xs" className="ring-2 ring-card" />
             ))}
           </span>
         ) : null}

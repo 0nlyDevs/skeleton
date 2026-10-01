@@ -173,6 +173,7 @@ export function CommentThread({
                   placeholder={replyTo ? t("comments.reply_placeholder", { name: replyTo.author?.name ?? "" }) : t("comments.placeholder")}
                   maxLength={2000}
                   maxRows={6}
+                  suggestions="above"
                 />
                 <button
                   type="button"

@@ -100,10 +100,10 @@ export async function findViewerReactions(
 
 export async function findPostCounters(
   postId: string,
-): Promise<{ commentCount: number; reactionCount: number } | null> {
+): Promise<{ commentCount: number; reactionCount: number; shareCount: number } | null> {
   return prisma.post.findUnique({
     where: { id: postId },
-    select: { commentCount: true, reactionCount: true },
+    select: { commentCount: true, reactionCount: true, shareCount: true },
   });
 }
 

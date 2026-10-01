@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useProfileOverridesListener } from "@/hooks/use-profile-overrides";
 import { useSocket, type SocketStatus } from "@/hooks/use-socket";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
@@ -55,6 +56,8 @@ export function RealtimeProvider({
   readonly viewerId: string | null;
 }) {
   const { socket, status } = useSocket();
+  // One listener for live identity changes (avatars, names) app-wide.
+  useProfileOverridesListener();
 
   /*
    * The socket is authenticated once, at handshake. A tab that signs in or out

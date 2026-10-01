@@ -37,7 +37,7 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
       <div aria-hidden className="h-36 bg-gradient-to-br from-primary via-[oklch(0.6_0.2_300)] to-[oklch(0.72_0.15_200)] sm:h-48" />
       <div className="px-5 pb-5">
         <div className="-mt-14 flex flex-wrap items-end justify-between gap-3">
-          <UserAvatar name={profile.name} image={profile.image} size="xl" {...(signedIn ? { online: presence?.online ?? false } : {})} />
+          <UserAvatar userId={profile.id} name={profile.name} image={profile.image} size="xl" {...(signedIn ? { online: presence?.online ?? false } : {})} />
           <div className="flex flex-wrap items-center gap-2 pb-1">
             {profile.isSelf ? (
               <Button asChild variant="secondary">

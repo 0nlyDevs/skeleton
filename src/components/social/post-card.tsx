@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, Link2, Lock, MessageCircle, MoreHorizontal, Pencil, ShieldAlert, Trash2, Flag, UsersRound } from "lucide-react";
+import { Flag, Globe, Link2, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, SquarePen, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,7 +26,9 @@ import { MediaGrid } from "./media-grid";
 import { PostEditDialog } from "./post-edit-dialog";
 import { ReactionButton, ReactionSummary } from "./reaction-picker";
 import { ReportDialog } from "./report-dialog";
+import { RepostEmbed } from "./repost-embed";
 import { RichText } from "./rich-text";
+import { ShareDialog, sharePost } from "./share-dialog";
 
 const CLAMP_CHARS = 420;
 
@@ -41,6 +43,7 @@ export function PostCard({
   onChange,
   onRemoved,
   onOpenComments,
+  onShared,
   expanded = false,
 }: {
   readonly post: FeedItemDto;
@@ -48,6 +51,7 @@ export function PostCard({
   readonly onChange: (post: FeedItemDto) => void;
   readonly onRemoved: (postId: string) => void;
   readonly onOpenComments?: (post: FeedItemDto) => void;
+  readonly onShared?: (post: FeedItemDto) => void;
   readonly expanded?: boolean;
 }) {
   const t = useTranslation();
@@ -56,6 +60,46 @@ export function PostCard({
   const [reporting, setReporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showAll, setShowAll] = useState(expanded);
+  const [sharing, setSharing] = useState(false);
+
+  // What a share points at: the original of a share, else this post. Only
+  // content public to everyone can be re-shared (the server enforces it too).
+  const shareTarget = post.repostOf
+    ? post.repostOf.available
+      ? post.repostOf
+      : null
+    : post.published && (post.group === null || post.group.privacy === "PUBLIC")
+      ? {
+          id: post.id,
+          available: true,
+          body: post.body,
+          author: post.author,
+          media: post.media,
+          mentions: post.mentions,
+          group: post.group,
+          createdAt: post.createdAt,
+        }
+      : null;
+
+  const shareNow = async () => {
+    if (!shareTarget) return;
+    try {
+      const shared = await sharePost(shareTarget.id);
+      toast.success(t("share.done"));
+      onShared?.(shared);
+    } catch (error) {
+      toast.error(describeApiError(error, t));
+    }
+  };
+
+  // Clicking the post's content opens it (with its comments) in place; links,
+  // buttons and images keep their own behaviour.
+  const openFromContent = (event: React.MouseEvent) => {
+    if (expanded || !onOpenComments) return;
+    if ((event.target as HTMLElement).closest("a,button,[role=button]")) return;
+    if (window.getSelection()?.toString()) return;
+    onOpenComments(post);
+  };
 
   const isAuthor = viewer?.id === post.author.id;
   const canRemove = isAuthor || post.viewerCanModerate;
@@ -92,10 +136,10 @@ export function PostCard({
       <header className="flex items-start gap-3 px-4 pt-4">
         {profileHref ? (
           <Link href={profileHref} tabIndex={-1} aria-hidden>
-            <UserAvatar name={post.author.name} image={post.author.image} size="md" />
+            <UserAvatar userId={post.author.id} name={post.author.name} image={post.author.image} size="md" />
           </Link>
         ) : (
-          <UserAvatar name={post.author.name} image={post.author.image} size="md" />
+          <UserAvatar userId={post.author.id} name={post.author.name} image={post.author.image} size="md" />
         )}
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-x-1.5 text-[14.5px] leading-snug">
@@ -166,8 +210,15 @@ export function PostCard({
         </DropdownMenu>
       </header>
 
+      {post.repostOf ? (
+        <p className="flex items-center gap-1.5 px-4 pt-2 text-[12.5px] text-muted-foreground">
+          <Repeat2 className="size-3.5" aria-hidden />
+          {t("share.shared")}
+        </p>
+      ) : null}
+
       {post.body ? (
-        <div className="px-4 pt-3">
+        <div className={cn("px-4 pt-3", !expanded && onOpenComments && "cursor-pointer")} onClick={openFromContent}>
           <RichText
             text={showAll || !long ? post.body : `${post.body.slice(0, CLAMP_CHARS).trimEnd()}…`}
             mentions={post.mentions}
@@ -181,6 +232,12 @@ export function PostCard({
         </div>
       ) : null}
 
+      {post.repostOf ? (
+        <div className="px-4 pt-3">
+          <RepostEmbed original={post.repostOf} />
+        </div>
+      ) : null}
+
       {post.media.length > 0 ? (
         <div className={cn("pt-3", post.media.length === 1 ? "px-0" : "px-4")}>
           <MediaGrid media={post.media} />
@@ -189,13 +246,12 @@ export function PostCard({
 
       <div className="flex items-center justify-between gap-3 px-4 pt-3">
         <ReactionSummary state={post} />
-        <button
-          type="button"
-          onClick={() => onOpenComments?.(post)}
-          className="text-[13px] text-muted-foreground hover:underline"
-        >
-          {t("feed.comments_count", { count: post.commentCount })}
-        </button>
+        <span className="flex items-center gap-3 text-[13px] text-muted-foreground">
+          <button type="button" onClick={() => onOpenComments?.(post)} className="hover:underline">
+            {t("feed.comments_count", { count: post.commentCount })}
+          </button>
+          {post.shareCount > 0 ? <span>{t("share.count", { count: post.shareCount })}</span> : null}
+        </span>
       </div>
 
       <div className="mx-4 mt-2 flex items-center gap-1 border-t border-border/60 py-1">
@@ -213,14 +269,31 @@ export function PostCard({
           <MessageCircle className="size-[18px]" aria-hidden />
           {t("post.comment")}
         </button>
-        <button
-          type="button"
-          onClick={() => void copyLink()}
-          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted"
-        >
-          <Link2 className="size-[18px]" aria-hidden />
-          {t("post.share")}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted">
+            <Share2 className="size-[18px]" aria-hidden />
+            {t("post.share")}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-56">
+            {viewer && shareTarget ? (
+              <>
+                <DropdownMenuItem onSelect={() => void shareNow()}>
+                  <Repeat2 />
+                  {t("share.now")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setSharing(true)}>
+                  <SquarePen />
+                  {t("share.with_text")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
+            <DropdownMenuItem onSelect={() => void copyLink()}>
+              <Link2 />
+              {t("post.copy_link")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {isAuthor ? <PostEditDialog post={post} open={editing} onOpenChange={setEditing} onSaved={onChange} /> : null}
@@ -232,6 +305,9 @@ export function PostCard({
         busy={deleting}
         onConfirm={() => void remove()}
       />
+      {viewer && shareTarget ? (
+        <ShareDialog original={shareTarget} open={sharing} onOpenChange={setSharing} {...(onShared ? { onShared } : {})} />
+      ) : null}
       {viewer ? <ReportDialog open={reporting} onOpenChange={setReporting} targetType="post" targetId={post.id} /> : null}
     </Card>
   );

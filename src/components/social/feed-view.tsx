@@ -118,6 +118,7 @@ export function FeedView({
           onChange={feed.replace}
           onRemoved={feed.remove}
           onOpenComments={setCommentsFor}
+          onShared={feed.insert}
         />
       ))}
 

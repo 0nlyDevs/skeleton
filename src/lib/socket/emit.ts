@@ -15,6 +15,7 @@
 import {
   SOCKET_EVENTS,
   type MessageHiddenPayload,
+  type ProfileUpdatedPayload,
   type PresenceStatePayload,
   type RoomReadPayload,
   type CommentEventPayload,
@@ -138,4 +139,9 @@ export function publishPresenceState(payload: PresenceStatePayload): void {
 /** Put a user's open sockets into a conversation's live channel. */
 export function grantRoomMembership(userId: string, roomId: string): void {
   getSocketServer()?.in(userRoom(userId)).socketsJoin(chatRoom(roomId));
+}
+
+/** Public identity changes are public data: everyone connected may re-render. */
+export function publishProfileUpdated(payload: ProfileUpdatedPayload): void {
+  getSocketServer()?.emit(SOCKET_EVENTS.profileUpdated, payload);
 }

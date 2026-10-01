@@ -38,15 +38,22 @@ const mediaField = z
 export const createPostSchema = z
   .object({
     title: titleField.optional(),
-    body: bodyField,
+    // Optional: an image or a share can stand without a caption.
+    body: bodyField.default(""),
     published: z.boolean().default(true),
     tags: tagsField.default([]),
     mediaIds: mediaField.default([]),
     groupId: idSchema.optional(),
+    /** Share an existing public post, with an optional caption. */
+    repostOfId: idSchema.optional(),
   })
-  .refine((value) => value.body.length > 0 || value.mediaIds.length > 0, {
+  .refine((value) => value.body.length > 0 || value.mediaIds.length > 0 || Boolean(value.repostOfId), {
     message: "Write something or add an image.",
     path: ["body"],
+  })
+  .refine((value) => !(value.repostOfId && value.mediaIds.length > 0), {
+    message: "A share cannot carry its own images.",
+    path: ["mediaIds"],
   });
 
 export type CreatePostInput = z.infer<typeof createPostSchema>;

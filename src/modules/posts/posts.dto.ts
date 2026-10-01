@@ -34,6 +34,19 @@ export interface PostGroupDto {
   readonly privacy: "PUBLIC" | "PRIVATE";
 }
 
+/** The shared original, embedded in a repost. `null` content when it is gone. */
+export interface RepostedPostDto {
+  readonly id: string;
+  /** False once the original was removed or its group became private. */
+  readonly available: boolean;
+  readonly body: string;
+  readonly author: PostAuthorDto | null;
+  readonly media: PostMediaDto[];
+  readonly mentions: MentionDto[];
+  readonly group: PostGroupDto | null;
+  readonly createdAt: string | null;
+}
+
 export interface PostDto {
   readonly id: string;
   readonly title: string;
@@ -46,6 +59,10 @@ export interface PostDto {
   readonly media: PostMediaDto[];
   readonly mentions: MentionDto[];
   readonly group: PostGroupDto | null;
+  readonly repostOf: RepostedPostDto | null;
+  /** Set when the post was a share whose original no longer exists at all. */
+  readonly wasRepost: boolean;
+  readonly shareCount: number;
   readonly editedAt: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -68,6 +85,7 @@ export interface PostEngagementDto {
   readonly postId: string;
   readonly commentCount: number;
   readonly reactionCount: number;
+  readonly shareCount: number;
   readonly reactions: ReactionCounts;
 }
 
@@ -112,6 +130,9 @@ export function toPostDto(row: PostWithAuthor): PostDto {
     group: row.group
       ? { id: row.group.id, slug: row.group.slug, name: row.group.name, privacy: row.group.privacy }
       : null,
+    repostOf: row.repostOf ? toRepostedDto(row.repostOf) : null,
+    wasRepost: false,
+    shareCount: row.shareCount,
     editedAt: row.editedAt ? row.editedAt.toISOString() : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -121,4 +142,29 @@ export function toPostDto(row: PostWithAuthor): PostDto {
 
 export function toPostDtos(rows: readonly PostWithAuthor[]): PostDto[] {
   return rows.map(toPostDto);
+}
+
+type RepostRow = NonNullable<PostWithAuthor["repostOf"]>;
+
+/**
+ * Only an original that is still public is embedded with its content; a
+ * removed one, or one whose group turned private, becomes a placeholder so a
+ * share can never be used to read content its viewer could not open.
+ */
+function toRepostedDto(row: RepostRow): RepostedPostDto {
+  const available =
+    row.published && row.deletedAt === null && (row.group === null || (row.group.privacy === "PUBLIC" && row.group.deletedAt === null));
+  if (!available) {
+    return { id: row.id, available: false, body: "", author: null, media: [], mentions: [], group: null, createdAt: null };
+  }
+  return {
+    id: row.id,
+    available: true,
+    body: row.body,
+    author: { id: row.user.id, name: row.user.name, username: row.user.username, image: row.user.image },
+    media: row.media.map(({ upload }) => ({ id: upload.id, url: `/api/files/${upload.id}`, width: upload.width, height: upload.height })),
+    mentions: toMentionDtos(row.mentions),
+    group: row.group ? { id: row.group.id, slug: row.group.slug, name: row.group.name, privacy: row.group.privacy } : null,
+    createdAt: row.createdAt.toISOString(),
+  };
 }

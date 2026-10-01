@@ -33,7 +33,9 @@ import {
   notifyContentMention,
   notifyInBackground,
   notifyModeration,
+  notifyPostShare,
 } from "../notifications/notifications.service";
+import { broadcastEngagement } from "./posts.engagement";
 import { countReactionsByType, findViewerReactions } from "../reactions/reactions.repository";
 import { findAttachableImages } from "../uploads/uploads.repository";
 import { toFeedItemDto, toPostDto, toPostDtos, type FeedItemDto, type PostDto } from "./posts.dto";
@@ -42,6 +44,7 @@ import {
   countPostsByUser,
   createPostWithMedia,
   currentMediaIds,
+  decrementShareCount,
   findFeedPage,
   findPostById,
   findPosts,
@@ -385,16 +388,33 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
 
   await assertAttachable(input.mediaIds, actor.user.id);
 
+  // A share always points at the original and only at content that is public
+  // to everyone: re-sharing a private group's post would leak it.
+  let repostOfId: string | null = null;
+  let original: PostWithAuthor | null = null;
+  if (input.repostOfId) {
+    let target = await loadReadablePost(input.repostOfId, actor.user);
+    if (target.repostOfId) target = await loadReadablePost(target.repostOfId, actor.user);
+    const shareable = isPublicPost(target) && (target.group === null || target.group.privacy === "PUBLIC");
+    if (!shareable) throw new ForbiddenError("This post cannot be shared.");
+    if (input.groupId && target.groupId === input.groupId) {
+      throw new BadRequestError("This post is already in that group.");
+    }
+    repostOfId = target.id;
+    original = target;
+  }
+
   const row = await createPostWithMedia(
     {
       // Ownership comes from the session. There is no path by which a client
       // can choose the author.
       userId: actor.user.id,
-      title: input.title ?? deriveTitle(input.body, "Photo"),
+      title: input.title ?? deriveTitle(input.body, repostOfId ? "Partage" : "Photo"),
       body: input.body,
-      published: input.published,
+      published: repostOfId ? true : input.published,
       tags: input.tags,
       groupId: input.groupId ?? null,
+      repostOfId,
     },
     input.mediaIds,
   );
@@ -402,6 +422,14 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
   const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(row.groupId));
   const fresh = await syncPostMentions(row.id, actor.user.id, mentioned);
   if (row.published) notifyNewMentions(fresh, actor.user, row.id, input.body);
+
+  if (original && original.userId !== actor.user.id) {
+    notifyInBackground(
+      notifyPostShare({ userId: original.userId, actor: actor.user, postId: row.id }),
+      { postId: row.id },
+    );
+  }
+  if (original) void broadcastEngagement(original.id, postAudience(original));
 
   await recordAudit({
     actorId: actor.user.id,
@@ -508,6 +536,10 @@ export async function deletePostForActor(id: string, actor: ActorContext, reason
   const before = postAudience(existing);
   const deleted = await softDeletePost(existing.id, new Date());
   void announce(deleted, before);
+  if (existing.repostOfId) {
+    await decrementShareCount(existing.repostOfId);
+    void broadcastEngagement(existing.repostOfId, existing.repostOf ? postAudience({ ...existing.repostOf, groupId: existing.repostOf.group?.id ?? null }) : []);
+  }
 
   await recordAudit({
     actorId: actor.user.id,

@@ -93,7 +93,7 @@ export function CommentItem({
 
   return (
     <div className={cn("group flex gap-2.5", isReply && "ml-11")}>
-      {author ? <UserAvatar name={author.name} image={author.image} size={isReply ? "xs" : "sm"} /> : null}
+      {author ? <UserAvatar userId={author.id} name={author.name} image={author.image} size={isReply ? "xs" : "sm"} /> : null}
       <div className="min-w-0 flex-1">
         {editing ? (
           <div className="rounded-2xl bg-surface-muted p-1 ring-2 ring-ring/25">

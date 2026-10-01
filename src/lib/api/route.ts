@@ -38,7 +38,7 @@ import {
 import { parseJsonBody, parseOrThrow, searchParamsToObject } from "@/lib/validate";
 import type { AuthContext, Role } from "@/types";
 
-import { errorResponse } from "./response";
+import { errorResponse, requestLocale } from "./response";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -186,7 +186,7 @@ async function run<TBody, TQuery, TParams>(
 
     return response;
   } catch (error) {
-    return errorResponse(error, log, requestId);
+    return errorResponse(error, log, requestId, requestLocale(request));
   }
 }
 
