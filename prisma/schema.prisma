@@ -64,6 +64,27 @@ enum NotificationType {
   NEW_FOLLOWER
   GROUP_INVITE
   MODERATION
+  GROUP_ACTIVITY
+}
+
+/// Who can see a group's posts and member list.
+enum GroupPrivacy {
+  PUBLIC
+  PRIVATE
+}
+
+/// Group-scoped authority, independent of the platform `Role`.
+enum GroupRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum GroupMemberStatus {
+  ACTIVE
+  PENDING
+  BANNED
 }
 
 enum ReactionType {
@@ -137,6 +158,16 @@ model User {
   roomMembers    RoomMember[]
   followers      Follow[]             @relation("UserFollowers")
   following      Follow[]             @relation("UserFollowing")
+  groupsOwned    Group[]              @relation("GroupOwner")
+  groupMemberships GroupMember[]
+  mentionsReceived Mention[]          @relation("MentionTarget")
+  mentionsMade     Mention[]          @relation("MentionAuthor")
+  hiddenMessages   MessageHide[]
+
+  /// Presence: written when the last socket of the user disconnects.
+  lastSeenAt   DateTime?
+  /// Privacy: when false, others never see "online" or "last seen".
+  showPresence Boolean   @default(true)
 
   @@index([role])
   @@index([banned])
@@ -236,8 +267,17 @@ model Post {
   commentCount  Int @default(0)
   reactionCount Int @default(0)
 
+  /// Set when the author edits the text after publishing.
+  editedAt DateTime?
+
+  /// Group the post was shared in; `null` for the author's own timeline.
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   comments  Comment[]
   reactions PostReaction[]
+  media     PostMedia[]
+  mentions  Mention[]
 
   @@index([userId])
   @@index([published])
@@ -246,7 +286,84 @@ model Post {
   @@index([userId, deletedAt])
   // The public feed: published, not deleted, newest first.
   @@index([published, deletedAt, createdAt])
+  @@index([groupId, deletedAt, createdAt])
   @@map("post")
+}
+
+/// Ordered images attached to a post. Each upload belongs to one post at most.
+model PostMedia {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  uploadId  String   @unique
+  upload    Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([postId, position])
+  @@map("postMedia")
+}
+
+/// A structural `@username` reference in a post or a comment. Stored at write
+/// time so rendering never guesses from raw text, and a renamed user still
+/// resolves.
+model Mention {
+  id              String   @id @default(cuid())
+  mentionedUserId String
+  mentionedUser   User     @relation("MentionTarget", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User     @relation("MentionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  postId          String?
+  post            Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId       String?
+  comment         Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+
+  @@unique([postId, mentionedUserId])
+  @@unique([commentId, mentionedUserId])
+  @@index([mentionedUserId, createdAt])
+  @@index([authorId])
+  @@map("mention")
+}
+
+model Group {
+  id          String       @id @default(cuid())
+  slug        String       @unique @db.VarChar(60)
+  name        String       @db.VarChar(80)
+  description String?      @db.Text
+  privacy     GroupPrivacy @default(PUBLIC)
+  coverImage  String?      @db.VarChar(200)
+  ownerId     String
+  owner       User         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  /// Denormalised, maintained with membership changes.
+  memberCount Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  members GroupMember[]
+  posts   Post[]
+
+  @@index([privacy, deletedAt, memberCount])
+  @@index([ownerId])
+  @@map("group")
+}
+
+model GroupMember {
+  id        String            @id @default(cuid())
+  groupId   String
+  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      GroupRole         @default(MEMBER)
+  status    GroupMemberStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([groupId, userId])
+  @@index([userId, status])
+  @@index([groupId, status, role])
+  @@map("groupMember")
 }
 
 /// One level of threading: a reply points at a top-level comment.
@@ -264,6 +381,8 @@ model Comment {
   updatedAt DateTime  @updatedAt
   editedAt  DateTime?
   deletedAt DateTime?
+
+  mentions Mention[]
 
   @@index([postId, createdAt])
   @@index([parentId])
@@ -343,13 +462,35 @@ model Message {
   senderId  String
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content   String   @db.Text
+  /// Optional image; served through the authorised file route.
+  uploadId  String?  @unique
+  upload    Upload?  @relation(fields: [uploadId], references: [id], onDelete: SetNull)
+  editedAt  DateTime?
+  /// "Deleted for everyone": the row stays as a tombstone so the thread keeps
+  /// its shape, but its content is never sent again.
   deletedAt DateTime?
   createdAt DateTime @default(now())
+
+  hiddenFor MessageHide[]
 
   // Drives the hot path: "latest N messages in this room, newer than X".
   @@index([roomId, createdAt])
   @@index([senderId])
   @@map("message")
+}
+
+/// "Deleted for me": hides one message from one member only.
+model MessageHide {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@map("messageHide")
 }
 
 model Notification {
@@ -409,7 +550,12 @@ model Upload {
   mime         String
   size         Int
   visibility   UploadVisibility @default(PRIVATE)
+  width        Int?
+  height       Int?
   createdAt    DateTime         @default(now())
+
+  postMedia PostMedia?
+  message   Message?
 
   @@index([userId])
   @@index([createdAt])
