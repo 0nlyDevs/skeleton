@@ -21,24 +21,40 @@ const JURY_PASSWORD = "Webcup-2026!jury";
 const ACCOUNTS = [
   {
     email: "admin@webcup.demo",
+    username: "colombe.admin",
+    firstName: "Colombe",
+    lastName: "Admin",
+    birthDate: "1995-04-12",
     name: "Colombe Admin",
     role: "ADMIN" as const,
     bio: "Administratrice de la plateforme de démonstration.",
   },
   {
     email: "moderator@webcup.demo",
+    username: "marc.moderateur",
+    firstName: "Marc",
+    lastName: "Modérateur",
+    birthDate: "1990-09-03",
     name: "Marc Modérateur",
     role: "MODERATOR" as const,
     bio: "Modérateur — file de signalements et contenu signalé.",
   },
   {
     email: "user@webcup.demo",
+    username: "aline",
+    firstName: "Aline",
+    lastName: "Utilisatrice",
+    birthDate: "2000-01-22",
     name: "Aline Utilisatrice",
     role: "USER" as const,
     bio: "Compte de démonstration standard.",
   },
   {
     email: "user2@webcup.demo",
+    username: "bilal",
+    firstName: "Bilal",
+    lastName: "Deuxième",
+    birthDate: "1998-06-30",
     name: "Bilal Deuxième",
     role: "USER" as const,
     bio: "Second compte standard, pour tester les droits d'accès entre utilisateurs.",
@@ -124,6 +140,16 @@ const MESSAGES: ReadonlyArray<{ author: number; content: string }> = [
   { author: 3, content: "Testons aussi le mode dégradé : coupez le réseau et rechargez, le polling prend le relais." },
 ];
 
+function profileOf(account: (typeof ACCOUNTS)[number]) {
+  return {
+    username: account.username,
+    displayUsername: account.username,
+    firstName: account.firstName,
+    lastName: account.lastName,
+    birthDate: new Date(`${account.birthDate}T00:00:00Z`),
+  };
+}
+
 async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: string) {
   // BetterAuth generates user ids itself; here we must supply one, because the
   // schema mirrors BetterAuth's table where `id` has no default.
@@ -140,7 +166,7 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
     });
     return prisma.user.update({
       where: { id: existing.id },
-      data: { role: account.role, emailVerified: true, bio: account.bio },
+      data: { role: account.role, emailVerified: true, bio: account.bio, ...profileOf(account) },
     });
   }
 
@@ -154,6 +180,7 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
       role: account.role,
       emailVerified: true,
       bio: account.bio,
+      ...profileOf(account),
       accounts: {
         create: {
           id: crypto.randomUUID(),

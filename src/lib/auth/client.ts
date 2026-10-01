@@ -1,6 +1,6 @@
 "use client";
 
-import { twoFactorClient } from "better-auth/client/plugins";
+import { twoFactorClient, usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 /**
@@ -17,6 +17,7 @@ import { createAuthClient } from "better-auth/react";
  */
 export const authClient = createAuthClient({
   plugins: [
+    usernameClient(),
     twoFactorClient({
       onTwoFactorRedirect: () => {
         // A hard navigation, not `router.push`: the session was just replaced

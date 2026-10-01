@@ -12,6 +12,7 @@
  * response" gate is checking for.
  */
 
+import { formatBirthDate } from "@/lib/validation/profile";
 import type { Role } from "@/types";
 
 import type { AdminUserRow, UserProfileRow } from "./users.repository";
@@ -19,12 +20,19 @@ import type { AdminUserRow, UserProfileRow } from "./users.repository";
 export interface PublicUserDto {
   readonly id: string;
   readonly name: string;
+  readonly username: string | null;
   readonly image: string | null;
 }
 
 export interface UserProfileDto {
   readonly id: string;
   readonly name: string;
+  readonly username: string | null;
+  readonly displayUsername: string | null;
+  readonly firstName: string | null;
+  readonly lastName: string | null;
+  /** `YYYY-MM-DD`; private, only ever returned to its owner and to admins. */
+  readonly birthDate: string | null;
   readonly email: string;
   readonly image: string | null;
   readonly bio: string | null;
@@ -42,13 +50,18 @@ export interface AdminUserDto extends UserProfileDto {
 }
 
 export function toPublicUserDto(row: PublicUserDto): PublicUserDto {
-  return { id: row.id, name: row.name, image: row.image };
+  return { id: row.id, name: row.name, username: row.username, image: row.image };
 }
 
 export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
   return {
     id: row.id,
     name: row.name,
+    username: row.username,
+    displayUsername: row.displayUsername,
+    firstName: row.firstName,
+    lastName: row.lastName,
+    birthDate: formatBirthDate(row.birthDate),
     email: row.email,
     image: row.image,
     bio: row.bio,
@@ -63,6 +76,11 @@ export function toAdminUserDto(row: AdminUserRow): AdminUserDto {
   return {
     id: row.id,
     name: row.name,
+    username: row.username,
+    displayUsername: row.displayUsername,
+    firstName: row.firstName,
+    lastName: row.lastName,
+    birthDate: formatBirthDate(row.birthDate),
     email: row.email,
     image: row.image,
     bio: row.bio,

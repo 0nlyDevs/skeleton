@@ -91,8 +91,16 @@ model User {
   // BetterAuth two-factor plugin field
   twoFactorEnabled Boolean @default(false)
 
+  // BetterAuth username plugin: `username` is the normalised (lowercase)
+  // public handle, `displayUsername` keeps the casing the user typed.
+  username        String? @unique @db.VarChar(30)
+  displayUsername String? @db.VarChar(30)
+
   // Application profile
-  bio String? @db.Text
+  firstName String?   @db.VarChar(50)
+  lastName  String?   @db.VarChar(50)
+  birthDate DateTime? @db.Date
+  bio       String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

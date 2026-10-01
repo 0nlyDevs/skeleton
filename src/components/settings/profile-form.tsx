@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, PartyPopper } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,7 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
+import type { MessageKey } from "@/lib/i18n";
+import {
+  birthDateViolation,
+  personNameViolation,
+  usernameViolation,
+} from "@/lib/validation/profile";
+import type { UserProfileDto } from "@/modules/users/users.dto";
 import { initials } from "@/lib/utils";
 
 const BIO_MAX = 500;
@@ -25,22 +33,37 @@ const BIO_MAX = 500;
  * trip — then the visible avatar updates from the response.
  */
 export function ProfileForm({
-  name: initialName,
-  bio: initialBio,
-  image: initialImage,
-  email,
+  profile,
+  welcome = false,
 }: {
-  readonly name: string;
-  readonly bio: string | null;
-  readonly image: string | null;
-  readonly email: string;
+  readonly profile: UserProfileDto;
+  readonly welcome?: boolean;
 }) {
   const t = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const email = profile.email;
 
-  const [name, setName] = useState(initialName);
-  const [bio, setBio] = useState(initialBio ?? "");
-  const [image, setImage] = useState(initialImage);
+  const [firstName, setFirstName] = useState(profile.firstName ?? "");
+  const [lastName, setLastName] = useState(profile.lastName ?? "");
+  const [username, setUsername] = useState(profile.displayUsername ?? profile.username ?? "");
+  const [birthDate, setBirthDate] = useState(profile.birthDate ?? "");
+  const [bio, setBio] = useState(profile.bio ?? "");
+  const [image, setImage] = useState(profile.image);
+  const [serverErrors, setServerErrors] = useState<Partial<Record<string, MessageKey>>>({});
+  const name = `${firstName} ${lastName}`.trim();
+
+  const invalid = {
+    firstName: personNameViolation(firstName) !== null,
+    lastName: personNameViolation(lastName) !== null,
+    username: usernameViolation(username) !== null,
+    // Optional for accounts created before it existed or through OAuth.
+    birthDate: birthDate !== "" && birthDateViolation(birthDate) !== null,
+  };
+  const errorFor = (field: keyof typeof invalid, key: MessageKey) => {
+    const server = serverErrors[field];
+    if (server) return { error: t(server) };
+    return invalid[field] ? { error: t(key) } : {};
+  };
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -87,18 +110,34 @@ export function ProfileForm({
     if (saving) return;
 
     setSaving(true);
+    setServerErrors({});
     try {
       await apiFetch("/api/users/me", {
         method: "PATCH",
-        body: { name: name.trim(), bio: bio.trim() },
+        body: {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          username: username.trim(),
+          birthDate: birthDate === "" ? null : birthDate,
+          bio: bio.trim(),
+        },
       });
       toast.success(t("settings.profile.saved"));
     } catch (caught) {
-      toast.error(
-        caught instanceof ApiRequestError && caught.fields?.name
-          ? caught.fields.name
-          : t("feedback.error.body"),
-      );
+      if (caught instanceof ApiRequestError && caught.status === 409) {
+        setServerErrors({ username: "profile.error.username_taken" });
+      } else if (caught instanceof ApiRequestError && caught.fields) {
+        const fields = caught.fields;
+        setServerErrors({
+          ...(fields.username ? { username: "profile.error.username" } : {}),
+          ...(fields.firstName ? { firstName: "profile.error.name" } : {}),
+          ...(fields.lastName ? { lastName: "profile.error.name" } : {}),
+          ...(fields.birthDate ? { birthDate: "profile.error.birth_date" } : {}),
+        });
+        toast.error(t("error.VALIDATION_ERROR"));
+      } else {
+        toast.error(t("feedback.error.body"));
+      }
     } finally {
       setSaving(false);
     }
@@ -112,6 +151,13 @@ export function ProfileForm({
         </h1>
         <p className="text-[14px] text-muted-foreground">{t("settings.profile.subtitle")}</p>
       </header>
+
+      {welcome ? (
+        <Alert>
+          <PartyPopper />
+          <AlertDescription className="text-foreground">{t("profile.welcome")}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -164,15 +210,75 @@ export function ProfileForm({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="flex flex-col gap-5" noValidate>
-            <FormField label={t("settings.profile.name")} required>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <FormField label={t("profile.first_name")} required {...errorFor("firstName", "profile.error.name")}>
+                {(field) => (
+                  <Input
+                    {...field}
+                    value={firstName}
+                    onChange={(event) => setFirstName(event.target.value)}
+                    maxLength={50}
+                    autoComplete="given-name"
+                    required
+                  />
+                )}
+              </FormField>
+              <FormField label={t("profile.last_name")} required {...errorFor("lastName", "profile.error.name")}>
+                {(field) => (
+                  <Input
+                    {...field}
+                    value={lastName}
+                    onChange={(event) => setLastName(event.target.value)}
+                    maxLength={50}
+                    autoComplete="family-name"
+                    required
+                  />
+                )}
+              </FormField>
+            </div>
+
+            <FormField
+              label={t("profile.username")}
+              hint={t("profile.username_hint")}
+              required
+              {...errorFor("username", "profile.error.username")}
+            >
+              {(field) => (
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground">
+                    @
+                  </span>
+                  <Input
+                    {...field}
+                    value={username}
+                    onChange={(event) => {
+                      setServerErrors((current) => ({ ...current, username: undefined }));
+                      setUsername(event.target.value.replace(/\s/g, ""));
+                    }}
+                    maxLength={30}
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    autoComplete="username"
+                    className="pl-7"
+                    required
+                  />
+                </div>
+              )}
+            </FormField>
+
+            <FormField
+              label={t("profile.birth_date")}
+              hint={t("profile.birth_date_hint")}
+              {...errorFor("birthDate", "profile.error.birth_date")}
+            >
               {(field) => (
                 <Input
                   {...field}
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  maxLength={80}
-                  autoComplete="name"
-                  required
+                  type="date"
+                  value={birthDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(event) => setBirthDate(event.target.value)}
+                  autoComplete="bday"
                 />
               )}
             </FormField>
@@ -196,7 +302,7 @@ export function ProfileForm({
             </FormField>
 
             <div className="flex items-center justify-end gap-3">
-              <Button type="submit" disabled={saving || name.trim().length === 0}>
+              <Button type="submit" disabled={saving || Object.values(invalid).some(Boolean)}>
                 {saving ? t("common.saving") : t("common.save")}
               </Button>
             </div>

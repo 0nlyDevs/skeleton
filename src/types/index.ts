@@ -30,6 +30,8 @@ export interface AuthUser {
   readonly id: string;
   readonly email: string;
   readonly name: string;
+  /** Public handle; `null` only for rows that predate the profile migration. */
+  readonly username: string | null;
   readonly image: string | null;
   readonly role: Role;
   readonly emailVerified: boolean;

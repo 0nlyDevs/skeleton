@@ -17,7 +17,9 @@
 
 import { assertCanAssignRole } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth/auth";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import type { Prisma } from "@/generated/prisma/client";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, fromPrismaError } from "@/lib/errors";
+import { composeDisplayName } from "@/lib/validation/profile";
 import { paginate, resolveSortField, toPagination, type Paginated } from "@/lib/pagination";
 import { parseDateInput } from "@/lib/utils";
 import type { AuthUser } from "@/types";
@@ -33,6 +35,7 @@ import {
   deleteOwnSession,
   deleteUserSessions,
   findAdminUserById,
+  findUserIdByUsername,
   findUserProfileById,
   findUsers,
   updateUserBan,
@@ -218,13 +221,40 @@ export async function updateOwnProfile(
   input: UpdateProfileInput,
   actor: ActorContext,
 ): Promise<UserProfileDto> {
-  const data: { name?: string; bio?: string; image?: string | null } = {};
+  const current = await findUserProfileById(actor.user.id);
+  if (!current) throw new NotFoundError("Your account could not be loaded.");
 
-  if (input.name !== undefined) data.name = input.name;
+  const data: Prisma.UserUncheckedUpdateInput = {};
+
+  if (input.username !== undefined && input.username !== current.username) {
+    const holder = await findUserIdByUsername(input.username);
+    if (holder && holder !== actor.user.id) {
+      throw new ConflictError("This username is already taken.", {
+        username: "This username is already taken.",
+      });
+    }
+    data.username = input.username;
+    data.displayUsername = input.username;
+  }
+  if (input.firstName !== undefined) data.firstName = input.firstName;
+  if (input.lastName !== undefined) data.lastName = input.lastName;
+  if (input.firstName !== undefined || input.lastName !== undefined) {
+    data.name = composeDisplayName(
+      input.firstName ?? current.firstName ?? "",
+      input.lastName ?? current.lastName ?? "",
+    );
+  }
+  if (input.birthDate !== undefined) data.birthDate = input.birthDate;
   if (input.bio !== undefined) data.bio = input.bio;
   if (input.image !== undefined) data.image = input.image;
 
-  const row = await updateUserProfile(actor.user.id, data);
+  let row;
+  try {
+    row = await updateUserProfile(actor.user.id, data);
+  } catch (error) {
+    // Two users racing for the same handle: the unique index decides.
+    throw fromPrismaError(error, "This username is already taken.") ?? error;
+  }
 
   await recordAudit({
     actorId: actor.user.id,

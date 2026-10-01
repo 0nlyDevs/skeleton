@@ -60,12 +60,13 @@ export function LoginForm({
     setErrorKey(null);
 
     try {
-      const result = await signIn.email({
-        email: email.trim(),
-        password,
-        rememberMe,
-        callbackURL: "/dashboard",
-      });
+      // One field, two doors: an address goes to the email endpoint, anything
+      // else is a username. Both are rate-limited and answer identically on a
+      // wrong identifier or a wrong password.
+      const identifier = email.trim();
+      const result = identifier.includes("@")
+        ? await signIn.email({ email: identifier, password, rememberMe, callbackURL: "/dashboard" })
+        : await signIn.username({ username: identifier, password, rememberMe, callbackURL: "/dashboard" });
 
       if (result.error) {
         setErrorKey(loginErrorMessageKey(result.error));
@@ -92,14 +93,15 @@ export function LoginForm({
         </Alert>
       ) : null}
 
-      <FormField label={t("auth.login.email")} required>
+      <FormField label={t("auth.login.identifier")} required>
         {(field) => (
           <Input
             {...field}
-            type="email"
-            name="email"
-            autoComplete="email"
-            inputMode="email"
+            type="text"
+            name="username"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             placeholder="nom@exemple.fr"
             required
             value={email}

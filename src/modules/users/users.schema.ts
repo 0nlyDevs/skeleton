@@ -2,12 +2,12 @@ import { z } from "zod";
 
 import { passwordSchema } from "@/lib/auth/password-policy";
 import { roleSchema } from "@/lib/auth/roles";
+import { birthDateSchema, personNameSchema, usernameSchema } from "@/lib/validation/profile";
 import { paginationQuerySchema, sortOrderSchema } from "@/lib/pagination";
 import {
   booleanQuerySchema,
   hasAtLeastOneDefined,
   idSchema,
-  nameSchema,
 } from "@/lib/validate";
 
 /** Local upload path only — an external URL here would be a tracking beacon. */
@@ -19,7 +19,12 @@ const avatarPathSchema = z
 
 export const updateProfileSchema = z
   .object({
-    name: nameSchema.optional(),
+    // The display name is derived from first + last name; it is not editable
+    // on its own, so the two can never disagree.
+    username: usernameSchema.optional(),
+    firstName: personNameSchema.optional(),
+    lastName: personNameSchema.optional(),
+    birthDate: birthDateSchema.nullable().optional(),
     bio: z
       .string()
       .transform((value) => value.trim())

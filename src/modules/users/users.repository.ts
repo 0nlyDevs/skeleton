@@ -11,6 +11,11 @@ import { prisma } from "@/lib/db/prisma";
 export const userProfileSelect = {
   id: true,
   name: true,
+  username: true,
+  displayUsername: true,
+  firstName: true,
+  lastName: true,
+  birthDate: true,
   email: true,
   image: true,
   bio: true,
@@ -77,6 +82,11 @@ export async function updateUserBan(
   data: { banned: boolean; banReason: string | null; banExpires: Date | null },
 ): Promise<AdminUserRow> {
   return prisma.user.update({ where: { id }, data, select: adminUserSelect });
+}
+
+export async function findUserIdByUsername(username: string): Promise<string | null> {
+  const row = await prisma.user.findUnique({ where: { username }, select: { id: true } });
+  return row?.id ?? null;
 }
 
 /** Used to refuse an action that would leave the platform without an admin. */

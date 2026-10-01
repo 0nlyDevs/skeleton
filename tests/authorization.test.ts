@@ -25,6 +25,7 @@ function user(role: AuthUser["role"], id = "user-1"): AuthUser {
     id,
     email: `${id}@example.com`,
     name: "Test User",
+    username: id.replace(/[^a-z0-9]/g, "_"),
     image: null,
     role,
     emailVerified: true,
