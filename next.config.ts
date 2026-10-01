@@ -56,14 +56,22 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/adapter-mariadb", "mariadb", "qrcode", "@node-rs/argon2"],
 
   /*
-   * The build tracer only copies 2 of 7 files for packages resolved through
-   * dynamic `require` (the ones above plus their runtime closure), which
-   * crashes the custom server at boot with MODULE_NOT_FOUND. Force the full
-   * closure into the standalone output. Keys are route globs (`/*` = all
-   * routes); values are project-root-relative globs.
+   * The build tracer copies a fraction of what the runtime needs (next
+   * 985/8586 with no root shims like headers.js, @swc/helpers 5/438,
+   * react-dom 12/43, prisma packages 2/7...), which crashes the custom
+   * server at boot with MODULE_NOT_FOUND and would break SSR. Force the
+   * full runtime closure into the standalone output. Keys are route globs
+   * (`/*` = all routes); values are project-root-relative globs.
    */
   outputFileTracingIncludes: {
     "/*": [
+      "./node_modules/next/**",
+      "./node_modules/react/**",
+      "./node_modules/react-dom/**",
+      "./node_modules/styled-jsx/**",
+      "./node_modules/@swc/helpers/**",
+      "./node_modules/client-only/**",
+      "./node_modules/@next/env/**",
       "./node_modules/@prisma/adapter-mariadb/**",
       "./node_modules/@prisma/client-runtime-utils/**",
       "./node_modules/@prisma/driver-adapter-utils/**",
@@ -74,6 +82,15 @@ const nextConfig: NextConfig = {
       "./node_modules/safer-buffer/**",
       "./node_modules/denque/**",
       "./node_modules/lru-cache/**",
+      "./node_modules/sharp/**",
+      "./node_modules/@img/**",
+      "./node_modules/@emnapi/**",
+      "./node_modules/detect-libc/**",
+      "./node_modules/semver/**",
+      "./node_modules/color/**",
+      "./node_modules/pngjs/**",
+      "./node_modules/qrcode/**",
+      "./node_modules/dijkstrajs/**",
     ],
   },
 
