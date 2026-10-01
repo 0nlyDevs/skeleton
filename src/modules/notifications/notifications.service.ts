@@ -15,6 +15,7 @@
 
 import type { NotificationType } from "@/generated/prisma/client";
 
+import { encryptNullable } from "@/lib/crypto/field-encryption";
 import { logger } from "@/lib/logger";
 import { sendNotificationEmail } from "@/lib/mail/transactional";
 import { paginate, toPagination, type Paginated } from "@/lib/pagination";
@@ -61,7 +62,8 @@ export async function createNotification(
     userId: input.userId,
     type: input.type,
     title: input.title,
-    body: input.body ?? null,
+    // Bodies quote private content (message previews, comments): encrypted at rest.
+    body: encryptNullable(input.body ?? null),
     link: input.link ?? null,
   });
 
@@ -86,12 +88,14 @@ async function deliverEmail(input: CreateNotificationInput): Promise<void> {
 
   // Conversation-style activity (mentions, comments, replies) follows the
   // mention switch; direct messages and group invites follow the message one.
+  // Security alerts are not optional: they are how an owner learns of a takeover.
   const wantsEmail =
-    input.type === "MENTION" || input.type === "POST_COMMENT" || input.type === "COMMENT_REPLY"
+    input.type === "SECURITY" ||
+    (input.type === "MENTION" || input.type === "POST_COMMENT" || input.type === "COMMENT_REPLY"
       ? (preferences?.emailOnMention ?? true)
       : input.type === "NEW_MESSAGE" || input.type === "GROUP_INVITE"
         ? (preferences?.emailOnMessage ?? false)
-        : (preferences?.emailOnSystem ?? true);
+        : (preferences?.emailOnSystem ?? true));
 
   if (!wantsEmail) return;
 

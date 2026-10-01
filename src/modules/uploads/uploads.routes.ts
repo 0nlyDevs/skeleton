@@ -12,7 +12,8 @@ import { NextResponse } from "next/server";
 
 import { apiRoute, publicRoute } from "@/lib/api/route";
 import { jsonCreated } from "@/lib/api/response";
-import { BadRequestError } from "@/lib/errors";
+import { env } from "@/lib/env";
+import { BadRequestError, PayloadTooLargeError } from "@/lib/errors";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 import { idSchema, parseOrThrow } from "@/lib/validate";
 
@@ -31,6 +32,12 @@ async function readUploadForm(request: Request): Promise<{
   readonly file: { readonly filename: string; readonly bytes: Buffer };
   readonly visibility: "PUBLIC" | "PRIVATE";
 }> {
+  // Checked before parsing: `formData()` would otherwise buffer any size.
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (!declared || declared > env.UPLOAD_MAX_BYTES + 64 * 1024) {
+    throw new PayloadTooLargeError(`The uploaded file exceeds the ${env.UPLOAD_MAX_BYTES} byte limit.`);
+  }
+
   let form: FormData;
   try {
     form = await request.formData();

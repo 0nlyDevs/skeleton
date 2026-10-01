@@ -21,7 +21,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, ValidationError, fromPrismaError } from "@/lib/errors";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { publishProfileUpdated } from "@/lib/socket/emit";
-import { composeDisplayName, normalizeUsername, usernameViolation } from "@/lib/validation/profile";
+import { encryptField } from "@/lib/crypto/field-encryption";
+import { composeDisplayName, formatBirthDate, normalizeUsername, usernameViolation } from "@/lib/validation/profile";
 import { paginate, resolveSortField, toPagination, type Paginated } from "@/lib/pagination";
 import { parseDateInput } from "@/lib/utils";
 import { disconnectUserSockets } from "@/lib/socket/emit";
@@ -296,7 +297,10 @@ export async function updateOwnProfile(
       input.lastName ?? current.lastName ?? "",
     );
   }
-  if (input.birthDate !== undefined) data.birthDate = input.birthDate;
+  if (input.birthDate !== undefined) {
+    data.birthDateEncrypted = input.birthDate ? encryptField(formatBirthDate(input.birthDate) ?? "") : null;
+    data.birthDate = null;
+  }
   if (input.bio !== undefined) data.bio = input.bio;
   if (input.image !== undefined) data.image = input.image;
   if (input.showPresence !== undefined) data.showPresence = input.showPresence;
@@ -400,7 +404,7 @@ export async function changeOwnPassword(
 
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { code?: string; message?: string } | null;
-    if (body?.code === "PASSWORD_TOO_WEAK") {
+    if (body?.code === "PASSWORD_TOO_WEAK" || body?.code === "PASSWORD_BREACHED") {
       throw new ValidationError({ newPassword: body.message ?? "This password is too weak." });
     }
     if (body?.code === "CREDENTIAL_ACCOUNT_NOT_FOUND") {

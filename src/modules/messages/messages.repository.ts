@@ -9,6 +9,7 @@
 import { type Prisma } from "@/generated/prisma/client";
 import { createHash } from "node:crypto";
 
+import { encryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
 
 export const messageSenderSelect = {
@@ -112,8 +113,9 @@ export async function createMessage(data: {
   uploadId?: string | null;
 }): Promise<MessageWithSender> {
   return prisma.$transaction(async (tx) => {
+    // Content is encrypted at rest; `toMessageDto` decrypts on the way out.
     const message = await tx.message.create({
-      data,
+      data: { ...data, content: data.content ? encryptField(data.content) : "" },
       include: messageSenderSelect,
     });
     await tx.room.update({ where: { id: data.roomId }, data: { updatedAt: message.createdAt } });
@@ -224,7 +226,7 @@ export async function softDeleteMessage(id: string): Promise<MessageWithSender |
 export async function updateMessageContent(id: string, content: string): Promise<MessageWithSender> {
   return prisma.message.update({
     where: { id },
-    data: { content, editedAt: new Date() },
+    data: { content: encryptField(content), editedAt: new Date() },
     include: messageSenderSelect,
   });
 }

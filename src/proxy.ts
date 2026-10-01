@@ -106,7 +106,7 @@ function isPassThrough(pathname: string): boolean {
   return PASS_THROUGH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-function buildContentSecurityPolicy(nonce: string, isDev: boolean): string {
+function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string): string {
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
@@ -123,7 +123,9 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean): string {
     "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
     "font-src 'self' data:",
     // `ws:`/`wss:` for Socket.IO; the app is otherwise same-origin.
-    "connect-src 'self' ws: wss:",
+    // Sockets to this host only (any-host `ws:` would let injected code
+    // exfiltrate to an attacker's socket server).
+    `connect-src 'self' wss://${host}${isDev ? ` ws://${host}` : ""}`,
     "media-src 'self'",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
@@ -148,7 +150,7 @@ export function proxy(request: NextRequest): NextResponse {
   }
 
   const nonce = btoa(crypto.randomUUID());
-  const csp = buildContentSecurityPolicy(nonce, isDev);
+  const csp = buildContentSecurityPolicy(nonce, isDev, request.nextUrl.host);
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);

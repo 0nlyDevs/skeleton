@@ -138,7 +138,10 @@ model User {
   // Application profile
   firstName String?   @db.VarChar(50)
   lastName  String?   @db.VarChar(50)
+  /// Legacy plaintext column: cleared on every write, read only as a fallback.
   birthDate DateTime? @db.Date
+  /// `YYYY-MM-DD`, AES-256-GCM encrypted at rest (see lib/crypto).
+  birthDateEncrypted String? @db.Text
   bio       String?   @db.Text
 
   createdAt DateTime @default(now())
@@ -165,6 +168,7 @@ model User {
   mentionsReceived Mention[]          @relation("MentionTarget")
   mentionsMade     Mention[]          @relation("MentionAuthor")
   hiddenMessages   MessageHide[]
+  knownDevices     KnownDevice[]
 
   /// Presence: written when the last socket of the user disconnects.
   lastSeenAt   DateTime?
@@ -487,6 +491,24 @@ model Message {
   @@index([roomId, createdAt])
   @@index([senderId])
   @@map("message")
+}
+
+/// A browser that has signed in to the account before. Only a hash of the
+/// device cookie is stored, so a database leak cannot be replayed as cookies.
+/// An unknown device signing in triggers a "was this you?" alert.
+model KnownDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceHash  String   @db.VarChar(64)
+  label       String   @db.VarChar(120)
+  lastIp      String?  @db.VarChar(64)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([userId, deviceHash])
+  @@index([userId, lastSeenAt])
+  @@map("knownDevice")
 }
 
 /// "Deleted for me": hides one message from one member only.

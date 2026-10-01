@@ -10,6 +10,9 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "This password appears in known data breaches. Choose a different one.": "Ce mot de passe apparaît dans des fuites de données connues. Choisissez-en un autre.",
+  "The request body is too large.": "La requête est trop volumineuse.",
+  "Could not read the request body.": "La requête est illisible.",
   "A ban needs a short reason.": "Une exclusion doit être motivée en quelques mots.",
   "A downstream service is unavailable. Please try again.": "Un service externe est indisponible. Réessayez.",
   "A group can have at most 51 members.": "Un groupe de discussion compte au plus 51 membres.",

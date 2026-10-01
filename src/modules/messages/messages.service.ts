@@ -9,6 +9,7 @@
  */
 
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { decryptField } from "@/lib/crypto/field-encryption";
 import { extractMentions } from "@/lib/mentions";
 import { logger } from "@/lib/logger";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
@@ -182,7 +183,7 @@ export async function listRooms(actor: AuthUser): Promise<RoomDto[]> {
       const lastMessage = latestMsg
         ? {
             id: latestMsg.id,
-            content: latestMsg.deletedAt ? "" : latestMsg.content,
+            content: latestMsg.deletedAt ? "" : decryptField(latestMsg.content),
             deleted: latestMsg.deletedAt !== null,
             senderId: latestMsg.sender.id,
             senderName: latestMsg.sender.name,

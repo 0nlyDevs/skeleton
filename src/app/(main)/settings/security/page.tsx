@@ -17,7 +17,12 @@ export const metadata: Metadata = { title: "Sécurité" };
  * no extra HTTP hop). Only session ids reach the client; revocation goes through
  * `/api/users/me/sessions`, which scopes every delete to the caller.
  */
-export default async function SecuritySettingsPage() {
+export default async function SecuritySettingsPage({
+  searchParams,
+}: {
+  readonly searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const context = await getAuthContext();
   if (!context) redirect("/login");
 
@@ -31,6 +36,7 @@ export default async function SecuritySettingsPage() {
     <SecurityForm
       twoFactorEnabled={context.user.twoFactorEnabled}
       hasPassword={hasPassword}
+      alert={params.alert === "new-device"}
       oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }}
       currentSessionId={context.session.id}
       // Ids only: a session token is a bearer credential and stays server-side.

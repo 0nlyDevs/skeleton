@@ -36,9 +36,12 @@ import { OAuthButtons, type OAuthAvailability } from "./oauth-buttons";
 export function LoginForm({
   oauth,
   initialError,
+  redirectTo = "/feed",
 }: {
   readonly oauth: OAuthAvailability;
   readonly initialError?: string;
+  /** Already validated by `safeNextPath` on the server. */
+  readonly redirectTo?: string;
 }) {
   const t = useTranslation();
   const router = useRouter();
@@ -65,8 +68,8 @@ export function LoginForm({
       // wrong identifier or a wrong password.
       const identifier = email.trim();
       const result = identifier.includes("@")
-        ? await signIn.email({ email: identifier, password, rememberMe, callbackURL: "/feed" })
-        : await signIn.username({ username: identifier, password, rememberMe, callbackURL: "/feed" });
+        ? await signIn.email({ email: identifier, password, rememberMe, callbackURL: redirectTo })
+        : await signIn.username({ username: identifier, password, rememberMe, callbackURL: redirectTo });
 
       if (result.error) {
         setErrorKey(loginErrorMessageKey(result.error));
@@ -76,7 +79,7 @@ export function LoginForm({
 
       // A successful sign-in with 2FA enabled never reaches this line: the
       // plugin navigates to the challenge page first.
-      router.replace("/feed");
+      router.replace(redirectTo);
       router.refresh();
     } catch (error) {
       setErrorKey(isNetworkFailure(error) ? "auth.login.network" : "error.INTERNAL_ERROR");
@@ -167,7 +170,7 @@ export function LoginForm({
         {pending ? t("common.loading") : t("auth.login.submit")}
       </Button>
 
-      <OAuthButtons availability={oauth} callbackURL="/feed" />
+      <OAuthButtons availability={oauth} callbackURL={redirectTo} />
     </form>
   );
 }

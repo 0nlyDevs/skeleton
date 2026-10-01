@@ -1,3 +1,5 @@
+import { decryptField } from "@/lib/crypto/field-encryption";
+
 import type { MessageWithSender, RoomRow } from "./messages.repository";
 
 export interface MessageSenderDto {
@@ -71,7 +73,7 @@ export function toMessageDto(row: MessageWithSender): MessageDto {
     // Content is stored verbatim and rendered as text by the client. It is
     // never interpreted as markup, so no HTML escaping is needed at this layer
     // — and escaping here would corrupt the stored message.
-    content: row.deletedAt ? "" : row.content,
+    content: row.deletedAt ? "" : decryptField(row.content),
     deleted: row.deletedAt !== null,
     editedAt: row.deletedAt || !row.editedAt ? null : row.editedAt.toISOString(),
     image:

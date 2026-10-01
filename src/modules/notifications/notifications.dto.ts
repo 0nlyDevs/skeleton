@@ -1,3 +1,4 @@
+import { decryptNullable } from "@/lib/crypto/field-encryption";
 import type { Notification, NotificationPreference } from "@/generated/prisma/client";
 
 import type { NotificationPayload } from "@/lib/socket/events";
@@ -23,7 +24,7 @@ export function toNotificationDto(row: Notification): NotificationDto {
     id: row.id,
     type: row.type,
     title: row.title,
-    body: row.body,
+    body: decryptNullable(row.body),
     link: row.link,
     read: row.read,
     createdAt: row.createdAt.toISOString(),

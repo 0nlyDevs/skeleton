@@ -1,5 +1,6 @@
 import { type Prisma } from "@/generated/prisma/client";
 
+import { decryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
 
 export const reportInclude = {
@@ -158,7 +159,7 @@ export async function findReportedTargetSummaries(
   for (const message of messages) {
     summaries.set(`message:${message.id}`, {
       label: message.deletedAt ? "Removed message" : "Message",
-      summary: message.deletedAt ? null : message.content.slice(0, 320),
+      summary: message.deletedAt ? null : decryptField(message.content).slice(0, 320),
       href: null,
     });
   }

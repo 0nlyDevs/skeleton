@@ -6,6 +6,7 @@ import type { OAuthAvailability } from "@/components/auth/oauth-buttons";
 
 import { LinkedAccounts } from "./linked-accounts";
 import { PasswordCard } from "./password-card";
+import { SecurityAlert } from "./security-alert";
 import { SessionsCard, type SessionInfo } from "./sessions-card";
 import { TwoFactorCard } from "./two-factor-card";
 
@@ -16,16 +17,19 @@ export function SecurityForm({
   sessions,
   currentSessionId,
   oauth,
+  alert = false,
 }: {
   readonly twoFactorEnabled: boolean;
   readonly hasPassword: boolean;
   readonly sessions: SessionInfo[];
   readonly currentSessionId: string;
   readonly oauth: OAuthAvailability;
+  readonly alert?: boolean;
 }) {
   const router = useRouter();
   return (
     <div className="flex flex-col gap-4">
+      {alert ? <SecurityAlert onSecured={() => router.refresh()} /> : null}
       <PasswordCard hasPassword={hasPassword} onCreated={() => router.refresh()} />
       <TwoFactorCard enabled={twoFactorEnabled} hasPassword={hasPassword} />
       <LinkedAccounts availability={oauth} />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AuthCard } from "@/components/auth/auth-card";
 import { LoginForm } from "@/components/auth/login-form";
 import { env } from "@/lib/env";
+import { safeNextPath } from "@/lib/http/safe-redirect";
 import { getServerDictionary } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Connexion" };
@@ -59,6 +60,7 @@ export default async function LoginPage({
     >
       <LoginForm
         oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }}
+        redirectTo={safeNextPath(typeof params.next === "string" ? params.next : null)}
         {...(initialError ? { initialError } : {})}
       />
     </AuthCard>

@@ -16,6 +16,7 @@ export const userProfileSelect = {
   firstName: true,
   lastName: true,
   birthDate: true,
+  birthDateEncrypted: true,
   email: true,
   image: true,
   bio: true,

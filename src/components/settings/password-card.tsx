@@ -79,7 +79,7 @@ export function PasswordCard({ hasPassword, onCreated }: { readonly hasPassword:
   const field = (name: Field) => (errors[name] ? { error: errors[name] } : {});
 
   return (
-    <Card>
+    <Card id="password-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <KeyRound className="size-4 text-muted-foreground" />
