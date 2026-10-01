@@ -330,6 +330,7 @@ model Report {
   /// resolution clears it (MySQL treats each NULL as distinct), so the reporter
   /// can flag the target again if staff got it wrong or the content reoffends.
   duplicateKey String? @unique
+  @@index([reporterId])
   @@index([status, createdAt])
   @@index([targetType, targetId])
   @@index([resolvedById])
