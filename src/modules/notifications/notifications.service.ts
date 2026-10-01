@@ -262,6 +262,23 @@ export async function notifyGroupInvite(input: {
   });
 }
 
+/** Membership events in a community group (request, approval, role change). */
+export async function notifyGroupActivity(input: {
+  userId: string;
+  title: string;
+  body?: string | null;
+  groupSlug: string;
+  path?: string;
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "GROUP_ACTIVITY",
+    title: truncate(input.title, 180),
+    body: input.body ? truncate(input.body, 200) : null,
+    link: input.path ?? `/groups/${encodeURIComponent(input.groupSlug)}`,
+  });
+}
+
 /** Staff removed something the user wrote; they deserve to know, and why. */
 export async function notifyModeration(input: {
   userId: string;

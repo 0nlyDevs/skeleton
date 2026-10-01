@@ -3,14 +3,25 @@ import type { MessageWithSender, RoomRow } from "./messages.repository";
 export interface MessageSenderDto {
   readonly id: string;
   readonly name: string;
+  readonly username: string | null;
   readonly image: string | null;
+}
+
+export interface MessageImageDto {
+  readonly id: string;
+  readonly url: string;
+  readonly width: number | null;
+  readonly height: number | null;
 }
 
 export interface MessageDto {
   readonly id: string;
   readonly roomId: string;
   readonly content: string;
+  /** "Deleted for everyone": content and image are withheld. */
   readonly deleted: boolean;
+  readonly editedAt: string | null;
+  readonly image: MessageImageDto | null;
   readonly sender: MessageSenderDto;
   readonly createdAt: string;
 }
@@ -22,6 +33,8 @@ export interface RoomMemberDto {
   readonly username: string | null;
   readonly image: string | null;
   readonly role: string;
+  /** Read-receipt cursor: everything at or before it has been seen. */
+  readonly lastReadAt: string | null;
 }
 
 export interface RoomLastMessageDto {
@@ -58,9 +71,20 @@ export function toMessageDto(row: MessageWithSender): MessageDto {
     // — and escaping here would corrupt the stored message.
     content: row.deletedAt ? "" : row.content,
     deleted: row.deletedAt !== null,
+    editedAt: row.deletedAt || !row.editedAt ? null : row.editedAt.toISOString(),
+    image:
+      row.deletedAt || !row.upload
+        ? null
+        : {
+            id: row.upload.id,
+            url: `/api/files/${row.upload.id}`,
+            width: row.upload.width,
+            height: row.upload.height,
+          },
     sender: {
       id: row.sender.id,
       name: row.sender.name,
+      username: row.sender.username,
       image: row.sender.image,
     },
     createdAt: row.createdAt.toISOString(),

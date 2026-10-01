@@ -12,7 +12,6 @@
 
 import { isStaff } from "@/lib/auth/guards";
 import { BadRequestError, NotFoundError } from "@/lib/errors";
-import { extractMentions } from "@/lib/mentions";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { publishComment } from "@/lib/socket/emit";
 import type { AuthUser } from "@/types";
@@ -27,8 +26,8 @@ import {
   notifyPostComment,
 } from "../notifications/notifications.service";
 import { broadcastEngagement } from "../posts/posts.engagement";
-import { isPublicPost, loadInteractivePost, loadReadablePost } from "../posts/posts.service";
-import { findActiveUsersByUsernames } from "../users/users.repository";
+import { loadInteractivePost, loadReadablePost, mentionAudience, postAudience } from "../posts/posts.service";
+import { resolveMentions, syncCommentMentions } from "../mentions/mentions.service";
 import { toCommentDto, type CommentDto } from "./comments.dto";
 import {
   findCommentById,
@@ -119,16 +118,19 @@ export async function createComment(
   const parent = await resolveParent(postId, input.parentId);
   const replyTarget = input.parentId ? await findCommentById(input.parentId) : null;
 
-  const row = await insertComment({
+  const inserted = await insertComment({
     postId,
     userId: actor.user.id,
     parentId: parent?.id ?? null,
     body: input.body,
   });
+  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(post.groupId));
+  await syncCommentMentions(inserted.id, actor.user.id, mentioned);
+  const row = (await findCommentById(inserted.id)) ?? inserted;
   const comment = toCommentDto(row);
 
   publishComment({ kind: "created", postId, comment });
-  void broadcastEngagement(postId, isPublicPost(post));
+  void broadcastEngagement(postId, postAudience(post));
 
   // One bell entry per person: a direct reply beats a comment-on-your-post,
   // which beats a mention.
@@ -155,16 +157,11 @@ export async function createComment(
     );
   }
 
-  const handles = extractMentions(input.body);
-  if (handles.length > 0) {
+  for (const userId of mentioned) {
+    if (notified.has(userId)) continue;
+    notified.add(userId);
     notifyInBackground(
-      (async () => {
-        for (const user of await findActiveUsersByUsernames(handles)) {
-          if (notified.has(user.id)) continue;
-          notified.add(user.id);
-          await notifyContentMention({ userId: user.id, actor: actor.user, postId, preview: input.body });
-        }
-      })(),
+      notifyContentMention({ userId, actor: actor.user, postId, preview: input.body }),
       { postId },
     );
   }
@@ -182,7 +179,18 @@ export async function editComment(
   // not even for staff (they remove, they do not rewrite).
   if (!existing || existing.deletedAt || existing.userId !== actor.user.id) throw new NotFoundError();
 
-  const row = await updateCommentBody(id, input.body);
+  const post = await loadReadablePost(existing.postId, actor.user);
+  await updateCommentBody(id, input.body);
+  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(post.groupId));
+  const fresh = await syncCommentMentions(id, actor.user.id, mentioned);
+  for (const userId of fresh) {
+    notifyInBackground(
+      notifyContentMention({ userId, actor: actor.user, postId: post.id, preview: input.body }),
+      { commentId: id },
+    );
+  }
+
+  const row = (await findCommentById(id)) ?? existing;
   const comment = toCommentDto(row);
   publishComment({ kind: "updated", postId: row.postId, comment });
   return comment;
@@ -199,7 +207,7 @@ export async function deleteComment(id: string, actor: ActorContext): Promise<vo
   const row = await softDeleteComment(id, existing.postId);
 
   publishComment({ kind: "deleted", postId: row.postId, comment: toCommentDto(row) });
-  void broadcastEngagement(row.postId, isPublicPost(post));
+  void broadcastEngagement(row.postId, postAudience(post));
 
   if (!isAuthor) {
     await recordAudit({
@@ -223,7 +231,7 @@ export async function removeCommentAsStaff(id: string, actor: ActorContext, reas
   const post = await loadReadablePost(existing.postId, actor.user);
   const row = await softDeleteComment(id, existing.postId);
   publishComment({ kind: "deleted", postId: row.postId, comment: toCommentDto(row) });
-  void broadcastEngagement(row.postId, isPublicPost(post));
+  void broadcastEngagement(row.postId, postAudience(post));
   await recordAudit({
     actorId: actor.user.id,
     action: auditActions.commentDeleted,

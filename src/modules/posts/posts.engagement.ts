@@ -31,11 +31,12 @@ export async function getEngagement(postId: string): Promise<PostEngagementDto |
 /** Recompute and push. Best-effort: a failed push never fails the write. */
 export async function broadcastEngagement(
   postId: string,
-  isPublic: boolean,
+  /** Feed rooms that show this post (see `postAudience`); the thread is implied. */
+  audience: readonly string[],
 ): Promise<PostEngagementDto | null> {
   try {
     const engagement = await getEngagement(postId);
-    if (engagement) publishEngagement(engagement, isPublic);
+    if (engagement) publishEngagement(engagement, audience);
     return engagement;
   } catch (error) {
     logger.warn("engagement broadcast failed", { postId, error });

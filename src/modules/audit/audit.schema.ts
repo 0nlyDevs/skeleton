@@ -43,6 +43,12 @@ export const auditActions = {
   messageDeleted: "message.deleted",
   conversationCreated: "conversation.created",
   conversationMembersChanged: "conversation.members_changed",
+  groupCreated: "group.created",
+  groupUpdated: "group.updated",
+  groupDeleted: "group.deleted",
+  groupMemberChanged: "group.member_changed",
+  postModerated: "post.moderated",
+  messageEdited: "message.edited",
 } as const;
 
 export type AuditAction = (typeof auditActions)[keyof typeof auditActions];

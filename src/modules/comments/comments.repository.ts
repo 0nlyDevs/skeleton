@@ -9,6 +9,9 @@ import { prisma } from "@/lib/db/prisma";
 
 export const commentInclude = {
   user: { select: { id: true, name: true, username: true, image: true } },
+  mentions: {
+    select: { mentionedUser: { select: { id: true, username: true, name: true, banned: true } } },
+  },
 } satisfies Prisma.CommentInclude;
 
 export type CommentRow = Prisma.CommentGetPayload<{ include: typeof commentInclude }>;

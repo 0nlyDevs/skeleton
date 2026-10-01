@@ -23,6 +23,9 @@ import { prisma } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
 import { resolveClientIp } from "@/lib/http/client-ip";
 import { logger } from "@/lib/logger";
+import { resolveGroupAccess } from "@/modules/groups/groups.access";
+import { findActiveGroupIds, findGroupById, findMembership } from "@/modules/groups/groups.repository";
+import { findMemberRoomIds } from "@/modules/messages/messages.repository";
 import { loadReadablePost } from "@/modules/posts/posts.service";
 import { GLOBAL_ROOM_ID } from "@/modules/messages/messages.constants";
 import { sendMessageSchema } from "@/modules/messages/messages.schema";
@@ -42,7 +45,8 @@ import {
   type ReadyPayload,
   type ServerToClientEvents,
 } from "./events";
-import { FEED_ROOM, GLOBAL_PRESENCE_ROOM, chatRoom, parseRoom, postRoom, userRoom } from "./rooms";
+import { FEED_ROOM, GLOBAL_PRESENCE_ROOM, chatRoom, groupRoom, parseRoom, postRoom, presenceRoom, userRoom } from "./rooms";
+import { markConnected, markDisconnected, presenceSnapshot } from "./presence";
 
 export interface SocketData {
   /** `null` for a guest: read-only access to public content. */
@@ -153,6 +157,29 @@ function registerPublicHandlers(socket: AppSocket, user: AuthUser | null, log: R
   socket.on(SOCKET_EVENTS.postUnsubscribe, (postId) => {
     if (isRoomId(postId)) void socket.leave(postRoom(postId));
   });
+
+  // Visitors of a public group page (members are joined at connection).
+  socket.on(SOCKET_EVENTS.groupSubscribe, (groupId) => {
+    void handle(socket, log, async () => {
+      if (!isRoomId(groupId)) throw new Error("Invalid group id.");
+      const group = await findGroupById(groupId);
+      if (!group) return;
+      const membership = user ? await findMembership(group.id, user.id) : null;
+      if (!resolveGroupAccess(group, user, membership).canRead) return;
+      await socket.join(groupRoom(group.id));
+    });
+  });
+
+  socket.on(SOCKET_EVENTS.groupUnsubscribe, (groupId) => {
+    if (!isRoomId(groupId) || !user) {
+      if (isRoomId(groupId)) void socket.leave(groupRoom(groupId));
+      return;
+    }
+    // A member stays in their group's room; only visitors leave it.
+    void findMembership(groupId, user.id).then((membership) => {
+      if (membership?.status !== "ACTIVE") void socket.leave(groupRoom(groupId));
+    });
+  });
 }
 
 async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<void> {
@@ -171,10 +198,41 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
   await ensureGlobalRoom();
 
   // One personal room plus the shared rooms. Joining the personal room is what
-  // makes notification delivery a single targeted emit.
-  await socket.join(userRoom(identity.userId));
-  await socket.join(GLOBAL_PRESENCE_ROOM);
-  await socket.join(chatRoom(GLOBAL_ROOM_ID));
+  // makes notification delivery a single targeted emit. Every private
+  // conversation and community group the user belongs to is joined up front,
+  // so messages, unread badges and group posts arrive on any page — not only
+  // while that conversation is open. Membership changes later are applied
+  // server-side (`grantRoomMembership` / `revokeRoomMembership` /
+  // `syncGroupRoom`), never by trusting a client subscription.
+  const [memberRooms, memberGroups] = await Promise.all([
+    findMemberRoomIds(identity.userId),
+    findActiveGroupIds(identity.userId),
+  ]);
+  await socket.join([
+    userRoom(identity.userId),
+    GLOBAL_PRESENCE_ROOM,
+    chatRoom(GLOBAL_ROOM_ID),
+    ...memberRooms.map(chatRoom),
+    ...memberGroups.map(groupRoom),
+  ]);
+
+  void markConnected(identity.userId);
+  socket.on("disconnect", () => {
+    void markDisconnected(identity.userId);
+  });
+
+  socket.on(SOCKET_EVENTS.presenceWatch, (userIds, ack) => {
+    void handle(socket, log, async () => {
+      if (!Array.isArray(userIds)) return;
+      const ids = userIds.filter((id): id is string => isRoomId(id)).slice(0, 200);
+      // Re-watching replaces the previous set, so the room list stays bounded.
+      for (const room of socket.rooms) {
+        if (room.startsWith("presence:") && room !== GLOBAL_PRESENCE_ROOM) void socket.leave(room);
+      }
+      await socket.join(ids.map(presenceRoom));
+      if (typeof ack === "function") ack(await presenceSnapshot(ids));
+    });
+  });
 
   const ready: ReadyPayload = {
     user: { id: identity.userId, name: identity.name },

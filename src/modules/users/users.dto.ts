@@ -25,6 +25,7 @@ export interface PublicUserDto {
 }
 
 export interface UserProfileDto {
+  readonly showPresence: boolean;
   readonly id: string;
   readonly name: string;
   readonly username: string | null;
@@ -55,6 +56,7 @@ export function toPublicUserDto(row: PublicUserDto): PublicUserDto {
 
 export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
   return {
+    showPresence: row.showPresence,
     id: row.id,
     name: row.name,
     username: row.username,
@@ -74,6 +76,7 @@ export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
 
 export function toAdminUserDto(row: AdminUserRow): AdminUserDto {
   return {
+    showPresence: row.showPresence,
     id: row.id,
     name: row.name,
     username: row.username,

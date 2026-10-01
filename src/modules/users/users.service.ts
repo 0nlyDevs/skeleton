@@ -18,8 +18,9 @@
 import { assertCanAssignRole, isStaff } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth/auth";
 import type { Prisma } from "@/generated/prisma/client";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, fromPrismaError } from "@/lib/errors";
-import { composeDisplayName } from "@/lib/validation/profile";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, ValidationError, fromPrismaError } from "@/lib/errors";
+import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
+import { composeDisplayName, normalizeUsername, usernameViolation } from "@/lib/validation/profile";
 import { paginate, resolveSortField, toPagination, type Paginated } from "@/lib/pagination";
 import { parseDateInput } from "@/lib/utils";
 import { disconnectUserSockets } from "@/lib/socket/emit";
@@ -32,6 +33,7 @@ import { notifyRoleChanged, notifySystemMessage } from "../notifications/notific
 import { toAdminUserDto, toUserProfileDto, type AdminUserDto, type UserProfileDto } from "./users.dto";
 import {
   countAdmins,
+  countCredentialAccounts,
   countUsers,
   deleteOtherSessions,
   deleteOwnSession,
@@ -47,6 +49,7 @@ import {
 import type {
   AdminListUsersQuery,
   ChangePasswordInput,
+  SetInitialPasswordInput,
   UpdateProfileInput,
   UpdateUserBanInput,
   UpdateUserRoleInput,
@@ -295,6 +298,7 @@ export async function updateOwnProfile(
   if (input.birthDate !== undefined) data.birthDate = input.birthDate;
   if (input.bio !== undefined) data.bio = input.bio;
   if (input.image !== undefined) data.image = input.image;
+  if (input.showPresence !== undefined) data.showPresence = input.showPresence;
 
   let row;
   try {
@@ -374,6 +378,11 @@ export async function changeOwnPassword(
   input: ChangePasswordInput,
   context: { readonly userId: string; readonly headers: Headers; readonly ip?: string },
 ): Promise<void> {
+  // A stolen session must not be able to brute-force the current password.
+  await enforceThenRecord([
+    { key: rateLimitKey("password:change", context.userId), rule: RATE_LIMITS.passwordChange },
+  ]);
+
   const response = await auth.api.changePassword({
     body: {
       currentPassword: input.currentPassword,
@@ -385,9 +394,16 @@ export async function changeOwnPassword(
   });
 
   if (!response.ok) {
-    // Never forward the provider message: "incorrect password" vs "user not
-    // found" is exactly the distinction an attacker is probing for.
-    throw new BadRequestError("The current password is incorrect.");
+    const body = (await response.json().catch(() => null)) as { code?: string; message?: string } | null;
+    if (body?.code === "PASSWORD_TOO_WEAK") {
+      throw new ValidationError({ newPassword: body.message ?? "This password is too weak." });
+    }
+    if (body?.code === "CREDENTIAL_ACCOUNT_NOT_FOUND") {
+      throw new ValidationError({ currentPassword: "This account has no password yet. Create one first." });
+    }
+    // The caller is already signed in, so naming the field leaks nothing; the
+    // per-account limit above stops this from becoming a guessing oracle.
+    throw new ValidationError({ currentPassword: "The current password is incorrect." });
   }
 
   await recordAudit({
@@ -395,6 +411,62 @@ export async function changeOwnPassword(
     action: auditActions.userPasswordChanged,
     targetType: "user",
     targetId: context.userId,
+    ip: context.ip ?? null,
+  });
+}
+
+export interface UsernameAvailability {
+  readonly username: string;
+  readonly available: boolean;
+  /** Why it cannot be used: `invalid` (format/reserved) or `taken`. */
+  readonly reason: "invalid" | "taken" | null;
+  readonly message: string | null;
+}
+
+/**
+ * Live check for the sign-up and profile forms. Advisory only: two people can
+ * still race for a handle, and the unique index on `user.username` decides.
+ * Usernames are public handles, so answering "taken" discloses nothing that a
+ * profile URL would not.
+ */
+export async function checkUsernameAvailability(
+  raw: string,
+  viewer: AuthUser | null,
+): Promise<UsernameAvailability> {
+  const username = normalizeUsername(raw);
+  const violation = usernameViolation(username);
+  if (violation) return { username, available: false, reason: "invalid", message: violation };
+
+  const holder = await findUserIdByUsername(username);
+  if (holder && holder !== viewer?.id) {
+    return { username, available: false, reason: "taken", message: "This username is already taken." };
+  }
+  return { username, available: true, reason: null, message: null };
+}
+
+export async function hasPasswordCredential(userId: string): Promise<boolean> {
+  return (await countCredentialAccounts(userId)) > 0;
+}
+
+/**
+ * Give an OAuth-only account a password (needed for two-factor and for signing
+ * in without the provider). Refused when one already exists: changing an
+ * existing password must prove knowledge of it.
+ */
+export async function setInitialPassword(
+  input: SetInitialPasswordInput,
+  context: { readonly userId: string; readonly headers: Headers; readonly ip?: string },
+): Promise<void> {
+  if (await hasPasswordCredential(context.userId)) {
+    throw new ConflictError("This account already has a password. Change it instead.");
+  }
+  await auth.api.setPassword({ body: { newPassword: input.newPassword }, headers: context.headers });
+  await recordAudit({
+    actorId: context.userId,
+    action: auditActions.userPasswordChanged,
+    targetType: "user",
+    targetId: context.userId,
+    metadata: { initial: true },
     ip: context.ip ?? null,
   });
 }

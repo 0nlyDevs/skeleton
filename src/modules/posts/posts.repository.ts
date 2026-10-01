@@ -15,6 +15,14 @@ import { prisma } from "@/lib/db/prisma";
 
 export const postAuthorSelect = {
   user: { select: { id: true, name: true, username: true, image: true } },
+  group: { select: { id: true, slug: true, name: true, privacy: true, deletedAt: true } },
+  media: {
+    orderBy: { position: "asc" },
+    select: { upload: { select: { id: true, width: true, height: true } } },
+  },
+  mentions: {
+    select: { mentionedUser: { select: { id: true, username: true, name: true, banned: true } } },
+  },
 } satisfies Prisma.PostInclude;
 
 export type PostWithAuthor = Prisma.PostGetPayload<{ include: typeof postAuthorSelect }>;
@@ -110,4 +118,39 @@ export async function findFeedPage(args: {
     take: args.take,
     include: postAuthorSelect,
   });
+}
+
+/** Create a post with its images in one transaction. */
+export async function createPostWithMedia(
+  data: Prisma.PostUncheckedCreateInput,
+  mediaIds: readonly string[],
+): Promise<PostWithAuthor> {
+  return prisma.$transaction(async (tx) => {
+    const post = await tx.post.create({ data, select: { id: true } });
+    if (mediaIds.length > 0) {
+      await tx.postMedia.createMany({
+        data: mediaIds.map((uploadId, position) => ({ postId: post.id, uploadId, position })),
+      });
+    }
+    return tx.post.findUniqueOrThrow({ where: { id: post.id }, include: postAuthorSelect });
+  });
+}
+
+/** Replace a post's image set (order = array order). */
+export async function replacePostMedia(postId: string, mediaIds: readonly string[]): Promise<void> {
+  await prisma.$transaction([
+    prisma.postMedia.deleteMany({ where: { postId, uploadId: { notIn: [...mediaIds] } } }),
+    ...mediaIds.map((uploadId, position) =>
+      prisma.postMedia.upsert({
+        where: { uploadId },
+        create: { postId, uploadId, position },
+        update: { position },
+      }),
+    ),
+  ]);
+}
+
+export async function currentMediaIds(postId: string): Promise<string[]> {
+  const rows = await prisma.postMedia.findMany({ where: { postId }, select: { uploadId: true } });
+  return rows.map((row) => row.uploadId);
 }

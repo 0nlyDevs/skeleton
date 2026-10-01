@@ -3,6 +3,7 @@
  * (its replies still make sense) but loses its body and author.
  */
 
+import { toMentionDtos, type MentionDto } from "../mentions/mentions.service";
 import type { CommentRow } from "./comments.repository";
 
 export interface CommentAuthorDto {
@@ -22,6 +23,7 @@ export interface CommentDto {
   readonly createdAt: string;
   readonly editedAt: string | null;
   readonly replies: CommentDto[];
+  readonly mentions: MentionDto[];
 }
 
 export function toCommentDto(row: CommentRow, replies: CommentDto[] = []): CommentDto {
@@ -38,5 +40,6 @@ export function toCommentDto(row: CommentRow, replies: CommentDto[] = []): Comme
     createdAt: row.createdAt.toISOString(),
     editedAt: row.editedAt ? row.editedAt.toISOString() : null,
     replies,
+    mentions: deleted ? [] : toMentionDtos(row.mentions),
   };
 }

@@ -142,10 +142,13 @@ async function run<TBody, TQuery, TParams>(
       }
     }
 
-    if (auth && options.rateLimit) {
+    if (options.rateLimit) {
+      // Signed-in callers are limited per account; guests on public routes
+      // per IP, so an anonymous endpoint is never an unmetered one.
       const scope = options.rateLimitScope ?? pathname;
+      const subject = auth ? auth.user.id : `ip:${ip}`;
       await enforceThenRecord([
-        { key: rateLimitKey(`route:${scope}`, auth.user.id), rule: options.rateLimit },
+        { key: rateLimitKey(`route:${scope}`, subject), rule: options.rateLimit },
       ]);
     }
 

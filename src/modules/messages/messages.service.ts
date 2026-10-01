@@ -8,27 +8,37 @@
  * post can never acquire a public chat room.
  */
 
-import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { extractMentions } from "@/lib/mentions";
 import { logger } from "@/lib/logger";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { isStaff } from "@/lib/auth/guards";
 import { parseDateInput } from "@/lib/utils";
 import type { AuthUser } from "@/types";
 
-import { publishMessage, publishRoomMembers, publishRoomUnread, revokeRoomMembership } from "@/lib/socket/emit";
+import {
+  grantRoomMembership,
+  publishMessage,
+  publishMessageHidden,
+  publishMessageUpdated,
+  publishRoomMembers,
+  publishRoomRead,
+  publishRoomUnread,
+  revokeRoomMembership,
+} from "@/lib/socket/emit";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { notifyGroupInvite, notifyInBackground, notifyMention, notifyModeration, notifyNewMessage } from "../notifications/notifications.service";
 import { findPostById } from "../posts/posts.repository";
-import { findActiveUsersByIds, findActiveUserById } from "../users/users.repository";
+import { findActiveUserById, findActiveUsersByIds, findActiveUsersByUsernames } from "../users/users.repository";
 import {
   GLOBAL_ROOM_ID,
   GLOBAL_ROOM_NAME,
   MAX_MESSAGE_LENGTH,
   MAX_POLL_BATCH,
 } from "./messages.constants";
-import { toMessageDto, toMessageDtos, toRoomDto, type MessageDto, type RoomDto } from "./messages.dto";
+import { toMessageDto, toMessageDtos, toRoomDto, type MessageDto, type RoomDto, type RoomMemberDto } from "./messages.dto";
 import {
   addRoomMember,
   addGroupRoomMember,
@@ -42,22 +52,44 @@ import {
   findLatestMessages,
   findMessageById,
   findMessagesSince,
+  findPreviousMessageAt,
   findRoomById,
   findRoomMember,
   findRoomMembers,
   findRoomMembersForRooms,
-  findRoomParticipantIds,
   findUnreadCountsForUser,
   findRoomsForUser,
   globalRoomId,
+  hideMessageForUser,
+  isAttachableImage,
   isRoomMember,
   removeRoomMember,
   softDeleteMessage,
+  updateMessageContent,
   updateRoomMemberLastRead,
   upsertRoom,
   type RoomRow,
 } from "./messages.repository";
 import type { ListMessagesQuery, SendMessageInput } from "./messages.schema";
+
+interface MemberRowLike {
+  readonly id: string;
+  readonly role: string;
+  readonly lastReadAt: Date | null;
+  readonly user: { id: string; name: string; username: string | null; image: string | null };
+}
+
+function toMemberDto(m: MemberRowLike): RoomMemberDto {
+  return {
+    id: m.id,
+    userId: m.user.id,
+    name: m.user.name,
+    username: m.user.username,
+    image: m.user.image,
+    role: m.role,
+    lastReadAt: m.lastReadAt ? m.lastReadAt.toISOString() : null,
+  };
+}
 
 export interface ActorContext {
   readonly user: AuthUser;
@@ -143,14 +175,7 @@ export async function listRooms(actor: AuthUser): Promise<RoomDto[]> {
 
   const allowed = rooms.map((room) => {
       const members = membersByRoom.get(room.id) ?? [];
-      const memberDtos = members.map((m) => ({
-        id: m.id,
-        userId: m.user.id,
-        name: m.user.name,
-        username: m.user.username,
-        image: m.user.image,
-        role: m.role,
-      }));
+      const memberDtos = members.map(toMemberDto);
 
       const unreadCount = unreadCounts.get(room.id) ?? 0;
       const latestMsg = room.messages[0];
@@ -229,6 +254,7 @@ export async function listMessages(
   if (since) {
     const fetched = await findMessagesSince({
       roomId,
+      viewerId: actor.id,
       since,
       afterId: query.afterId,
       take: limit + 1,
@@ -238,6 +264,7 @@ export async function listMessages(
   } else {
     const fetched = await findLatestMessages({
       roomId,
+      viewerId: actor.id,
       take: limit + 1,
       before,
       beforeId: query.beforeId,
@@ -251,7 +278,8 @@ export async function listMessages(
   }
 
   // Automatically update last read for caller in this room
-  void updateRoomMemberLastRead(roomId, actor.id).catch(() => undefined);
+  // Opening the newest page counts as reading it.
+  if (!before) void markReadAndAnnounce(roomId, actor.id, new Date());
 
   return {
     data: toMessageDtos(rows),
@@ -282,11 +310,19 @@ export async function sendMessage(
     },
   ]);
 
+  if (input.uploadId && !(await isAttachableImage(input.uploadId, actor.user.id))) {
+    throw new BadRequestError("This image is unavailable. Upload it again.");
+  }
+
   const row = await createMessage({
     roomId: input.roomId,
     senderId: actor.user.id,
     content: input.content.slice(0, MAX_MESSAGE_LENGTH),
+    uploadId: input.uploadId ?? null,
   });
+
+  // Sending implies having read everything up to now.
+  void markReadAndAnnounce(input.roomId, actor.user.id, row.createdAt);
 
   const message = toMessageDto(row);
 
@@ -309,58 +345,108 @@ export async function sendMessage(
 }
 
 /**
- * Tell everyone who has spoken in this room that a new message arrived.
+ * Fan-out after a message.
  *
- * A participant named in the text gets the `MENTION` notification instead of
- * the generic one — one bell entry per person, never both. The match requires
- * `@name` to end at a word boundary, so `@ada` does not fire for `@adaline`.
+ *   * private conversations: every other member's unread badge moves live,
+ *     and a bell entry is created only for the *first* unread message of a
+ *     burst (when the member had read everything before it) — a chatty
+ *     conversation must not bury the bell;
+ *   * any room: a structured `@username` mention of a member notifies them.
  */
-async function notifyRoomAboutMessage(
-  message: MessageDto,
-  sender: AuthUser,
-): Promise<void> {
+async function notifyRoomAboutMessage(message: MessageDto, sender: AuthUser): Promise<void> {
   const room = await findRoomById(message.roomId);
-  const targetMap = new Map<string, string>();
-  if (room?.type === "DIRECT" || room?.type === "GROUP") {
-    for (const member of await findRoomMembers(message.roomId)) {
-      targetMap.set(member.user.id, member.user.name);
+  if (!room) return;
+
+  const mentioned = new Set(
+    (await findActiveUsersByUsernames(extractMentions(message.content))).map((user) => user.id),
+  );
+
+  if (room.type === "DIRECT" || room.type === "GROUP") {
+    const members = await findRoomMembers(message.roomId);
+    const previousAt = await findPreviousMessageAt(message.roomId, new Date(message.createdAt), message.id);
+
+    for (const member of members) {
+      if (member.userId === sender.id) continue;
+      publishRoomUnread(member.userId, { roomId: message.roomId, increment: 1 });
+
+      const preview = message.content || "📷";
+      if (mentioned.has(member.userId)) {
+        await notifyMention({ userId: member.userId, senderName: sender.name, roomId: message.roomId, preview });
+        continue;
+      }
+      const caughtUp = !previousAt || (member.lastReadAt !== null && member.lastReadAt >= previousAt);
+      if (caughtUp) {
+        await notifyNewMessage({ userId: member.userId, senderName: sender.name, roomId: message.roomId, preview });
+      }
     }
-  } else {
-    for (const participant of await findRoomParticipantIds(message.roomId)) {
-      targetMap.set(participant.id, participant.name);
-    }
+    return;
   }
 
-  for (const [userId, name] of targetMap.entries()) {
+  // Shared rooms: only explicit mentions, never "someone spoke".
+  for (const userId of mentioned) {
     if (userId === sender.id) continue;
-
-    if (room?.type === "DIRECT" || room?.type === "GROUP") {
-      publishRoomUnread(userId, { roomId: message.roomId, increment: 1 });
-    }
-
-    const notify = mentionsName(message.content, name)
-      ? notifyMention
-      : notifyNewMessage;
-
-    await notify({
-      userId,
-      senderName: sender.name,
-      roomId: message.roomId,
-      preview: message.content,
-    });
+    await notifyMention({ userId, senderName: sender.name, roomId: message.roomId, preview: message.content });
   }
 }
 
-function mentionsName(content: string, name: string): boolean {
-  const needle = name.trim().toLowerCase();
-  if (needle.length === 0) return false;
+async function markReadAndAnnounce(roomId: string, userId: string, at: Date): Promise<void> {
+  try {
+    await updateRoomMemberLastRead(roomId, userId, at);
+    publishRoomRead({ roomId, userId, lastReadAt: at.toISOString() });
+  } catch (error) {
+    logger.debug("read cursor update failed", { roomId, error });
+  }
+}
 
-  const haystack = content.toLowerCase();
-  const at = haystack.indexOf(`@${needle}`);
-  if (at === -1) return false;
+/** Edits are the sender's own, on a live message, within 24 hours. */
+const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-  const after = haystack[at + 1 + needle.length];
-  return after === undefined || !/[a-z0-9]/.test(after);
+export async function editMessage(id: string, content: string, actor: ActorContext): Promise<MessageDto> {
+  const existing = await findMessageById(id);
+  // Not-yours is not-found, here as everywhere.
+  if (!existing || existing.senderId !== actor.user.id) throw new NotFoundError("This message does not exist.");
+  await assertRoomAccess(existing.roomId, actor.user);
+  if (existing.deletedAt) throw new ConflictError("This message was deleted.");
+  if (Date.now() - existing.createdAt.getTime() > EDIT_WINDOW_MS) {
+    throw new ConflictError("Messages can only be edited within 24 hours.");
+  }
+
+  await enforceThenRecord([{ key: rateLimitKey("message:edit", actor.user.id), rule: RATE_LIMITS.messageEdit }]);
+
+  const message = toMessageDto(await updateMessageContent(id, content));
+  publishMessageUpdated(message.roomId, message);
+  return message;
+}
+
+/**
+ * `me`: hide it from the caller's history only (any member, any message).
+ * `everyone`: the sender withdraws it for all; a tombstone keeps the thread's
+ * shape ("message deleted") and the content is never sent again.
+ */
+export async function deleteMessage(
+  id: string,
+  scope: "me" | "everyone",
+  actor: ActorContext,
+): Promise<void> {
+  const existing = await findMessageById(id);
+  if (!existing) throw new NotFoundError("This message does not exist.");
+  await assertRoomAccess(existing.roomId, actor.user);
+
+  await enforceThenRecord([{ key: rateLimitKey("message:edit", actor.user.id), rule: RATE_LIMITS.messageEdit }]);
+
+  if (scope === "me") {
+    await hideMessageForUser(id, actor.user.id);
+    publishMessageHidden(actor.user.id, { roomId: existing.roomId, messageId: id });
+    return;
+  }
+
+  if (existing.senderId !== actor.user.id) {
+    throw new ForbiddenError("Only the sender can delete a message for everyone.");
+  }
+  if (existing.deletedAt) return;
+
+  const removed = await softDeleteMessage(id);
+  if (removed) publishMessageUpdated(removed.roomId, toMessageDto(removed));
 }
 
 export async function getRoomStats(roomId = GLOBAL_ROOM_ID): Promise<{ messages: number }> {
@@ -389,6 +475,8 @@ export async function getOrCreateDirectRoom(
   let room = await findDirectRoom(actor.id, targetUserId);
   if (!room) {
     room = await createDirectRoom(actor.id, targetUserId);
+    grantRoomMembership(actor.id, room.id);
+    grantRoomMembership(targetUserId, room.id);
   }
 
   const members = await findRoomMembers(room.id);
@@ -396,14 +484,7 @@ export async function getOrCreateDirectRoom(
 
   return toRoomDto(room, {
     name: otherMember?.user.name ?? "Direct Message",
-    members: members.map((m) => ({
-      id: m.id,
-      userId: m.user.id,
-      name: m.user.name,
-      username: m.user.username,
-      image: m.user.image,
-      role: m.role,
-    })),
+    members: members.map(toMemberDto),
     targetUser: otherMember
       ? {
           id: otherMember.user.id,
@@ -434,6 +515,7 @@ export async function createGroup(
 
   const room = await createGroupRoom(trimmedName, actor.id, uniqueIds);
   const members = await findRoomMembers(room.id);
+  for (const member of members) grantRoomMembership(member.userId, room.id);
 
   for (const userId of uniqueIds) {
     void notifyGroupInvite({
@@ -448,20 +530,13 @@ export async function createGroup(
 
   return toRoomDto(room, {
     name: room.name,
-    members: members.map((m) => ({
-      id: m.id,
-      userId: m.user.id,
-      name: m.user.name,
-      username: m.user.username,
-      image: m.user.image,
-      role: m.role,
-    })),
+    members: members.map(toMemberDto),
   });
 }
 
 export async function markRoomRead(roomId: string, actor: AuthUser): Promise<void> {
   await assertRoomAccess(roomId, actor);
-  await updateRoomMemberLastRead(roomId, actor.id, new Date());
+  await markReadAndAnnounce(roomId, actor.id, new Date());
 }
 
 export async function getRoomMembersList(
@@ -473,14 +548,7 @@ export async function getRoomMembersList(
     throw new ForbiddenError("Member lists are only available for private conversations.");
   }
   const members = await findRoomMembers(roomId);
-  return members.map((m) => ({
-    id: m.id,
-    userId: m.user.id,
-    name: m.user.name,
-    username: m.user.username,
-    image: m.user.image,
-    role: m.role,
-  }));
+  return members.map(toMemberDto);
 }
 
 export async function addMemberToGroup(
@@ -504,6 +572,7 @@ export async function addMemberToGroup(
   if (result === "full") throw new BadRequestError("A group can have at most 51 members.");
   if (result === "exists") return;
 
+  grantRoomMembership(targetUserId, roomId);
   publishRoomMembers({ roomId });
   void notifyGroupInvite({
     userId: targetUserId,
@@ -542,7 +611,7 @@ export async function removeMessageAsStaff(
   const removed = await softDeleteMessage(id);
   if (!removed) return;
   const message = toMessageDto(removed);
-  publishMessage(message.roomId, message);
+  publishMessageUpdated(message.roomId, message);
   await recordAudit({
     actorId: actor.user.id,
     action: auditActions.messageDeleted,

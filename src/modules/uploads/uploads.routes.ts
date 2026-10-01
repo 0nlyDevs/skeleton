@@ -71,8 +71,13 @@ export const serveFileRoute = publicRoute({
         "Content-Type": file.mime,
         "Content-Length": String(file.bytes.byteLength),
         "X-Content-Type-Options": "nosniff",
+        // Defence in depth: even if a file were ever interpreted as a document,
+        // it could run nothing and reach nothing.
+        "Content-Security-Policy": "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox",
+        "Content-Disposition": file.mime.startsWith("image/") ? "inline" : "attachment",
+        "Cross-Origin-Resource-Policy": "same-origin",
         "Cache-Control":
-          file.visibility === "PRIVATE" ? "private, no-store" : "public, max-age=3600",
+          file.visibility === "PRIVATE" ? "private, max-age=300" : "public, max-age=86400, immutable",
       },
     });
   },

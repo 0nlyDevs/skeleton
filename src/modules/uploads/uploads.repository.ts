@@ -19,3 +19,32 @@ export async function createUpload(
 export async function findUploadById(id: string): Promise<Prisma.UploadModel | null> {
   return prisma.upload.findUnique({ where: { id } });
 }
+
+/**
+ * What an upload is attached to, for authorisation: a post (visible to whoever
+ * may read the post) or a message (visible to the conversation's members).
+ */
+export async function findUploadAttachment(id: string) {
+  return prisma.upload.findUnique({
+    where: { id },
+    select: {
+      postMedia: { select: { postId: true } },
+      message: { select: { roomId: true, deletedAt: true } },
+    },
+  });
+}
+
+/** Uploads the user owns and that are not yet attached to anything. */
+export async function findAttachableImages(userId: string, ids: readonly string[]) {
+  if (ids.length === 0) return [];
+  return prisma.upload.findMany({
+    where: {
+      id: { in: [...ids] },
+      userId,
+      mime: { startsWith: "image/" },
+      postMedia: null,
+      message: null,
+    },
+    select: { id: true },
+  });
+}

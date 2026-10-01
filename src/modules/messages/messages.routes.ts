@@ -10,12 +10,15 @@
  */
 
 import { apiRoute } from "@/lib/api/route";
-import { jsonCreated, jsonOk } from "@/lib/api/response";
+import { jsonCreated, jsonOk, noContent } from "@/lib/api/response";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 
 import {
   addMemberSchema,
   createRoomSchema,
+  deleteMessageQuerySchema,
+  editMessageSchema,
+  messageIdParamSchema,
   listMessagesQuerySchema,
   roomParamSchema,
   sendMessageSchema,
@@ -23,6 +26,8 @@ import {
 import {
   addMemberToGroup,
   createGroup,
+  deleteMessage,
+  editMessage,
   getOrCreateDirectRoom,
   getRoomMembersList,
   leaveGroupRoom,
@@ -100,4 +105,21 @@ export const leaveRoomRoute = apiRoute({
 export const sendMessageRoute = apiRoute({
   body: sendMessageSchema,
   handler: async ({ body, auth }) => jsonCreated(await sendMessage(body, { user: auth.user })),
+});
+
+export const editMessageRoute = apiRoute({
+  params: messageIdParamSchema,
+  body: editMessageSchema,
+  handler: async ({ params, body, auth, ip }) =>
+    jsonOk({ data: await editMessage(params.id, body.content, { user: auth.user, ip }) }),
+});
+
+/** `DELETE /api/messages/:id?scope=me|everyone` */
+export const deleteMessageRoute = apiRoute({
+  params: messageIdParamSchema,
+  query: deleteMessageQuerySchema,
+  handler: async ({ params, query, auth, ip }) => {
+    await deleteMessage(params.id, query.scope, { user: auth.user, ip });
+    return noContent();
+  },
 });

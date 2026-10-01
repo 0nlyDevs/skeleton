@@ -53,7 +53,7 @@ const nextConfig: NextConfig = {
    * application code and *is* bundled — but the MariaDB driver it now depends on
    * opens sockets and does runtime `require`, so it stays external.
    */
-  serverExternalPackages: ["@prisma/adapter-mariadb", "mariadb", "qrcode", "@node-rs/argon2"],
+  serverExternalPackages: ["@prisma/adapter-mariadb", "mariadb", "qrcode", "@node-rs/argon2", "sharp"],
 
   async headers() {
     return [

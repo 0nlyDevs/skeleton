@@ -1,12 +1,15 @@
 import { headers as nextHeaders } from "next/headers";
 
-import { apiRoute } from "@/lib/api/route";
+import { apiRoute, publicRoute } from "@/lib/api/route";
+import { RATE_LIMITS } from "@/lib/rate-limit";
+import { z } from "zod";
 import { jsonOk, noContent } from "@/lib/api/response";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 
 import {
   adminListUsersQuerySchema,
   changePasswordSchema,
+  setInitialPasswordSchema,
   sessionIdParamSchema,
   updateProfileSchema,
   updateUserBanSchema,
@@ -14,7 +17,9 @@ import {
   userIdParamSchema,
 } from "./users.schema";
 import {
+  checkUsernameAvailability,
   changeOwnPassword,
+  setInitialPassword,
   changeUserRole,
   getOwnProfile,
   getUserForAdmin,
@@ -100,4 +105,25 @@ export const updateUserBanRoute = apiRoute({
   body: updateUserBanSchema,
   handler: async ({ params, body, auth, ip }) =>
     jsonOk(await setUserBan(params.id, body, { user: auth.user, ip })),
+});
+
+const usernameQuerySchema = z.object({ username: z.string().max(60) });
+
+/** Public (sign-up needs it); limited per IP via the burst limiter scope. */
+export const usernameAvailabilityRoute = publicRoute({
+  query: usernameQuerySchema,
+  rateLimit: RATE_LIMITS.usernameCheck,
+  rateLimitScope: "username-check",
+  handler: async ({ query, auth }) =>
+    jsonOk({ data: await checkUsernameAvailability(query.username, auth?.user ?? null) }),
+});
+
+export const setInitialPasswordRoute = apiRoute({
+  body: setInitialPasswordSchema,
+  rateLimit: RATE_LIMITS.passwordChange,
+  rateLimitScope: "password-initial",
+  handler: async ({ body, auth, ip }) => {
+    await setInitialPassword(body, { userId: auth.user.id, headers: await nextHeaders(), ip });
+    return jsonOk({ created: true });
+  },
 });
