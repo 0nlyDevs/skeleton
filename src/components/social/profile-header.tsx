@@ -19,7 +19,9 @@ import { usePresence } from "@/hooks/use-presence";
 import { formatLongDate } from "@/lib/format";
 import type { PublicProfileDto } from "@/modules/follows/follows.dto";
 
+import { ConnectionsDialog } from "./connections-dialog";
 import { FollowButton } from "./follow-button";
+import { RelationBadge } from "./relation-badge";
 import { ReportDialog } from "./report-dialog";
 
 /**
@@ -33,6 +35,7 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
   const ids = useMemo(() => (signedIn ? [profile.id] : []), [signedIn, profile.id]);
   const presence = usePresence(ids).get(profile.id);
   const [followers, setFollowers] = useState(profile.followerCount);
+  const [connections, setConnections] = useState<"followers" | "following" | null>(null);
 
   return (
     <Card className="overflow-hidden">
@@ -81,7 +84,10 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
           </div>
         </div>
 
-        <h1 className="mt-3 text-[24px] font-bold tracking-tight">{profile.name}</h1>
+        <h1 className="mt-3 flex flex-wrap items-center gap-2 text-[24px] font-bold tracking-tight">
+          {profile.name}
+          {!profile.isSelf ? <RelationBadge isFriend={profile.isFriend} followsYou={profile.followsYou} /> : null}
+        </h1>
         <p className="text-[14px] text-muted-foreground">
           @{profile.username}
           {signedIn && presence ? (
@@ -96,19 +102,35 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
           {t("profile.public.joined", { date: formatLongDate(profile.createdAt) })}
         </p>
         <dl className="mt-4 flex gap-6">
+          <div className="flex items-baseline gap-1.5">
+            <dd className="text-[16px] font-bold tabular-nums">{profile.postCount}</dd>
+            <dt className="text-[13px] text-muted-foreground">{t("profile.public.posts")}</dt>
+          </div>
           {(
             [
-              ["profile.public.posts", profile.postCount],
-              ["profile.public.followers", followers],
-              ["profile.public.following", profile.followingCount],
+              ["followers", "profile.public.followers", followers],
+              ["following", "profile.public.following", profile.followingCount],
             ] as const
-          ).map(([key, value]) => (
-            <div key={key} className="flex items-baseline gap-1.5">
+          ).map(([kind, key, value]) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => setConnections(kind)}
+              className="flex items-baseline gap-1.5 rounded-md hover:underline"
+              aria-haspopup="dialog"
+            >
               <dd className="text-[16px] font-bold tabular-nums">{value}</dd>
               <dt className="text-[13px] text-muted-foreground">{t(key)}</dt>
-            </div>
+            </button>
           ))}
         </dl>
+        <ConnectionsDialog
+          username={profile.username}
+          open={connections !== null}
+          onOpenChange={(open) => !open && setConnections(null)}
+          initialKind={connections ?? "followers"}
+          signedIn={signedIn}
+        />
       </div>
       {signedIn && !profile.isSelf ? <ReportDialog open={reporting} onOpenChange={setReporting} targetType="user" targetId={profile.id} /> : null}
     </Card>

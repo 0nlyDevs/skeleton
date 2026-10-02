@@ -3,7 +3,9 @@ import { jsonOk } from "@/lib/api/response";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 
 import { followUserParamsSchema, publicUsernameParamsSchema, searchUsersQuerySchema } from "./follows.schema";
-import { followUser, getPublicProfile, searchUsers, unfollowUser } from "./follows.service";
+import { z } from "zod";
+
+import { followUser, getPublicProfile, listConnections, searchUsers, unfollowUser } from "./follows.service";
 
 export const getPublicProfileRoute = publicRoute({
   params: publicUsernameParamsSchema,
@@ -32,3 +34,17 @@ export const unfollowUserRoute = apiRoute({
     return jsonOk({ following: false });
   },
 });
+
+const connectionsQuerySchema = z.object({
+  kind: z.enum(["followers", "following"]),
+  cursor: z.string().trim().max(64).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+export const listConnectionsRoute = publicRoute({
+  params: publicUsernameParamsSchema,
+  query: connectionsQuerySchema,
+  handler: async ({ params, query, auth }) =>
+    jsonOk(await listConnections(params.username, query.kind, query, auth?.user ?? null)),
+});
+

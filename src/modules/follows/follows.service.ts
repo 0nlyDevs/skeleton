@@ -9,15 +9,16 @@ import {
   findFollowingTargetIds,
   searchActivePublicUsers,
 } from "../users/users.repository";
-import { createFollow, deleteFollow, findFollow } from "./follows.repository";
-import { toPublicProfileDto, toSearchUserDto, type PublicProfileDto, type SearchUserDto } from "./follows.dto";
+import { createFollow, deleteFollow, findConnections, findFollow, findRelations } from "./follows.repository";
+import { toPublicProfileDto, toSearchUserDto, type ConnectionDto, type PublicProfileDto, type SearchUserDto } from "./follows.dto";
 import type { SearchUsersQuery } from "./follows.schema";
 
 export async function getPublicProfile(username: string, viewer: AuthUser | null): Promise<PublicProfileDto> {
   const row = await findActivePublicProfileByUsername(username.toLowerCase());
   if (!row) throw new NotFoundError("That profile does not exist.");
-  const isFollowing = viewer && viewer.id !== row.id ? await findFollow(viewer.id, row.id) : false;
-  return toPublicProfileDto(row, isFollowing, viewer?.id === row.id);
+  const other = viewer && viewer.id !== row.id;
+  const [isFollowing, followsYou] = other ? await Promise.all([findFollow(viewer.id, row.id), findFollow(row.id, viewer.id)]) : [false, false];
+  return toPublicProfileDto(row, isFollowing, viewer?.id === row.id, followsYou);
 }
 
 export async function followUser(targetId: string, actor: AuthUser): Promise<{ following: true }> {
@@ -53,3 +54,35 @@ export async function searchUsers(query: SearchUsersQuery, actor: AuthUser): Pro
 export async function getFollowingIds(userId: string): Promise<string[]> {
   return findFollowingIds(userId);
 }
+
+/** A profile's followers or followings, with the viewer's relation to each person. */
+export async function listConnections(
+  username: string,
+  kind: "followers" | "following",
+  query: { cursor?: string | undefined; limit: number },
+  viewer: AuthUser | null,
+): Promise<{ data: ConnectionDto[]; nextCursor: string | null }> {
+  const owner = await findActivePublicProfileByUsername(username.toLowerCase());
+  if (!owner) throw new NotFoundError("That profile does not exist.");
+  const rows = await findConnections(owner.id, kind, query.cursor ?? null, query.limit + 1);
+  const page = rows.slice(0, query.limit);
+  const relations = viewer ? await findRelations(viewer.id, page.map((row) => row.user.id)) : { following: new Set<string>(), followers: new Set<string>() };
+  return {
+    data: page.map(({ user }) => {
+      const isFollowing = relations.following.has(user.id);
+      const followsYou = relations.followers.has(user.id);
+      return {
+        id: user.id,
+        name: user.name,
+        username: user.username ?? "",
+        image: user.image,
+        isFollowing,
+        followsYou,
+        isFriend: isFollowing && followsYou,
+        isSelf: viewer?.id === user.id,
+      };
+    }),
+    nextCursor: rows.length > query.limit ? (page.at(-1)?.followId ?? null) : null,
+  };
+}
+
