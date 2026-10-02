@@ -17,6 +17,8 @@
 
 import { createServer } from "node:http";
 
+import { installFileLog } from "./src/lib/file-log";
+
 import next from "next";
 
 import { env } from "./src/lib/env";
@@ -27,7 +29,10 @@ const dev = !env.isProduction;
 const hostname = process.env.HOST ?? "0.0.0.0";
 const port = env.PORT;
 
+const logFile = env.isProduction ? installFileLog() : null;
+
 async function main(): Promise<void> {
+  if (logFile) logger.warn("server log mirrored to file", { file: logFile });
   const app = next({ dev, hostname, port });
   await app.prepare();
 

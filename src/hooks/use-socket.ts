@@ -70,8 +70,13 @@ function ensureSocket(): AppClientSocket | null {
     path: "/api/socket",
     // Same origin: the session cookie rides along with the handshake.
     withCredentials: true,
-    transports: publicEnv.realtimeMode === "socket" ? ["websocket"] : ["websocket", "polling"],
-    tryAllTransports: publicEnv.realtimeMode !== "socket",
+    // Long-polling first, then upgrade to WebSocket when the path allows it.
+    // Behind cPanel/Passenger (Apache) the Upgrade header never reaches the
+    // app: a WebSocket-only client would stay disconnected forever, while
+    // polling works everywhere and upgrades silently where it can.
+    transports: ["polling", "websocket"],
+    upgrade: true,
+    tryAllTransports: true,
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1_000,
