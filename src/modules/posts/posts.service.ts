@@ -679,7 +679,7 @@ export async function deletePostForActor(id: string, actor: ActorContext, reason
   });
 
   if (!isAuthor) {
-    notifyInBackground(notifyModeration({ userId: existing.userId, what: "publication", reason: reason ?? null }), {
+    notifyInBackground(notifyModeration({ userId: existing.userId, what: "post", reason: reason ?? null }), {
       postId: id,
     });
   }

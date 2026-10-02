@@ -227,7 +227,7 @@ export async function deleteComment(id: string, actor: ActorContext): Promise<vo
       metadata: { postId: row.postId, authorId: existing.userId },
       ip: actor.ip ?? null,
     });
-    notifyInBackground(notifyModeration({ userId: existing.userId, what: "commentaire" }), { commentId: id });
+    notifyInBackground(notifyModeration({ userId: existing.userId, what: "comment" }), { commentId: id });
   }
 }
 
@@ -250,7 +250,7 @@ export async function removeCommentAsStaff(id: string, actor: ActorContext, reas
     ip: actor.ip ?? null,
   });
   notifyInBackground(
-    notifyModeration({ userId: existing.userId, what: "commentaire", reason }),
+    notifyModeration({ userId: existing.userId, what: "comment", reason }),
     { commentId: id },
   );
 }

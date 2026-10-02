@@ -25,8 +25,9 @@ import { findRoomById, findRoomMembers } from "@/modules/messages/messages.repos
 import { createNotification } from "@/modules/notifications/notifications.service";
 import type { AuthUser } from "@/types";
 
-import { SOCKET_EVENTS, type CallEndedPayload } from "./events";
+import { SOCKET_EVENTS, type CallAck, type CallEndedPayload } from "./events";
 import type { AppSocket, AppSocketServer } from "./handlers";
+import { localizeForSocket } from "./locale";
 import { isOnline } from "./presence";
 import { userRoom } from "./rooms";
 
@@ -55,7 +56,10 @@ function finish(io: AppSocketServer, callId: string, reason: CallEndedPayload["r
 export function registerCallHandlers(io: AppSocketServer, socket: AppSocket, user: AuthUser): void {
   socket.on(SOCKET_EVENTS.callInvite, (payload, ack) => {
     void (async () => {
-      const reply = typeof ack === "function" ? ack : () => undefined;
+      const reply = (result: CallAck) => {
+      if (typeof ack !== "function") return;
+      ack(result.ok ? result : { ...result, message: localizeForSocket(socket, result.message) });
+    };
       try {
         const parsed = inviteSchema.safeParse(payload);
         if (!parsed.success) return reply({ ok: false, code: "VALIDATION_ERROR", message: "Invalid call." });
@@ -100,7 +104,10 @@ export function registerCallHandlers(io: AppSocketServer, socket: AppSocket, use
   });
 
   socket.on(SOCKET_EVENTS.callAccept, (callId, ack) => {
-    const reply = typeof ack === "function" ? ack : () => undefined;
+    const reply = (result: CallAck) => {
+      if (typeof ack !== "function") return;
+      ack(result.ok ? result : { ...result, message: localizeForSocket(socket, result.message) });
+    };
     const call = getCall(callId);
     if (!call || call.calleeId !== user.id || call.state !== "ringing") {
       reply({ ok: false, code: "NOT_FOUND", message: "This call has ended." });

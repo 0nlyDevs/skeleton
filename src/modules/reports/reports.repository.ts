@@ -151,14 +151,14 @@ export async function findReportedTargetSummaries(
   }
   for (const comment of comments) {
     summaries.set(`comment:${comment.id}`, {
-      label: comment.deletedAt ? "Removed comment" : "Comment",
+      label: comment.deletedAt ? "Commentaire supprimé" : "Commentaire",
       summary: comment.deletedAt ? null : comment.body.slice(0, 320),
       href: `/feed/${encodeURIComponent(comment.postId)}#comments`,
     });
   }
   for (const message of messages) {
     summaries.set(`message:${message.id}`, {
-      label: message.deletedAt ? "Removed message" : "Message",
+      label: message.deletedAt ? "Message supprimé" : "Message",
       summary: message.deletedAt ? null : decryptField(message.content).slice(0, 320),
       href: null,
     });

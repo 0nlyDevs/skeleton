@@ -46,6 +46,8 @@ import type {
   UpdateGroupInput,
 } from "./groups.schema";
 
+const ROLE_LABEL_FR = { OWNER: "propriétaire", ADMIN: "administrateur", MODERATOR: "modérateur", MEMBER: "membre" } as const;
+
 export interface ActorContext {
   readonly user: AuthUser;
   readonly ip?: string;
@@ -273,7 +275,7 @@ export async function actOnMember(
       notifyInBackground(
         notifyGroupActivity({
           userId: targetUserId,
-          title: `Votre rôle dans « ${group.name} » est maintenant ${input.role.toLowerCase()}`,
+          title: `Votre rôle dans « ${group.name} » est maintenant : ${ROLE_LABEL_FR[input.role]}`,
           groupSlug: group.slug,
         }),
         { groupId: group.id },

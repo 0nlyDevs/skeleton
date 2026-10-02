@@ -47,6 +47,7 @@ import {
 } from "./events";
 import { FEED_ROOM, GLOBAL_PRESENCE_ROOM, chatRoom, groupRoom, parseRoom, postRoom, presenceRoom, userRoom } from "./rooms";
 import { registerCallHandlers } from "./call-handlers";
+import { localizeForSocket } from "./locale";
 import { markConnected, markDisconnected, presenceSnapshot } from "./presence";
 
 export interface SocketData {
@@ -268,7 +269,7 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
       try {
         const parsed = sendMessageSchema.safeParse(payload);
         if (!parsed.success) {
-          ack?.({ ok: false, code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Invalid message." });
+          ack?.({ ok: false, code: "VALIDATION_ERROR", message: localizeForSocket(socket, parsed.error.issues[0]?.message ?? "Invalid message.") });
           return;
         }
         // The service persists *and* fans the message out to the room, so the
@@ -282,7 +283,7 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
         ack?.({
           ok: false,
           code: typeof code === "string" ? code : "INTERNAL_ERROR",
-          message: exposed ? (error as Error).message : "The message could not be sent.",
+          message: localizeForSocket(socket, exposed ? (error as Error).message : "The message could not be sent."),
         });
       }
     })();
@@ -351,7 +352,7 @@ async function handle(
     log.warn("socket event rejected", { code: typeof code === "string" ? code : "UNKNOWN" });
     socket.emit(SOCKET_EVENTS.error, {
       code: typeof code === "string" ? code : "INTERNAL_ERROR",
-      message,
+      message: localizeForSocket(socket, message),
     });
   }
 }

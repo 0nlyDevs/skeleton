@@ -209,8 +209,8 @@ export async function setUserBan(
     });
     await notifySystemMessage({
       userId: id,
-      title: "Your account has been reinstated",
-      body: "You can sign in again.",
+      title: "Votre compte a été rétabli",
+      body: "Vous pouvez de nouveau vous connecter.",
       link: "/login",
     });
   }
@@ -237,7 +237,7 @@ export async function removeUserProfileAsStaff(
   await guardLastAdmin(id, "suspend this account");
   await updateUserBan(id, {
     banned: true,
-    banReason: note?.trim() || "Profile removed after moderation review.",
+    banReason: note?.trim() || "Profil retiré après examen de la modération.",
     banExpires: null,
   });
   const revokedSessions = await deleteUserSessions(id);
@@ -254,8 +254,8 @@ export async function removeUserProfileAsStaff(
   notifyInBackground(
     notifySystemMessage({
       userId: id,
-      title: "Your profile was suspended",
-      body: note?.trim() || "Your profile was removed after a moderation review.",
+      title: "Votre profil a été suspendu",
+      body: note?.trim() || "Votre profil a été retiré après un examen de la modération.",
       link: "/",
     }),
     { userId: id, action: "profile_suspended" },
