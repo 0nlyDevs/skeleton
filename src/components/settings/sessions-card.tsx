@@ -5,12 +5,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
-import { formatDateTime } from "@/lib/format";
 
 export interface SessionInfo {
   readonly id: string;
@@ -23,6 +23,7 @@ export interface SessionInfo {
 /** Devices signed in to the account; revoked by id (tokens never leave the server). */
 export function SessionsCard({ sessions: initial, currentSessionId }: { readonly sessions: readonly SessionInfo[]; readonly currentSessionId: string }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const [sessions, setSessions] = useState(initial);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -61,7 +62,7 @@ export function SessionsCard({ sessions: initial, currentSessionId }: { readonly
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-[13.5px] font-medium">{session.userAgent ?? "—"}</span>
                 <span className="text-[12px] text-muted-foreground">
-                  {session.ipAddress ?? "—"} · {formatDateTime(session.createdAt)}
+                  {session.ipAddress ?? "—"} · {fmt.dateTime(session.createdAt)}
                 </span>
               </div>
               {session.id === currentSessionId ? (

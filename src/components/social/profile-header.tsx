@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usePresence } from "@/hooks/use-presence";
-import { formatLongDate, formatRelative } from "@/lib/format";
+import { formatLongDate } from "@/lib/format";
 import type { PublicProfileDto } from "@/modules/follows/follows.dto";
 
 import { FollowButton } from "./follow-button";
@@ -27,6 +28,7 @@ import { ReportDialog } from "./report-dialog";
  */
 export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicProfileDto; readonly signedIn: boolean }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const [reporting, setReporting] = useState(false);
   const ids = useMemo(() => (signedIn ? [profile.id] : []), [signedIn, profile.id]);
   const presence = usePresence(ids).get(profile.id);
@@ -84,7 +86,7 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
           @{profile.username}
           {signedIn && presence ? (
             <span className={presence.online ? "ml-2 text-success" : "ml-2"}>
-              · {presence.online ? t("contacts.online") : presence.lastSeenAt ? t("contacts.last_seen", { time: formatRelative(presence.lastSeenAt) }) : null}
+              · {presence.online ? t("contacts.online") : presence.lastSeenAt ? t("contacts.last_seen", { time: fmt.relative(presence.lastSeenAt) }) : null}
             </span>
           ) : null}
         </p>

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { TableSkeleton } from "@/components/feedback/loading-skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,7 +38,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch, ApiRequestError, toQueryString } from "@/lib/api/client";
-import { formatDate } from "@/lib/format";
 import { ROLES, type ListMeta, type Role } from "@/types";
 import type { AdminUserDto } from "@/modules/users/users.dto";
 import { initials } from "@/lib/utils";
@@ -58,6 +58,7 @@ const PAGE_SIZE = 15;
  */
 export function UsersTable({ currentUserId }: { readonly currentUserId: string }) {
   const t = useTranslation();
+  const fmt = useFormatters();
 
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -271,7 +272,7 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
                     </td>
                     <td className="px-4 py-3 tabular-nums">{user.postCount}</td>
                     <td className="px-4 py-3 text-[12.5px] text-muted-foreground">
-                      {formatDate(user.createdAt)}
+                      {fmt.date(user.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <DropdownMenu>

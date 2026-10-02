@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiFetch, toQueryString } from "@/lib/api/client";
-import { formatRelative } from "@/lib/format";
 import type { MapPostDto } from "@/modules/posts/posts.service";
 
 import { Map, type MapBounds } from "./map";
@@ -16,6 +16,7 @@ import { Map, type MapBounds } from "./map";
 /** Geotagged posts in the visible area; refetched (debounced) when the map moves. */
 export function MapExplorer({ initial }: { readonly initial: { latitude: number; longitude: number; zoom: number } }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const [center, setCenter] = useState(initial);
   const [posts, setPosts] = useState<MapPostDto[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -84,7 +85,7 @@ export function MapExplorer({ initial }: { readonly initial: { latitude: number;
                 ) : null}
                 <span className="text-[12px] font-semibold">{post.author.name}</span>
                 <span className="flex items-center gap-1 text-[11px] text-neutral-500">
-                  <MapPin className="size-3" /> {post.placeName} · {formatRelative(post.createdAt)}
+                  <MapPin className="size-3" /> {post.placeName} · {fmt.relative(post.createdAt)}
                 </span>
                 {post.excerpt ? <span className="line-clamp-3 text-[12.5px]">{post.excerpt}</span> : null}
                 <Link href={`/feed/${post.id}`} className="text-[12.5px] font-semibold text-indigo-600 hover:underline">

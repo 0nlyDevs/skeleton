@@ -4,6 +4,7 @@ import { AlertCircle, Copy, MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide
 import { useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import {
   DropdownMenu,
@@ -12,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { RoomMemberDto } from "@/modules/messages/messages.dto";
 
@@ -52,6 +52,7 @@ export function MessageBubble({
   readonly onDiscard: () => void;
 }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   // Captured once per mount: the 24-hour window is a hint, the server enforces it.
   const [mountedAt] = useState(() => Date.now());
   const editable = mine && !message.deleted && !message.pending && !message.failed && mountedAt - Date.parse(message.createdAt) < EDIT_WINDOW_MS;
@@ -79,7 +80,7 @@ export function MessageBubble({
               ) : null}
               {message.content ? (
                 <p
-                  title={formatDateTime(message.createdAt)}
+                  title={fmt.dateTime(message.createdAt)}
                   className={cn(
                     "whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-[14.5px] leading-snug [overflow-wrap:anywhere]",
                     mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-surface-muted text-foreground",

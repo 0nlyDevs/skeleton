@@ -4,13 +4,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
-import { formatRelative } from "@/lib/format";
 
 export interface FeatureFlagDto {
   readonly key: string;
@@ -31,6 +31,7 @@ export interface FeatureFlagDto {
  */
 export function AdminSettingsView({ flags }: { readonly flags: FeatureFlagDto[] }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const [rows, setRows] = useState(flags);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
@@ -85,7 +86,7 @@ export function AdminSettingsView({ flags }: { readonly flags: FeatureFlagDto[] 
                       <span className="text-[12.5px] text-muted-foreground">{flag.description}</span>
                     ) : null}
                     <span className="text-[11.5px] text-muted-foreground/70">
-                      {formatRelative(flag.updatedAt)}
+                      {fmt.relative(flag.updatedAt)}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">

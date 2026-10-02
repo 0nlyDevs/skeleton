@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { FollowButton } from "@/components/social/follow-button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePresence } from "@/hooks/use-presence";
 import { apiFetch } from "@/lib/api/client";
-import { formatRelative } from "@/lib/format";
 import type { ContactDto, SuggestionsDto } from "@/modules/discovery/discovery.service";
 
 import { UserAvatar } from "./user-avatar";
@@ -36,6 +36,7 @@ function useRailData() {
 /** Contacts with live presence, then people and groups to discover. */
 export function RightRail() {
   const t = useTranslation();
+  const fmt = useFormatters();
   const { contacts, suggestions } = useRailData();
   const [filter, setFilter] = useState("");
   const ids = useMemo(() => (contacts ?? []).map((contact) => contact.id), [contacts]);
@@ -73,7 +74,7 @@ export function RightRail() {
               const status = state?.online
                 ? t("contacts.online")
                 : state?.lastSeenAt
-                  ? t("contacts.last_seen", { time: formatRelative(state.lastSeenAt) })
+                  ? t("contacts.last_seen", { time: fmt.relative(state.lastSeenAt) })
                   : null;
               return (
                 <li key={contact.id}>

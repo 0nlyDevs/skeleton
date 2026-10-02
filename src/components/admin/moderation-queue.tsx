@@ -6,13 +6,13 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { TableSkeleton } from "@/components/feedback/loading-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
-import { formatRelative } from "@/lib/format";
 import type { ListMeta } from "@/types";
 
 interface ReportDto {
@@ -37,6 +37,7 @@ interface ReportDto {
  */
 export function ModerationQueue() {
   const t = useTranslation();
+  const fmt = useFormatters();
 
   const [reports, setReports] = useState<ReportDto[]>([]);
   const [meta, setMeta] = useState<ListMeta | null>(null);
@@ -114,7 +115,7 @@ export function ModerationQueue() {
                   <p className="text-[12px] text-muted-foreground">{t("admin.moderation.reason")}: {report.reason}</p>
                   <span className="text-[12px] text-muted-foreground">
                     {t("admin.moderation.reporter")}: {report.reporter?.name ?? "—"} ·{" "}
-                    {formatRelative(report.createdAt)}
+                    {fmt.relative(report.createdAt)}
                   </span>
                 </div>
 

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
-import { formatDateTime, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CommentDto } from "@/modules/comments/comments.dto";
 
@@ -42,6 +42,7 @@ export function CommentItem({
   readonly isReply?: boolean;
 }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const [saving, setSaving] = useState(false);
@@ -149,8 +150,8 @@ export function CommentItem({
           </div>
         )}
         <div className="mt-0.5 flex items-center gap-3 px-3 text-[12px] text-muted-foreground">
-          <time dateTime={comment.createdAt} title={formatDateTime(comment.createdAt)}>
-            {formatRelative(comment.createdAt)}
+          <time dateTime={comment.createdAt} title={fmt.dateTime(comment.createdAt)}>
+            {fmt.relative(comment.createdAt)}
           </time>
           {comment.editedAt ? <span>{t("comments.edited")}</span> : null}
           {viewerId ? (

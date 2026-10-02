@@ -5,10 +5,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
-import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PollDto } from "@/modules/polls/polls.dto";
 
@@ -34,7 +34,8 @@ export function PollView({
   readonly onChange: (poll: PollDto, viewerVotes: readonly string[]) => void;
 }) {
   const t = useTranslation();
-    const [draft, setDraft] = useState<readonly string[]>([]);
+  const fmt = useFormatters();
+  const [draft, setDraft] = useState<readonly string[]>([]);
   const [busy, setBusy] = useState(false);
   const voted = viewerVotes.length > 0;
   const results = voted || poll.closed || forceResults || !canVote;
@@ -117,7 +118,7 @@ export function PollView({
           {poll.closed
             ? t("poll.closed")
             : poll.closesAt
-              ? t("poll.closes", { when: formatRelative(poll.closesAt) })
+              ? t("poll.closes", { when: fmt.relative(poll.closesAt) })
               : t("poll.open")}
         </span>
         {poll.multiple ? (

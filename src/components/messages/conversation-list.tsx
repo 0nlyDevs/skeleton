@@ -4,12 +4,12 @@ import { PenSquare, Search, UsersRound } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePresence } from "@/hooks/use-presence";
-import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { RoomDto } from "@/modules/messages/messages.dto";
 
@@ -31,6 +31,7 @@ export function ConversationList({
   readonly typingRooms?: ReadonlyMap<string, string>;
 }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const { messageUnread } = useRealtime();
   const [q, setQ] = useState("");
   const peers = useMemo(() => (rooms ?? []).flatMap((room) => (room.targetUser ? [room.targetUser.id] : [])), [rooms]);
@@ -105,7 +106,7 @@ export function ConversationList({
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className={cn("truncate text-[14px]", unread > 0 ? "font-bold" : "font-medium")}>{room.name}</span>
-                      {last ? <span className="shrink-0 text-[11px] text-muted-foreground">{formatRelative(last.createdAt)}</span> : null}
+                      {last ? <span className="shrink-0 text-[11px] text-muted-foreground">{fmt.relative(last.createdAt)}</span> : null}
                     </span>
                     <span className="flex items-center gap-2">
                       {typingRooms?.has(room.id) ? (

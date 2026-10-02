@@ -4,15 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Card } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api/client";
-import { formatRelative } from "@/lib/format";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
 /** Nearest neighbours of a post in embedding space ("Publications similaires"). */
 export function SimilarPosts({ postId }: { readonly postId: string }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const [posts, setPosts] = useState<FeedItemDto[]>([]);
   useEffect(() => {
     let cancelled = false;
@@ -35,7 +36,7 @@ export function SimilarPosts({ postId }: { readonly postId: string }) {
               <UserAvatar userId={post.author.id} name={post.author.name} image={post.author.image} size="xs" />
               <span className="min-w-0">
                 <span className="block text-[12.5px] text-muted-foreground">
-                  {post.author.name} · {formatRelative(post.createdAt)}
+                  {post.author.name} · {fmt.relative(post.createdAt)}
                 </span>
                 <span className="line-clamp-2 text-[14px]">{post.body || post.title}</span>
               </span>

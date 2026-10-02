@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Card } from "@/components/ui/card";
 import {
@@ -18,7 +19,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
-import { formatDateTime, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
@@ -56,6 +56,7 @@ export function PostCard({
   readonly expanded?: boolean;
 }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const [editing, setEditing] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -175,10 +176,10 @@ export function PostCard({
             ) : null}
           </p>
           <p className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
-            <Link href={href} className="hover:underline" title={formatDateTime(post.createdAt)}>
-              <time dateTime={post.createdAt}>{formatRelative(post.createdAt)}</time>
+            <Link href={href} className="hover:underline" title={fmt.dateTime(post.createdAt)}>
+              <time dateTime={post.createdAt}>{fmt.relative(post.createdAt)}</time>
             </Link>
-            {post.editedAt ? <span title={formatDateTime(post.editedAt)}>· {t("post.edited")}</span> : null}
+            {post.editedAt ? <span title={fmt.dateTime(post.editedAt)}>· {t("post.edited")}</span> : null}
             {post.location ? (
               <Link
                 href={`/map?lat=${post.location.latitude}&lng=${post.location.longitude}`}

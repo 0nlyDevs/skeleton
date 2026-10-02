@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useCall } from "@/components/calls/call-provider";
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/components/social/use-image-uploads";
@@ -22,7 +23,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePresence } from "@/hooks/use-presence";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
-import { formatRelative } from "@/lib/format";
 import type { MessagePayload } from "@/lib/socket/events";
 import type { RoomDto, RoomMemberDto } from "@/modules/messages/messages.dto";
 
@@ -58,6 +58,7 @@ export function ConversationThread({
   readonly onLeft: () => void;
 }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const { clearRoomUnread } = useRealtime();
   const thread = useThread(room.id, viewer);
   const [draft, setDraft] = useState("");
@@ -165,7 +166,7 @@ export function ConversationThread({
     ? presence?.online
       ? t("messages.online")
       : presence?.lastSeenAt
-        ? t("messages.last_seen", { time: formatRelative(presence.lastSeenAt) })
+        ? t("messages.last_seen", { time: fmt.relative(presence.lastSeenAt) })
         : null
     : t("messages.members", { count: thread.members.length || room.members?.length || 0 });
 

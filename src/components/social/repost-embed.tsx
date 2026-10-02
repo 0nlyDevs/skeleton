@@ -3,8 +3,8 @@
 import Link from "next/link";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
-import { formatRelative } from "@/lib/format";
 import type { RepostedPostDto } from "@/modules/posts/posts.dto";
 
 import { MediaGrid } from "./media-grid";
@@ -13,6 +13,7 @@ import { RichText } from "./rich-text";
 /** The original inside a share, framed so it reads as quoted content. */
 export function RepostEmbed({ original }: { readonly original: RepostedPostDto }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   if (!original.available || !original.author) {
     return (
       <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-[13px] text-muted-foreground">
@@ -28,7 +29,7 @@ export function RepostEmbed({ original }: { readonly original: RepostedPostDto }
           <UserAvatar userId={original.author.id} name={original.author.name} image={original.author.image} size="xs" />
           <span className="min-w-0">
             <span className="block truncate text-[13.5px] font-semibold">{original.author.name}</span>
-            {original.createdAt ? <span className="block text-[11.5px] text-muted-foreground">{formatRelative(original.createdAt)}</span> : null}
+            {original.createdAt ? <span className="block text-[11.5px] text-muted-foreground">{fmt.relative(original.createdAt)}</span> : null}
           </span>
         </Link>
         {original.body ? (
