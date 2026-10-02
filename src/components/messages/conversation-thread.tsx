@@ -11,7 +11,8 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/components/social/use-image-uploads";
+import { IMAGE_INPUT_ACCEPT, uploadImage } from "@/components/social/use-image-uploads";
+import { imagesFromClipboard, UnsupportedImageError } from "@/lib/images/prepare-image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -121,21 +122,18 @@ export function ConversationThread({
   };
 
   const sendImage = async (file: File) => {
-    if (!(ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type) || file.size > MAX_IMAGE_BYTES) {
+    if (!file.type.startsWith("image/")) {
       toast.error(t("composer.image_type"));
       return;
     }
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("visibility", "PRIVATE");
-      const response = await apiFetch<{ data: { id: string; url: string } }>("/api/upload", { method: "POST", body: form });
+      const uploaded = await uploadImage(file);
       stickToBottom.current = true;
-      await thread.send(draft.trim(), response.data.id, response.data.url);
+      await thread.send(draft.trim(), uploaded.id, uploaded.url);
       setDraft("");
     } catch (error) {
-      toast.error(describeApiError(error, t));
+      toast.error(error instanceof UnsupportedImageError ? t("composer.image_type") : describeApiError(error, t));
     } finally {
       setUploading(false);
     }
@@ -346,6 +344,14 @@ export function ConversationThread({
                 setDraft("");
               }
             }}
+            onPaste={(event) => {
+              // A pasted screenshot or copied image is sent like a picked one.
+              const [image] = imagesFromClipboard(event);
+              if (image && !editing) {
+                event.preventDefault();
+                void sendImage(image);
+              }
+            }}
             placeholder={t("messages.placeholder")}
             aria-label={t("messages.placeholder")}
             className="min-h-10 flex-1 resize-none rounded-2xl bg-surface-muted px-4 py-2.5 text-[14.5px] leading-5 outline-none focus:ring-2 focus:ring-ring/25"
@@ -356,7 +362,7 @@ export function ConversationThread({
           <input
             ref={fileInput}
             type="file"
-            accept={ACCEPTED_IMAGE_TYPES.join(",")}
+            accept={IMAGE_INPUT_ACCEPT}
             hidden
             onChange={(event) => {
               const file = event.target.files?.[0];

@@ -17,7 +17,7 @@ import { LocationPicker, type PickedPlace } from "@/components/maps/location-pic
 import { useAutoLocation } from "@/hooks/use-auto-location";
 
 import { MentionInput, type MentionInputHandle } from "./mention-input";
-import { ACCEPTED_IMAGE_TYPES, useImageUploads } from "./use-image-uploads";
+import { IMAGE_INPUT_ACCEPT, useImageUploads } from "./use-image-uploads";
 
 const MAX_IMAGES = 6;
 const MAX_BODY = 20_000;
@@ -127,6 +127,7 @@ export function PostComposer({
             placeholder={poll ? t("poll.question_placeholder") : group ? t("composer.placeholder_group") : t("composer.placeholder", { name: viewer.name.split(" ")[0] ?? viewer.name })}
             minRows={2}
             maxRows={14}
+            onPasteImages={(files) => uploads.add(files)}
             maxLength={MAX_BODY}
           />
         </div>
@@ -226,7 +227,7 @@ export function PostComposer({
         <input
           ref={fileInput}
           type="file"
-          accept={ACCEPTED_IMAGE_TYPES.join(",")}
+          accept={IMAGE_INPUT_ACCEPT}
           multiple
           hidden
           onChange={(event) => {

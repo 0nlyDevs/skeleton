@@ -5,9 +5,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
+import { prepareImage, UnsupportedImageError } from "@/lib/images/prepare-image";
 
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/** File pickers accept any image: it is converted in the browser before upload. */
+export const IMAGE_INPUT_ACCEPT = "image/*";
+
+/**
+ * Prepare (decode, orient, scale, re-encode) then upload one image.
+ * Throws `UnsupportedImageError` for files the browser cannot read.
+ */
+export async function uploadImage(file: File, visibility: "PRIVATE" | "PUBLIC" = "PRIVATE"): Promise<{ id: string; url: string }> {
+  const prepared = await prepareImage(file);
+  if (prepared.size > MAX_IMAGE_BYTES) throw new UnsupportedImageError("too-large");
+  const form = new FormData();
+  form.append("file", prepared);
+  form.append("visibility", visibility);
+  const response = await apiFetch<{ data: { id: string; url: string } }>("/api/upload", { method: "POST", body: form });
+  return response.data;
+}
 
 export interface PendingImage {
   /** Local key; equals the upload id once uploaded. */
@@ -41,29 +58,28 @@ export function useImageUploads(max: number, initial: ReadonlyArray<{ id: string
       const room = max - images.length;
       if (list.length > room) setRejection(t("composer.image_limit", { max }));
 
-      for (const file of list.slice(0, Math.max(0, room))) {
-        if (!(ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type) || file.size > MAX_IMAGE_BYTES) {
+      for (const original of list.slice(0, Math.max(0, room))) {
+        if (!original.type.startsWith("image/")) {
           setRejection(t("composer.image_type"));
           continue;
         }
         const key = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const previewUrl = URL.createObjectURL(file);
+        const previewUrl = URL.createObjectURL(original);
         objectUrls.current.push(previewUrl);
         setImages((current) => [...current, { key, previewUrl, uploadId: null, status: "uploading" }]);
 
-        const form = new FormData();
-        form.append("file", file);
-        form.append("visibility", "PRIVATE");
-        void apiFetch<{ data: { id: string } }>("/api/upload", { method: "POST", body: form })
+        void uploadImage(original)
           .then((response) =>
             setImages((current) =>
-              current.map((image) => (image.key === key ? { ...image, uploadId: response.data.id, status: "ready" } : image)),
+              current.map((image) => (image.key === key ? { ...image, uploadId: response.id, status: "ready" } : image)),
             ),
           )
           .catch((error: unknown) =>
             setImages((current) =>
               current.map((image) =>
-                image.key === key ? { ...image, status: "error", error: describeApiError(error, t) } : image,
+                image.key === key
+                  ? { ...image, status: "error", error: error instanceof UnsupportedImageError ? t("composer.image_type") : describeApiError(error, t) }
+                  : image,
               ),
             ),
           );
