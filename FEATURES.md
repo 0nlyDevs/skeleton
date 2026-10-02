@@ -49,14 +49,14 @@ overstates is worse than a short one.
   paging, and a composer for published posts
 - Public post pages at `/feed/[id]` with threaded comments, replies, reactions,
   live comment and engagement updates, and reporting
-- Follow and unfollow accounts, browse public profiles at `/u/[username]`, and
+- Follow and unfollow accounts, browse public profiles at `/profile/[username]`, and
   search users by public name or handle
 
 ## Realtime
 
 - Socket.IO mounted on the same HTTP server as Next.js (one port, because only
-  one port is proxied on shared hosting)
-- Automatic fallback to HTTP polling, with the active transport shown in the UI
+  one port is proxied on shared hosting), or the short-poll relay under
+  Passenger; both carry the same events through the same server handlers
 - Typing indicators and presence in chat rooms
 - Socket-first direct messages and groups, including member roles, invites,
   unread counts, and HTTP fallback only when Socket.IO has degraded
@@ -64,6 +64,86 @@ overstates is worse than a short one.
   are retained as moderation placeholders
 - Live notifications with read/unread state, deduplicated by id
 - The unread count has a single source of truth shared by the bell and the list
+
+## Social network
+
+- Feed with three tabs: **Pour vous** (ranked by embedding similarity to what
+  you engage with, freshness, follows and engagement), **Abonnements** (people
+  you follow, never your own posts) and **Récents**
+- Posts with text, up to six images, @mentions (highlighted while typing),
+  a place, a poll, and an **audience** (public, followers, only me) that can be
+  changed after posting; every read path enforces it
+- Polls: single or multiple choice, duration, live results, retract, and the
+  list of who voted for each option
+- Reactions (six emojis) on posts, comments and chat messages, each with
+  "who reacted"
+- Comments in a modal with one-level replies, edit, delete, report
+- One **Share** button: repost (caption optional, audience of your choice) or
+  send the post into one or more conversations, rendered as a preview card
+- Saved posts (private), semantic search, "similar posts"
+- Public profiles with banner, bio, followers / followings lists and a
+  **Friends** badge for mutual follows; usernames change at most every 30 days
+- Blocking: hides posts, comments and profiles both ways, removes follows and
+  refuses follows, mentions and messages; managed in Settings › Privacy
+- Notifications for follows, comments, replies, reactions (posts and
+  comments), mentions, shares, group activity, moderation and new devices
+
+## Groups
+
+- Public or private, optional **join approval** for public groups, cover image
+- Roles OWNER / ADMIN / MODERATOR / MEMBER with a rank-checked permission
+  matrix; roles are badged on posts, comments and rosters
+- Requests, bans, role changes, group feed with its own live channel
+
+## Messages and calls
+
+- Direct and group conversations, socket-first; edit, delete for me, delete
+  for everyone, replies (quoted, jump to original), reactions
+- Typing indicator (never shown to the typer), presence and last seen,
+  read receipts and delivery state
+- Images staged in the composer until Send; any photo format is converted in
+  the browser; pasted images (Ctrl+V) work in chats and composers
+- Delete a conversation for yourself; group admins rename it, set a photo or
+  delete it for everyone
+- Peer-to-peer **audio and video calls** (WebRTC) from direct conversations;
+  calls ring until missed, including for people who come online meanwhile
+
+## Pages (page builder)
+
+- Block-based public pages at `/p/<slug>`: heading, text, image, gallery,
+  quote, link button, video (YouTube/Vimeo, loaded on click), divider,
+  countdown, key figures, timeline
+- Templates: blank, farewell, imaginary country, product launch, event,
+  tribute; seven themes and three fonts; draft / public / unlisted
+- Likes, view counts, QR code, reporting and moderation
+
+## Maps and location
+
+- OpenStreetMap map of geotagged posts, place search and reverse geocoding
+  through a throttled, cached proxy; coordinates rounded to ~100 m
+- Optional automatic town on new posts (never an exact address), with a
+  privacy switch
+
+## Trust, privacy and eco-design
+
+- Privacy policy and terms pages
+- Data export (JSON) and account deletion with password confirmation
+- Private messages, birth dates and notification bodies encrypted at rest
+  (AES-256-GCM); passwords checked against known breaches (k-anonymity)
+- New-device sign-in alert ("Est-ce bien vous ?")
+- **Eco mode**: no animation, banners, covers or 3D, set by cookie so the
+  server sends the light page directly
+- Installable web app (manifest) and a service worker that retries dropped
+  requests and caches immutable build assets
+
+## Deployment (Hodifly / cPanel / Passenger)
+
+- Production build with webpack and memory optimizations to stay under the
+  host's 2 GB RAM cap; standalone output pruned to fit 300 MB
+- Pending database migrations applied at the start of every build
+- Realtime over a short-poll relay under Passenger (Apache breaks WebSocket
+  upgrades and caps concurrent requests); Socket.IO everywhere else
+- Server warnings and errors mirrored to `~/logs/skeleton-app.log`
 
 ## Admin panel
 
