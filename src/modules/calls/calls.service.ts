@@ -44,6 +44,8 @@ export interface Call {
   readonly kind: CallKind;
   readonly callerId: string;
   readonly calleeId: string;
+  /** Shown on the callee's ringing screen, including tabs that open later. */
+  readonly caller: { readonly id: string; readonly name: string; readonly image: string | null };
   /** The exact tabs in the call: signalling goes only to them, and closing one ends it. */
   readonly callerSocketId: string;
   calleeSocketId: string | null;
@@ -63,6 +65,7 @@ export function createCall(input: {
   callerId: string;
   calleeId: string;
   callerSocketId: string;
+  caller: { id: string; name: string; image: string | null };
 }): Call {
   const call: Call = { id: randomUUID(), state: "ringing", createdAt: Date.now(), timeout: null, calleeSocketId: null, ...input };
   calls.set(call.id, call);
@@ -109,4 +112,9 @@ export function peerSocket(call: Call, socketId: string): string | null {
   if (call.callerSocketId === socketId) return call.calleeSocketId;
   if (call.calleeSocketId === socketId) return call.callerSocketId;
   return null;
+}
+
+/** Calls still ringing for this callee (delivered to tabs that connect late). */
+export function ringingCallsFor(userId: string): Call[] {
+  return [...calls.values()].filter((call) => call.calleeId === userId && call.state === "ringing");
 }

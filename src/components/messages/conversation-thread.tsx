@@ -202,13 +202,9 @@ export function ConversationThread({
                 key={kind}
                 type="button"
                 aria-label={t(kind === "audio" ? "call.audio" : "call.video")}
-                title={presence?.online ? t(kind === "audio" ? "call.audio" : "call.video") : t("call.offline")}
+                title={t(kind === "audio" ? "call.audio" : "call.video")}
                 disabled={callState.phase !== "idle"}
                 onClick={() => {
-                  if (!presence?.online) {
-                    toast(t("call.offline"));
-                    return;
-                  }
                   void startCall(room.id, { id: peer.id, name: peer.name, image: peer.image }, kind);
                 }}
                 className="grid size-9 place-items-center rounded-full text-primary hover:bg-surface-muted disabled:opacity-50"

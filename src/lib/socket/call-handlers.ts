@@ -12,6 +12,7 @@ import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import {
   RING_TIMEOUT_MS,
   callsOf,
+  ringingCallsFor,
   callsOfSocket,
   peerSocket,
   createCall,
@@ -54,6 +55,12 @@ function finish(io: AppSocketServer, callId: string, reason: CallEndedPayload["r
 }
 
 export function registerCallHandlers(io: AppSocketServer, socket: AppSocket, user: AuthUser): void {
+  // Someone called while this person was offline: a tab opening during the
+  // ring window still rings.
+  for (const call of ringingCallsFor(user.id)) {
+    socket.emit(SOCKET_EVENTS.callIncoming, { callId: call.id, roomId: call.roomId, kind: call.kind, from: call.caller });
+  }
+
   socket.on(SOCKET_EVENTS.callInvite, (payload, ack) => {
     void (async () => {
       const reply = (result: CallAck) => {
@@ -73,12 +80,12 @@ export function registerCallHandlers(io: AppSocketServer, socket: AppSocket, use
         }
         const callee = members.find((member) => member.userId !== user.id);
         if (!callee) return reply({ ok: false, code: "NOT_FOUND", message: "Nobody to call." });
-        if (!isOnline(callee.userId)) return reply({ ok: false, code: "OFFLINE", message: "This person is offline." });
         if (isBusy(callee.userId) || isBusy(user.id)) return reply({ ok: false, code: "BUSY", message: "This person is already in a call." });
 
-        const call = createCall({ roomId: room.id, kind: parsed.data.kind, callerId: user.id, calleeId: callee.userId, callerSocketId: socket.id });
+        const call = createCall({ roomId: room.id, kind: parsed.data.kind, callerId: user.id, calleeId: callee.userId, callerSocketId: socket.id, caller: { id: user.id, name: user.name, image: user.image } });
         call.timeout = setTimeout(() => {
           if (getCall(call.id)?.state !== "ringing") return;
+          // Offline or away: it rings out, and they find a missed call.
           finish(io, call.id, "missed");
           void createNotification({
             userId: call.calleeId,
