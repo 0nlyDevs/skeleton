@@ -33,6 +33,7 @@ import { recordAudit } from "../audit/audit.service";
 import { notifyInBackground } from "../notifications/notifications.service";
 import { notifyRoleChanged, notifySystemMessage } from "../notifications/notifications.service";
 import { toAdminUserDto, toUserProfileDto, type AdminUserDto, type UserProfileDto } from "./users.dto";
+import { assertOwnPublicImage } from "../uploads/uploads.service";
 import {
   countAdmins,
   countCredentialAccounts,
@@ -314,7 +315,11 @@ export async function updateOwnProfile(
     data.birthDate = null;
   }
   if (input.bio !== undefined) data.bio = input.bio;
+  // Only the caller's own public uploads may become their avatar or banner.
+  if (input.image) await assertOwnPublicImage(input.image, actor.user.id);
+  if (input.banner) await assertOwnPublicImage(input.banner, actor.user.id);
   if (input.image !== undefined) data.image = input.image;
+  if (input.banner !== undefined) data.banner = input.banner;
   if (input.showPresence !== undefined) data.showPresence = input.showPresence;
   if (input.autoLocation !== undefined) data.autoLocation = input.autoLocation;
 

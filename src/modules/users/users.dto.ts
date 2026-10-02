@@ -31,6 +31,7 @@ export interface PublicUserDto {
 }
 
 export interface UserProfileDto {
+  readonly banner: string | null;
   readonly showPresence: boolean;
   readonly autoLocation: boolean;
   /** When the handle may change again (`null`: now). */
@@ -65,6 +66,7 @@ export function toPublicUserDto(row: PublicUserDto): PublicUserDto {
 
 export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
   return {
+    banner: row.banner,
     showPresence: row.showPresence,
     autoLocation: row.autoLocation,
     usernameChangeAvailableAt:
@@ -90,6 +92,7 @@ export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
 
 export function toAdminUserDto(row: AdminUserRow): AdminUserDto {
   return {
+    banner: row.banner,
     showPresence: row.showPresence,
     autoLocation: row.autoLocation,
     usernameChangeAvailableAt: null,

@@ -20,6 +20,7 @@ export const userProfileSelect = {
   email: true,
   image: true,
   bio: true,
+  banner: true,
   role: true,
   emailVerified: true,
   twoFactorEnabled: true,
@@ -48,6 +49,7 @@ export const publicProfileSelect = {
   displayUsername: true,
   image: true,
   bio: true,
+  banner: true,
   createdAt: true,
   _count: {
     select: {
