@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { AppProviders } from "@/components/providers/app-providers";
 import { getCurrentUser } from "@/lib/auth/session";
+import { ECO_COOKIE } from "@/lib/eco";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { publicEnv } from "@/lib/env.public";
 
@@ -48,6 +49,7 @@ export default async function RootLayout({
     getCurrentUser().catch(() => null),
   ]);
   const dictionary = getDictionary(locale);
+  const eco = (await cookies()).get(ECO_COOKIE)?.value === "1";
   // Per-request CSP nonce minted by `src/proxy.ts`; inline scripts injected by
   // providers (the theme bootstrap) must carry it or the browser blocks them.
   const nonce = requestHeaders.get("x-nonce") ?? undefined;
@@ -57,6 +59,7 @@ export default async function RootLayout({
       lang={locale}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
+      {...(eco ? { "data-eco": "" } : {})}
     >
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         {/* Keyboard users land here first; the sidebar and header are skippable. */}

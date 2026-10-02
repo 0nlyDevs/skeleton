@@ -6,6 +6,7 @@ import { getDictionary, getLocale } from "@/lib/i18n/server";
 
 import { Brand } from "./brand";
 import { LocaleToggle } from "./locale-toggle";
+import { EcoToggle } from "./eco-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 
@@ -64,6 +65,7 @@ export async function SiteHeader() {
             <Link href="/feed">{t["nav.feed"]}</Link>
           </Button>
           <LocaleToggle />
+          <EcoToggle />
           <ThemeToggle />
           {user ? (
             <UserMenu id={user.id} username={user.username ?? null} name={user.name} email={user.email} image={user.image ?? null} role={user.role} />

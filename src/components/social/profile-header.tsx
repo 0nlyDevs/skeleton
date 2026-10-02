@@ -60,7 +60,7 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
     <Card className="overflow-hidden">
       {profile.banner ? (
         // eslint-disable-next-line @next/next/no-img-element -- the owner's public banner upload
-        <img src={profile.banner} alt="" className="h-36 w-full object-cover sm:h-48" />
+        <img src={profile.banner} alt="" loading="lazy" className="eco-hide h-36 w-full object-cover sm:h-48" />
       ) : (
         <div aria-hidden className="h-36 bg-gradient-to-br from-primary via-[oklch(0.6_0.2_300)] to-[oklch(0.72_0.15_200)] sm:h-48" />
       )}
