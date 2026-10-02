@@ -47,7 +47,11 @@ export function publishMessage(roomId: string, payload: MessagePayload): void {
 
 /** Ephemeral typing indicator; never persisted. */
 export function publishTyping(roomId: string, payload: TypingPayload): void {
-  publish(chatRoom(roomId), SOCKET_EVENTS.typingUpdate, payload);
+  const server = getSocketServer();
+  if (!server) return;
+  // Never echoed to the typer, in any of their tabs: "X is typing" is only
+  // ever about someone else.
+  server.to(chatRoom(roomId)).except(userRoom(payload.userId)).emit(SOCKET_EVENTS.typingUpdate, payload);
 }
 
 export function publishPresence(roomId: string, online: number): void {
