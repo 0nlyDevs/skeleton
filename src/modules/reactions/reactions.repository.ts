@@ -110,7 +110,7 @@ export async function findPostCounters(
 /** Who reacted to a post, newest first, for the "who reacted" list. */
 export async function findReactors(postId: string, take: number) {
   return prisma.postReaction.findMany({
-    where: { postId },
+    where: { postId, user: { banned: false } },
     orderBy: { createdAt: "desc" },
     take,
     select: {

@@ -2,7 +2,7 @@
 
 import { ThumbsUp } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -14,6 +14,7 @@ import type { PostEngagementDto } from "@/modules/posts/posts.dto";
 import { REACTION_TYPES, type ReactionCounts, type ReactionType } from "@/types";
 
 import { REACTION_EMOJI, REACTION_LABEL, applyReactionChange, topReactions } from "./reactions";
+import { ReactorsDialog, type Reactor } from "./reactors-dialog";
 
 export interface ReactionState {
   readonly reactions: ReactionCounts;
@@ -22,10 +23,26 @@ export interface ReactionState {
 }
 
 /** "👍❤️ 12" — the compact summary shown above a post's action bar. */
-export function ReactionSummary({ state }: { readonly state: ReactionState }) {
+/** Compact summary; a click lists who reacted with what. */
+export function ReactionSummary({ state, postId }: { readonly state: ReactionState; readonly postId: string }) {
+  const t = useTranslation();
+  const [open, setOpen] = useState(false);
+  const load = useCallback(async () => {
+    const response = await apiFetch<{ data: { type: ReactionType; user: Reactor["user"] }[] }>(`/api/posts/${encodeURIComponent(postId)}/reactions`);
+    return response.data.map((row) => ({ emoji: REACTION_EMOJI[row.type], user: row.user }));
+  }, [postId]);
   if (state.reactionCount === 0) return <span />;
   return (
-    <span className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+    <>
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        setOpen(true);
+      }}
+      aria-label={t("reactors.open", { count: state.reactionCount })}
+      className="flex items-center gap-1.5 rounded-full text-[13px] text-muted-foreground hover:underline"
+    >
       <span aria-hidden className="flex -space-x-1 text-[15px]">
         {topReactions(state.reactions).map((type) => (
           <span key={type} className="grid size-5 place-items-center rounded-full bg-surface ring-2 ring-card">
@@ -34,7 +51,9 @@ export function ReactionSummary({ state }: { readonly state: ReactionState }) {
         ))}
       </span>
       <span className="tabular-nums">{state.reactionCount}</span>
-    </span>
+    </button>
+    <ReactorsDialog open={open} onOpenChange={setOpen} load={load} />
+    </>
   );
 }
 

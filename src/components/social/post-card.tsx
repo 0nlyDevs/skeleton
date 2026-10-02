@@ -292,7 +292,7 @@ export function PostCard({
       ) : null}
 
       <div className="flex items-center justify-between gap-3 px-4 pt-3">
-        <ReactionSummary state={post} />
+        <ReactionSummary state={post} postId={post.id} />
         <span className="flex items-center gap-3 text-[13px] text-muted-foreground">
           <button type="button" onClick={() => onOpenComments?.(post)} className="hover:underline">
             {t("feed.comments_count", { count: post.commentCount })}
