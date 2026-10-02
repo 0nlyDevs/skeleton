@@ -1,6 +1,6 @@
 "use client";
 
-import { AtSign, ImagePlus, Loader2, X } from "lucide-react";
+import { AtSign, ImagePlus, Loader2, MapPin, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +12,8 @@ import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
+
+import { LocationPicker, type PickedPlace } from "@/components/maps/location-picker";
 
 import { MentionInput, type MentionInputHandle } from "./mention-input";
 import { ACCEPTED_IMAGE_TYPES, useImageUploads } from "./use-image-uploads";
@@ -45,6 +47,8 @@ export function PostComposer({
   const fileInput = useRef<HTMLInputElement>(null);
   const input = useRef<MentionInputHandle>(null);
   const uploads = useImageUploads(MAX_IMAGES);
+  const [place, setPlace] = useState<PickedPlace | null>(null);
+  const [picking, setPicking] = useState(false);
 
   const publish = async () => {
     if (publishing) return;
@@ -67,9 +71,16 @@ export function PostComposer({
     try {
       const response = await apiFetch<{ data: FeedItemDto }>("/api/posts", {
         method: "POST",
-        body: { body: body.trim(), mediaIds: uploads.readyIds, published: true, ...(group ? { groupId: group.id } : {}) },
+        body: {
+          body: body.trim(),
+          mediaIds: uploads.readyIds,
+          published: true,
+          ...(group ? { groupId: group.id } : {}),
+          ...(place ? { location: place } : {}),
+        },
       });
       setBody("");
+      setPlace(null);
       uploads.reset();
       onPublished(response.data);
       toast.success(t("composer.published"));
@@ -152,6 +163,18 @@ export function PostComposer({
           <AtSign className="text-primary" />
           {t("composer.mention")}
         </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setPicking(true)}>
+          <MapPin className="text-error" />
+          {t("place.add")}
+        </Button>
+        {place ? (
+          <span className="inline-flex max-w-[14rem] items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
+            <span className="truncate">{place.name}</span>
+            <button type="button" onClick={() => setPlace(null)} aria-label={t("place.remove")}>
+              <X className="size-3" />
+            </button>
+          </span>
+        ) : null}
         {group ? (
           <span className="ml-1 rounded-full bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
             {t("composer.in_group", { name: group.name })}
@@ -161,6 +184,7 @@ export function PostComposer({
           {publishing ? <Loader2 className="animate-spin" /> : null}
           {publishing ? t("composer.publishing") : t("composer.publish")}
         </Button>
+        <LocationPicker open={picking} onOpenChange={setPicking} onPick={setPlace} />
         <input
           ref={fileInput}
           type="file"

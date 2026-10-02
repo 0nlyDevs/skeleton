@@ -15,6 +15,8 @@
 import type { Prisma } from "@/generated/prisma/client";
 
 import { isStaff } from "@/lib/auth/guards";
+import { prisma } from "@/lib/db/prisma";
+import { roundCoordinate } from "@/modules/places/places.service";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
@@ -325,6 +327,59 @@ export async function homeVisibility(viewer: AuthUser | null): Promise<Prisma.Po
   };
 }
 
+export interface MapPostDto {
+  readonly id: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly placeName: string;
+  readonly excerpt: string;
+  readonly author: { readonly name: string; readonly image: string | null };
+  readonly image: string | null;
+  readonly createdAt: string;
+}
+
+/** Geotagged posts inside a bounding box, newest first, home-visible only. */
+export async function listMapPosts(
+  box: { south: number; west: number; north: number; east: number },
+  viewer: AuthUser | null,
+): Promise<MapPostDto[]> {
+  const longitude = box.west <= box.east ? { gte: box.west, lte: box.east } : undefined;
+  const rows = await prisma.post.findMany({
+    where: {
+      AND: [
+        await homeVisibility(viewer),
+        { latitude: { gte: box.south, lte: box.north } },
+        // A box crossing the antimeridian (west > east) wraps around.
+        longitude ? { longitude } : { OR: [{ longitude: { gte: box.west } }, { longitude: { lte: box.east } }] },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: {
+      id: true,
+      latitude: true,
+      longitude: true,
+      placeName: true,
+      body: true,
+      createdAt: true,
+      user: { select: { name: true, image: true } },
+      media: { take: 1, orderBy: { position: "asc" }, select: { uploadId: true } },
+    },
+  });
+  return rows
+    .filter((row) => row.latitude !== null && row.longitude !== null)
+    .map((row) => ({
+      id: row.id,
+      latitude: row.latitude as number,
+      longitude: row.longitude as number,
+      placeName: row.placeName ?? "",
+      excerpt: row.body.slice(0, 140),
+      author: { name: row.user.name, image: row.user.image },
+      image: row.media[0] ? `/api/files/${row.media[0].uploadId}` : null,
+      createdAt: row.createdAt.toISOString(),
+    }));
+}
+
 /** Feed items for ids (in the given order), filtered by home visibility. */
 export async function getFeedItemsByIds(ids: readonly string[], viewer: AuthUser | null): Promise<FeedItemDto[]> {
   if (ids.length === 0) return [];
@@ -450,6 +505,13 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
       tags: input.tags,
       groupId: input.groupId ?? null,
       repostOfId,
+      ...(input.location
+        ? {
+            placeName: input.location.name,
+            latitude: roundCoordinate(input.location.latitude),
+            longitude: roundCoordinate(input.location.longitude),
+          }
+        : {}),
     },
     input.mediaIds,
   );
@@ -514,6 +576,12 @@ export async function updatePostForActor(
   if (input.tags !== undefined) {
     data.tags = input.tags;
     changed.push("tags");
+  }
+  if (input.location !== undefined) {
+    data.placeName = input.location?.name ?? null;
+    data.latitude = input.location ? roundCoordinate(input.location.latitude) : null;
+    data.longitude = input.location ? roundCoordinate(input.location.longitude) : null;
+    changed.push("location");
   }
   if (input.mediaIds !== undefined) {
     const current = await currentMediaIds(id);

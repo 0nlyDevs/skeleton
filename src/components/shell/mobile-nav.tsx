@@ -22,7 +22,10 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
 
-  const tabs = MAIN_NAV.slice(0, 4);
+  // The four destinations used most on a phone; everything else is in the drawer.
+  const tabs = ["/feed", "/messages", "/groups", "/notifications"]
+    .map((href) => MAIN_NAV.find((item) => item.href === href))
+    .filter((item): item is (typeof MAIN_NAV)[number] => item !== undefined);
   const badges = { messages: messageUnreadTotal, notifications: unreadCount } as const;
 
   return (

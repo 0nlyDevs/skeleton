@@ -280,6 +280,12 @@ model Post {
   groupId String?
   group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
+  /// Optional place. Coordinates are rounded to 3 decimals (~100 m) before
+  /// storage so a post never pinpoints someone's home.
+  placeName String? @db.VarChar(160)
+  latitude  Float?
+  longitude Float?
+
   /// A share of another post (always the original, never a share of a share).
   /// SetNull keeps the sharer's caption if the original is hard-deleted.
   repostOfId String?
@@ -302,6 +308,7 @@ model Post {
   @@index([published, deletedAt, createdAt])
   @@index([groupId, deletedAt, createdAt])
   @@index([repostOfId])
+  @@index([latitude, longitude])
   @@map("post")
 }
 

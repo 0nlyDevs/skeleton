@@ -58,6 +58,9 @@ export const RATE_LIMITS = {
   /** Conversations opened or created per user. */
   openConversation: { limit: 120, windowMs: 10 * 60_000 },
 
+  /** Geocoding lookups per user (upstream allows ~1/s for the whole app). */
+  places: { limit: 30, windowMs: 60_000 },
+
   /** Groups created per user. */
   groupCreate: { limit: 5, windowMs: 60 * 60_000 },
 

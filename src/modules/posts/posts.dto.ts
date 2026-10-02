@@ -63,6 +63,7 @@ export interface PostDto {
   /** Set when the post was a share whose original no longer exists at all. */
   readonly wasRepost: boolean;
   readonly shareCount: number;
+  readonly location: { readonly name: string; readonly latitude: number; readonly longitude: number } | null;
   readonly editedAt: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -133,6 +134,10 @@ export function toPostDto(row: PostWithAuthor): PostDto {
     repostOf: row.repostOf ? toRepostedDto(row.repostOf) : null,
     wasRepost: false,
     shareCount: row.shareCount,
+    location:
+      row.placeName && row.latitude !== null && row.longitude !== null
+        ? { name: row.placeName, latitude: row.latitude, longitude: row.longitude }
+        : null,
     editedAt: row.editedAt ? row.editedAt.toISOString() : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

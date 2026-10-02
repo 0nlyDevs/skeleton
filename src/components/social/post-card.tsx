@@ -1,6 +1,6 @@
 "use client";
 
-import { Flag, Globe, Link2, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, SquarePen, Trash2, UsersRound } from "lucide-react";
+import { Flag, Globe, Link2, MapPin, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, SquarePen, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -165,6 +165,15 @@ export function PostCard({
               <time dateTime={post.createdAt}>{formatRelative(post.createdAt)}</time>
             </Link>
             {post.editedAt ? <span title={formatDateTime(post.editedAt)}>· {t("post.edited")}</span> : null}
+            {post.location ? (
+              <Link
+                href={`/map?lat=${post.location.latitude}&lng=${post.location.longitude}`}
+                className="inline-flex min-w-0 items-center gap-0.5 hover:underline"
+              >
+                · <MapPin className="size-3 shrink-0" aria-hidden />
+                <span className="max-w-[10rem] truncate">{post.location.name}</span>
+              </Link>
+            ) : null}
             <span aria-hidden>·</span>
             {post.group?.privacy === "PRIVATE" ? (
               <Lock className="size-3" aria-label={t("groups.private")} />

@@ -31,6 +31,12 @@ const mediaField = z
   .max(MAX_POST_IMAGES, `Attach at most ${MAX_POST_IMAGES} images.`)
   .refine((ids) => new Set(ids).size === ids.length, "An image is attached twice.");
 
+const locationField = z.object({
+  name: z.string().trim().min(1).max(160),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
 /**
  * A social post: text and/or images. The title is optional (the feed shows the
  * text); when omitted it is derived from the first line for lists and search.
@@ -46,6 +52,7 @@ export const createPostSchema = z
     groupId: idSchema.optional(),
     /** Share an existing public post, with an optional caption. */
     repostOfId: idSchema.optional(),
+    location: locationField.nullable().optional(),
   })
   .refine((value) => value.body.length > 0 || value.mediaIds.length > 0 || Boolean(value.repostOfId), {
     message: "Write something or add an image.",
@@ -65,6 +72,7 @@ export const updatePostSchema = z
     published: z.boolean().optional(),
     tags: tagsField.optional(),
     mediaIds: mediaField.optional(),
+    location: locationField.nullable().optional(),
   })
   .refine(hasAtLeastOneDefined, {
     message: "Provide at least one field to update.",

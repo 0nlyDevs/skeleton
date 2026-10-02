@@ -45,7 +45,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 /** Readable without an account (content-level rules still apply server-side). */
-const PUBLIC_PREFIXES = ["/feed/", "/profile/", "/groups", "/u/", "/search"];
+const PUBLIC_PREFIXES = ["/feed/", "/profile/", "/groups", "/u/", "/search", "/map"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -120,7 +120,8 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string)
     // Inline styles are required: Next inlines critical CSS and Tailwind's
     // runtime injects style tags.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
+    // OpenStreetMap tiles for maps; provider avatars for OAuth accounts.
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://tile.openstreetmap.org",
     "font-src 'self' data:",
     // `ws:`/`wss:` for Socket.IO; the app is otherwise same-origin.
     // Sockets to this host only (any-host `ws:` would let injected code
