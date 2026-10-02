@@ -219,7 +219,7 @@ export interface ClientToServerEvents {
   [SOCKET_EVENTS.leaveRoom]: (roomId: string) => void;
   [SOCKET_EVENTS.notificationRead]: (notificationId: string) => void;
   [SOCKET_EVENTS.sendMessage]: (
-    payload: { roomId: string; content: string; uploadId?: string },
+    payload: { roomId: string; content: string; uploadId?: string; replyToId?: string },
     acknowledge: (result: SendMessageAck) => void,
   ) => void;
   [SOCKET_EVENTS.typing]: (payload: { roomId: string; typing: boolean }) => void;

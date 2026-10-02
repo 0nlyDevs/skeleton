@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ImagePlus, Loader2, LogOut, MoreVertical, Pencil, Phone, SendHorizontal, UserPlus, UsersRound, Video, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, LogOut, MoreVertical, Pencil, Phone, SendHorizontal, Trash2, UserPlus, UsersRound, Video, X } from "lucide-react";
 import Link from "@/components/ui/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -25,8 +25,10 @@ import { usePresence } from "@/hooks/use-presence";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import type { MessagePayload } from "@/lib/socket/events";
-import type { RoomDto, RoomMemberDto } from "@/modules/messages/messages.dto";
+import { cn } from "@/lib/utils";
+import type { MessageReplyDto, RoomDto, RoomMemberDto } from "@/modules/messages/messages.dto";
 
+import { EditGroupDialog } from "./edit-group-dialog";
 import { AddPeopleDialog } from "./new-conversation-dialog";
 import { MessageBubble } from "./message-bubble";
 import { useThread, type ThreadMessage } from "./use-thread";
@@ -62,11 +64,15 @@ export function ConversationThread({
   const fmt = useFormatters();
   const { clearRoomUnread } = useRealtime();
   const thread = useThread(room.id, viewer);
+  const isGroupAdmin = room.type === "GROUP" && thread.members.some((member) => member.userId === viewer.id && member.role === "ADMIN");
   const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState<ThreadMessage | null>(null);
   const [confirmAll, setConfirmAll] = useState<ThreadMessage | null>(null);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<MessageReplyDto | null>(null);
+  const [confirmClear, setConfirmClear] = useState<"me" | "everyone" | null>(null);
+  const [editingGroup, setEditingGroup] = useState(false);
   const [attachment, setAttachment] = useState<{ previewUrl: string; upload: Promise<{ id: string; url: string }>; failed: boolean } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -127,7 +133,9 @@ export function ConversationThread({
       stickToBottom.current = true;
       try {
         const uploaded = await staged.upload;
-        await thread.send(content, uploaded.id, staged.previewUrl);
+        const reply = replyingTo;
+        setReplyingTo(null);
+        await thread.send(content, uploaded.id, staged.previewUrl, reply);
       } catch {
         // The upload error was already shown when it happened.
       }
@@ -136,7 +144,19 @@ export function ConversationThread({
     if (!content) return;
     setDraft("");
     stickToBottom.current = true;
-    await thread.send(content);
+    const reply = replyingTo;
+    setReplyingTo(null);
+    await thread.send(content, undefined, undefined, reply);
+  };
+
+  const clearConversation = async (scope: "me" | "everyone") => {
+    try {
+      await apiFetch(`/api/messages/rooms/${encodeURIComponent(room.id)}?scope=${scope}`, { method: "DELETE" });
+      toast.success(t(scope === "me" ? "messages.conversation_deleted" : "messages.group_deleted"));
+      onLeft?.();
+    } catch (error) {
+      toast.error(describeApiError(error, t));
+    }
   };
 
   /*
@@ -212,9 +232,14 @@ export function ConversationThread({
           </Link>
         ) : (
           <span className="flex min-w-0 items-center gap-3">
+            {room.image ? (
+              // eslint-disable-next-line @next/next/no-img-element -- group photo (public upload)
+              <img src={room.image} alt="" className="size-10 rounded-full object-cover" />
+            ) : (
             <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.62_0.2_310)] text-primary-foreground">
               <UsersRound className="size-5" />
             </span>
+            )}
             <span className="min-w-0">
               <span className="block truncate text-[15px] font-semibold">{room.name}</span>
               <span className="block truncate text-[12px] text-muted-foreground">{thread.members.map((member) => member.name.split(" ")[0]).join(", ") || status}</span>
@@ -240,20 +265,44 @@ export function ConversationThread({
             ))}
           </span>
         ) : null}
-        {room.type === "GROUP" ? (
+        {room.type === "GROUP" || room.type === "DIRECT" ? (
           <DropdownMenu>
-            <DropdownMenuTrigger aria-label={t("common.more")} className="ml-auto grid size-9 place-items-center rounded-full hover:bg-surface-muted">
+            <DropdownMenuTrigger aria-label={t("common.more")} className={cn("grid size-9 place-items-center rounded-full hover:bg-surface-muted", room.type === "GROUP" && "ml-auto")}>
               <MoreVertical className="size-5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setAdding(true)}>
-                <UserPlus />
-                {t("messages.add_member")}
+              {room.type === "GROUP" ? (
+                <>
+                  <DropdownMenuItem onSelect={() => setAdding(true)}>
+                    <UserPlus />
+                    {t("messages.add_member")}
+                  </DropdownMenuItem>
+                  {isGroupAdmin ? (
+                    <DropdownMenuItem onSelect={() => setEditingGroup(true)}>
+                      <Pencil />
+                      {t("messages.edit_group")}
+                    </DropdownMenuItem>
+                  ) : null}
+                </>
+              ) : null}
+              <DropdownMenuItem onSelect={() => setConfirmClear("me")}>
+                <Trash2 />
+                {t("messages.delete_conversation")}
               </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onSelect={() => void leave()}>
-                <LogOut />
-                {t("messages.leave")}
-              </DropdownMenuItem>
+              {room.type === "GROUP" ? (
+                <>
+                  <DropdownMenuItem variant="destructive" onSelect={() => void leave()}>
+                    <LogOut />
+                    {t("messages.leave")}
+                  </DropdownMenuItem>
+                  {isGroupAdmin ? (
+                    <DropdownMenuItem variant="destructive" onSelect={() => setConfirmClear("everyone")}>
+                      <Trash2 />
+                      {t("messages.delete_group")}
+                    </DropdownMenuItem>
+                  ) : null}
+                </>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
@@ -317,6 +366,24 @@ export function ConversationThread({
                   onDiscard={() => thread.discardFailed(message.id)}
                   viewerId={viewer.id}
                   onReacted={thread.replaceMessage}
+                  onReply={() => {
+                    setEditing(null);
+                    setReplyingTo({
+                      id: message.id,
+                      senderName: message.sender.name,
+                      preview: message.content.slice(0, 140),
+                      hasImage: message.image !== null,
+                      deleted: false,
+                    });
+                    input.current?.focus();
+                  }}
+                  onJumpTo={(messageId) => {
+                    const target = scroller.current?.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+                    if (!target) return;
+                    target.scrollIntoView({ behavior: "smooth", block: "center" });
+                    target.classList.add("bg-primary/10");
+                    setTimeout(() => target.classList.remove("bg-primary/10"), 1_200);
+                  }}
                 />
               );
             })}
@@ -341,6 +408,17 @@ export function ConversationThread({
               <Pencil className="size-3.5" /> {t("messages.editing")}
             </span>
             <button type="button" onClick={() => { setEditing(null); setDraft(""); }} aria-label={t("messages.cancel_edit")}>
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ) : null}
+        {replyingTo && !editing ? (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border-l-2 border-primary bg-accent px-3 py-1.5 text-[12.5px] text-accent-foreground">
+            <span className="min-w-0">
+              <span className="block font-semibold">{t("messages.replying_to", { name: replyingTo.senderName })}</span>
+              <span className="block truncate opacity-80">{replyingTo.preview || (replyingTo.hasImage ? `📷 ${t("messages.photo")}` : "")}</span>
+            </span>
+            <button type="button" onClick={() => setReplyingTo(null)} aria-label={t("comments.cancel_reply")}>
               <X className="size-3.5" />
             </button>
           </div>
@@ -430,6 +508,14 @@ export function ConversationThread({
         description={t("messages.delete_all_confirm")}
         onConfirm={() => confirmAll && void deleteMessage(confirmAll, "everyone")}
       />
+      <ConfirmDialog
+        open={confirmClear !== null}
+        onOpenChange={(open) => !open && setConfirmClear(null)}
+        title={t(confirmClear === "everyone" ? "messages.delete_group" : "messages.delete_conversation")}
+        description={t(confirmClear === "everyone" ? "messages.delete_group_confirm" : "messages.delete_conversation_confirm")}
+        onConfirm={() => confirmClear && void clearConversation(confirmClear)}
+      />
+      {isGroupAdmin ? <EditGroupDialog room={room} open={editingGroup} onOpenChange={setEditingGroup} /> : null}
       {room.type === "GROUP" ? (
         <AddPeopleDialog
           open={adding}

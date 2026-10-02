@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Copy, MoreHorizontal, Pencil, SmilePlus, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, Copy, CornerUpLeft, MoreHorizontal, Pencil, SmilePlus, Trash2, Undo2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -48,6 +48,8 @@ export function MessageBubble({
   onDiscard,
   viewerId,
   onReacted,
+  onReply,
+  onJumpTo,
 }: {
   readonly message: ThreadMessage;
   readonly mine: boolean;
@@ -65,6 +67,10 @@ export function MessageBubble({
   readonly viewerId: string;
   /** The server's updated message (also pushed to the room over the socket). */
   readonly onReacted: (message: MessageDto) => void;
+  /** Start a reply to this message. */
+  readonly onReply: () => void;
+  /** Scroll to a quoted message, when it is loaded. */
+  readonly onJumpTo: (messageId: string) => void;
 }) {
   const t = useTranslation();
   const fmt = useFormatters();
@@ -94,7 +100,7 @@ export function MessageBubble({
   const editable = mine && !message.deleted && !message.pending && !message.failed && mountedAt - Date.parse(message.createdAt) < EDIT_WINDOW_MS;
 
   return (
-    <div className={cn("group flex flex-col", mine ? "items-end" : "items-start")}>
+    <div data-message-id={message.id} className={cn("group flex scroll-mt-24 flex-col rounded-xl transition-colors", mine ? "items-end" : "items-start")}>
       {showAuthor && !mine ? <span className="mb-0.5 ml-11 text-[11.5px] font-medium text-muted-foreground">{message.sender.name}</span> : null}
       <div className={cn("flex max-w-[85%] items-end gap-2 sm:max-w-[70%]", mine && "flex-row-reverse")}>
         {!mine ? (
@@ -113,6 +119,21 @@ export function MessageBubble({
                   {/* eslint-disable-next-line @next/next/no-img-element -- authorised, re-encoded image */}
                   <img src={message.image.url} alt={t("messages.photo")} loading="lazy" className="max-h-72 max-w-full object-cover" />
                 </a>
+              ) : null}
+              {message.replyTo ? (
+                <button
+                  type="button"
+                  onClick={() => message.replyTo && onJumpTo(message.replyTo.id)}
+                  className={cn(
+                    "max-w-full rounded-xl border-l-2 border-primary/60 bg-surface-muted/70 px-2.5 py-1.5 text-left text-[12.5px]",
+                    mine ? "self-end" : "self-start",
+                  )}
+                >
+                  <span className="block font-semibold">{message.replyTo.senderName}</span>
+                  <span className="line-clamp-2 text-muted-foreground">
+                    {message.replyTo.deleted ? t("messages.deleted") : message.replyTo.preview || (message.replyTo.hasImage ? `📷 ${t("messages.photo")}` : "")}
+                  </span>
+                </button>
               ) : null}
               {sharedPostId(message.content) ? <PostLinkPreview postId={sharedPostId(message.content) as string} /> : null}
               {message.content ? (
@@ -164,6 +185,12 @@ export function MessageBubble({
               <MoreHorizontal className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align={mine ? "end" : "start"}>
+              {!message.deleted ? (
+                <DropdownMenuItem onSelect={onReply}>
+                  <CornerUpLeft />
+                  {t("messages.reply")}
+                </DropdownMenuItem>
+              ) : null}
               {!message.deleted && message.content ? (
                 <DropdownMenuItem onSelect={onCopy}>
                   <Copy />

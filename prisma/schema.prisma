@@ -610,6 +610,8 @@ model Room {
   type       RoomType @default(GLOBAL)
   entityType String?
   entityId   String?
+  /// Group conversation photo (a public upload path).
+  image      String?  @db.VarChar(200)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -622,15 +624,18 @@ model Room {
 }
 
 model RoomMember {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   roomId     String
-  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room       Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role       String   @default("MEMBER")
-  lastReadAt DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       String    @default("MEMBER")
+  lastReadAt DateTime  @default(now())
+  /// "Delete conversation" for this member: history before it is hidden, and
+  /// the conversation leaves their list until a newer message arrives.
+  clearedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@unique([roomId, userId])
   @@index([userId])
@@ -670,6 +675,10 @@ model Message {
 
   hiddenFor MessageHide[]
   reactions MessageReaction[]
+  /// The message this one replies to (same room); kept as `null` if it is purged.
+  replyToId String?
+  replyTo   Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Message[]         @relation("MessageReplies")
 
   // Drives the hot path: "latest N messages in this room, newer than X".
   @@index([roomId, createdAt])

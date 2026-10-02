@@ -26,9 +26,20 @@ export interface MessageDto {
   readonly editedAt: string | null;
   readonly image: MessageImageDto | null;
   readonly sender: MessageSenderDto;
+  /** The message this one answers (preview only). */
+  readonly replyTo: MessageReplyDto | null;
   /** Who reacted with what; members only ever see their own rooms' messages. */
   readonly reactions: readonly MessageReactionDto[];
   readonly createdAt: string;
+}
+
+export interface MessageReplyDto {
+  readonly id: string;
+  readonly senderName: string;
+  /** A short excerpt; empty with `hasImage` for a photo, `deleted` when withdrawn. */
+  readonly preview: string;
+  readonly hasImage: boolean;
+  readonly deleted: boolean;
 }
 
 export interface MessageReactionDto {
@@ -63,6 +74,8 @@ export interface RoomDto {
   readonly type: string;
   readonly entityType: string | null;
   readonly entityId: string | null;
+  /** Group conversation photo. */
+  readonly image: string | null;
   readonly unreadCount?: number;
   readonly lastMessage?: RoomLastMessageDto | null;
   readonly members?: RoomMemberDto[];
@@ -100,6 +113,16 @@ export function toMessageDto(row: MessageWithSender): MessageDto {
       image: row.sender.image,
     },
     reactions: row.deletedAt ? [] : groupReactions(row.reactions),
+    replyTo:
+      row.deletedAt || !row.replyTo
+        ? null
+        : {
+            id: row.replyTo.id,
+            senderName: row.replyTo.sender.name,
+            preview: row.replyTo.deletedAt ? "" : decryptField(row.replyTo.content).slice(0, 140),
+            hasImage: !row.replyTo.deletedAt && row.replyTo.uploadId !== null,
+            deleted: row.replyTo.deletedAt !== null,
+          },
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -134,6 +157,7 @@ export function toRoomDto(
     type: row.type,
     entityType: row.entityType,
     entityId: row.entityId,
+    image: row.image ?? null,
     unreadCount: options?.unreadCount ?? 0,
     lastMessage: options?.lastMessage ?? null,
     members: options?.members,

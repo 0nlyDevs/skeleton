@@ -10,6 +10,12 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "The message you are replying to no longer exists.": "Le message auquel vous répondez n'existe plus.",
+  "This conversation cannot be deleted.": "Cette conversation ne peut pas être supprimée.",
+  "Only group conversations can be deleted for everyone.": "Seuls les groupes peuvent être supprimés pour tout le monde.",
+  "Only the group's admins can delete it.": "Seuls les admins du groupe peuvent le supprimer.",
+  "Only group conversations can be renamed.": "Seuls les groupes peuvent être renommés.",
+  "Only the group's admins can change it.": "Seuls les admins du groupe peuvent le modifier.",
   "The address needs at least 3 characters.": "L'adresse doit compter au moins 3 caractères.",
   "The address is limited to 60 characters.": "L'adresse est limitée à 60 caractères.",
   "Use lowercase letters, digits and single hyphens.": "Utilisez des minuscules, des chiffres et des tirets simples.",
