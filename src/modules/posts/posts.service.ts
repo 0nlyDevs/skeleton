@@ -38,6 +38,7 @@ import {
   notifyPostShare,
 } from "../notifications/notifications.service";
 import { broadcastEngagement } from "./posts.engagement";
+import { findViewerBookmarks } from "../bookmarks/bookmarks.repository";
 import { countReactionsByType, findViewerReactions } from "../reactions/reactions.repository";
 import { findAttachableImages } from "../uploads/uploads.repository";
 import { toFeedItemDto, toPostDto, toPostDtos, type FeedItemDto, type PostDto } from "./posts.dto";
@@ -213,10 +214,11 @@ export function postAudience(row: { published: boolean; deletedAt: Date | null; 
 async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Promise<FeedItemDto[]> {
   const ids = rows.map((row) => row.id);
   const groupIds = [...new Set(rows.map((row) => row.groupId).filter((id): id is string => id !== null))];
-  const [counts, mine, memberships] = await Promise.all([
+  const [counts, mine, memberships, saved] = await Promise.all([
     countReactionsByType(ids),
     viewer ? findViewerReactions(ids, viewer.id) : Promise.resolve(new Map<string, never>()),
     viewer ? findMemberships(viewer.id, groupIds) : Promise.resolve(new Map()),
+    viewer ? findViewerBookmarks(ids, viewer.id) : Promise.resolve(new Set<string>()),
   ]);
 
   return rows.map((row) => {
@@ -229,6 +231,7 @@ async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Pro
       mine.get(row.id) ?? null,
       staff || access?.canModerate === true,
       canInteract,
+      saved.has(row.id),
     );
   });
 }

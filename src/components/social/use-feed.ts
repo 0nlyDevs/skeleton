@@ -16,6 +16,8 @@ export interface FeedScope {
   readonly scope?: "all" | "following" | "for_you";
   readonly authorId?: string;
   readonly group?: { readonly id: string; readonly slug: string };
+  /** The viewer's saved posts: no live inserts, only updates to listed posts. */
+  readonly saved?: boolean;
 }
 
 const PAGE_SIZE = 10;
@@ -41,14 +43,16 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
 
   const url = useCallback(
     (cursor?: string) =>
-      `/api/feed${toQueryString({
+      filter.saved
+        ? `/api/bookmarks${toQueryString({ limit: PAGE_SIZE, cursor })}`
+        : `/api/feed${toQueryString({
         limit: PAGE_SIZE,
         cursor,
         authorId: filter.authorId,
         groupSlug: filter.group?.slug,
         scope: filter.scope && filter.scope !== "all" ? filter.scope : undefined,
       })}`,
-    [filter.authorId, filter.group?.slug, filter.scope],
+    [filter.authorId, filter.group?.slug, filter.scope, filter.saved],
   );
 
   // A new filter (tab switch) restarts from the server.
@@ -143,11 +147,11 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
       if (!filter.group && !filter.authorId && filter.scope === "following" && post.author.id !== viewerId) return;
 
       if (known.current.has(post.id)) {
-        const { viewerReaction: _r, viewerCanModerate: _m, viewerCanInteract: _i, ...shared } = post;
+        const { viewerReaction: _r, viewerCanModerate: _m, viewerCanInteract: _i, viewerSaved: _s, ...shared } = post;
         patch(post.id, shared);
         return;
       }
-      if (payload.kind === "updated") return;
+      if (payload.kind === "updated" || filter.saved) return;
       if (post.author.id === viewerId) {
         // Our own post (from this tab it is already known; from another tab
         // it appears at once, no pill).
@@ -171,7 +175,7 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
       socket.off(SOCKET_EVENTS.feedPost, onPost);
       socket.off(SOCKET_EVENTS.postEngagement, onEngagement);
     };
-  }, [socket, filter.authorId, filter.group, filter.scope, viewerId, insert, patch, remove]);
+  }, [socket, filter.authorId, filter.group, filter.scope, filter.saved, viewerId, insert, patch, remove]);
 
   useEffect(() => {
     if (status !== "polling") return;

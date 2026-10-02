@@ -115,7 +115,7 @@ export function FeedView({
           key={post.id}
           post={post}
           viewer={viewer}
-          onChange={feed.replace}
+          onChange={(post) => (filter.saved && !post.viewerSaved ? feed.remove(post.id) : feed.replace(post))}
           onRemoved={feed.remove}
           onOpenComments={setCommentsFor}
           onShared={feed.insert}

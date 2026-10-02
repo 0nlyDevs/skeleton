@@ -1,6 +1,6 @@
 "use client";
 
-import { Flag, Globe, Link2, MapPin, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, SquarePen, Trash2, UsersRound } from "lucide-react";
+import { Bookmark, BookmarkCheck, Flag, Globe, Link2, MapPin, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, SquarePen, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -129,6 +129,19 @@ export function PostCard({
     }
   };
 
+  // Optimistic: flip at once, roll back if the server refuses.
+  const toggleSaved = async () => {
+    const saved = !post.viewerSaved;
+    onChange({ ...post, viewerSaved: saved });
+    try {
+      await apiFetch(`/api/posts/${post.id}/bookmark`, { method: saved ? "PUT" : "DELETE" });
+      toast.success(t(saved ? "post.saved_toast" : "post.unsaved_toast"));
+    } catch (error) {
+      onChange({ ...post, viewerSaved: !saved });
+      toast.error(describeApiError(error, t));
+    }
+  };
+
   const profileHref = post.author.username ? `/profile/${encodeURIComponent(post.author.username)}` : undefined;
 
   return (
@@ -194,6 +207,12 @@ export function PostCard({
               <Link2 />
               {t("post.copy_link")}
             </DropdownMenuItem>
+            {viewer ? (
+              <DropdownMenuItem onSelect={() => void toggleSaved()}>
+                {post.viewerSaved ? <BookmarkCheck /> : <Bookmark />}
+                {post.viewerSaved ? t("post.unbookmark") : t("post.bookmark")}
+              </DropdownMenuItem>
+            ) : null}
             {isAuthor ? (
               <DropdownMenuItem onSelect={() => setEditing(true)}>
                 <Pencil />

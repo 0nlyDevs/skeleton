@@ -79,6 +79,8 @@ export interface FeedItemDto extends PostDto {
   readonly viewerCanModerate: boolean;
   /** Whether the viewer may react and comment (signed in; member if in a group). */
   readonly viewerCanInteract: boolean;
+  /** Whether the viewer saved it (private to the viewer). */
+  readonly viewerSaved: boolean;
 }
 
 /** The live counters pushed to every viewer of a post or of the feed. */
@@ -96,8 +98,9 @@ export function toFeedItemDto(
   viewerReaction: ReactionType | null,
   viewerCanModerate = false,
   viewerCanInteract = false,
+  viewerSaved = false,
 ): FeedItemDto {
-  return { ...toPostDto(row), reactions, viewerReaction, viewerCanModerate, viewerCanInteract };
+  return { ...toPostDto(row), reactions, viewerReaction, viewerCanModerate, viewerCanInteract, viewerSaved };
 }
 
 /** `tags` is a `Json` column, so it arrives untyped. Normalize on the way out. */
