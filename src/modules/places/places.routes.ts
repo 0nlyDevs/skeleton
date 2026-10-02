@@ -18,10 +18,10 @@ export const searchPlacesRoute = apiRoute({
 });
 
 export const reversePlaceRoute = apiRoute({
-  query: z.object({ lat: latitude, lng: longitude }),
+  query: z.object({ lat: latitude, lng: longitude, precision: z.enum(["exact", "town"]).default("exact") }),
   rateLimit: RATE_LIMITS.places,
   rateLimitScope: "places",
-  handler: async ({ query, request }) => jsonOk({ data: await reversePlace(query.lat, query.lng, requestLocale(request)) }),
+  handler: async ({ query, request }) => jsonOk({ data: await reversePlace(query.lat, query.lng, requestLocale(request), query.precision) }),
 });
 
 /** Posts with a place inside the visible map area (visibility-checked). */

@@ -9,5 +9,5 @@ export const metadata: Metadata = { title: "Confidentialité" };
 export default async function PrivacyPage() {
   const { user } = await requirePageAuth("/settings/privacy");
   const profile = await getOwnProfile({ user });
-  return <PrivacyForm showPresence={profile.showPresence} />;
+  return <PrivacyForm showPresence={profile.showPresence} autoLocation={profile.autoLocation} />;
 }

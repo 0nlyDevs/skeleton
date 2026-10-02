@@ -25,6 +25,7 @@ export const userProfileSelect = {
   twoFactorEnabled: true,
   createdAt: true,
   showPresence: true,
+  autoLocation: true,
 } satisfies Prisma.UserSelect;
 
 export const adminUserSelect = {

@@ -84,13 +84,21 @@ export async function searchPlaces(q: string, language: string): Promise<PlaceDt
   }
 }
 
-export async function reversePlace(latitude: number, longitude: number, language: string): Promise<PlaceDto> {
-  const lat = roundCoordinate(latitude);
-  const lng = roundCoordinate(longitude);
+/**
+ * `town` precision (automatic location) never reveals more than the town: the
+ * point is snapped to ~1 km before geocoding and only the town name is kept.
+ */
+export async function reversePlace(latitude: number, longitude: number, language: string, precision: "exact" | "town" = "exact"): Promise<PlaceDto> {
+  const lat = precision === "town" ? Math.round(latitude * 100) / 100 : roundCoordinate(latitude);
+  const lng = precision === "town" ? Math.round(longitude * 100) / 100 : roundCoordinate(longitude);
   try {
-    return await getOrSet(cacheKey("places:reverse", language, lat, lng), DAY_MS, async () => {
-      const data = (await call("/reverse", { lat: String(lat), lon: String(lng), zoom: "16" }, language)) as NominatimPlace;
-      return toPlace(data) ?? { name: `${lat}, ${lng}`, latitude: lat, longitude: lng };
+    return await getOrSet(cacheKey("places:reverse", precision, language, lat, lng), DAY_MS, async () => {
+      const data = (await call("/reverse", { lat: String(lat), lon: String(lng), zoom: precision === "town" ? "10" : "16" }, language)) as NominatimPlace;
+      const place = toPlace(data);
+      if (!place) return { name: `${lat}, ${lng}`, latitude: lat, longitude: lng };
+      return precision === "town"
+        ? { name: place.name.split(",")[0]?.trim() || place.name, latitude: lat, longitude: lng }
+        : { ...place, latitude: roundCoordinate(place.latitude), longitude: roundCoordinate(place.longitude) };
     });
   } catch (error) {
     logger.warn("reverse geocoding failed", { error });

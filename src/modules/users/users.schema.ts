@@ -33,6 +33,8 @@ export const updateProfileSchema = z
     image: avatarPathSchema.nullable().optional(),
     /** Privacy: show others when I am online and when I was last seen. */
     showPresence: z.boolean().optional(),
+    /** Suggest my town on new posts and centre the map on me. */
+    autoLocation: z.boolean().optional(),
   })
   .refine(hasAtLeastOneDefined, { message: "Provide at least one field to update." });
 

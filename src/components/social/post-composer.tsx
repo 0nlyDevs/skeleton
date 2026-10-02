@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
 import { LocationPicker, type PickedPlace } from "@/components/maps/location-picker";
+import { useAutoLocation } from "@/hooks/use-auto-location";
 
 import { MentionInput, type MentionInputHandle } from "./mention-input";
 import { ACCEPTED_IMAGE_TYPES, useImageUploads } from "./use-image-uploads";
@@ -50,6 +51,9 @@ export function PostComposer({
   const [place, setPlace] = useState<PickedPlace | null>(null);
   const [picking, setPicking] = useState(false);
   const [poll, setPoll] = useState<PollDraft | null>(null);
+  const auto = useAutoLocation();
+  // A place picked by hand wins; otherwise the automatic town, unless removed.
+  const effectivePlace = place ?? auto.place;
 
   const publish = async () => {
     if (publishing) return;
@@ -87,13 +91,14 @@ export function PostComposer({
           mediaIds: uploads.readyIds,
           published: true,
           ...(group ? { groupId: group.id } : {}),
-          ...(place ? { location: place } : {}),
+          ...(effectivePlace ? { location: effectivePlace } : {}),
           ...(poll ? { poll: { options: pollOptions, multiple: poll.multiple, durationHours: poll.durationHours } } : {}),
         },
       });
       setBody("");
       setPlace(null);
       setPoll(null);
+      auto.reset();
       uploads.reset();
       onPublished(response.data);
       toast.success(t("composer.published"));
@@ -108,7 +113,10 @@ export function PostComposer({
     <Card className="p-4">
       <div className="flex gap-3">
         <UserAvatar name={viewer.name} image={viewer.image} size="md" />
-        <div className="min-w-0 flex-1 rounded-2xl bg-surface-muted transition-colors focus-within:bg-surface focus-within:ring-2 focus-within:ring-ring/25">
+        <div
+          onFocusCapture={auto.request}
+          className="min-w-0 flex-1 rounded-2xl bg-surface-muted transition-colors focus-within:bg-surface focus-within:ring-2 focus-within:ring-ring/25"
+        >
           <MentionInput
             ref={input}
             value={body}
@@ -192,10 +200,15 @@ export function PostComposer({
           <MapPin className="text-error" />
           {t("place.add")}
         </Button>
-        {place ? (
-          <span className="inline-flex max-w-[14rem] items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
-            <span className="truncate">{place.name}</span>
-            <button type="button" onClick={() => setPlace(null)} aria-label={t("place.remove")}>
+        {effectivePlace ? (
+          <span
+            className="inline-flex max-w-[16rem] items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground"
+            title={place ? undefined : t("place.auto_hint")}
+          >
+            <MapPin className="size-3 shrink-0" aria-hidden />
+            <span className="truncate">{effectivePlace.name}</span>
+            {!place ? <span className="shrink-0 opacity-70">· {t("place.auto")}</span> : null}
+            <button type="button" onClick={() => (place ? setPlace(null) : auto.dismiss())} aria-label={t("place.remove")}>
               <X className="size-3" />
             </button>
           </span>

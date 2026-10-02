@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { autoMapCenter } from "@/hooks/use-auto-location";
 import { useFormatters } from "@/hooks/use-formatters";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +15,14 @@ import type { MapPostDto } from "@/modules/posts/posts.service";
 import { Map, type MapBounds } from "./map";
 
 /** Geotagged posts in the visible area; refetched (debounced) when the map moves. */
-export function MapExplorer({ initial }: { readonly initial: { latitude: number; longitude: number; zoom: number } }) {
+export function MapExplorer({
+  initial,
+  initialFromLink = false,
+}: {
+  readonly initial: { latitude: number; longitude: number; zoom: number };
+  /** Opened on a shared point: never move away from it automatically. */
+  readonly initialFromLink?: boolean;
+}) {
   const t = useTranslation();
   const fmt = useFormatters();
   const [center, setCenter] = useState(initial);
@@ -46,6 +54,18 @@ export function MapExplorer({ initial }: { readonly initial: { latitude: number;
     if (timer.current) clearTimeout(timer.current);
     controller.current?.abort();
   }, []);
+
+  // "Ma position automatique": open on the viewer when the browser already allows it.
+  useEffect(() => {
+    if (initialFromLink) return;
+    let cancelled = false;
+    void autoMapCenter().then((point) => {
+      if (point && !cancelled) setCenter({ ...point, zoom: 12 });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialFromLink]);
 
   const locate = () => {
     navigator.geolocation?.getCurrentPosition(

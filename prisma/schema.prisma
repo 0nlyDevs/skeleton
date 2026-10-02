@@ -173,6 +173,8 @@ model User {
   lastSeenAt       DateTime?
   /// Privacy: when false, others never see "online" or "last seen".
   showPresence     Boolean           @default(true)
+  /// Suggest the user's town on new posts and centre the map on them.
+  autoLocation     Boolean           @default(true)
   pollVotes        PollVote[]
   pages            Page[]
   pageLikes        PageLike[]

@@ -304,6 +304,7 @@ export async function updateOwnProfile(
   if (input.bio !== undefined) data.bio = input.bio;
   if (input.image !== undefined) data.image = input.image;
   if (input.showPresence !== undefined) data.showPresence = input.showPresence;
+  if (input.autoLocation !== undefined) data.autoLocation = input.autoLocation;
 
   let row;
   try {

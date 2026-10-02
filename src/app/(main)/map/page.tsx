@@ -23,7 +23,7 @@ export default async function MapPage({
     latitude !== null && longitude !== null ? { latitude, longitude, zoom: 15 } : { latitude: -19.5, longitude: 52, zoom: 5 };
   return (
     <div className="mx-auto w-full max-w-[1000px]">
-      <MapExplorer initial={initial} />
+      <MapExplorer initial={initial} initialFromLink={latitude !== null && longitude !== null} />
     </div>
   );
 }
