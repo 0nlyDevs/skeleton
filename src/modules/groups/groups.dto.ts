@@ -6,6 +6,8 @@ export interface GroupSummaryDto {
   readonly slug: string;
   readonly name: string;
   readonly privacy: "PUBLIC" | "PRIVATE";
+  /** New members wait for an admin's approval (always true for private groups). */
+  readonly requiresApproval: boolean;
   readonly coverImage: string | null;
   readonly memberCount: number;
 }
@@ -30,6 +32,7 @@ export function toGroupSummaryDto(row: GroupRow): GroupSummaryDto {
     slug: row.slug,
     name: row.name,
     privacy: row.privacy,
+    requiresApproval: row.privacy === "PRIVATE" || row.requiresApproval,
     coverImage: row.coverImage,
     memberCount: row.memberCount,
   };

@@ -511,19 +511,22 @@ model Mention {
 }
 
 model Group {
-  id          String       @id @default(cuid())
-  slug        String       @unique @db.VarChar(60)
-  name        String       @db.VarChar(80)
-  description String?      @db.Text
-  privacy     GroupPrivacy @default(PUBLIC)
-  coverImage  String?      @db.VarChar(200)
-  ownerId     String
-  owner       User         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  id               String       @id @default(cuid())
+  slug             String       @unique @db.VarChar(60)
+  name             String       @db.VarChar(80)
+  description      String?      @db.Text
+  privacy          GroupPrivacy @default(PUBLIC)
+  /// Public groups can still ask admins to approve each new member.
+  /// Private groups always do.
+  requiresApproval Boolean      @default(false)
+  coverImage       String?      @db.VarChar(200)
+  ownerId          String
+  owner            User         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   /// Denormalised, maintained with membership changes.
-  memberCount Int          @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
+  memberCount      Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
 
   members GroupMember[]
   posts   Post[]

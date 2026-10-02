@@ -31,6 +31,8 @@ export const createGroupSchema = z.object({
   name: nameField,
   description: descriptionField.optional(),
   privacy: groupPrivacySchema.default("PUBLIC"),
+  requiresApproval: z.boolean().default(false),
+  coverImage: coverField.nullable().optional(),
 });
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
 
@@ -39,6 +41,7 @@ export const updateGroupSchema = z
     name: nameField.optional(),
     description: descriptionField.optional(),
     privacy: groupPrivacySchema.optional(),
+    requiresApproval: z.boolean().optional(),
     coverImage: coverField.nullable().optional(),
   })
   .refine((value) => Object.values(value).some((entry) => entry !== undefined), {

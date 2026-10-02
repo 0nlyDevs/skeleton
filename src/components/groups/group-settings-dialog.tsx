@@ -17,6 +17,7 @@ import { describeApiError } from "@/lib/api/error-message";
 import type { GroupDto } from "@/modules/groups/groups.dto";
 
 import { PrivacyPicker } from "./create-group-dialog";
+import { ApprovalSwitch, CoverPicker } from "./group-options";
 
 /** Group admins edit identity and privacy; only the owner (or a platform admin) deletes. */
 export function GroupSettingsDialog({
@@ -35,6 +36,8 @@ export function GroupSettingsDialog({
   const [name, setName] = useState(group.name);
   const [description, setDescription] = useState(group.description ?? "");
   const [privacy, setPrivacy] = useState(group.privacy);
+  const [requiresApproval, setRequiresApproval] = useState(group.requiresApproval);
+  const [coverImage, setCoverImage] = useState<string | null>(group.coverImage);
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -45,7 +48,7 @@ export function GroupSettingsDialog({
     try {
       const response = await apiFetch<{ data: GroupDto }>(`/api/groups/${group.slug}`, {
         method: "PATCH",
-        body: { name: name.trim(), description: description.trim(), privacy },
+        body: { name: name.trim(), description: description.trim(), privacy, requiresApproval, coverImage },
       });
       onSaved(response.data);
       toast.success(t("groups.saved"));
@@ -85,6 +88,8 @@ export function GroupSettingsDialog({
             {(field) => <Textarea {...field} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1000} rows={4} />}
           </FormField>
           <PrivacyPicker value={privacy} onChange={setPrivacy} />
+          <ApprovalSwitch privacy={privacy} value={requiresApproval} onChange={setRequiresApproval} />
+          <CoverPicker value={coverImage} onChange={setCoverImage} />
         </div>
         <DialogFooter className="items-center sm:justify-between">
           {group.viewer.canDelete ? (
