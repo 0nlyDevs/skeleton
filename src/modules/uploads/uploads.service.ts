@@ -19,6 +19,7 @@ import { randomUUID } from "node:crypto";
 
 import { env } from "@/lib/env";
 import {
+  BadRequestError,
   NotFoundError,
   PayloadTooLargeError,
   UnsupportedMediaTypeError,
@@ -174,3 +175,19 @@ export async function getFileForViewer(id: string, viewer: AuthUser | null): Pro
 
   return { bytes, mime: row.mime, visibility: row.visibility };
 }
+
+/**
+ * A public image path (`/api/files/<id>`) the actor may use as an avatar,
+ * banner or cover: it must exist, be theirs, be an image and be PUBLIC.
+ * Without this, any file id (someone else's, or a private one) could be
+ * pinned to a profile or group.
+ */
+export async function assertOwnPublicImage(path: string | null | undefined, userId: string): Promise<void> {
+  if (!path) return;
+  const id = /^\/api\/files\/([A-Za-z0-9_-]+)$/.exec(path)?.[1];
+  const row = id ? await findUploadById(id) : null;
+  if (!row || row.userId !== userId || row.visibility !== "PUBLIC" || !row.mime.startsWith("image/")) {
+    throw new BadRequestError("Upload the image again and retry.");
+  }
+}
+

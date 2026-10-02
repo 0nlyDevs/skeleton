@@ -16,6 +16,7 @@ import type { FeedItemDto } from "@/modules/posts/posts.dto";
 import { LocationPicker, type PickedPlace } from "@/components/maps/location-picker";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 
+import { AudiencePicker, type Audience } from "./audience";
 import { MentionInput, type MentionInputHandle } from "./mention-input";
 import { IMAGE_INPUT_ACCEPT, useImageUploads } from "./use-image-uploads";
 
@@ -51,6 +52,7 @@ export function PostComposer({
   const [place, setPlace] = useState<PickedPlace | null>(null);
   const [picking, setPicking] = useState(false);
   const [poll, setPoll] = useState<PollDraft | null>(null);
+  const [audience, setAudience] = useState<Audience>("PUBLIC");
   const auto = useAutoLocation();
   // A place picked by hand wins; otherwise the automatic town, unless removed.
   const effectivePlace = place ?? auto.place;
@@ -92,6 +94,7 @@ export function PostComposer({
           published: true,
           ...(group ? { groupId: group.id } : {}),
           ...(effectivePlace ? { location: effectivePlace } : {}),
+          ...(group ? {} : { audience }),
           ...(poll ? { poll: { options: pollOptions, multiple: poll.multiple, durationHours: poll.durationHours } } : {}),
         },
       });
@@ -214,6 +217,7 @@ export function PostComposer({
             </button>
           </span>
         ) : null}
+        {!group ? <AudiencePicker value={audience} onChange={setAudience} /> : null}
         {group ? (
           <span className="ml-1 rounded-full bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
             {t("composer.in_group", { name: group.name })}

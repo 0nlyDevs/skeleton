@@ -81,7 +81,7 @@ export function GroupView({
     if (!viewer) {
       return (
         <Button asChild>
-          <Link href={`/login?next=/groups/${group.slug}`}>{group.privacy === "PUBLIC" ? t("groups.join") : t("groups.request")}</Link>
+          <Link href={`/login?next=/groups/${group.slug}`}>{group.requiresApproval ? t("groups.request") : t("groups.join")}</Link>
         </Button>
       );
     }
@@ -120,7 +120,7 @@ export function GroupView({
     return (
       <Button onClick={() => void join()} disabled={busy}>
         <UserPlus />
-        {group.privacy === "PUBLIC" ? t("groups.join") : t("groups.request")}
+        {group.requiresApproval ? t("groups.request") : t("groups.join")}
       </Button>
     );
   };
@@ -134,7 +134,12 @@ export function GroupView({
   return (
     <div className="flex flex-col gap-4">
       <Card className="overflow-hidden">
-        <div aria-hidden className="h-32 bg-gradient-to-br from-[oklch(0.62_0.2_310)] via-primary to-[oklch(0.7_0.14_210)] sm:h-44" />
+        {group.coverImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- public cover chosen by the group admins
+          <img src={group.coverImage} alt="" className="h-32 w-full object-cover sm:h-44" />
+        ) : (
+          <div aria-hidden className="h-32 bg-gradient-to-br from-[oklch(0.62_0.2_310)] via-primary to-[oklch(0.7_0.14_210)] sm:h-44" />
+        )}
         <div className="flex flex-wrap items-end gap-4 px-5 pb-4">
           <GroupAvatar name={group.name} size="lg" className="-mt-10 ring-4 ring-card" />
           <div className="min-w-0 flex-1 pt-3">
@@ -142,6 +147,7 @@ export function GroupView({
             <p className="flex items-center gap-1.5 text-[13.5px] text-muted-foreground">
               {group.privacy === "PRIVATE" ? <Lock className="size-3.5" /> : <Globe className="size-3.5" />}
               {group.privacy === "PRIVATE" ? t("groups.private") : t("groups.public")} · {t("groups.members", { count: group.memberCount })}
+              {group.privacy === "PUBLIC" && group.requiresApproval ? <> · {t("groups.approval_badge")}</> : null}
             </p>
           </div>
           <div className="flex items-center gap-2">

@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { apiRoute } from "@/lib/api/route";
+import { apiRoute, publicRoute } from "@/lib/api/route";
 import { jsonOk } from "@/lib/api/response";
 import { idSchema } from "@/lib/validate";
 
 import { postIdParamSchema } from "../posts/posts.schema";
-import { castBallot } from "./polls.service";
+import { castBallot, listPollVoters } from "./polls.service";
 
 const ballotSchema = z.object({ optionIds: z.array(idSchema).min(1).max(6) });
 
@@ -20,3 +20,9 @@ export const retractBallotRoute = apiRoute({
   params: postIdParamSchema,
   handler: async ({ params, auth }) => jsonOk({ data: await castBallot(params.id, [], auth.user) }),
 });
+
+export const listPollVotersRoute = publicRoute({
+  params: postIdParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await listPollVoters(params.id, auth?.user ?? null) }),
+});
+

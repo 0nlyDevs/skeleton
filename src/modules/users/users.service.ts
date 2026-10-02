@@ -33,6 +33,7 @@ import { recordAudit } from "../audit/audit.service";
 import { notifyInBackground } from "../notifications/notifications.service";
 import { notifyRoleChanged, notifySystemMessage } from "../notifications/notifications.service";
 import { toAdminUserDto, toUserProfileDto, type AdminUserDto, type UserProfileDto } from "./users.dto";
+import { assertOwnPublicImage } from "../uploads/uploads.service";
 import {
   countAdmins,
   countCredentialAccounts,
@@ -48,6 +49,8 @@ import {
   updateUserProfile,
   updateUserRoleAdmin,
 } from "./users.repository";
+
+const USERNAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 import type {
   AdminListUsersQuery,
   ChangePasswordInput,
@@ -280,6 +283,15 @@ export async function updateOwnProfile(
   const data: Prisma.UserUncheckedUpdateInput = {};
 
   if (input.username !== undefined && input.username !== current.username) {
+    // A handle is how people find and mention someone: it may change once a
+    // month, so it cannot be used to dodge reports or impersonate in a hurry.
+    const changedAt = current.usernameChangedAt;
+    if (changedAt && Date.now() - changedAt.getTime() < USERNAME_COOLDOWN_MS) {
+      const next = new Date(changedAt.getTime() + USERNAME_COOLDOWN_MS);
+      throw new ConflictError(`You can change your username again on ${next.toISOString().slice(0, 10)}.`, {
+        username: `You can change your username again on ${next.toISOString().slice(0, 10)}.`,
+      });
+    }
     const holder = await findUserIdByUsername(input.username);
     if (holder && holder !== actor.user.id) {
       throw new ConflictError("This username is already taken.", {
@@ -288,6 +300,7 @@ export async function updateOwnProfile(
     }
     data.username = input.username;
     data.displayUsername = input.username;
+    data.usernameChangedAt = new Date();
   }
   if (input.firstName !== undefined) data.firstName = input.firstName;
   if (input.lastName !== undefined) data.lastName = input.lastName;
@@ -302,7 +315,11 @@ export async function updateOwnProfile(
     data.birthDate = null;
   }
   if (input.bio !== undefined) data.bio = input.bio;
+  // Only the caller's own public uploads may become their avatar or banner.
+  if (input.image) await assertOwnPublicImage(input.image, actor.user.id);
+  if (input.banner) await assertOwnPublicImage(input.banner, actor.user.id);
   if (input.image !== undefined) data.image = input.image;
+  if (input.banner !== undefined) data.banner = input.banner;
   if (input.showPresence !== undefined) data.showPresence = input.showPresence;
   if (input.autoLocation !== undefined) data.autoLocation = input.autoLocation;
 

@@ -39,7 +39,12 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
 
   return (
     <Card className="overflow-hidden">
-      <div aria-hidden className="h-36 bg-gradient-to-br from-primary via-[oklch(0.6_0.2_300)] to-[oklch(0.72_0.15_200)] sm:h-48" />
+      {profile.banner ? (
+        // eslint-disable-next-line @next/next/no-img-element -- the owner's public banner upload
+        <img src={profile.banner} alt="" className="h-36 w-full object-cover sm:h-48" />
+      ) : (
+        <div aria-hidden className="h-36 bg-gradient-to-br from-primary via-[oklch(0.6_0.2_300)] to-[oklch(0.72_0.15_200)] sm:h-48" />
+      )}
       <div className="px-5 pb-5">
         <div className="-mt-14 flex flex-wrap items-end justify-between gap-3">
           <UserAvatar userId={profile.id} name={profile.name} image={profile.image} size="xl" {...(signedIn ? { online: presence?.online ?? false } : {})} />

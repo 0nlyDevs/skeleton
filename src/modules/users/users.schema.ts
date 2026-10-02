@@ -31,6 +31,7 @@ export const updateProfileSchema = z
       .refine((value) => value.length <= 500, "Keep your bio under 500 characters.")
       .optional(),
     image: avatarPathSchema.nullable().optional(),
+    banner: avatarPathSchema.nullable().optional(),
     /** Privacy: show others when I am online and when I was last seen. */
     showPresence: z.boolean().optional(),
     /** Suggest my town on new posts and centre the map on me. */

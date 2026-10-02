@@ -141,6 +141,8 @@ model User {
   /// `YYYY-MM-DD`, AES-256-GCM encrypted at rest (see lib/crypto).
   birthDateEncrypted String?   @db.Text
   bio                String?   @db.Text
+  /// Profile banner: a public upload path (`/api/files/<id>`).
+  banner             String?   @db.VarChar(200)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -170,15 +172,17 @@ model User {
   knownDevices     KnownDevice[]
 
   /// Presence: written when the last socket of the user disconnects.
-  lastSeenAt       DateTime?
+  lastSeenAt        DateTime?
   /// Privacy: when false, others never see "online" or "last seen".
-  showPresence     Boolean           @default(true)
+  showPresence      Boolean           @default(true)
   /// Suggest the user's town on new posts and centre the map on them.
-  autoLocation     Boolean           @default(true)
-  pollVotes        PollVote[]
-  pages            Page[]
-  pageLikes        PageLike[]
-  messageReactions MessageReaction[]
+  autoLocation      Boolean           @default(true)
+  /// Last time the handle changed: a handle can change once every 30 days.
+  usernameChangedAt DateTime?
+  pollVotes         PollVote[]
+  pages             Page[]
+  pageLikes         PageLike[]
+  messageReactions  MessageReaction[]
 
   @@index([role])
   @@index([banned])
@@ -262,15 +266,16 @@ model TwoFactor {
 
 /// Template entity. Clone this module for every subject-specific resource.
 model Post {
-  id        String    @id @default(cuid())
+  id        String       @id @default(cuid())
   title     String
-  body      String    @db.Text
+  body      String       @db.Text
   tags      Json?
-  published Boolean   @default(false)
+  published Boolean      @default(false)
+  audience  PostAudience @default(PUBLIC)
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
   deletedAt DateTime?
 
   /// Denormalised counters, maintained in the same transaction as the row
@@ -349,7 +354,7 @@ model PollOption {
   @@map("pollOption")
 }
 
-/// Who voted for what. Never exposed: results are aggregate only.
+/// Who voted for what; visible to whoever can read the post.
 model PollVote {
   pollId    String
   poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
@@ -363,6 +368,15 @@ model PollVote {
   @@index([pollId, userId])
   @@index([userId])
   @@map("pollVote")
+}
+
+/// Who can read a timeline post (group posts follow the group's privacy).
+enum PostAudience {
+  PUBLIC
+  /// The author's followers (and the author).
+  FOLLOWERS
+  /// The author alone.
+  PRIVATE
 }
 
 /// Who can open a published page. Drafts (unpublished) are owner-only.
@@ -507,19 +521,22 @@ model Mention {
 }
 
 model Group {
-  id          String       @id @default(cuid())
-  slug        String       @unique @db.VarChar(60)
-  name        String       @db.VarChar(80)
-  description String?      @db.Text
-  privacy     GroupPrivacy @default(PUBLIC)
-  coverImage  String?      @db.VarChar(200)
-  ownerId     String
-  owner       User         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  id               String       @id @default(cuid())
+  slug             String       @unique @db.VarChar(60)
+  name             String       @db.VarChar(80)
+  description      String?      @db.Text
+  privacy          GroupPrivacy @default(PUBLIC)
+  /// Public groups can still ask admins to approve each new member.
+  /// Private groups always do.
+  requiresApproval Boolean      @default(false)
+  coverImage       String?      @db.VarChar(200)
+  ownerId          String
+  owner            User         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   /// Denormalised, maintained with membership changes.
-  memberCount Int          @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
+  memberCount      Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
 
   members GroupMember[]
   posts   Post[]

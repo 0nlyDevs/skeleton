@@ -15,6 +15,7 @@ import { ApiRequestError, apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import type { GroupDto } from "@/modules/groups/groups.dto";
+import { ApprovalSwitch, CoverPicker } from "./group-options";
 
 export function PrivacyPicker({
   value,
@@ -60,6 +61,8 @@ export function CreateGroupDialog({ open, onOpenChange }: { readonly open: boole
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [privacy, setPrivacy] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
+  const [requiresApproval, setRequiresApproval] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -74,7 +77,7 @@ export function CreateGroupDialog({ open, onOpenChange }: { readonly open: boole
     try {
       const response = await apiFetch<{ data: GroupDto }>("/api/groups", {
         method: "POST",
-        body: { name: name.trim(), description: description.trim(), privacy },
+        body: { name: name.trim(), description: description.trim(), privacy, requiresApproval, coverImage },
       });
       toast.success(t("groups.created"));
       onOpenChange(false);
@@ -102,6 +105,8 @@ export function CreateGroupDialog({ open, onOpenChange }: { readonly open: boole
             {(field) => <Textarea {...field} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1000} rows={3} />}
           </FormField>
           <PrivacyPicker value={privacy} onChange={setPrivacy} />
+          <ApprovalSwitch privacy={privacy} value={requiresApproval} onChange={setRequiresApproval} />
+          <CoverPicker value={coverImage} onChange={setCoverImage} />
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}

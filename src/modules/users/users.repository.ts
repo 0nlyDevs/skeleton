@@ -20,11 +20,13 @@ export const userProfileSelect = {
   email: true,
   image: true,
   bio: true,
+  banner: true,
   role: true,
   emailVerified: true,
   twoFactorEnabled: true,
   createdAt: true,
   showPresence: true,
+  usernameChangedAt: true,
   autoLocation: true,
 } satisfies Prisma.UserSelect;
 
@@ -47,12 +49,14 @@ export const publicProfileSelect = {
   displayUsername: true,
   image: true,
   bio: true,
+  banner: true,
   createdAt: true,
   _count: {
     select: {
       followers: true,
       following: true,
-      posts: { where: { published: true, deletedAt: null, groupId: null } },
+      // The public count: follower-only and private posts are not advertised.
+      posts: { where: { published: true, deletedAt: null, groupId: null, audience: "PUBLIC" } },
     },
   },
 } satisfies Prisma.UserSelect;

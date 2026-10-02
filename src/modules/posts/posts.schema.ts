@@ -68,6 +68,8 @@ export const createPostSchema = z
     repostOfId: idSchema.optional(),
     location: locationField.nullable().optional(),
     poll: pollField.optional(),
+    /** Who can read it (timeline posts only; group posts follow the group). */
+    audience: z.enum(["PUBLIC", "FOLLOWERS", "PRIVATE"]).default("PUBLIC"),
   })
   .refine((value) => !value.poll || value.body.trim().length > 0, {
     message: "Write the poll question in the text.",
@@ -96,6 +98,7 @@ export const updatePostSchema = z
     tags: tagsField.optional(),
     mediaIds: mediaField.optional(),
     location: locationField.nullable().optional(),
+    audience: z.enum(["PUBLIC", "FOLLOWERS", "PRIVATE"]).optional(),
   })
   .refine(hasAtLeastOneDefined, {
     message: "Provide at least one field to update.",

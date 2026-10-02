@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { describeApiError } from "@/lib/api/error-message";
+
 import { FormField } from "@/components/forms/form-field";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { CoverPicker } from "@/components/groups/group-options";
 import { IMAGE_INPUT_ACCEPT, uploadImage } from "@/components/social/use-image-uploads";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -55,6 +58,7 @@ export function ProfileForm({
   const [birthDate, setBirthDate] = useState(profile.birthDate ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [image, setImage] = useState(profile.image);
+  const [banner, setBanner] = useState<string | null>(profile.banner);
   const [serverErrors, setServerErrors] = useState<Partial<Record<string, MessageKey>>>({});
   const name = `${firstName} ${lastName}`.trim();
 
@@ -212,6 +216,23 @@ export function ProfileForm({
 
       <Card>
         <CardHeader>
+          <CardTitle>{t("settings.profile.banner")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CoverPicker
+            value={banner}
+            onChange={(url) => {
+              setBanner(url);
+              void apiFetch("/api/users/me", { method: "PATCH", body: { banner: url } })
+                .then(() => toast.success(t("settings.profile.saved")))
+                .catch((error: unknown) => toast.error(describeApiError(error, t)));
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>{t("settings.profile.title")}</CardTitle>
         </CardHeader>
         <CardContent>
@@ -245,7 +266,11 @@ export function ProfileForm({
 
             <FormField
               label={t("profile.username")}
-              hint={t("profile.username_hint")}
+              hint={
+                profile.usernameChangeAvailableAt
+                  ? t("profile.username_locked", { date: new Date(profile.usernameChangeAvailableAt).toLocaleDateString() })
+                  : t("profile.username_hint_cooldown")
+              }
               required
               {...(serverErrors.username ? { error: t(serverErrors.username) } : {})}
             >

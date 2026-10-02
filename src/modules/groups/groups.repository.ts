@@ -13,6 +13,7 @@ export const groupSelect = {
   name: true,
   description: true,
   privacy: true,
+  requiresApproval: true,
   coverImage: true,
   ownerId: true,
   memberCount: true,
@@ -97,6 +98,8 @@ export async function createGroupWithOwner(data: {
   name: string;
   description: string | null;
   privacy: "PUBLIC" | "PRIVATE";
+  requiresApproval: boolean;
+  coverImage: string | null;
   ownerId: string;
 }): Promise<GroupRow> {
   return prisma.$transaction(async (tx) => {

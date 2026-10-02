@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, BookmarkCheck, Flag, Globe, Link2, MapPin, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, SquarePen, Trash2, UsersRound } from "lucide-react";
+import { Bookmark, BookmarkCheck, Check, Flag, Globe, Link2, MapPin, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, Trash2, UsersRound } from "lucide-react";
 import Link from "@/components/ui/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -17,13 +17,18 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
+import type { MessageKey } from "@/lib/i18n";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
+import { AUDIENCES, AudienceIcon, type Audience } from "./audience";
 import { MediaGrid } from "./media-grid";
 import { PollView } from "./poll-view";
 import { PostEditDialog } from "./post-edit-dialog";
@@ -31,7 +36,7 @@ import { ReactionButton, ReactionSummary } from "./reaction-picker";
 import { ReportDialog } from "./report-dialog";
 import { RepostEmbed } from "./repost-embed";
 import { RichText } from "./rich-text";
-import { ShareDialog, sharePost } from "./share-dialog";
+import { ShareDialog } from "./share-dialog";
 
 const CLAMP_CHARS = 420;
 
@@ -72,7 +77,7 @@ export function PostCard({
     ? post.repostOf.available
       ? post.repostOf
       : null
-    : post.published && (post.group === null || post.group.privacy === "PUBLIC")
+    : post.published && post.audience === "PUBLIC" && (post.group === null || post.group.privacy === "PUBLIC")
       ? {
           id: post.id,
           available: true,
@@ -85,16 +90,17 @@ export function PostCard({
         }
       : null;
 
-  const shareNow = async () => {
-    if (!shareTarget) return;
+  const changeAudience = async (audience: Audience) => {
+    if (audience === post.audience) return;
     try {
-      const shared = await sharePost(shareTarget.id);
-      toast.success(t("share.done"));
-      onShared?.(shared);
+      const response = await apiFetch<{ data: FeedItemDto }>(`/api/posts/${post.id}`, { method: "PATCH", body: { audience } });
+      onChange(response.data);
+      toast.success(t("audience.changed"));
     } catch (error) {
       toast.error(describeApiError(error, t));
     }
   };
+
 
   // Clicking the post's content opens it (with its comments) in place; links,
   // buttons and images keep their own behaviour.
@@ -193,10 +199,14 @@ export function PostCard({
               </Link>
             ) : null}
             <span aria-hidden>·</span>
-            {post.group?.privacy === "PRIVATE" ? (
-              <Lock className="size-3" aria-label={t("groups.private")} />
+            {post.group ? (
+              post.group.privacy === "PRIVATE" ? (
+                <Lock className="size-3" aria-label={t("groups.private")} />
+              ) : (
+                <Globe className="size-3" aria-label={t("groups.public")} />
+              )
             ) : (
-              <Globe className="size-3" aria-label={t("groups.public")} />
+              <AudienceIcon audience={post.audience} />
             )}
           </p>
         </div>
@@ -217,6 +227,23 @@ export function PostCard({
                 {post.viewerSaved ? <BookmarkCheck /> : <Bookmark />}
                 {post.viewerSaved ? t("post.unbookmark") : t("post.bookmark")}
               </DropdownMenuItem>
+            ) : null}
+            {isAuthor && !post.group ? (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <AudienceIcon audience={post.audience} className="size-4" />
+                  {t("audience.change")}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="min-w-48">
+                  {AUDIENCES.map((audience) => (
+                    <DropdownMenuItem key={audience} onSelect={() => void changeAudience(audience)}>
+                      <AudienceIcon audience={audience} className="size-4" />
+                      {t(`audience.${audience}` as MessageKey)}
+                      {audience === post.audience ? <Check className="ml-auto" /> : null}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             ) : null}
             {isAuthor ? (
               <DropdownMenuItem onSelect={() => setEditing(true)}>
@@ -316,31 +343,14 @@ export function PostCard({
           <MessageCircle className="size-[18px]" aria-hidden />
           {t("post.comment")}
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted">
-            <Share2 className="size-[18px]" aria-hidden />
-            {t("post.share")}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-56">
-            {viewer && shareTarget ? (
-              <>
-                <DropdownMenuItem onSelect={() => void shareNow()}>
-                  <Repeat2 />
-                  {t("share.now")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setSharing(true)}>
-                  <SquarePen />
-                  {t("share.with_text")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
-            <DropdownMenuItem onSelect={() => void copyLink()}>
-              <Link2 />
-              {t("post.copy_link")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <button
+          type="button"
+          onClick={() => (viewer ? setSharing(true) : void copyLink())}
+          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted"
+        >
+          <Share2 className="size-[18px]" aria-hidden />
+          {t("post.share")}
+        </button>
       </div>
 
       {isAuthor ? <PostEditDialog post={post} open={editing} onOpenChange={setEditing} onSaved={onChange} /> : null}
@@ -352,8 +362,8 @@ export function PostCard({
         busy={deleting}
         onConfirm={() => void remove()}
       />
-      {viewer && shareTarget ? (
-        <ShareDialog original={shareTarget} open={sharing} onOpenChange={setSharing} {...(onShared ? { onShared } : {})} />
+      {viewer ? (
+        <ShareDialog original={shareTarget} postId={post.repostOf?.available ? post.repostOf.id : post.id} open={sharing} onOpenChange={setSharing} {...(onShared ? { onShared } : {})} />
       ) : null}
       {viewer ? <ReportDialog open={reporting} onOpenChange={setReporting} targetType="post" targetId={post.id} /> : null}
     </Card>

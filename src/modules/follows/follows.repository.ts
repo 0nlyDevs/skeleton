@@ -56,3 +56,10 @@ export async function findRelations(viewerId: string, ids: readonly string[]): P
   return { following: new Set(following.map((row) => row.followingId)), followers: new Set(followers.map((row) => row.followerId)) };
 }
 
+/** Of `ids`, the people who follow `userId`. */
+export async function findFollowerIdsAmong(userId: string, ids: readonly string[]): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const rows = await prisma.follow.findMany({ where: { followingId: userId, followerId: { in: [...ids] } }, select: { followerId: true } });
+  return rows.map((row) => row.followerId);
+}
+

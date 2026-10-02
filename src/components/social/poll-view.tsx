@@ -12,10 +12,12 @@ import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import type { PollDto } from "@/modules/polls/polls.dto";
 
+import { PollVotersDialog } from "./poll-voters-dialog";
+
 /**
  * A poll inside a post. Before voting, options are plain choices; after
  * voting (or once closed, or for the author) each shows its share of the
- * voters. Ballots are anonymous: only totals ever reach the browser.
+ * voters, and "Voir les votes" lists who chose what.
  */
 export function PollView({
   postId,
@@ -37,6 +39,7 @@ export function PollView({
   const fmt = useFormatters();
   const [draft, setDraft] = useState<readonly string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [votersOpen, setVotersOpen] = useState(false);
   const voted = viewerVotes.length > 0;
   const results = voted || poll.closed || forceResults || !canVote;
 
@@ -127,6 +130,14 @@ export function PollView({
             <span>{t("poll.multiple_hint")}</span>
           </>
         ) : null}
+        {poll.totalVoters > 0 ? (
+          <>
+            <span aria-hidden>·</span>
+            <button type="button" className="font-semibold hover:underline" onClick={() => setVotersOpen(true)}>
+              {t("poll.see_votes")}
+            </button>
+          </>
+        ) : null}
         {voted && canVote && !poll.closed ? (
           <button type="button" className="ml-auto font-semibold hover:underline" disabled={busy} onClick={() => void submit([])}>
             {t("poll.retract")}
@@ -134,6 +145,8 @@ export function PollView({
         ) : null}
         {!canVote && !poll.closed ? <span className="ml-auto">{t("poll.sign_in_to_vote")}</span> : null}
       </div>
+
+      <PollVotersDialog postId={postId} open={votersOpen} onOpenChange={setVotersOpen} />
 
       {poll.multiple && !voted && canVote && !poll.closed ? (
         <Button

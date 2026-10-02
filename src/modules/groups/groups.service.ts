@@ -20,6 +20,7 @@ import { recordAudit } from "../audit/audit.service";
 import { syncGroupRoom } from "@/lib/socket/emit";
 
 import { notifyGroupActivity, notifyInBackground } from "../notifications/notifications.service";
+import { assertOwnPublicImage } from "../uploads/uploads.service";
 import { findActiveUserById } from "../users/users.repository";
 import { canManageMember, resolveGroupAccess, type GroupAccess } from "./groups.access";
 import { toGroupDto, toGroupSummaryDto, type GroupDto, type GroupMemberDto, type GroupSummaryDto } from "./groups.dto";
@@ -81,11 +82,14 @@ async function uniqueSlug(name: string): Promise<string> {
 export async function createGroup(input: CreateGroupInput, actor: ActorContext): Promise<GroupDto> {
   await enforceThenRecord([{ key: rateLimitKey("group:create", actor.user.id), rule: RATE_LIMITS.groupCreate }]);
 
+  await assertOwnPublicImage(input.coverImage, actor.user.id);
   const group = await createGroupWithOwner({
     slug: await uniqueSlug(input.name),
     name: input.name,
     description: input.description || null,
     privacy: input.privacy,
+    requiresApproval: input.requiresApproval,
+    coverImage: input.coverImage ?? null,
     ownerId: actor.user.id,
   });
 
@@ -122,10 +126,12 @@ export async function updateGroupSettings(
   const { group, access } = await loadGroup(slug, actor.user);
   if (!access.canEditSettings) throw new ForbiddenError("Only group admins can change these settings.");
 
+  if (input.coverImage) await assertOwnPublicImage(input.coverImage, actor.user.id);
   const updated = await updateGroup(group.id, {
     ...(input.name !== undefined ? { name: input.name } : {}),
     ...(input.description !== undefined ? { description: input.description || null } : {}),
     ...(input.privacy !== undefined ? { privacy: input.privacy } : {}),
+    ...(input.requiresApproval !== undefined ? { requiresApproval: input.requiresApproval } : {}),
     ...(input.coverImage !== undefined ? { coverImage: input.coverImage } : {}),
   });
 
@@ -163,7 +169,9 @@ export async function joinGroup(slug: string, actor: ActorContext): Promise<Grou
 
   await enforceThenRecord([{ key: rateLimitKey("group:join", actor.user.id), rule: RATE_LIMITS.conversation }]);
 
-  const status = group.privacy === "PUBLIC" ? "ACTIVE" : "PENDING";
+  // Open groups let people in at once; private ones, and public ones whose
+  // admins ask for it, hold the request until a manager approves.
+  const status = group.privacy === "PUBLIC" && !group.requiresApproval ? "ACTIVE" : "PENDING";
   await setMembership({ groupId: group.id, userId: actor.user.id, status, role: "MEMBER" });
   if (status === "ACTIVE") syncGroupRoom(actor.user.id, group.id, true);
 

@@ -7,6 +7,7 @@ export interface PublicProfileDto {
   readonly displayUsername: string | null;
   readonly image: string | null;
   readonly bio: string | null;
+  readonly banner: string | null;
   readonly createdAt: string;
   readonly followerCount: number;
   readonly followingCount: number;
@@ -48,6 +49,7 @@ export function toPublicProfileDto(row: PublicProfileRow, isFollowing: boolean, 
     displayUsername: row.displayUsername,
     image: row.image,
     bio: row.bio,
+    banner: row.banner,
     createdAt: row.createdAt.toISOString(),
     followerCount: row._count.followers,
     followingCount: row._count.following,
