@@ -15,6 +15,7 @@ concurrency:
 env:
   DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
   BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
+  SKIP_MIGRATIONS: "1"
 
 jobs:
   lint:
