@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, Flag, Heart, Pencil, QrCode, Share2, Trash2 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

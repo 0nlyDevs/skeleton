@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, Flag, MessageCircle, MoreHorizontal, Pencil } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useMemo, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";

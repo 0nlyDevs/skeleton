@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, CheckCircle2, MailCheck } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 

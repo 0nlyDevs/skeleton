@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useState } from "react";
 
 import { FormField } from "@/components/forms/form-field";

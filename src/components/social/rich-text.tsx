@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { Fragment } from "react";
 
 import type { MentionDto } from "@/modules/mentions/mentions.service";

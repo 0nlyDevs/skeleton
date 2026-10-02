@@ -1,7 +1,7 @@
 "use client";
 
 import { Home, RotateCcw, ServerCrash } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useEffect } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";

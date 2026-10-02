@@ -1,7 +1,7 @@
 "use client";
 
 import { Bookmark, BookmarkCheck, Flag, Globe, Link2, MapPin, Lock, MessageCircle, MoreHorizontal, Pencil, Repeat2, Share2, ShieldAlert, SquarePen, Trash2, UsersRound } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useState } from "react";
 import { toast } from "sonner";
 

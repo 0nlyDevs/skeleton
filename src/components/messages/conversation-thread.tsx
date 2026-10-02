@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ImagePlus, Loader2, LogOut, MoreVertical, Pencil, Phone, SendHorizontal, UserPlus, UsersRound, Video, X } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, SendHorizontal, X } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";

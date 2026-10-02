@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";

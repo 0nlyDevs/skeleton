@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, MoreHorizontal } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useState } from "react";
 import { toast } from "sonner";
 

@@ -1,5 +1,5 @@
 import { ArrowRight, Check } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { HeroObject } from "./hero-object";
 import { Button } from "@/components/ui/button";
