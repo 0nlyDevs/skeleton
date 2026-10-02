@@ -319,6 +319,24 @@
  * Accessibility: honour the OS "reduce motion" setting everywhere at once.
  * GSAP timelines additionally check this and skip straight to their end state.
  */
+/*
+ * Eco mode (cookie `skeleton_eco=1`, toggled from the menu): no animation,
+ * no decorative imagery (banners, covers, 3D), lighter rendering. Content
+ * images stay, loaded lazily as everywhere else.
+ */
+html[data-eco] *,
+html[data-eco] *::before,
+html[data-eco] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+html[data-eco] .eco-hide {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -49,6 +49,7 @@ export const auditActions = {
   groupMemberChanged: "group.member_changed",
   postModerated: "post.moderated",
   messageEdited: "message.edited",
+  userDeleted: "user.deleted",
   pageCreated: "page.created",
   pageUpdated: "page.updated",
   pageDeleted: "page.deleted",

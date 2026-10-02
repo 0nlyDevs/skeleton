@@ -27,5 +27,9 @@ const HeroObject3D = dynamic(
 );
 
 export function HeroObject() {
-  return <HeroObject3D />;
+  return (
+    <div className="eco-hide contents">
+      <HeroObject3D />
+    </div>
+  );
 }

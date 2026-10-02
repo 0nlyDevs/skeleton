@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { Brand } from "@/components/layout/brand";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { RealtimeStatus } from "@/components/layout/realtime-status";
+import { EcoToggle } from "@/components/layout/eco-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -35,6 +36,7 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
         <div className="ml-auto flex items-center gap-1 md:ml-0">
           <RealtimeStatus className="hidden lg:inline-flex" />
           <LocaleToggle className="hidden sm:inline-flex" />
+          <EcoToggle />
           <ThemeToggle />
           {viewer ? (
             <>

@@ -10,6 +10,9 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "The password is incorrect.": "Le mot de passe est incorrect.",
+  "Type your username to confirm.": "Saisissez votre nom d'utilisateur pour confirmer.",
+  "The last administrator cannot delete their account.": "Le dernier administrateur ne peut pas supprimer son compte.",
   "This comment no longer exists.": "Ce commentaire n'existe plus.",
   "You cannot block yourself.": "Vous ne pouvez pas vous bloquer vous-même.",
   "You cannot message this person.": "Vous ne pouvez pas écrire à cette personne.",

@@ -136,7 +136,7 @@ export function GroupView({
       <Card className="overflow-hidden">
         {group.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- public cover chosen by the group admins
-          <img src={group.coverImage} alt="" className="h-32 w-full object-cover sm:h-44" />
+          <img src={group.coverImage} alt="" loading="lazy" className="eco-hide h-32 w-full object-cover sm:h-44" />
         ) : (
           <div aria-hidden className="h-32 bg-gradient-to-br from-[oklch(0.62_0.2_310)] via-primary to-[oklch(0.7_0.14_210)] sm:h-44" />
         )}
