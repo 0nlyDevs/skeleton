@@ -12,14 +12,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
+  BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
+  SKIP_MIGRATIONS: "1"
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
-      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
-      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,10 +40,6 @@ jobs:
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
-      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
-      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -58,16 +55,10 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
-        env:
-          CI: true
 
   prisma:
     name: Prisma schema
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
-      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
-      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -90,10 +81,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
-      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
-      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -112,16 +99,10 @@ jobs:
 
       - name: Test
         run: npm test
-        env:
-          CI: true
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
-      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
-      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -137,31 +118,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  deploy:
-    name: Apply database migrations
-    if: github.ref == 'refs/heads/preprod' || github.ref == 'refs/heads/prod'
-    needs: [lint, typecheck, prisma, test, build]
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/preprod' && 'preprod' || 'prod' }}
-    concurrency:
-      group: migrate-${{ github.ref_name }}
-      cancel-in-progress: false
-    env:
-      APP_DIR: ${{ secrets.APP_DIR }}
-    steps:
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
-
-      - name: Run Prisma migrations over SSH
-        shell: bash
-        run: |
-          set -euo pipefail
-          : "${APP_DIR:?The APP_DIR environment secret is not configured}"
-          printf -v APP_DIR_ESCAPED '%q' "$APP_DIR"
-          ssh -p "${{ secrets.SSH_PORT }}" \
-            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "set -e; cd ${APP_DIR_ESCAPED}; test -x node_modules/.bin/prisma || { echo 'no node_modules/.bin/prisma in APP_DIR - the host has no usable Prisma install' >&2; exit 1; }; npm run db:deploy"
