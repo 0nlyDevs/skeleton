@@ -42,6 +42,10 @@ const PUBLIC_PATHS = new Set([
   "/forgot-password",
   "/reset-password",
   "/2fa",
+  "/sw.js",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/manifest.webmanifest",
 ]);
 
 /** Readable without an account (content-level rules still apply server-side). */

@@ -7,6 +7,8 @@ import type { Dictionary, Locale } from "@/lib/i18n";
 import { I18nProvider } from "./i18n-provider";
 import { CallProvider } from "@/components/calls/call-provider";
 
+import { ServiceWorkerRegistration } from "./service-worker";
+
 import { RealtimeProvider } from "./realtime-provider";
 import { ThemeProvider } from "./theme-provider";
 
@@ -43,6 +45,7 @@ export function AppProviders({
             <CallProvider viewerId={viewerId}>
               {children}
               <Toaster />
+              <ServiceWorkerRegistration />
             </CallProvider>
           </RealtimeProvider>
         </TooltipProvider>
