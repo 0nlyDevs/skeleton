@@ -98,6 +98,9 @@ export function ConversationList({
                 >
                   {peer ? (
                     <UserAvatar userId={peer.id} name={peer.name} image={peer.image} size="md" online={presence.get(peer.id)?.online ?? false} />
+                  ) : room.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- group photo (public upload)
+                    <img src={room.image} alt="" className="size-10 shrink-0 rounded-full object-cover" />
                   ) : (
                     <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.62_0.2_310)] text-primary-foreground">
                       <UsersRound className="size-5" />

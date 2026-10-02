@@ -32,6 +32,8 @@ import {
   deleteMessage,
   editMessage,
   reactToMessage,
+  deleteConversation,
+  updateConversation,
   listMessageReactors,
   getUnreadSummary,
   getOrCreateDirectRoom,
@@ -153,5 +155,29 @@ export const listMessageReactorsRoute = apiRoute({
 export const removeMessageReactionRoute = apiRoute({
   params: messageIdParamSchema,
   handler: async ({ params, auth, ip }) => jsonOk({ data: await reactToMessage(params.id, null, { user: auth.user, ip }) }),
+});
+
+const roomIdParams = z.object({ id: z.string().trim().min(1).max(120) });
+
+/** `DELETE /api/messages/rooms/:id?scope=me|everyone` */
+export const deleteConversationRoute = apiRoute({
+  params: roomIdParams,
+  query: z.object({ scope: z.enum(["me", "everyone"]).default("me") }),
+  handler: async ({ params, query, auth }) => {
+    await deleteConversation(params.id, query.scope, auth.user);
+    return noContent();
+  },
+});
+
+/** `PATCH /api/messages/rooms/:id` — rename a group conversation or change its photo. */
+export const updateConversationRoute = apiRoute({
+  params: roomIdParams,
+  body: z
+    .object({
+      name: z.string().trim().min(1).max(100).optional(),
+      image: z.string().trim().max(200).regex(/^\/api\/files\/[A-Za-z0-9_-]+$/).nullable().optional(),
+    })
+    .strict(),
+  handler: async ({ params, body, auth }) => jsonOk({ data: await updateConversation(params.id, body, auth.user) }),
 });
 

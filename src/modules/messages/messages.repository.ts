@@ -15,6 +15,9 @@ import { prisma } from "@/lib/db/prisma";
 export const messageSenderSelect = {
   sender: { select: { id: true, name: true, username: true, image: true } },
   upload: { select: { id: true, width: true, height: true } },
+  replyTo: {
+    select: { id: true, content: true, deletedAt: true, uploadId: true, sender: { select: { id: true, name: true } } },
+  },
   reactions: {
     where: { user: { banned: false } },
     orderBy: { createdAt: "asc" },
@@ -116,6 +119,7 @@ export async function createMessage(data: {
   senderId: string;
   content: string;
   uploadId?: string | null;
+  replyToId?: string | null;
 }): Promise<MessageWithSender> {
   return prisma.$transaction(async (tx) => {
     // Content is encrypted at rest; `toMessageDto` decrypts on the way out.
@@ -138,10 +142,12 @@ export async function findMessagesSince(args: {
   since: Date;
   afterId?: string;
   take: number;
+  notBefore?: Date | null;
 }): Promise<MessageWithSender[]> {
   return prisma.message.findMany({
     where: {
       roomId: args.roomId,
+      ...(args.notBefore ? { AND: [{ createdAt: { gt: args.notBefore } }] } : {}),
       // "Deleted for me" rows never leave the server for that viewer.
       hiddenFor: { none: { userId: args.viewerId } },
       ...(args.afterId
@@ -166,10 +172,12 @@ export async function findLatestMessages(args: {
   take: number;
   before?: Date;
   beforeId?: string;
+  notBefore?: Date | null;
 }): Promise<MessageWithSender[]> {
   const rows = await prisma.message.findMany({
     where: {
       roomId: args.roomId,
+      ...(args.notBefore ? { AND: [{ createdAt: { gt: args.notBefore } }] } : {}),
       hiddenFor: { none: { userId: args.viewerId } },
       ...(args.before
         ? args.beforeId
@@ -495,3 +503,26 @@ export async function findLatestMessageForRoom(roomId: string): Promise<MessageW
 export async function countMessagesBySender(senderId: string): Promise<number> {
   return prisma.message.count({ where: { senderId } });
 }
+
+/** "Delete conversation" for one member: hide everything up to now. */
+export async function clearRoomForMember(roomId: string, userId: string): Promise<void> {
+  await prisma.roomMember.updateMany({ where: { roomId, userId }, data: { clearedAt: new Date(), lastReadAt: new Date() } });
+}
+
+export async function updateRoomDetails(roomId: string, data: { name?: string; image?: string | null }) {
+  return prisma.room.update({ where: { id: roomId }, data });
+}
+
+export async function deleteRoom(roomId: string): Promise<void> {
+  await prisma.room.delete({ where: { id: roomId } });
+}
+
+/** Rooms a member cleared and that have nothing newer since. */
+export async function findClearedRoomIds(userId: string): Promise<Set<string>> {
+  const rows = await prisma.roomMember.findMany({
+    where: { userId, clearedAt: { not: null } },
+    select: { roomId: true, clearedAt: true, room: { select: { updatedAt: true } } },
+  });
+  return new Set(rows.filter((row) => row.clearedAt && row.room.updatedAt <= row.clearedAt).map((row) => row.roomId));
+}
+

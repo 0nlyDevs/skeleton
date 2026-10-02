@@ -12,7 +12,7 @@ import {
   type SendMessageAck,
   type TypingPayload,
 } from "@/lib/socket/events";
-import type { RoomMemberDto } from "@/modules/messages/messages.dto";
+import type { MessageReplyDto, RoomMemberDto } from "@/modules/messages/messages.dto";
 
 export interface ThreadMessage extends MessagePayload {
   /** Client-side only: an optimistic message waiting for the server. */
@@ -201,7 +201,7 @@ export function useThread(roomId: string | null, viewer: { id: string; name: str
   }, [status, roomId, messages]);
 
   const send = useCallback(
-    async (content: string, uploadId?: string, previewUrl?: string): Promise<void> => {
+    async (content: string, uploadId?: string, previewUrl?: string, replyTo?: MessageReplyDto | null): Promise<void> => {
       if (!roomId) return;
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const optimistic: ThreadMessage = {
@@ -214,6 +214,7 @@ export function useThread(roomId: string | null, viewer: { id: string; name: str
         sender: { id: viewer.id, name: viewer.name, username: null, image: viewer.image },
         createdAt: new Date().toISOString(),
         reactions: [],
+      replyTo: replyTo ?? null,
       pending: true,
       };
       setMessages((current) => [...current, optimistic]);
@@ -227,7 +228,7 @@ export function useThread(roomId: string | null, viewer: { id: string; name: str
           return current.map((entry) => (entry.id === tempId ? { ...entry, pending: false, failed: failure ?? "error" } : entry));
         });
 
-      const payload = { roomId, content, ...(uploadId ? { uploadId } : {}) };
+      const payload = { roomId, content, ...(uploadId ? { uploadId } : {}), ...(replyTo ? { replyToId: replyTo.id } : {}) };
       if (socket?.connected) {
         socket.timeout(SEND_TIMEOUT_MS).emit(SOCKET_EVENTS.sendMessage, payload, (timeoutError: Error | null, ack: SendMessageAck) => {
           if (timeoutError) settle(null, "timeout");

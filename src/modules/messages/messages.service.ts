@@ -42,6 +42,10 @@ import {
 import { toMessageDto, toMessageDtos, toRoomDto, type MessageDto, type RoomDto, type RoomMemberDto } from "./messages.dto";
 import {
   addRoomMember,
+  clearRoomForMember,
+  deleteRoom,
+  findClearedRoomIds,
+  updateRoomDetails,
   setMessageReaction,
   findMessageReactors,
   addGroupRoomMember,
@@ -72,6 +76,7 @@ import {
   upsertRoom,
   type RoomRow,
 } from "./messages.repository";
+import { assertOwnPublicImage } from "../uploads/uploads.service";
 import type { ListMessagesQuery, SendMessageInput } from "./messages.schema";
 
 interface MemberRowLike {
@@ -160,10 +165,13 @@ export async function listRooms(actor: AuthUser): Promise<RoomDto[]> {
   // Give the shared room a per-user read marker without resetting an existing
   // user's unread cursor on each room-list refresh.
   await addRoomMember({ roomId: globalRoomId(), userId: actor.id });
-  const [rooms, unreadCounts] = await Promise.all([
+  const [allRooms, unreadCounts, cleared] = await Promise.all([
     findRoomsForUser(actor.id),
     findUnreadCountsForUser(actor.id),
+    findClearedRoomIds(actor.id),
   ]);
+  // A conversation the member deleted stays out of the list until a new message.
+  const rooms = allRooms.filter((room) => !cleared.has(room.id));
   const memberRoomIds = rooms
     .filter((room) => room.type === "DIRECT" || room.type === "GROUP")
     .map((room) => room.id);
@@ -254,6 +262,7 @@ export async function listMessages(
 
   let hasMore = false;
   let rows;
+  const notBefore = (await findRoomMember(roomId, actor.id))?.clearedAt ?? null;
 
   if (since) {
     const fetched = await findMessagesSince({
@@ -262,6 +271,7 @@ export async function listMessages(
       since,
       afterId: query.afterId,
       take: limit + 1,
+      notBefore,
     });
     hasMore = fetched.length > limit;
     rows = hasMore ? fetched.slice(0, limit) : fetched;
@@ -272,6 +282,7 @@ export async function listMessages(
       take: limit + 1,
       before,
       beforeId: query.beforeId,
+      notBefore,
     });
     if (fetched.length > limit) {
       hasMore = true;
@@ -299,6 +310,13 @@ export async function listMessages(
  * separate steps, but a duplicate message is harmless here — the goal is to stop
  * a flood, not to enforce exactly-once delivery.
  */
+/** A reply must point at a live message of the same conversation. */
+async function validReplyTarget(replyToId: string, roomId: string): Promise<string> {
+  const target = await findMessageById(replyToId);
+  if (!target || target.roomId !== roomId || target.deletedAt) throw new BadRequestError("The message you are replying to no longer exists.");
+  return target.id;
+}
+
 export async function sendMessage(
   input: SendMessageInput,
   actor: ActorContext,
@@ -321,6 +339,7 @@ export async function sendMessage(
     senderId: actor.user.id,
     content: input.content.slice(0, MAX_MESSAGE_LENGTH),
     uploadId: input.uploadId ?? null,
+    replyToId: input.replyToId ? await validReplyTarget(input.replyToId, input.roomId) : null,
   });
 
   // Sending implies having read everything up to now.
@@ -667,3 +686,42 @@ export async function getUnreadSummary(actor: AuthUser): Promise<{ total: number
   }
   return { total, rooms };
 }
+
+/**
+ * Remove a conversation from one's list. `me` (any member): history up to now
+ * is hidden and the conversation disappears until a newer message arrives.
+ * `everyone` (group admins only): the group conversation is deleted for all.
+ */
+export async function deleteConversation(roomId: string, scope: "me" | "everyone", actor: AuthUser): Promise<void> {
+  const room = await assertRoomAccess(roomId, actor);
+  if (room.type !== "DIRECT" && room.type !== "GROUP") throw new ForbiddenError("This conversation cannot be deleted.");
+  if (scope === "me") {
+    await clearRoomForMember(roomId, actor.id);
+    return;
+  }
+  if (room.type !== "GROUP") throw new ForbiddenError("Only group conversations can be deleted for everyone.");
+  const member = await findRoomMember(roomId, actor.id);
+  if (member?.role !== "ADMIN" && !isStaff(actor)) throw new ForbiddenError("Only the group's admins can delete it.");
+  const members = await findRoomMembers(roomId);
+  await deleteRoom(roomId);
+  for (const entry of members) {
+    publishRoomMembers({ roomId });
+    revokeRoomMembership(entry.userId, roomId);
+  }
+}
+
+/** Rename a group conversation or change its photo (group admins). */
+export async function updateConversation(roomId: string, input: { name?: string; image?: string | null }, actor: AuthUser): Promise<RoomDto> {
+  const room = await assertRoomAccess(roomId, actor);
+  if (room.type !== "GROUP") throw new ForbiddenError("Only group conversations can be renamed.");
+  const member = await findRoomMember(roomId, actor.id);
+  if (member?.role !== "ADMIN") throw new ForbiddenError("Only the group's admins can change it.");
+  if (input.image) await assertOwnPublicImage(input.image, actor.id);
+  const updated = await updateRoomDetails(roomId, {
+    ...(input.name !== undefined ? { name: input.name } : {}),
+    ...(input.image !== undefined ? { image: input.image } : {}),
+  });
+  publishRoomMembers({ roomId });
+  return toRoomDto(updated);
+}
+

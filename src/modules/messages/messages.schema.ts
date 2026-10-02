@@ -17,6 +17,8 @@ export const sendMessageSchema = z
     content: contentField.default(""),
     /** An image uploaded beforehand by the sender. */
     uploadId: z.string().trim().min(1).max(64).optional(),
+    /** Answer to an earlier message of the same conversation. */
+    replyToId: z.string().trim().min(1).max(64).optional(),
   })
   .refine((value) => value.content.length > 0 || Boolean(value.uploadId), {
     message: "Write a message or add an image.",
