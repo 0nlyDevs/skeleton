@@ -44,14 +44,14 @@ jobs:
       - name: Prisma format check
         run: npx prisma format --check
 
-  deploy-preprod:
+  deploy:
     name: initiate deployment
-    if: github.ref == 'refs/heads/preprod'
+    if: github.ref == 'refs/heads/preprod' || github.ref == 'refs/heads/prod'
     needs: [ci]
     runs-on: ubuntu-latest
-    environment: preprod
+    environment: ${{ github.ref == 'refs/heads/preprod' && 'preprod' || 'production' }}
     concurrency:
-      group: migrate-preprod
+      group: migrate-${{ github.ref_name }}
       cancel-in-progress: false
     steps:
       - name: Checkout repository
@@ -74,38 +74,5 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Initiate preprod deployment
-        run: echo "Initiate deployment"
-
-  deploy-prod:
-    name: initiate deployment
-    if: github.ref == 'refs/heads/prod'
-    needs: [ci]
-    runs-on: ubuntu-latest
-    environment: production
-    concurrency:
-      group: migrate-prod
-      cancel-in-progress: false
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Run migrations
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Initiate production deployment
-        run: echo "Initiate deployment"
+      - name: Initiate deployment
+        run: echo "Initiate ${{ github.ref_name }} deployment"
