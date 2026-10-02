@@ -51,6 +51,24 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: true,
   },
 
+  /*
+   * Fewer, larger client chunks. The host serves an account at most ~20
+   * requests at a time, static files included, and a first page load used to
+   * fire ~40 JS chunks at once. Capping the initial and async request counts
+   * keeps a page load well under that while staying cacheable (immutable).
+   */
+  webpack(config, { isServer, dev }) {
+    if (!isServer && !dev && config.optimization?.splitChunks) {
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        maxInitialRequests: 4,
+        maxAsyncRequests: 4,
+        minSize: 120_000,
+      };
+    }
+    return config;
+  },
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
