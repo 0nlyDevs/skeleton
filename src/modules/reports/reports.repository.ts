@@ -122,7 +122,7 @@ export async function findReportedTargetSummaries(
     idsByType.set(target.targetType, ids);
   }
 
-  const [posts, comments, messages, users] = await Promise.all([
+  const [posts, comments, messages, users, pages] = await Promise.all([
     prisma.post.findMany({
       where: { id: { in: idsByType.get("post") ?? [] } },
       select: { id: true, title: true, body: true },
@@ -138,6 +138,10 @@ export async function findReportedTargetSummaries(
     prisma.user.findMany({
       where: { id: { in: idsByType.get("user") ?? [] } },
       select: { id: true, name: true, username: true, bio: true },
+    }),
+    prisma.page.findMany({
+      where: { id: { in: idsByType.get("page") ?? [] } },
+      select: { id: true, slug: true, title: true, tagline: true, deletedAt: true },
     }),
   ]);
 
@@ -168,6 +172,14 @@ export async function findReportedTargetSummaries(
       label: user.username ? `@${user.username}` : user.name,
       summary: user.bio?.slice(0, 320) ?? null,
       href: user.username ? `/u/${encodeURIComponent(user.username)}` : null,
+    });
+  }
+
+  for (const page of pages) {
+    summaries.set(`page:${page.id}`, {
+      label: page.deletedAt ? "Page supprimée" : `Page « ${page.title} »`,
+      summary: page.tagline,
+      href: page.deletedAt ? null : `/p/${encodeURIComponent(page.slug)}`,
     });
   }
 

@@ -295,13 +295,14 @@ export async function notifyGroupActivity(input: {
 /** Staff removed something the user wrote; they deserve to know, and why. */
 export async function notifyModeration(input: {
   userId: string;
-  what: "post" | "comment" | "message";
+  what: "post" | "comment" | "message" | "page";
   reason?: string | null;
 }): Promise<void> {
   const title = {
     post: "Votre publication a été retirée par la modération",
     comment: "Votre commentaire a été retiré par la modération",
     message: "Votre message a été retiré par la modération",
+    page: "Votre page a été retirée par la modération",
   }[input.what];
   await createNotification({
     userId: input.userId,

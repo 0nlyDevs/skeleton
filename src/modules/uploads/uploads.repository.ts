@@ -30,6 +30,9 @@ export async function findUploadAttachment(id: string) {
     select: {
       postMedia: { select: { postId: true } },
       message: { select: { roomId: true, deletedAt: true } },
+      pageMedia: {
+        select: { page: { select: { userId: true, published: true, deletedAt: true, user: { select: { banned: true } } } } },
+      },
     },
   });
 }
@@ -44,6 +47,7 @@ export async function findAttachableImages(userId: string, ids: readonly string[
       mime: { startsWith: "image/" },
       postMedia: null,
       message: null,
+      pageMedia: null,
     },
     select: { id: true },
   });

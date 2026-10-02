@@ -10,6 +10,22 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "The address needs at least 3 characters.": "L'adresse doit compter au moins 3 caractères.",
+  "The address is limited to 60 characters.": "L'adresse est limitée à 60 caractères.",
+  "Use lowercase letters, digits and single hyphens.": "Utilisez des minuscules, des chiffres et des tirets simples.",
+  "Invalid image.": "Image invalide.",
+  "A block is empty.": "Un bloc est vide.",
+  "Give the page a title.": "Donnez un titre à la page.",
+  "This address is reserved.": "Cette adresse est réservée.",
+  "Enter a full web address starting with https://.": "Saisissez une adresse web complète commençant par https://.",
+  "Two blocks share an id.": "Deux blocs ont le même identifiant.",
+  "This page does not exist.": "Cette page n'existe pas.",
+  "Only the author can edit this page.": "Seul·e l'auteur·rice peut modifier cette page.",
+  "This address is already taken.": "Cette adresse est déjà prise.",
+  "Only the author can delete this page.": "Seul·e l'auteur·rice peut supprimer cette page.",
+  "This page is not published.": "Cette page n'est pas publiée.",
+  "A page holds at most 40 blocks.": "Une page compte au plus 40 blocs.",
+  "A page holds at most 24 images.": "Une page compte au plus 24 images.",
   "Scheduled jobs are disabled on this deployment.": "Les tâches planifiées sont désactivées sur ce déploiement.",
   "Invalid cron secret.": "Secret de tâche planifiée invalide.",
   "Unknown job.": "Tâche inconnue.",

@@ -66,6 +66,10 @@ export const RATE_LIMITS = {
 
   /** Groups created per user. */
   groupCreate: { limit: 5, windowMs: 60 * 60_000 },
+  pageCreate: { limit: 10, windowMs: 60 * 60_000 },
+  pageUpdate: { limit: 120, windowMs: 10 * 60_000 },
+  /** One counted view per visitor and page every 6 hours. */
+  pageView: { limit: 1, windowMs: 6 * 60 * 60_000 },
 
   /** Username availability probes per IP (public, typed live in a form). */
   usernameCheck: { limit: 60, windowMs: 60_000 },

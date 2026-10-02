@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const REASONS = ["spam", "harassment", "hate", "nudity", "violence", "other"] as const;
 
-export type ReportTarget = "post" | "comment" | "message" | "user";
+export type ReportTarget = "post" | "comment" | "message" | "user" | "page";
 
 /** Report anything: pick a reason (one tap), optionally explain. */
 export function ReportDialog({

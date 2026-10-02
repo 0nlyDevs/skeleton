@@ -170,10 +170,12 @@ model User {
   knownDevices     KnownDevice[]
 
   /// Presence: written when the last socket of the user disconnects.
-  lastSeenAt   DateTime?
+  lastSeenAt       DateTime?
   /// Privacy: when false, others never see "online" or "last seen".
-  showPresence Boolean    @default(true)
-  pollVotes    PollVote[]
+  showPresence     Boolean           @default(true)
+  pollVotes        PollVote[]
+  pages            Page[]
+  pageLikes        PageLike[]
 
   @@index([role])
   @@index([banned])
@@ -358,6 +360,67 @@ model PollVote {
   @@index([pollId, userId])
   @@index([userId])
   @@map("pollVote")
+}
+
+/// Who can open a published page. Drafts (unpublished) are owner-only.
+enum PageVisibility {
+  /// Listed in the discovery page and readable by anyone.
+  PUBLIC
+  /// Readable by anyone with the link, never listed.
+  UNLISTED
+}
+
+/// A user-built public page (landing page, tribute, farewell, fictional site…)
+/// made of typed blocks. `blocks` is validated by a strict Zod schema on every
+/// write and rendered as text only: no HTML from users ever reaches the DOM.
+model Page {
+  id         String         @id @default(cuid())
+  slug       String         @unique @db.VarChar(60)
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String         @db.VarChar(120)
+  tagline    String?        @db.VarChar(200)
+  theme      String         @default("aurora") @db.VarChar(20)
+  font       String         @default("sans") @db.VarChar(10)
+  coverId    String?        @db.VarChar(40)
+  blocks     Json
+  visibility PageVisibility @default(PUBLIC)
+  published  Boolean        @default(false)
+  viewCount  Int            @default(0)
+  likeCount  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  deletedAt  DateTime?
+  media      PageMedia[]
+  likes      PageLike[]
+
+  @@index([userId, deletedAt])
+  @@index([published, visibility, deletedAt, createdAt])
+  @@map("page")
+}
+
+/// Images used by a page: ties each upload to exactly one page so file access
+/// follows the page's visibility (see `canViewPrivateUpload`).
+model PageMedia {
+  pageId   String
+  page     Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  uploadId String @unique
+  upload   Upload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@id([pageId, uploadId])
+  @@map("pageMedia")
+}
+
+model PageLike {
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([pageId, userId])
+  @@index([userId])
+  @@map("pageLike")
 }
 
 /// A post the user saved for later. Private: only its owner ever sees it.
@@ -674,6 +737,7 @@ model Upload {
 
   postMedia PostMedia?
   message   Message?
+  pageMedia PageMedia?
 
   @@index([userId])
   @@index([createdAt])

@@ -45,7 +45,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 /** Readable without an account (content-level rules still apply server-side). */
-const PUBLIC_PREFIXES = ["/feed/", "/profile/", "/groups", "/u/", "/search", "/map"];
+const PUBLIC_PREFIXES = ["/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -128,6 +128,8 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string)
     // exfiltrate to an attacker's socket server).
     `connect-src 'self' wss://${host}${isDev ? ` ws://${host}` : ""}`,
     "media-src 'self'",
+    // Video blocks on user pages: privacy-enhanced players only, loaded on click.
+    "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",

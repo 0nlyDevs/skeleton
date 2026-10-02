@@ -134,6 +134,11 @@ async function canViewPrivateUpload(
       return false;
     }
   }
+  if (attachment?.pageMedia) {
+    // A page image is public exactly while the page is.
+    const page = attachment.pageMedia.page;
+    return page.published && page.deletedAt === null && !page.user.banned;
+  }
   if (attachment?.message && viewer && !attachment.message.deletedAt) {
     return isRoomMember(attachment.message.roomId, viewer.id);
   }

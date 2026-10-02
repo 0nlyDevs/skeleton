@@ -1,6 +1,7 @@
 import {
   Bell,
   Bookmark,
+  FileText,
   Gavel,
   Home,
   Map as MapIcon,
@@ -32,6 +33,7 @@ export const MAIN_NAV: readonly ShellNavItem[] = [
   { href: "/messages", labelKey: "nav.messages", icon: MessageCircle, badge: "messages" },
   { href: "/groups", labelKey: "nav.groups", icon: UsersRound },
   { href: "/map", labelKey: "nav.map", icon: MapIcon },
+  { href: "/pages", labelKey: "nav.pages", icon: FileText },
   { href: "/saved", labelKey: "nav.saved", icon: Bookmark },
   { href: "/notifications", labelKey: "nav.notifications", icon: Bell, badge: "notifications" },
   { href: "/assistant", labelKey: "nav.assistant", icon: Sparkles },

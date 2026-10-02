@@ -20,6 +20,7 @@ import { findPostById } from "../posts/posts.repository";
 import { removeCommentAsStaff } from "../comments/comments.service";
 import { findCommentById } from "../comments/comments.repository";
 import { assertRoomAccess, findMessageForModeration, removeMessageAsStaff } from "../messages/messages.service";
+import { loadReportablePage, removePageAsStaff } from "../pages/pages.service";
 import { findActiveUserById } from "../users/users.repository";
 import { removeUserProfileAsStaff } from "../users/users.service";
 import { toReportDto, type ReportDto } from "./reports.dto";
@@ -76,6 +77,9 @@ export async function createReportForActor(
     if (!message || message.deletedAt) throw new NotFoundError();
     await assertRoomAccess(message.roomId, actor.user);
     if (message.senderId === actor.user.id) throw new ConflictError("You cannot report your own content.");
+  } else if (input.targetType === "page") {
+    const page = await loadReportablePage(input.targetId, actor.user);
+    if (page.userId === actor.user.id) throw new ConflictError("You cannot report your own content.");
   } else if (input.targetType === "user") {
     if (input.targetId === actor.user.id) throw new ConflictError("You cannot report your own profile.");
     const user = await findActiveUserById(input.targetId);
@@ -170,6 +174,7 @@ export async function resolveReport(
       else if (report.targetType === "comment") await removeCommentAsStaff(report.targetId, context, input.note ?? null);
       else if (report.targetType === "message") await removeMessageAsStaff(report.targetId, context, input.note ?? null);
       else if (report.targetType === "user") await removeUserProfileAsStaff(report.targetId, context, input.note ?? null);
+      else if (report.targetType === "page") await removePageAsStaff(report.targetId, context, input.note ?? null);
 
       logger.info("moderation removed content", {
         reportId: report.id,
