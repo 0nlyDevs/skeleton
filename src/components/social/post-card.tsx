@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
+import { GroupRoleBadge } from "@/components/groups/group-role-badge";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
@@ -14,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -165,6 +167,7 @@ export function PostCard({
             ) : (
               <span className="font-semibold">{post.author.name}</span>
             )}
+            <GroupRoleBadge role={post.authorGroupRole} size="xs" />
             {post.group ? (
               <>
                 <span aria-hidden className="text-muted-foreground">▸</span>
@@ -230,6 +233,7 @@ export function PostCard({
             {canRemove ? (
               <>
                 <DropdownMenuSeparator />
+                {!isAuthor ? <DropdownMenuLabel className="text-[11.5px] text-muted-foreground">{t("post.moderator_action")}</DropdownMenuLabel> : null}
                 <DropdownMenuItem variant="destructive" onSelect={() => setConfirm(true)}>
                   {isAuthor ? <Trash2 /> : <ShieldAlert />}
                   {isAuthor ? t("post.delete") : t("post.remove")}

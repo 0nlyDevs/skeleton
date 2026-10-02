@@ -59,6 +59,29 @@ export async function findMemberships(
   return new Map(rows.map((row) => [row.groupId, { role: row.role, status: row.status }]));
 }
 
+export type GroupStaffRole = "OWNER" | "ADMIN" | "MODERATOR";
+
+/**
+ * Staff roles (owner/admin/moderator) of these users in these groups, keyed
+ * `groupId:userId`. Plain members are left out: the UI only labels staff.
+ */
+export async function findStaffRoles(
+  groupIds: readonly string[],
+  userIds: readonly string[],
+): Promise<Map<string, GroupStaffRole>> {
+  if (groupIds.length === 0 || userIds.length === 0) return new Map();
+  const rows = await prisma.groupMember.findMany({
+    where: {
+      groupId: { in: [...new Set(groupIds)] },
+      userId: { in: [...new Set(userIds)] },
+      status: "ACTIVE",
+      role: { in: ["OWNER", "ADMIN", "MODERATOR"] },
+    },
+    select: { groupId: true, userId: true, role: true },
+  });
+  return new Map(rows.map((row) => [`${row.groupId}:${row.userId}`, row.role as GroupStaffRole]));
+}
+
 /** Ids of groups the user is an active member of (main-feed scoping). */
 export async function findActiveGroupIds(userId: string): Promise<string[]> {
   const rows = await prisma.groupMember.findMany({

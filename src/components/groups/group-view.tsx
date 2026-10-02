@@ -19,12 +19,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
+import type { MessageKey } from "@/lib/i18n";
 import { formatLongDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { GroupDto } from "@/modules/groups/groups.dto";
 
 import { GroupAvatar } from "./group-avatar";
 import { GroupMembers } from "./group-members";
+import { GroupRoleBadge, ROLE_STYLE } from "./group-role-badge";
+import { GroupTeam } from "./group-team";
 import { GroupSettingsDialog } from "./group-settings-dialog";
 
 type Tab = "discussion" | "members" | "about";
@@ -150,6 +153,21 @@ export function GroupView({
             {membershipButton()}
           </div>
         </div>
+        {access.isMember && access.role ? (
+          access.role === "MEMBER" ? (
+            <p className="px-5 pb-3 text-[13px] text-muted-foreground">{t("groups.you_are_member")}</p>
+          ) : (
+            <div className={cn("mx-5 mb-4 flex flex-wrap items-start gap-x-3 gap-y-1 rounded-xl px-3 py-2.5", ROLE_STYLE[access.role].className)}>
+              <GroupRoleBadge role={access.role} className="bg-background/60" />
+              <div className="min-w-0 flex-1 text-[13px] text-foreground">
+                <p className="font-semibold">
+                  {t("groups.you_are", { role: t(`groups.role.${access.role}` as MessageKey).toLocaleLowerCase() })}
+                </p>
+                <p className="text-muted-foreground">{t(`groups.role_can.${access.role}` as MessageKey)}</p>
+              </div>
+            </div>
+          )
+        ) : null}
         <div role="tablist" className="flex gap-1 border-t border-border/60 px-3">
           {tabs.map(([value, label]) => (
             <button
@@ -192,6 +210,8 @@ export function GroupView({
       {tab === "members" && access.canRead ? (
         <GroupMembers group={group} viewerId={viewer?.id ?? null} isPlatformAdmin={viewer?.isPlatformAdmin ?? false} />
       ) : null}
+
+      {tab === "about" && access.canRead ? <GroupTeam slug={group.slug} viewerId={viewer?.id ?? null} /> : null}
 
       {tab === "about" ? (
         <Card className="flex flex-col gap-3 p-5">

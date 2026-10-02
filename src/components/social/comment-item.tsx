@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
+import { GroupRoleBadge } from "@/components/groups/group-role-badge";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
@@ -113,13 +114,16 @@ export function CommentItem({
           <div className="flex items-start gap-1">
             <div className="inline-block max-w-full rounded-2xl bg-surface-muted px-3 py-2">
               {author ? (
-                profile ? (
-                  <Link href={profile} className="block text-[13px] font-semibold hover:underline">
-                    {author.name}
-                  </Link>
-                ) : (
-                  <span className="block text-[13px] font-semibold">{author.name}</span>
-                )
+                <span className="flex flex-wrap items-center gap-1.5">
+                  {profile ? (
+                    <Link href={profile} className="text-[13px] font-semibold hover:underline">
+                      {author.name}
+                    </Link>
+                  ) : (
+                    <span className="text-[13px] font-semibold">{author.name}</span>
+                  )}
+                  <GroupRoleBadge role={author.groupRole} size="xs" />
+                </span>
               ) : null}
               <RichText text={comment.body} mentions={comment.mentions} className="whitespace-pre-line break-words text-[14px] leading-snug [overflow-wrap:anywhere]" />
             </div>

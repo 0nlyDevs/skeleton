@@ -1,13 +1,14 @@
 "use client";
 
-import { MoreHorizontal, ShieldCheck } from "lucide-react";
+import { Info, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
-import { Badge } from "@/components/ui/badge";
+
+import { GroupRoleBadge, ROLE_STYLE } from "./group-role-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -91,21 +92,24 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
         <p className="py-6 text-center text-[13px] text-muted-foreground">{status === "PENDING" ? t("groups.no_requests") : "—"}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border/60">
-          {members.map((member) => {
+          {members.map((member, index) => {
+            // The roster comes sorted by role: a heading opens each role's section.
+            const section = status === "ACTIVE" && members[index - 1]?.role !== member.role ? member.role : null;
             const actable = manager && member.user.id !== viewerId && member.role !== "OWNER" && RANK[member.role] < myRank;
             return (
-              <li key={member.user.id} className="flex items-center gap-3 py-2.5">
-                <UserAvatar name={member.user.name} image={member.user.image} size="sm" />
+              <li key={member.user.id} className="flex flex-col">
+                {section ? (
+                  <h3 className="flex items-center gap-1.5 pb-1 pt-3 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground first:pt-0">
+                    {t(`groups.section.${section}` as MessageKey)}
+                  </h3>
+                ) : null}
+                <div className="flex items-center gap-3 py-2.5">
+                <UserAvatar userId={member.user.id} name={member.user.name} image={member.user.image} size="sm" />
                 <Link href={member.user.username ? `/profile/${member.user.username}` : "#"} className="min-w-0 flex-1">
                   <span className="block truncate text-[14px] font-medium">{member.user.name}</span>
                   {member.user.username ? <span className="block truncate text-[12px] text-muted-foreground">@{member.user.username}</span> : null}
                 </Link>
-                {member.role !== "MEMBER" && status === "ACTIVE" ? (
-                  <Badge variant={member.role === "OWNER" ? "primary" : "neutral"}>
-                    <ShieldCheck className="size-3" />
-                    {t(`groups.role.${member.role}` as MessageKey)}
-                  </Badge>
-                ) : null}
+                {status === "ACTIVE" ? <GroupRoleBadge role={member.role} /> : null}
                 {status === "PENDING" && actable ? (
                   <div className="flex gap-1.5">
                     <Button size="sm" onClick={() => void act(member, { action: "approve" })}>{t("groups.approve")}</Button>
@@ -136,11 +140,35 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : null}
+                </div>
               </li>
             );
           })}
         </ul>
       )}
+
+      <details className="mt-4 rounded-xl bg-surface-muted/60 px-3 py-2 text-[13px]">
+        <summary className="flex cursor-pointer items-center gap-1.5 font-semibold text-muted-foreground">
+          <Info className="size-4" aria-hidden />
+          {t("groups.roles_guide")}
+        </summary>
+        <dl className="mt-2 flex flex-col gap-2 pb-1">
+          {(["OWNER", "ADMIN", "MODERATOR", "MEMBER"] as const).map((role) => (
+            <div key={role} className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:gap-3">
+              <dt className="w-32 shrink-0">
+                {role === "MEMBER" ? (
+                  <span className="text-[12px] font-semibold">{t("groups.role.MEMBER")}</span>
+                ) : (
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${ROLE_STYLE[role].className}`}>
+                    {t(`groups.role.${role}` as MessageKey)}
+                  </span>
+                )}
+              </dt>
+              <dd className="text-muted-foreground">{t(`groups.role_can.${role}` as MessageKey)}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
     </Card>
   );
 }

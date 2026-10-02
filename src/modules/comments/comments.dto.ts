@@ -4,6 +4,7 @@
  */
 
 import { toMentionDtos, type MentionDto } from "../mentions/mentions.service";
+import type { GroupStaffRole } from "../groups/groups.repository";
 import type { CommentRow } from "./comments.repository";
 
 export interface CommentAuthorDto {
@@ -11,6 +12,8 @@ export interface CommentAuthorDto {
   readonly name: string;
   readonly username: string | null;
   readonly image: string | null;
+  /** Owner/admin/moderator of the post's group, so readers know who speaks for it. */
+  readonly groupRole?: GroupStaffRole;
 }
 
 export interface CommentDto {
@@ -26,7 +29,12 @@ export interface CommentDto {
   readonly mentions: MentionDto[];
 }
 
-export function toCommentDto(row: CommentRow, replies: CommentDto[] = []): CommentDto {
+export function toCommentDto(
+  row: CommentRow,
+  replies: CommentDto[] = [],
+  roles: ReadonlyMap<string, GroupStaffRole> = new Map(),
+): CommentDto {
+  const groupRole = roles.get(row.user.id);
   const deleted = row.deletedAt !== null;
   return {
     id: row.id,
@@ -36,7 +44,13 @@ export function toCommentDto(row: CommentRow, replies: CommentDto[] = []): Comme
     deleted,
     author: deleted
       ? null
-      : { id: row.user.id, name: row.user.name, username: row.user.username, image: row.user.image },
+      : {
+          id: row.user.id,
+          name: row.user.name,
+          username: row.user.username,
+          image: row.user.image,
+          ...(groupRole ? { groupRole } : {}),
+        },
     createdAt: row.createdAt.toISOString(),
     editedAt: row.editedAt ? row.editedAt.toISOString() : null,
     replies,

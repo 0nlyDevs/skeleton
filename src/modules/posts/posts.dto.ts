@@ -8,6 +8,7 @@
  */
 
 import type { ReactionCounts, ReactionType } from "@/types";
+import type { GroupStaffRole } from "../groups/groups.repository";
 import { toPollDto, type PollDto } from "../polls/polls.dto";
 
 import { toMentionDtos, type MentionDto } from "../mentions/mentions.service";
@@ -83,6 +84,8 @@ export interface FeedItemDto extends PostDto {
   readonly viewerCanInteract: boolean;
   /** Whether the viewer saved it (private to the viewer). */
   readonly viewerSaved: boolean;
+  /** The author's staff role in the post's group (owner/admin/moderator), else `null`. */
+  readonly authorGroupRole: GroupStaffRole | null;
   /** Poll option ids the viewer voted for (empty when none or no poll). */
   readonly viewerPollVotes: readonly string[];
 }
@@ -106,8 +109,18 @@ export function toFeedItemDto(
   viewerCanInteract = false,
   viewerSaved = false,
   viewerPollVotes: readonly string[] = [],
+  authorGroupRole: GroupStaffRole | null = null,
 ): FeedItemDto {
-  return { ...toPostDto(row), reactions, viewerReaction, viewerCanModerate, viewerCanInteract, viewerSaved, viewerPollVotes };
+  return {
+    ...toPostDto(row),
+    reactions,
+    viewerReaction,
+    viewerCanModerate,
+    viewerCanInteract,
+    viewerSaved,
+    viewerPollVotes,
+    authorGroupRole,
+  };
 }
 
 /** `tags` is a `Json` column, so it arrives untyped. Normalize on the way out. */

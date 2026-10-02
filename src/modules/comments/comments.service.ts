@@ -11,6 +11,7 @@
  */
 
 import { isStaff } from "@/lib/auth/guards";
+import { findStaffRoles, type GroupStaffRole } from "../groups/groups.repository";
 import { BadRequestError, NotFoundError } from "@/lib/errors";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { publishComment } from "@/lib/socket/emit";
@@ -68,7 +69,7 @@ export async function listComments(
   query: ListCommentsQuery,
   viewer: AuthUser | null,
 ): Promise<CommentPage> {
-  await loadReadablePost(postId, viewer);
+  const post = await loadReadablePost(postId, viewer);
 
   const rows = await findTopLevelComments({
     postId,
@@ -77,19 +78,27 @@ export async function listComments(
   });
   const page = rows.slice(0, query.limit);
   const replies = await findRepliesFor(page.map((row) => row.id));
+  const roles = await staffRolesFor(post.groupId, [...page, ...replies].map((row) => row.user.id));
 
   const byParent = new Map<string, CommentDto[]>();
   for (const reply of replies) {
     const list = byParent.get(reply.parentId ?? "") ?? [];
-    list.push(toCommentDto(reply));
+    list.push(toCommentDto(reply, [], roles));
     byParent.set(reply.parentId ?? "", list);
   }
 
   const last = page[page.length - 1];
   return {
-    data: page.map((row) => toCommentDto(row, byParent.get(row.id) ?? [])),
+    data: page.map((row) => toCommentDto(row, byParent.get(row.id) ?? [], roles)),
     nextCursor: rows.length > query.limit && last ? encodeCursor(last) : null,
   };
+}
+
+/** Staff roles of comment authors in the post's group, by user id. */
+async function staffRolesFor(groupId: string | null, userIds: readonly string[]): Promise<Map<string, GroupStaffRole>> {
+  if (!groupId) return new Map();
+  const keyed = await findStaffRoles([groupId], userIds);
+  return new Map([...keyed].map(([key, role]) => [key.slice(groupId.length + 1), role]));
 }
 
 async function resolveParent(postId: string, parentId: string | undefined): Promise<CommentRow | null> {
@@ -127,7 +136,7 @@ export async function createComment(
   const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(post.groupId));
   await syncCommentMentions(inserted.id, actor.user.id, mentioned);
   const row = (await findCommentById(inserted.id)) ?? inserted;
-  const comment = toCommentDto(row);
+  const comment = toCommentDto(row, [], await staffRolesFor(post.groupId, [actor.user.id]));
 
   publishComment({ kind: "created", postId, comment });
   void broadcastEngagement(postId, postAudience(post));
@@ -191,7 +200,7 @@ export async function editComment(
   }
 
   const row = (await findCommentById(id)) ?? existing;
-  const comment = toCommentDto(row);
+  const comment = toCommentDto(row, [], await staffRolesFor(post.groupId, [actor.user.id]));
   publishComment({ kind: "updated", postId: row.postId, comment });
   return comment;
 }

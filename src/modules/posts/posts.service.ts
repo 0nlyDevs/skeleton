@@ -28,7 +28,7 @@ import type { AuthUser } from "@/types";
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { resolveGroupAccess, type GroupAccess } from "../groups/groups.access";
-import { findActiveGroupIds, findGroupById, findMembership, findMemberships } from "../groups/groups.repository";
+import { findActiveGroupIds, findGroupById, findMembership, findMemberships, findStaffRoles } from "../groups/groups.repository";
 import { loadGroup } from "../groups/groups.service";
 import { resolveMentions, syncPostMentions } from "../mentions/mentions.service";
 import {
@@ -216,12 +216,16 @@ async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Pro
   const ids = rows.map((row) => row.id);
   const groupIds = [...new Set(rows.map((row) => row.groupId).filter((id): id is string => id !== null))];
   const pollIds = rows.map((row) => row.poll?.id).filter((id): id is string => id !== undefined);
-  const [counts, mine, memberships, saved, ballots] = await Promise.all([
+  const [counts, mine, memberships, saved, ballots, groupStaff] = await Promise.all([
     countReactionsByType(ids),
     viewer ? findViewerReactions(ids, viewer.id) : Promise.resolve(new Map<string, never>()),
     viewer ? findMemberships(viewer.id, groupIds) : Promise.resolve(new Map()),
     viewer ? findViewerBookmarks(ids, viewer.id) : Promise.resolve(new Set<string>()),
     viewer ? findViewerPollVotes(pollIds, viewer.id) : Promise.resolve(new Map<string, string[]>()),
+    findStaffRoles(
+      groupIds,
+      rows.filter((row) => row.groupId).map((row) => row.userId),
+    ),
   ]);
 
   return rows.map((row) => {
@@ -236,6 +240,7 @@ async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Pro
       canInteract,
       saved.has(row.id),
       row.poll ? (ballots.get(row.poll.id) ?? []) : [],
+      row.groupId ? (groupStaff.get(`${row.groupId}:${row.userId}`) ?? null) : null,
     );
   });
 }
