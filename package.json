@@ -4,7 +4,7 @@
   "private": true,
   "description": "Production-grade Next.js 15 skeleton for the 24H by Webcup hackathon.",
   "engines": {
-    "node": ">=20.11.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
