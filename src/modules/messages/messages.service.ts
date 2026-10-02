@@ -15,7 +15,7 @@ import { logger } from "@/lib/logger";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { isStaff } from "@/lib/auth/guards";
 import { parseDateInput } from "@/lib/utils";
-import type { AuthUser } from "@/types";
+import type { AuthUser, ReactionType } from "@/types";
 
 import {
   grantRoomMembership,
@@ -42,6 +42,8 @@ import {
 import { toMessageDto, toMessageDtos, toRoomDto, type MessageDto, type RoomDto, type RoomMemberDto } from "./messages.dto";
 import {
   addRoomMember,
+  setMessageReaction,
+  findMessageReactors,
   addGroupRoomMember,
   countMessagesBySender,
   countMessagesInRoom,
@@ -417,6 +419,30 @@ export async function editMessage(id: string, content: string, actor: ActorConte
   await enforceThenRecord([{ key: rateLimitKey("message:edit", actor.user.id), rule: RATE_LIMITS.messageEdit }]);
 
   const message = toMessageDto(await updateMessageContent(id, content));
+  publishMessageUpdated(message.roomId, message);
+  return message;
+}
+
+/** Who reacted to a message: members of its conversation only. */
+export async function listMessageReactors(id: string, viewer: AuthUser) {
+  const existing = await findMessageById(id);
+  if (!existing) throw new NotFoundError("This message does not exist.");
+  await assertRoomAccess(existing.roomId, viewer);
+  return (await findMessageReactors(id)).map((row) => ({ type: row.type as ReactionType, user: row.user }));
+}
+
+/** React to a message (one reaction per member; `null` removes it). */
+export async function reactToMessage(id: string, type: ReactionType | null, actor: ActorContext): Promise<MessageDto> {
+  const existing = await findMessageById(id);
+  if (!existing) throw new NotFoundError("This message does not exist.");
+  await assertRoomAccess(existing.roomId, actor.user);
+  if (existing.deletedAt) throw new ConflictError("This message was deleted.");
+
+  await enforceThenRecord([{ key: rateLimitKey("message:react", actor.user.id), rule: RATE_LIMITS.reaction }]);
+
+  const row = await setMessageReaction(id, actor.user.id, type);
+  if (!row) throw new NotFoundError("This message does not exist.");
+  const message = toMessageDto(row);
   publishMessageUpdated(message.roomId, message);
   return message;
 }

@@ -9,9 +9,12 @@
  * sender.
  */
 
+import { z } from "zod";
+
 import { apiRoute } from "@/lib/api/route";
 import { jsonCreated, jsonOk, noContent } from "@/lib/api/response";
 import { RATE_LIMITS } from "@/lib/rate-limit";
+import { REACTION_TYPES } from "@/types";
 
 import {
   addMemberSchema,
@@ -28,6 +31,8 @@ import {
   createGroup,
   deleteMessage,
   editMessage,
+  reactToMessage,
+  listMessageReactors,
   getUnreadSummary,
   getOrCreateDirectRoom,
   getRoomMembersList,
@@ -130,3 +135,23 @@ export const deleteMessageRoute = apiRoute({
 export const unreadSummaryRoute = apiRoute({
   handler: async ({ auth }) => jsonOk({ data: await getUnreadSummary(auth.user) }),
 });
+
+const messageReactionSchema = z.object({ type: z.enum(REACTION_TYPES) });
+
+/** `PUT /api/messages/:id/reaction` sets the caller's reaction; `DELETE` removes it. */
+export const setMessageReactionRoute = apiRoute({
+  params: messageIdParamSchema,
+  body: messageReactionSchema,
+  handler: async ({ params, body, auth, ip }) => jsonOk({ data: await reactToMessage(params.id, body.type, { user: auth.user, ip }) }),
+});
+
+export const listMessageReactorsRoute = apiRoute({
+  params: messageIdParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await listMessageReactors(params.id, auth.user) }),
+});
+
+export const removeMessageReactionRoute = apiRoute({
+  params: messageIdParamSchema,
+  handler: async ({ params, auth, ip }) => jsonOk({ data: await reactToMessage(params.id, null, { user: auth.user, ip }) }),
+});
+

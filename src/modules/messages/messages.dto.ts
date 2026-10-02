@@ -1,4 +1,5 @@
 import { decryptField } from "@/lib/crypto/field-encryption";
+import { REACTION_TYPES, type ReactionType } from "@/types";
 
 import type { MessageWithSender, RoomRow } from "./messages.repository";
 
@@ -25,7 +26,14 @@ export interface MessageDto {
   readonly editedAt: string | null;
   readonly image: MessageImageDto | null;
   readonly sender: MessageSenderDto;
+  /** Who reacted with what; members only ever see their own rooms' messages. */
+  readonly reactions: readonly MessageReactionDto[];
   readonly createdAt: string;
+}
+
+export interface MessageReactionDto {
+  readonly type: ReactionType;
+  readonly userIds: readonly string[];
 }
 
 export interface RoomMemberDto {
@@ -91,8 +99,19 @@ export function toMessageDto(row: MessageWithSender): MessageDto {
       username: row.sender.username,
       image: row.sender.image,
     },
+    reactions: row.deletedAt ? [] : groupReactions(row.reactions),
     createdAt: row.createdAt.toISOString(),
   };
+}
+
+function groupReactions(rows: readonly { userId: string; type: string }[]): MessageReactionDto[] {
+  const byType = new Map<ReactionType, string[]>();
+  for (const row of rows) {
+    if (!(REACTION_TYPES as readonly string[]).includes(row.type)) continue;
+    const type = row.type as ReactionType;
+    byType.set(type, [...(byType.get(type) ?? []), row.userId]);
+  }
+  return [...byType].map(([type, userIds]) => ({ type, userIds }));
 }
 
 export function toMessageDtos(rows: readonly MessageWithSender[]): MessageDto[] {

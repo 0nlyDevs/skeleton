@@ -293,6 +293,8 @@ export function ConversationThread({
                   onDeleteForEveryone={() => setConfirmAll(message)}
                   onCopy={() => void navigator.clipboard.writeText(message.content).then(() => toast.success(t("messages.copied")))}
                   onDiscard={() => thread.discardFailed(message.id)}
+                  viewerId={viewer.id}
+                  onReacted={thread.replaceMessage}
                 />
               );
             })}

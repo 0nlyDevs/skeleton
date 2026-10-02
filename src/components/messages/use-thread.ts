@@ -213,7 +213,8 @@ export function useThread(roomId: string | null, viewer: { id: string; name: str
         image: uploadId && previewUrl ? { id: uploadId, url: previewUrl, width: null, height: null } : null,
         sender: { id: viewer.id, name: viewer.name, username: null, image: viewer.image },
         createdAt: new Date().toISOString(),
-        pending: true,
+        reactions: [],
+      pending: true,
       };
       setMessages((current) => [...current, optimistic]);
 

@@ -176,6 +176,7 @@ model User {
   pollVotes        PollVote[]
   pages            Page[]
   pageLikes        PageLike[]
+  messageReactions MessageReaction[]
 
   @@index([role])
   @@index([banned])
@@ -423,6 +424,20 @@ model PageLike {
   @@map("pageLike")
 }
 
+/// One emoji reaction per member per message (switching replaces it).
+model MessageReaction {
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @db.VarChar(10)
+  createdAt DateTime @default(now())
+
+  @@id([messageId, userId])
+  @@index([userId])
+  @@map("messageReaction")
+}
+
 /// A post the user saved for later. Private: only its owner ever sees it.
 model PostBookmark {
   userId    String
@@ -635,6 +650,7 @@ model Message {
   createdAt DateTime  @default(now())
 
   hiddenFor MessageHide[]
+  reactions MessageReaction[]
 
   // Drives the hot path: "latest N messages in this room, newer than X".
   @@index([roomId, createdAt])

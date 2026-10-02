@@ -15,6 +15,11 @@ import { prisma } from "@/lib/db/prisma";
 export const messageSenderSelect = {
   sender: { select: { id: true, name: true, username: true, image: true } },
   upload: { select: { id: true, width: true, height: true } },
+  reactions: {
+    where: { user: { banned: false } },
+    orderBy: { createdAt: "asc" },
+    select: { userId: true, type: true },
+  },
 } satisfies Prisma.MessageInclude;
 
 export const roomListInclude = {
@@ -452,6 +457,29 @@ export async function countUnreadMessages(
       createdAt: { gt: sinceDate },
     },
   });
+}
+
+export async function findMessageReactors(messageId: string) {
+  return prisma.messageReaction.findMany({
+    where: { messageId, user: { banned: false } },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: { type: true, user: { select: { id: true, name: true, username: true, image: true } } },
+  });
+}
+
+/** Set (or with `null`, remove) a member's reaction, then reload the message. */
+export async function setMessageReaction(messageId: string, userId: string, type: string | null): Promise<MessageWithSender | null> {
+  if (type) {
+    await prisma.messageReaction.upsert({
+      where: { messageId_userId: { messageId, userId } },
+      create: { messageId, userId, type },
+      update: { type },
+    });
+  } else {
+    await prisma.messageReaction.deleteMany({ where: { messageId, userId } });
+  }
+  return findMessageById(messageId);
 }
 
 export async function findLatestMessageForRoom(roomId: string): Promise<MessageWithSender | null> {

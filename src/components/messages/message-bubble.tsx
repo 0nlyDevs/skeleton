@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertCircle, Copy, MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
-import { useState } from "react";
+import { AlertCircle, Copy, MoreHorizontal, Pencil, SmilePlus, Trash2, Undo2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { useFormatters } from "@/hooks/use-formatters";
@@ -13,7 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ReactorsDialog } from "@/components/social/reactors-dialog";
+import { REACTION_EMOJI, REACTION_LABEL } from "@/components/social/reactions";
+import { apiFetch } from "@/lib/api/client";
+import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
+import type { MessageDto } from "@/modules/messages/messages.dto";
+import { REACTION_TYPES, type ReactionType } from "@/types";
 import type { RoomMemberDto } from "@/modules/messages/messages.dto";
 
 import type { ThreadMessage } from "./use-thread";
@@ -37,6 +45,8 @@ export function MessageBubble({
   onDeleteForEveryone,
   onCopy,
   onDiscard,
+  viewerId,
+  onReacted,
 }: {
   readonly message: ThreadMessage;
   readonly mine: boolean;
@@ -50,11 +60,36 @@ export function MessageBubble({
   readonly onDeleteForEveryone: () => void;
   readonly onCopy: () => void;
   readonly onDiscard: () => void;
+  /** The viewer, to highlight their own reaction. */
+  readonly viewerId: string;
+  /** The server's updated message (also pushed to the room over the socket). */
+  readonly onReacted: (message: MessageDto) => void;
 }) {
   const t = useTranslation();
   const fmt = useFormatters();
   // Captured once per mount: the 24-hour window is a hint, the server enforces it.
   const [mountedAt] = useState(() => Date.now());
+  const [picker, setPicker] = useState(false);
+  const [reactorsOpen, setReactorsOpen] = useState(false);
+  const mineReaction = message.reactions.find((entry) => entry.userIds.includes(viewerId))?.type ?? null;
+  const canReact = !message.deleted && !message.pending && !message.failed;
+
+  const react = async (type: ReactionType | null) => {
+    setPicker(false);
+    try {
+      const response = await apiFetch<{ data: MessageDto }>(`/api/messages/${encodeURIComponent(message.id)}/reaction`, type ? { method: "PUT", body: { type } } : { method: "DELETE" });
+      onReacted(response.data);
+    } catch (error) {
+      toast.error(describeApiError(error, t));
+    }
+  };
+  const loadReactors = useCallback(async () => {
+    const response = await apiFetch<{ data: { type: ReactionType; user: { id: string; name: string; username: string | null; image: string | null } }[] }>(
+      `/api/messages/${encodeURIComponent(message.id)}/reaction`,
+    );
+    return response.data.map((row) => ({ emoji: REACTION_EMOJI[row.type], user: row.user }));
+  }, [message.id]);
+
   const editable = mine && !message.deleted && !message.pending && !message.failed && mountedAt - Date.parse(message.createdAt) < EDIT_WINDOW_MS;
 
   return (
@@ -93,6 +128,31 @@ export function MessageBubble({
           )}
         </div>
 
+        {canReact ? (
+          <Popover open={picker} onOpenChange={setPicker}>
+            <PopoverTrigger
+              aria-label={t("messages.react")}
+              className="grid size-7 shrink-0 place-items-center self-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-surface-muted focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-60"
+            >
+              <SmilePlus className="size-4" />
+            </PopoverTrigger>
+            <PopoverContent side="top" align={mine ? "end" : "start"} className="flex w-auto gap-0.5 rounded-full p-1">
+              {REACTION_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  aria-label={t(REACTION_LABEL[type])}
+                  aria-pressed={mineReaction === type}
+                  onClick={() => void react(mineReaction === type ? null : type)}
+                  className={cn("grid size-9 place-items-center rounded-full text-[20px] transition-transform hover:scale-125", mineReaction === type && "bg-primary/15")}
+                >
+                  {REACTION_EMOJI[type]}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+        ) : null}
+
         {!message.pending && !message.failed ? (
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -129,6 +189,27 @@ export function MessageBubble({
           </DropdownMenu>
         ) : null}
       </div>
+
+      {message.reactions.length > 0 && !message.deleted ? (
+        <div className={cn("-mt-1 flex flex-wrap gap-1", mine ? "mr-2" : "ml-12")} aria-label={t("messages.reactions_label")}>
+          {message.reactions.map((entry) => (
+            <button
+              key={entry.type}
+              type="button"
+              onClick={() => setReactorsOpen(true)}
+              title={t(REACTION_LABEL[entry.type])}
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded-full border bg-card px-1.5 py-0.5 text-[12px] shadow-sm hover:bg-surface-muted",
+                entry.userIds.includes(viewerId) ? "border-primary/60" : "border-border",
+              )}
+            >
+              <span aria-hidden>{REACTION_EMOJI[entry.type]}</span>
+              {entry.userIds.length > 1 ? <span className="tabular-nums text-muted-foreground">{entry.userIds.length}</span> : null}
+            </button>
+          ))}
+          <ReactorsDialog open={reactorsOpen} onOpenChange={setReactorsOpen} load={loadReactors} />
+        </div>
+      ) : null}
 
       <div className={cn("mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground", mine ? "mr-1" : "ml-11")}>
         {message.failed ? (
