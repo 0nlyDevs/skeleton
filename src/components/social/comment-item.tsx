@@ -22,6 +22,7 @@ import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import type { CommentDto } from "@/modules/comments/comments.dto";
 
+import { InlineReactions } from "./inline-reactions";
 import { MentionInput } from "./mention-input";
 import { ReportDialog } from "./report-dialog";
 import { RichText } from "./rich-text";
@@ -158,6 +159,12 @@ export function CommentItem({
             {fmt.relative(comment.createdAt)}
           </time>
           {comment.editedAt ? <span>{t("comments.edited")}</span> : null}
+          <InlineReactions<CommentDto>
+            reactions={comment.reactions}
+            viewerId={viewerId}
+            endpoint={`/api/comments/${encodeURIComponent(comment.id)}/reactions`}
+            onUpdated={(updated) => onChanged({ ...comment, reactions: updated.reactions })}
+          />
           {viewerId ? (
             <button type="button" onClick={() => onReply(comment)} className="font-semibold hover:underline">
               {t("comments.reply")}

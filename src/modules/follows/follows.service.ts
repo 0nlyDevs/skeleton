@@ -12,19 +12,25 @@ import {
 import { createFollow, deleteFollow, findConnections, findFollow, findRelations } from "./follows.repository";
 import { toPublicProfileDto, toSearchUserDto, type ConnectionDto, type PublicProfileDto, type SearchUserDto } from "./follows.dto";
 import type { SearchUsersQuery } from "./follows.schema";
+import { hasBlocked, isBlockedBetween } from "../blocks/blocks.service";
 
 export async function getPublicProfile(username: string, viewer: AuthUser | null): Promise<PublicProfileDto> {
   const row = await findActivePublicProfileByUsername(username.toLowerCase());
   if (!row) throw new NotFoundError("That profile does not exist.");
   const other = viewer && viewer.id !== row.id;
+  // Blocked by the owner: the profile does not exist for this viewer. Blocked
+  // by the viewer: shown, so they can unblock.
+  const viewerBlocked = other ? await hasBlocked(viewer.id, row.id) : false;
+  if (other && !viewerBlocked && (await hasBlocked(row.id, viewer.id))) throw new NotFoundError("That profile does not exist.");
   const [isFollowing, followsYou] = other ? await Promise.all([findFollow(viewer.id, row.id), findFollow(row.id, viewer.id)]) : [false, false];
-  return toPublicProfileDto(row, isFollowing, viewer?.id === row.id, followsYou);
+  return { ...toPublicProfileDto(row, isFollowing, viewer?.id === row.id, followsYou), viewerBlocked };
 }
 
 export async function followUser(targetId: string, actor: AuthUser): Promise<{ following: true }> {
   if (targetId === actor.id) throw new ConflictError("You cannot follow yourself.");
   const target = await findActiveUserById(targetId);
   if (!target || !target.username) throw new NotFoundError("That profile does not exist.");
+  if (await isBlockedBetween(actor.id, targetId)) throw new NotFoundError("That profile does not exist.");
 
   const created = await createFollow(actor.id, targetId);
   if (created) {

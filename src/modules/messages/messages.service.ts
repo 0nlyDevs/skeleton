@@ -78,6 +78,7 @@ import {
 } from "./messages.repository";
 import { assertOwnPublicImage } from "../uploads/uploads.service";
 import type { ListMessagesQuery, SendMessageInput } from "./messages.schema";
+import { isBlockedBetween } from "../blocks/blocks.service";
 
 interface MemberRowLike {
   readonly id: string;
@@ -321,7 +322,11 @@ export async function sendMessage(
   input: SendMessageInput,
   actor: ActorContext,
 ): Promise<MessageDto> {
-  await assertRoomAccess(input.roomId, actor.user);
+  const sendingRoom = await assertRoomAccess(input.roomId, actor.user);
+  if (sendingRoom.type === "DIRECT") {
+    const other = (await findRoomMembers(input.roomId)).find((member) => member.userId !== actor.user.id);
+    if (other && (await isBlockedBetween(actor.user.id, other.userId))) throw new ForbiddenError("You cannot message this person.");
+  }
 
   // Throws `RateLimitedError`, which the route wrapper serializes as a 429 with
   // a `Retry-After` header.
@@ -518,6 +523,7 @@ export async function getOrCreateDirectRoom(
   }
   const target = await findActiveUserById(targetUserId);
   if (!target) throw new NotFoundError("That account does not exist.");
+  if (await isBlockedBetween(actor.id, targetUserId)) throw new ForbiddenError("You cannot message this person.");
 
   let room = await findDirectRoom(actor.id, targetUserId);
   if (!room) {

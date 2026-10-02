@@ -12,6 +12,7 @@ export const commentInclude = {
   mentions: {
     select: { mentionedUser: { select: { id: true, username: true, name: true, banned: true } } },
   },
+  reactions: { where: { user: { banned: false } }, orderBy: { createdAt: "asc" }, take: 300, select: { userId: true, type: true } },
 } satisfies Prisma.CommentInclude;
 
 export type CommentRow = Prisma.CommentGetPayload<{ include: typeof commentInclude }>;
@@ -28,9 +29,11 @@ export async function findTopLevelComments(args: {
   postId: string;
   after: { createdAt: Date; id: string } | null;
   take: number;
+  excludeUserIds?: readonly string[];
 }): Promise<CommentRow[]> {
   const visible: Prisma.CommentWhereInput = {
     OR: [{ deletedAt: null }, { replies: { some: { deletedAt: null } } }],
+    ...(args.excludeUserIds?.length ? { userId: { notIn: [...args.excludeUserIds] } } : {}),
   };
   const after: Prisma.CommentWhereInput | undefined = args.after
     ? {
@@ -50,10 +53,10 @@ export async function findTopLevelComments(args: {
 }
 
 /** Live replies for a page of threads, in one query. */
-export async function findRepliesFor(parentIds: readonly string[]): Promise<CommentRow[]> {
+export async function findRepliesFor(parentIds: readonly string[], excludeUserIds: readonly string[] = []): Promise<CommentRow[]> {
   if (parentIds.length === 0) return [];
   return prisma.comment.findMany({
-    where: { parentId: { in: [...parentIds] }, deletedAt: null },
+    where: { parentId: { in: [...parentIds] }, deletedAt: null, ...(excludeUserIds.length ? { userId: { notIn: [...excludeUserIds] } } : {}) },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     take: 500,
     include: commentInclude,
@@ -94,3 +97,27 @@ export async function softDeleteComment(id: string, postId: string): Promise<Com
     return tx.comment.findUniqueOrThrow({ where: { id }, include: commentInclude });
   });
 }
+
+export async function setCommentReaction(commentId: string, userId: string, type: string | null): Promise<"created" | "updated" | "removed"> {
+  if (!type) {
+    await prisma.commentReaction.deleteMany({ where: { commentId, userId } });
+    return "removed";
+  }
+  const existing = await prisma.commentReaction.findUnique({ where: { commentId_userId: { commentId, userId } }, select: { type: true } });
+  await prisma.commentReaction.upsert({
+    where: { commentId_userId: { commentId, userId } },
+    create: { commentId, userId, type },
+    update: { type },
+  });
+  return existing ? "updated" : "created";
+}
+
+export async function findCommentReactors(commentId: string) {
+  return prisma.commentReaction.findMany({
+    where: { commentId, user: { banned: false } },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: { type: true, user: { select: { id: true, name: true, username: true, image: true } } },
+  });
+}
+

@@ -224,6 +224,15 @@ export async function notifyContentMention(input: {
   });
 }
 
+export async function notifyCommentReaction(input: { userId: string; actor: { name: string }; postId: string; preview: string }): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "POST_REACTION",
+    title: `${actorHandle(input.actor)} a réagi à votre commentaire « ${truncate(input.preview, 60)} »`,
+    link: `/feed/${encodeURIComponent(input.postId)}#comments`,
+  });
+}
+
 export async function notifyPostReaction(input: {
   userId: string;
   actor: { name: string };

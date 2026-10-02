@@ -65,6 +65,7 @@ import type {
   ListPostsQuery,
   UpdatePostInput,
 } from "./posts.schema";
+import { findBlockedIds, isBlockedBetween } from "../blocks/blocks.service";
 
 const SORTABLE_FIELDS = ["createdAt", "updatedAt", "title"] as const;
 
@@ -173,6 +174,7 @@ export async function loadReadablePost(id: string, viewer: AuthUser | null): Pro
   if (row.deletedAt && !staff) throw new NotFoundError();
   if (!row.published && !staff && row.userId !== viewer?.id) throw new NotFoundError();
   if (!(await audienceAllows(row, viewer))) throw new NotFoundError();
+  if (viewer && !isStaff(viewer) && (await isBlockedBetween(viewer.id, row.userId))) throw new NotFoundError();
 
   if (row.group) {
     const access = await groupAccessForPost(row, viewer);
@@ -287,7 +289,7 @@ export async function listFeed(
   viewer: AuthUser | null,
   followingIds?: readonly string[],
 ): Promise<FeedPage> {
-  const conditions: Prisma.PostWhereInput[] = [{ published: true, deletedAt: null }, audienceFilter(viewer)];
+  const conditions: Prisma.PostWhereInput[] = [{ published: true, deletedAt: null }, audienceFilter(viewer), await blockFilter(viewer)];
   const myGroups = viewer ? await findActiveGroupIds(viewer.id) : [];
 
   if (query.groupSlug) {
@@ -343,6 +345,7 @@ export async function homeVisibility(viewer: AuthUser | null): Promise<Prisma.Po
     AND: [
       { OR: [{ groupId: null }, ...(myGroups.length > 0 ? [{ groupId: { in: myGroups } }] : [])] },
       audienceFilter(viewer),
+      await blockFilter(viewer),
     ],
   };
 }
@@ -351,6 +354,13 @@ export async function homeVisibility(viewer: AuthUser | null): Promise<Prisma.Po
  * The audience rule as a Prisma condition: public posts for everyone, a
  * follower-only post for the author's followers, a private one for its author.
  */
+/** Posts by people the viewer blocked or was blocked by are never shown. */
+async function blockFilter(viewer: AuthUser | null): Promise<Prisma.PostWhereInput> {
+  if (!viewer) return {};
+  const blocked = await findBlockedIds(viewer.id);
+  return blocked.length > 0 ? { userId: { notIn: blocked } } : {};
+}
+
 export function audienceFilter(viewer: AuthUser | null): Prisma.PostWhereInput {
   if (!viewer) return { audience: "PUBLIC" };
   if (isStaff(viewer)) return {};

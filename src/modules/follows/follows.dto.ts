@@ -19,6 +19,8 @@ export interface PublicProfileDto {
   readonly isFriend: boolean;
   /** True when the viewer is looking at their own profile. */
   readonly isSelf: boolean;
+  /** The viewer blocked this profile. */
+  readonly viewerBlocked?: boolean;
 }
 
 /** One row of a followers/following list, with the viewer's relation to that person. */

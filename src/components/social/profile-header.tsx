@@ -1,10 +1,15 @@
 "use client";
 
-import { CalendarDays, Flag, MessageCircle, MoreHorizontal, Pencil } from "lucide-react";
+import { Ban, CalendarDays, Flag, MessageCircle, MoreHorizontal, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import Link from "@/components/ui/link";
 import { useMemo, useState } from "react";
 
+import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { apiFetch } from "@/lib/api/client";
+import { describeApiError } from "@/lib/api/error-message";
 import { useFormatters } from "@/hooks/use-formatters";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -36,6 +41,20 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
   const presence = usePresence(ids).get(profile.id);
   const [followers, setFollowers] = useState(profile.followerCount);
   const [connections, setConnections] = useState<"followers" | "following" | null>(null);
+  const [blocked, setBlocked] = useState(profile.viewerBlocked === true);
+  const [confirmBlock, setConfirmBlock] = useState(false);
+  const router = useRouter();
+
+  const toggleBlock = async () => {
+    try {
+      await apiFetch(`/api/users/${encodeURIComponent(profile.id)}/block`, { method: blocked ? "DELETE" : "PUT" });
+      setBlocked(!blocked);
+      toast.success(t(blocked ? "block.unblocked" : "block.blocked"));
+      router.refresh();
+    } catch (error) {
+      toast.error(describeApiError(error, t));
+    }
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -58,6 +77,10 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
               </Button>
             ) : signedIn ? (
               <>
+                {blocked ? (
+                  <span className="rounded-lg bg-error/10 px-3 py-2 text-[13px] font-medium text-error">{t("block.you_blocked")}</span>
+                ) : (
+                <>
                 <FollowButton
                   userId={profile.id}
                   initialFollowing={profile.isFollowing}
@@ -69,6 +92,8 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
                     {t("profile.public.message")}
                   </Link>
                 </Button>
+                </>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger aria-label={t("common.more")} className="grid size-10 place-items-center rounded-lg border border-border hover:bg-surface-muted">
                     <MoreHorizontal className="size-4" />
@@ -77,6 +102,10 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
                     <DropdownMenuItem onSelect={() => setReporting(true)}>
                       <Flag />
                       {t("profile.public.report")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem variant={blocked ? "default" : "destructive"} onSelect={() => (blocked ? void toggleBlock() : setConfirmBlock(true))}>
+                      <Ban />
+                      {blocked ? t("block.unblock") : t("block.block")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -137,6 +166,16 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
           signedIn={signedIn}
         />
       </div>
+      {signedIn && !profile.isSelf ? (
+        <ConfirmDialog
+          open={confirmBlock}
+          onOpenChange={setConfirmBlock}
+          title={t("block.confirm_title", { name: profile.name })}
+          description={t("block.confirm_body")}
+          confirmLabel={t("block.block")}
+          onConfirm={() => void toggleBlock()}
+        />
+      ) : null}
       {signedIn && !profile.isSelf ? <ReportDialog open={reporting} onOpenChange={setReporting} targetType="user" targetId={profile.id} /> : null}
     </Card>
   );
