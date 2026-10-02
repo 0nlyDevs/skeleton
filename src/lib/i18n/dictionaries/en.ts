@@ -753,6 +753,8 @@ export const en: Dictionary = {
   "feedback.server_error.title": "Oops, something went wrong",
   "feedback.server_error.body": "The server could not render this page. Try again: it is often temporary.",
   "feedback.server_error.retry": "Try again",
+  "messages.image_ready": "Image ready: add some text if you like, then send.",
+  "messages.image_failed": "The image could not be uploaded. Remove it or pick another.",
   "auth.password.rules_title": "Your password must contain:",
   "auth.password.rule.length": "At least {min} characters",
   "auth.password.rule.lower": "A lowercase letter",

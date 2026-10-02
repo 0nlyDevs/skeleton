@@ -756,6 +756,8 @@ export const fr = {
   "feedback.server_error.title": "Oups, quelque chose s'est mal passé",
   "feedback.server_error.body": "Le serveur n'a pas pu afficher cette page. Réessayez : c'est souvent passager.",
   "feedback.server_error.retry": "Réessayer",
+  "messages.image_ready": "Image prête : ajoutez un texte si vous voulez, puis envoyez.",
+  "messages.image_failed": "L'image n'a pas pu être envoyée. Retirez-la ou choisissez-en une autre.",
   "auth.password.rules_title": "Votre mot de passe doit contenir :",
   "auth.password.rule.length": "Au moins {min} caractères",
   "auth.password.rule.lower": "Une lettre minuscule",
