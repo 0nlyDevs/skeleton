@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Dictionary, Locale } from "@/lib/i18n";
 
 import { I18nProvider } from "./i18n-provider";
+import { CallProvider } from "@/components/calls/call-provider";
+
 import { RealtimeProvider } from "./realtime-provider";
 import { ThemeProvider } from "./theme-provider";
 
@@ -38,8 +40,10 @@ export function AppProviders({
       <I18nProvider locale={locale} dictionary={dictionary}>
         <TooltipProvider delayDuration={300}>
           <RealtimeProvider viewerId={viewerId}>
-            {children}
-            <Toaster />
+            <CallProvider viewerId={viewerId}>
+              {children}
+              <Toaster />
+            </CallProvider>
           </RealtimeProvider>
         </TooltipProvider>
       </I18nProvider>

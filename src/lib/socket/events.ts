@@ -65,6 +65,15 @@ export const SOCKET_EVENTS = {
   /** Client → server: follow a community group's live feed. */
   groupSubscribe: "group:subscribe",
   groupUnsubscribe: "group:unsubscribe",
+  /** Calls (WebRTC signalling). */
+  callInvite: "call:invite",
+  callAccept: "call:accept",
+  callDecline: "call:decline",
+  callHangup: "call:hangup",
+  callSignal: "call:signal",
+  callIncoming: "call:incoming",
+  callAccepted: "call:accepted",
+  callEnded: "call:ended",
   /** Server → everyone: a user's public identity (name/avatar/handle) changed. */
   profileUpdated: "profile:updated",
 } as const;
@@ -86,6 +95,35 @@ export type PostEngagementPayload = PostEngagementDto;
 export type SendMessageAck =
   | { readonly ok: true; readonly message: MessagePayload }
   | { readonly ok: false; readonly code: string; readonly message: string };
+
+export interface IceServerPayload {
+  readonly urls: string | string[];
+  readonly username?: string;
+  readonly credential?: string;
+}
+
+export type CallAck =
+  | { readonly ok: true; readonly callId: string; readonly iceServers: IceServerPayload[] }
+  | { readonly ok: false; readonly code: string; readonly message: string };
+
+export interface CallIncomingPayload {
+  readonly callId: string;
+  readonly roomId: string;
+  readonly kind: "audio" | "video";
+  readonly from: { readonly id: string; readonly name: string; readonly image: string | null };
+}
+
+export interface CallSignalPayload {
+  readonly callId: string;
+  readonly data:
+    | { readonly type: "offer" | "answer"; readonly sdp: string }
+    | { readonly type: "candidate"; readonly candidate: { candidate: string; sdpMid?: string | null; sdpMLineIndex?: number | null } };
+}
+
+export interface CallEndedPayload {
+  readonly callId: string;
+  readonly reason: "declined" | "hangup" | "missed" | "busy" | "failed";
+}
 
 export interface ProfileUpdatedPayload {
   readonly userId: string;
@@ -178,6 +216,11 @@ export interface ClientToServerEvents {
   [SOCKET_EVENTS.typing]: (payload: { roomId: string; typing: boolean }) => void;
   [SOCKET_EVENTS.presenceWatch]: (userIds: string[], ack?: (snapshot: PresenceStatePayload[]) => void) => void;
   [SOCKET_EVENTS.groupSubscribe]: (groupId: string) => void;
+  [SOCKET_EVENTS.callInvite]: (payload: { roomId: string; kind: "audio" | "video" }, ack: (result: CallAck) => void) => void;
+  [SOCKET_EVENTS.callAccept]: (callId: string, ack: (result: CallAck) => void) => void;
+  [SOCKET_EVENTS.callDecline]: (callId: string) => void;
+  [SOCKET_EVENTS.callHangup]: (callId: string) => void;
+  [SOCKET_EVENTS.callSignal]: (payload: CallSignalPayload) => void;
   [SOCKET_EVENTS.groupUnsubscribe]: (groupId: string) => void;
   [SOCKET_EVENTS.feedSubscribe]: () => void;
   [SOCKET_EVENTS.feedUnsubscribe]: () => void;
@@ -203,4 +246,8 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.roomRead]: (payload: RoomReadPayload) => void;
   [SOCKET_EVENTS.presenceState]: (payload: PresenceStatePayload) => void;
   [SOCKET_EVENTS.profileUpdated]: (payload: ProfileUpdatedPayload) => void;
+  [SOCKET_EVENTS.callIncoming]: (payload: CallIncomingPayload) => void;
+  [SOCKET_EVENTS.callAccepted]: (payload: { callId: string }) => void;
+  [SOCKET_EVENTS.callEnded]: (payload: CallEndedPayload) => void;
+  [SOCKET_EVENTS.callSignal]: (payload: CallSignalPayload) => void;
 }

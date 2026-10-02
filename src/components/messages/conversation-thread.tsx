@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowLeft, ImagePlus, Loader2, LogOut, MoreVertical, Pencil, SendHorizontal, UserPlus, UsersRound, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, LogOut, MoreVertical, Pencil, Phone, SendHorizontal, UserPlus, UsersRound, Video, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useCall } from "@/components/calls/call-provider";
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { useRealtime } from "@/components/providers/realtime-provider";
@@ -69,6 +70,7 @@ export function ConversationThread({
   const stickToBottom = useRef(true);
   const input = useRef<HTMLTextAreaElement>(null);
   const peer = room.targetUser ?? null;
+  const { startCall, state: callState } = useCall();
   const presence = usePresence(useMemo(() => (peer ? [peer.id] : []), [peer])).get(peer?.id ?? "");
 
   useEffect(() => clearRoomUnread(room.id), [room.id, clearRoomUnread, thread.messages.length]);
@@ -192,6 +194,29 @@ export function ConversationThread({
             </span>
           </span>
         )}
+        {peer && room.type !== "GROUP" ? (
+          <span className="ml-auto flex items-center gap-1">
+            {(["audio", "video"] as const).map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                aria-label={t(kind === "audio" ? "call.audio" : "call.video")}
+                title={presence?.online ? t(kind === "audio" ? "call.audio" : "call.video") : t("call.offline")}
+                disabled={callState.phase !== "idle"}
+                onClick={() => {
+                  if (!presence?.online) {
+                    toast(t("call.offline"));
+                    return;
+                  }
+                  void startCall(room.id, { id: peer.id, name: peer.name, image: peer.image }, kind);
+                }}
+                className="grid size-9 place-items-center rounded-full text-primary hover:bg-surface-muted disabled:opacity-50"
+              >
+                {kind === "audio" ? <Phone className="size-[18px]" /> : <Video className="size-5" />}
+              </button>
+            ))}
+          </span>
+        ) : null}
         {room.type === "GROUP" ? (
           <DropdownMenu>
             <DropdownMenuTrigger aria-label={t("common.more")} className="ml-auto grid size-9 place-items-center rounded-full hover:bg-surface-muted">

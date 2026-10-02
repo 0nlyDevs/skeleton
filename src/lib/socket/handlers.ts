@@ -46,6 +46,7 @@ import {
   type ServerToClientEvents,
 } from "./events";
 import { FEED_ROOM, GLOBAL_PRESENCE_ROOM, chatRoom, groupRoom, parseRoom, postRoom, presenceRoom, userRoom } from "./rooms";
+import { registerCallHandlers } from "./call-handlers";
 import { markConnected, markDisconnected, presenceSnapshot } from "./presence";
 
 export interface SocketData {
@@ -217,6 +218,7 @@ async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<voi
   ]);
 
   void markConnected(identity.userId);
+  registerCallHandlers(io, socket, user);
   socket.on("disconnect", () => {
     void markDisconnected(identity.userId);
   });

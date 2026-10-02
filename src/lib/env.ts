@@ -90,6 +90,13 @@ const envSchema = z.object({
   /** Provider embedding model (e.g. `text-embedding-3-small`); unset = local embedding. */
   AI_EMBEDDING_MODEL: optionalText,
 
+  // --- Calls (WebRTC) -------------------------------------------------------
+  /** Comma-separated STUN URLs. */
+  WEBRTC_STUN_URLS: z.string().default("stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302"),
+  /** Optional TURN relay (coturn `use-auth-secret`), e.g. `turn:turn.example.com:3478`. */
+  TURN_URL: optionalText,
+  TURN_SECRET: optionalText,
+
   // --- Uploads --------------------------------------------------------------
   UPLOAD_DIR: z.string().min(1).default("./uploads"),
   UPLOAD_MAX_BYTES: z.coerce
