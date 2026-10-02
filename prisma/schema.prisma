@@ -353,7 +353,7 @@ model PollOption {
   @@map("pollOption")
 }
 
-/// Who voted for what. Never exposed: results are aggregate only.
+/// Who voted for what; visible to whoever can read the post.
 model PollVote {
   pollId    String
   poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)

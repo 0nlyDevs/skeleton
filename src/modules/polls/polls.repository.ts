@@ -50,3 +50,14 @@ export async function replaceBallot(pollId: string, userId: string, optionIds: r
     return tx.poll.update({ where: { id: pollId }, data: { totalVoters: voters.length }, select: pollSelect });
   });
 }
+
+/** Who voted for which option (most recent first), banned accounts left out. */
+export async function findPollVoters(pollId: string) {
+  return prisma.pollVote.findMany({
+    where: { pollId, user: { banned: false } },
+    orderBy: { createdAt: "desc" },
+    take: 500,
+    select: { optionId: true, user: { select: { id: true, name: true, username: true, image: true } } },
+  });
+}
+
