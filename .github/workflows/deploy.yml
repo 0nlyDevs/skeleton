@@ -31,9 +31,13 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+        env:
+          CI: true
 
       - name: Test
         run: npm test
+        env:
+          CI: true
 
       - name: Build
         run: npm run build
@@ -45,7 +49,7 @@ jobs:
         run: npx prisma format --check
 
   deploy:
-    name: initiate deployment
+    name: CD / initiate deployment
     if: github.ref == 'refs/heads/preprod' || github.ref == 'refs/heads/prod'
     needs: [ci]
     runs-on: ubuntu-latest
@@ -57,22 +61,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
         with:
-          node-version: '24'
-          cache: 'npm'
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Run migrations
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Initiate deployment
-        run: echo "Initiate ${{ github.ref_name }} deployment"
+      - name: Deploy and run migrations
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            set -e
+            if [ "${{ github.ref_name }}" = "prod" ]; then
+              APP_DIR="/home/nlydevs/.hodifly/8c57e5b89786d068/current"
+            else
+              APP_DIR="/home/nlydevs/.hodifly/8c57e5b89786d068/current"
+            fi
+            cd "$APP_DIR"
+            npx prisma migrate deploy
+          '
