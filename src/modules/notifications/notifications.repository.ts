@@ -23,9 +23,12 @@ export async function createNotification(
   return prisma.notification.create({ data });
 }
 
+/** Direct messages live in the inbox badge, never in the bell (older rows included). */
+const NOT_A_MESSAGE = { type: { not: "NEW_MESSAGE" as const } };
+
 export async function findNotifications(args: FindNotificationsArgs) {
   return prisma.notification.findMany({
-    where: args.where,
+    where: { AND: [args.where, NOT_A_MESSAGE] },
     // Newest first, and `id` breaks ties so two notifications written in the
     // same millisecond still paginate deterministically.
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -35,11 +38,11 @@ export async function findNotifications(args: FindNotificationsArgs) {
 }
 
 export async function countNotifications(where: Prisma.NotificationWhereInput): Promise<number> {
-  return prisma.notification.count({ where });
+  return prisma.notification.count({ where: { AND: [where, NOT_A_MESSAGE] } });
 }
 
 export async function countUnreadNotifications(userId: string): Promise<number> {
-  return prisma.notification.count({ where: { userId, read: false } });
+  return prisma.notification.count({ where: { userId, read: false, ...NOT_A_MESSAGE } });
 }
 
 /** Mark a specific set as read. Returns how many rows changed. */

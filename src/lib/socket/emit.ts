@@ -14,6 +14,7 @@
 
 import {
   SOCKET_EVENTS,
+  type MessageAlertPayload,
   type MessageHiddenPayload,
   type ProfileUpdatedPayload,
   type PresenceStatePayload,
@@ -38,6 +39,11 @@ function publish(room: string, event: string, payload: unknown): void {
 /** Deliver a notification to every device the user has open. */
 export function publishNotification(userId: string, payload: NotificationPayload): void {
   publish(userRoom(userId), SOCKET_EVENTS.notification, payload);
+}
+
+/** Ephemeral "new message" popup for one user (no bell entry). */
+export function publishMessageAlert(userId: string, payload: MessageAlertPayload): void {
+  publish(userRoom(userId), SOCKET_EVENTS.messageAlert, payload);
 }
 
 /** Fan a persisted message out to everyone in the room. */

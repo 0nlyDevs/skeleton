@@ -7,7 +7,7 @@ import { useProfileOverridesListener } from "@/hooks/use-profile-overrides";
 import { useSocket, type SocketStatus } from "@/hooks/use-socket";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
-import { SOCKET_EVENTS, type NotificationPayload, type ReadyPayload, type RoomReadPayload } from "@/lib/socket/events";
+import { SOCKET_EVENTS, type MessageAlertPayload, type NotificationPayload, type ReadyPayload, type RoomReadPayload } from "@/lib/socket/events";
 import type { ListMeta, NotificationType } from "@/types";
 
 interface RealtimeContextValue {
@@ -198,9 +198,21 @@ export function RealtimeProvider({
       });
     };
 
+    // New chat messages: a popup with a shortcut, never a bell entry. Silent
+    // when that conversation (or the inbox) is already on screen.
+    const onMessageAlert = (payload: MessageAlertPayload) => {
+      if (window.location.pathname.startsWith("/messages")) return;
+      toast(t("messages.alert_title", { name: payload.senderName }), {
+        description: payload.preview,
+        action: { label: t("messages.alert_open"), onClick: () => window.location.assign(`/messages?room=${encodeURIComponent(payload.roomId)}`) },
+      });
+    };
+
     socket.on(SOCKET_EVENTS.notification, onNew);
+    socket.on(SOCKET_EVENTS.messageAlert, onMessageAlert);
     return () => {
       socket.off(SOCKET_EVENTS.notification, onNew);
+      socket.off(SOCKET_EVENTS.messageAlert, onMessageAlert);
     };
   }, [socket, t]);
 
