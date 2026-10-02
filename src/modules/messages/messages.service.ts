@@ -308,10 +308,8 @@ export async function sendMessage(
   // Throws `RateLimitedError`, which the route wrapper serializes as a 429 with
   // a `Retry-After` header.
   await enforceThenRecord([
-    {
-      key: rateLimitKey("chat:send", actor.user.id),
-      rule: RATE_LIMITS.chatMessage,
-    },
+    { key: rateLimitKey("chat:send", actor.user.id), rule: RATE_LIMITS.chatMessage },
+    { key: rateLimitKey("chat:send:sustained", actor.user.id), rule: RATE_LIMITS.chatMessageSustained },
   ]);
 
   if (input.uploadId && !(await isAttachableImage(input.uploadId, actor.user.id))) {

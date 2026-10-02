@@ -31,8 +31,13 @@ export const RATE_LIMITS = {
   /** Uploads per user. */
   upload: { limit: 10, windowMs: 60_000 },
 
-  /** Chat messages per user: one per second. */
-  chatMessage: { limit: 1, windowMs: 1_000 },
+  /**
+   * Chat messages per user. A short burst window lets people fire off a few
+   * quick lines (a one-per-second rule broke normal typing); the long window
+   * still stops a flood or a bot.
+   */
+  chatMessage: { limit: 20, windowMs: 15_000 },
+  chatMessageSustained: { limit: 150, windowMs: 5 * 60_000 },
 
   /** Reactions per user: generous for scrolling, fatal for a like-bot. */
   reaction: { limit: 60, windowMs: 60_000 },
