@@ -13,6 +13,7 @@ import { prisma } from "@/lib/db/prisma";
 import { extractMentions } from "@/lib/mentions";
 
 import { findActiveUsersByUsernames } from "../users/users.repository";
+import { findBlockedIds } from "../blocks/blocks.service";
 
 export interface MentionDto {
   readonly userId: string;
@@ -48,7 +49,8 @@ export async function resolveMentions(
   const handles = extractMentions(text);
   if (handles.length === 0) return [];
 
-  const users = (await findActiveUsersByUsernames(handles)).filter((user) => user.id !== authorId);
+  const blocked = new Set(await findBlockedIds(authorId));
+  const users = (await findActiveUsersByUsernames(handles)).filter((user) => user.id !== authorId && !blocked.has(user.id));
   const ids = users.map((user) => user.id);
   if (!audience) return ids;
 

@@ -75,13 +75,15 @@ export async function listComments(
 ): Promise<CommentPage> {
   const post = await loadReadablePost(postId, viewer);
 
+  const hidden = viewer ? await findBlockedIds(viewer.id) : [];
   const rows = await findTopLevelComments({
     postId,
     after: decodeCursor(query.cursor),
     take: query.limit + 1,
+    excludeUserIds: hidden,
   });
   const page = rows.slice(0, query.limit);
-  const replies = await findRepliesFor(page.map((row) => row.id));
+  const replies = await findRepliesFor(page.map((row) => row.id), hidden);
   const roles = await staffRolesFor(post.groupId, [...page, ...replies].map((row) => row.user.id));
 
   const byParent = new Map<string, CommentDto[]>();

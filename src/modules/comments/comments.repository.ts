@@ -29,9 +29,11 @@ export async function findTopLevelComments(args: {
   postId: string;
   after: { createdAt: Date; id: string } | null;
   take: number;
+  excludeUserIds?: readonly string[];
 }): Promise<CommentRow[]> {
   const visible: Prisma.CommentWhereInput = {
     OR: [{ deletedAt: null }, { replies: { some: { deletedAt: null } } }],
+    ...(args.excludeUserIds?.length ? { userId: { notIn: [...args.excludeUserIds] } } : {}),
   };
   const after: Prisma.CommentWhereInput | undefined = args.after
     ? {
@@ -51,10 +53,10 @@ export async function findTopLevelComments(args: {
 }
 
 /** Live replies for a page of threads, in one query. */
-export async function findRepliesFor(parentIds: readonly string[]): Promise<CommentRow[]> {
+export async function findRepliesFor(parentIds: readonly string[], excludeUserIds: readonly string[] = []): Promise<CommentRow[]> {
   if (parentIds.length === 0) return [];
   return prisma.comment.findMany({
-    where: { parentId: { in: [...parentIds] }, deletedAt: null },
+    where: { parentId: { in: [...parentIds] }, deletedAt: null, ...(excludeUserIds.length ? { userId: { notIn: [...excludeUserIds] } } : {}) },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     take: 500,
     include: commentInclude,
