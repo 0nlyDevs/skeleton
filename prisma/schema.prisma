@@ -9,15 +9,13 @@
 //     BetterAuth's official layout verbatim — do not rename their fields.
 // ============================================================================
 
-/*
+/**
  * Prisma 7 generates TypeScript into the source tree instead of `node_modules`,
  * which is why `output` is required and why imports read
  * `@/generated/prisma/client` rather than `@prisma/client`.
- *
  * `moduleFormat = "cjs"` keeps the generated client requireable: the custom
  * server is bundled to CommonJS and PM2 loads a CJS ecosystem file, so an
  * ESM-only client would force `"type": "module"` on the whole project.
- *
  * There is no `binaryTargets` here on purpose — the Rust query engine is gone in
  * v7 (the driver adapter does the talking), so the per-platform binary tuning
  * that v6 needed is no longer required.
@@ -28,7 +26,7 @@ generator client {
   moduleFormat = "cjs"
 }
 
-/*
+/**
  * The connection URL lives in `prisma.config.ts` (v7 moved it there so the CLI
  * reads it from one typed place). `url` here would be a deprecated duplicate.
  */
@@ -132,11 +130,11 @@ model User {
   preferences    NotificationPreference?
   auditLogs      AuditLog[]
   uploads        Upload[]
-  reportsMade    Report[]             @relation("ReportReporter")
-  reportsHandled Report[]             @relation("ReportResolver")
+  reportsMade    Report[]                @relation("ReportReporter")
+  reportsHandled Report[]                @relation("ReportResolver")
   roomMembers    RoomMember[]
-  followers      Follow[]             @relation("UserFollowers")
-  following      Follow[]             @relation("UserFollowing")
+  followers      Follow[]                @relation("UserFollowers")
+  following      Follow[]                @relation("UserFollowing")
 
   @@index([role])
   @@index([banned])
@@ -199,16 +197,16 @@ model Verification {
 
 /// TOTP secret + hashed single-use recovery codes (BetterAuth two-factor).
 model TwoFactor {
-  id                     String    @id
-  secret                 String    @db.Text
-  backupCodes            String    @db.Text
-  userId                 String
-  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  verified               Boolean   @default(true)
-  failedVerificationCount Int      @default(0)
-  lockedUntil            DateTime?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                      String    @id
+  secret                  String    @db.Text
+  backupCodes             String    @db.Text
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   @@index([userId])
   @@map("twoFactor")
@@ -337,14 +335,14 @@ model Follow {
 }
 
 model Message {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   roomId    String
-  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   senderId  String
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  content   String   @db.Text
+  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content   String    @db.Text
   deletedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   // Drives the hot path: "latest N messages in this room, newer than X".
   @@index([roomId, createdAt])
@@ -368,9 +366,9 @@ model Notification {
 }
 
 model NotificationPreference {
-  id      String @id @default(cuid())
-  userId  String @unique
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailOnMessage Boolean @default(false)
   emailOnMention Boolean @default(true)
   emailOnSystem  Boolean @default(true)
@@ -401,9 +399,9 @@ model AuditLog {
 }
 
 model Upload {
-  id           String   @id @default(cuid())
+  id           String           @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   filename     String           @unique
   originalName String
   mime         String
@@ -422,24 +420,25 @@ model Upload {
 /// every entity the contest subject introduces, without a schema change.
 /// Targets are soft-deleted, so a report can never dangle.
 model Report {
-  id          String       @id @default(cuid())
-  reporterId  String
-  reporter    User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
-  targetType  String
-  targetId    String
-  reason      String       @db.Text
-  status      ReportStatus @default(OPEN)
-  resolvedById String?
-  resolvedBy  User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
-  resolutionNote String?   @db.Text
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String       @id @default(cuid())
+  reporterId     String
+  reporter       User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType     String
+  targetId       String
+  reason         String       @db.Text
+  status         ReportStatus @default(OPEN)
+  resolvedById   String?
+  resolvedBy     User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolutionNote String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   /// `(reporter, target)` collapsed into one column, set only while the report
   /// is OPEN. The unique index rejects a second flag from the same reporter;
   /// resolution clears it (MySQL treats each NULL as distinct), so the reporter
   /// can flag the target again if staff got it wrong or the content reoffends.
   duplicateKey String? @unique
+
   /// Standalone index for the `reporterId` FK: InnoDB otherwise borrows the
   /// leftmost prefix of whichever index happens to start with that column, and
   /// dropping such an index fails with "needed in a foreign key constraint"
