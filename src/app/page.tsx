@@ -5,6 +5,9 @@ import { LiveStats } from "@/components/landing/live-stats";
 import { StackSection } from "@/components/landing/stack-section";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { redirect } from "next/navigation";
+
+import { getAuthContext } from "@/lib/auth/session";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 
 /**
@@ -19,6 +22,8 @@ import { getDictionary, getLocale } from "@/lib/i18n/server";
  * changes at H0.
  */
 export default async function LandingPage() {
+  // Signed in: the home of a social app is the feed, not the sales pitch.
+  if (await getAuthContext()) redirect("/feed");
   const locale = await getLocale();
   const t = getDictionary(locale);
 

@@ -12,7 +12,23 @@ export interface PublicProfileDto {
   readonly followingCount: number;
   readonly postCount: number;
   readonly isFollowing: boolean;
+  /** The profile owner follows the viewer. */
+  readonly followsYou: boolean;
+  /** Both follow each other: shown as "Amis". */
+  readonly isFriend: boolean;
   /** True when the viewer is looking at their own profile. */
+  readonly isSelf: boolean;
+}
+
+/** One row of a followers/following list, with the viewer's relation to that person. */
+export interface ConnectionDto {
+  readonly id: string;
+  readonly name: string;
+  readonly username: string;
+  readonly image: string | null;
+  readonly isFollowing: boolean;
+  readonly followsYou: boolean;
+  readonly isFriend: boolean;
   readonly isSelf: boolean;
 }
 
@@ -24,7 +40,7 @@ export interface SearchUserDto {
   readonly isFollowing: boolean;
 }
 
-export function toPublicProfileDto(row: PublicProfileRow, isFollowing: boolean, isSelf = false): PublicProfileDto {
+export function toPublicProfileDto(row: PublicProfileRow, isFollowing: boolean, isSelf = false, followsYou = false): PublicProfileDto {
   return {
     id: row.id,
     name: row.name,
@@ -37,6 +53,8 @@ export function toPublicProfileDto(row: PublicProfileRow, isFollowing: boolean, 
     followingCount: row._count.following,
     postCount: row._count.posts,
     isFollowing,
+    followsYou,
+    isFriend: isFollowing && followsYou,
     isSelf,
   };
 }
