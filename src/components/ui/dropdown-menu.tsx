@@ -1,7 +1,7 @@
 "use client";
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
@@ -101,5 +101,35 @@ export function DropdownMenuSeparator({
       className={cn("-mx-1 my-1 h-px bg-border", className)}
       {...props}
     />
+  );
+}
+
+export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
+
+export function DropdownMenuSubTrigger({ className, children, ...props }: ComponentProps<typeof DropdownMenuPrimitive.SubTrigger>) {
+  return (
+    <DropdownMenuPrimitive.SubTrigger
+      className={cn(
+        "relative flex cursor-default select-none items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm outline-none",
+        "data-[highlighted]:bg-accent data-[state=open]:bg-accent data-[highlighted]:text-accent-foreground",
+        "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:opacity-70",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronRight className="ml-auto" aria-hidden />
+    </DropdownMenuPrimitive.SubTrigger>
+  );
+}
+
+export function DropdownMenuSubContent({ className, ...props }: ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.SubContent
+        className={cn("z-50 min-w-44 overflow-hidden rounded-xl border border-border/70 bg-popover p-1 text-popover-foreground shadow-float", className)}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
   );
 }

@@ -39,6 +39,7 @@ import {
 } from "../notifications/notifications.service";
 import { broadcastEngagement } from "./posts.engagement";
 import { findViewerBookmarks } from "../bookmarks/bookmarks.repository";
+import { findFollow as isFollowing, findFollowerIdsAmong } from "../follows/follows.repository";
 import { findViewerPollVotes } from "../polls/polls.repository";
 import { countReactionsByType, findViewerReactions } from "../reactions/reactions.repository";
 import { findAttachableImages } from "../uploads/uploads.repository";
@@ -171,6 +172,7 @@ export async function loadReadablePost(id: string, viewer: AuthUser | null): Pro
   const staff = viewer !== null && isStaff(viewer);
   if (row.deletedAt && !staff) throw new NotFoundError();
   if (!row.published && !staff && row.userId !== viewer?.id) throw new NotFoundError();
+  if (!(await audienceAllows(row, viewer))) throw new NotFoundError();
 
   if (row.group) {
     const access = await groupAccessForPost(row, viewer);
@@ -207,8 +209,10 @@ export function isPublicPost(row: { published: boolean; deletedAt: Date | null }
  * for a timeline post, the group's room for a group post, nothing for a draft
  * or a removed post.
  */
-export function postAudience(row: { published: boolean; deletedAt: Date | null; groupId: string | null }): string[] {
+export function postAudience(row: { published: boolean; deletedAt: Date | null; groupId: string | null; audience?: string }): string[] {
   if (!isPublicPost(row)) return [];
+  // Follower-only and private posts are never pushed to shared feed rooms.
+  if (!row.groupId && row.audience && row.audience !== "PUBLIC") return [];
   return row.groupId ? [groupRoom(row.groupId)] : [FEED_ROOM];
 }
 
@@ -283,7 +287,7 @@ export async function listFeed(
   viewer: AuthUser | null,
   followingIds?: readonly string[],
 ): Promise<FeedPage> {
-  const conditions: Prisma.PostWhereInput[] = [{ published: true, deletedAt: null }];
+  const conditions: Prisma.PostWhereInput[] = [{ published: true, deletedAt: null }, audienceFilter(viewer)];
   const myGroups = viewer ? await findActiveGroupIds(viewer.id) : [];
 
   if (query.groupSlug) {
@@ -336,8 +340,36 @@ export async function homeVisibility(viewer: AuthUser | null): Promise<Prisma.Po
   return {
     published: true,
     deletedAt: null,
-    OR: [{ groupId: null }, ...(myGroups.length > 0 ? [{ groupId: { in: myGroups } }] : [])],
+    AND: [
+      { OR: [{ groupId: null }, ...(myGroups.length > 0 ? [{ groupId: { in: myGroups } }] : [])] },
+      audienceFilter(viewer),
+    ],
   };
+}
+
+/**
+ * The audience rule as a Prisma condition: public posts for everyone, a
+ * follower-only post for the author's followers, a private one for its author.
+ */
+export function audienceFilter(viewer: AuthUser | null): Prisma.PostWhereInput {
+  if (!viewer) return { audience: "PUBLIC" };
+  if (isStaff(viewer)) return {};
+  return {
+    OR: [
+      { audience: "PUBLIC" },
+      { userId: viewer.id },
+      { audience: "FOLLOWERS", user: { followers: { some: { followerId: viewer.id } } } },
+    ],
+  };
+}
+
+/** The same rule for one loaded post. */
+async function audienceAllows(row: { audience: string; userId: string; groupId: string | null }, viewer: AuthUser | null): Promise<boolean> {
+  if (row.groupId || row.audience === "PUBLIC") return true;
+  if (!viewer) return false;
+  if (viewer.id === row.userId || isStaff(viewer)) return true;
+  if (row.audience === "PRIVATE") return false;
+  return isFollowing(viewer.id, row.userId);
 }
 
 export interface MapPostDto {
@@ -459,7 +491,18 @@ async function assertAttachable(mediaIds: readonly string[], userId: string, kee
 }
 
 /** Who may receive a mention from this post: only people able to read it. */
-export function mentionAudience(groupId: string | null): ((ids: string[]) => Promise<Set<string>>) | undefined {
+export function mentionAudience(
+  groupId: string | null,
+  post?: { audience: string; userId: string },
+): ((ids: string[]) => Promise<Set<string>>) | undefined {
+  // A follower-only post mentions followers only; a private one, nobody.
+  if (!groupId && post && post.audience !== "PUBLIC") {
+    return async (ids) => {
+      if (post.audience === "PRIVATE") return new Set();
+      const followers = new Set(await findFollowerIdsAmong(post.userId, ids));
+      return new Set(ids.filter((id) => followers.has(id)));
+    };
+  }
   if (!groupId) return undefined;
   return async (ids) => {
     const group = await findGroupById(groupId);
@@ -498,7 +541,7 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
   if (input.repostOfId) {
     let target = await loadReadablePost(input.repostOfId, actor.user);
     if (target.repostOfId) target = await loadReadablePost(target.repostOfId, actor.user);
-    const shareable = isPublicPost(target) && (target.group === null || target.group.privacy === "PUBLIC");
+    const shareable = isPublicPost(target) && target.audience === "PUBLIC" && (target.group === null || target.group.privacy === "PUBLIC");
     if (!shareable) throw new ForbiddenError("This post cannot be shared.");
     if (input.groupId && target.groupId === input.groupId) {
       throw new BadRequestError("This post is already in that group.");
@@ -515,6 +558,8 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
       title: input.title ?? deriveTitle(input.body, repostOfId ? "Partage" : "Photo"),
       body: input.body,
       published: repostOfId ? true : input.published,
+      // Group posts follow the group's privacy; the audience is for the timeline.
+      audience: input.groupId ? "PUBLIC" : input.audience,
       tags: input.tags,
       groupId: input.groupId ?? null,
       repostOfId,
@@ -540,7 +585,7 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
     input.mediaIds,
   );
 
-  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(row.groupId));
+  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(row.groupId, row));
   const fresh = await syncPostMentions(row.id, actor.user.id, mentioned);
   if (row.published) notifyNewMentions(fresh, actor.user, row.id, input.body);
 
@@ -601,6 +646,10 @@ export async function updatePostForActor(
     data.tags = input.tags;
     changed.push("tags");
   }
+  if (input.audience !== undefined && !existing.groupId && input.audience !== existing.audience) {
+    data.audience = input.audience;
+    changed.push("audience");
+  }
   if (input.location !== undefined) {
     data.placeName = input.location?.name ?? null;
     data.latitude = input.location ? roundCoordinate(input.location.latitude) : null;
@@ -624,7 +673,7 @@ export async function updatePostForActor(
   const row = Object.keys(data).length > 0 ? await updatePost(id, data) : ((await findPostById(id)) ?? existing);
 
   if (changed.includes("body")) {
-    const mentioned = await resolveMentions(nextBody, actor.user.id, mentionAudience(row.groupId));
+    const mentioned = await resolveMentions(nextBody, actor.user.id, mentionAudience(row.groupId, row));
     const fresh = await syncPostMentions(row.id, actor.user.id, mentioned);
     if (row.published) notifyNewMentions(fresh, actor.user, row.id, nextBody);
   }

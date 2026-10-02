@@ -55,7 +55,8 @@ export const publicProfileSelect = {
     select: {
       followers: true,
       following: true,
-      posts: { where: { published: true, deletedAt: null, groupId: null } },
+      // The public count: follower-only and private posts are not advertised.
+      posts: { where: { published: true, deletedAt: null, groupId: null, audience: "PUBLIC" } },
     },
   },
 } satisfies Prisma.UserSelect;

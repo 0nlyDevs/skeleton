@@ -65,6 +65,8 @@ export interface PostDto {
   /** Set when the post was a share whose original no longer exists at all. */
   readonly wasRepost: boolean;
   readonly shareCount: number;
+  /** Who can read it: everyone, the author's followers, or the author alone. */
+  readonly audience: "PUBLIC" | "FOLLOWERS" | "PRIVATE";
   readonly poll: PollDto | null;
   readonly location: { readonly name: string; readonly latitude: number; readonly longitude: number } | null;
   readonly editedAt: string | null;
@@ -157,6 +159,7 @@ export function toPostDto(row: PostWithAuthor): PostDto {
     repostOf: row.repostOf ? toRepostedDto(row.repostOf) : null,
     wasRepost: false,
     shareCount: row.shareCount,
+    audience: row.audience,
     poll: row.poll ? toPollDto(row.poll) : null,
     location:
       row.placeName && row.latitude !== null && row.longitude !== null

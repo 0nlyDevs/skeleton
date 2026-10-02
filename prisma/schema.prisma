@@ -266,15 +266,16 @@ model TwoFactor {
 
 /// Template entity. Clone this module for every subject-specific resource.
 model Post {
-  id        String    @id @default(cuid())
+  id        String       @id @default(cuid())
   title     String
-  body      String    @db.Text
+  body      String       @db.Text
   tags      Json?
-  published Boolean   @default(false)
+  published Boolean      @default(false)
+  audience  PostAudience @default(PUBLIC)
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
   deletedAt DateTime?
 
   /// Denormalised counters, maintained in the same transaction as the row
@@ -367,6 +368,15 @@ model PollVote {
   @@index([pollId, userId])
   @@index([userId])
   @@map("pollVote")
+}
+
+/// Who can read a timeline post (group posts follow the group's privacy).
+enum PostAudience {
+  PUBLIC
+  /// The author's followers (and the author).
+  FOLLOWERS
+  /// The author alone.
+  PRIVATE
 }
 
 /// Who can open a published page. Drafts (unpublished) are owner-only.

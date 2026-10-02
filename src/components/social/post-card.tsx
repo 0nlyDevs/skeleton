@@ -17,13 +17,18 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
+import type { MessageKey } from "@/lib/i18n";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
+import { AUDIENCES, AudienceIcon, type Audience } from "./audience";
 import { MediaGrid } from "./media-grid";
 import { PollView } from "./poll-view";
 import { PostEditDialog } from "./post-edit-dialog";
@@ -72,7 +77,7 @@ export function PostCard({
     ? post.repostOf.available
       ? post.repostOf
       : null
-    : post.published && (post.group === null || post.group.privacy === "PUBLIC")
+    : post.published && post.audience === "PUBLIC" && (post.group === null || post.group.privacy === "PUBLIC")
       ? {
           id: post.id,
           available: true,
@@ -85,16 +90,17 @@ export function PostCard({
         }
       : null;
 
-  const shareNow = async () => {
-    if (!shareTarget) return;
+  const changeAudience = async (audience: Audience) => {
+    if (audience === post.audience) return;
     try {
-      const shared = await sharePost(shareTarget.id);
-      toast.success(t("share.done"));
-      onShared?.(shared);
+      const response = await apiFetch<{ data: FeedItemDto }>(`/api/posts/${post.id}`, { method: "PATCH", body: { audience } });
+      onChange(response.data);
+      toast.success(t("audience.changed"));
     } catch (error) {
       toast.error(describeApiError(error, t));
     }
   };
+
 
   // Clicking the post's content opens it (with its comments) in place; links,
   // buttons and images keep their own behaviour.
@@ -193,10 +199,14 @@ export function PostCard({
               </Link>
             ) : null}
             <span aria-hidden>·</span>
-            {post.group?.privacy === "PRIVATE" ? (
-              <Lock className="size-3" aria-label={t("groups.private")} />
+            {post.group ? (
+              post.group.privacy === "PRIVATE" ? (
+                <Lock className="size-3" aria-label={t("groups.private")} />
+              ) : (
+                <Globe className="size-3" aria-label={t("groups.public")} />
+              )
             ) : (
-              <Globe className="size-3" aria-label={t("groups.public")} />
+              <AudienceIcon audience={post.audience} />
             )}
           </p>
         </div>
@@ -217,6 +227,23 @@ export function PostCard({
                 {post.viewerSaved ? <BookmarkCheck /> : <Bookmark />}
                 {post.viewerSaved ? t("post.unbookmark") : t("post.bookmark")}
               </DropdownMenuItem>
+            ) : null}
+            {isAuthor && !post.group ? (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <AudienceIcon audience={post.audience} className="size-4" />
+                  {t("audience.change")}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="min-w-48">
+                  {AUDIENCES.map((audience) => (
+                    <DropdownMenuItem key={audience} onSelect={() => void changeAudience(audience)}>
+                      <AudienceIcon audience={audience} className="size-4" />
+                      {t(`audience.${audience}` as MessageKey)}
+                      {audience === post.audience ? <Check className="ml-auto" /> : null}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             ) : null}
             {isAuthor ? (
               <DropdownMenuItem onSelect={() => setEditing(true)}>

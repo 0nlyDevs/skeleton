@@ -133,7 +133,7 @@ export async function createComment(
     parentId: parent?.id ?? null,
     body: input.body,
   });
-  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(post.groupId));
+  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(post.groupId, post));
   await syncCommentMentions(inserted.id, actor.user.id, mentioned);
   const row = (await findCommentById(inserted.id)) ?? inserted;
   const comment = toCommentDto(row, [], await staffRolesFor(post.groupId, [actor.user.id]));
@@ -190,7 +190,7 @@ export async function editComment(
 
   const post = await loadReadablePost(existing.postId, actor.user);
   await updateCommentBody(id, input.body);
-  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(post.groupId));
+  const mentioned = await resolveMentions(input.body, actor.user.id, mentionAudience(post.groupId, post));
   const fresh = await syncCommentMentions(id, actor.user.id, mentioned);
   for (const userId of fresh) {
     notifyInBackground(
