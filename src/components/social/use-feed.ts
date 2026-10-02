@@ -144,14 +144,16 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
       const post = payload.post;
       if (filter.authorId && post.author.id !== filter.authorId) return;
       if (filter.group && post.group?.id !== filter.group.id) return;
-      if (!filter.group && !filter.authorId && filter.scope === "following" && post.author.id !== viewerId) return;
+      const followingOnly = !filter.group && !filter.authorId && filter.scope === "following";
 
       if (known.current.has(post.id)) {
         const { viewerReaction: _r, viewerCanModerate: _m, viewerCanInteract: _i, viewerSaved: _s, ...shared } = post;
         patch(post.id, shared);
         return;
       }
-      if (payload.kind === "updated" || filter.saved) return;
+      // Following never shows one's own posts, and which authors are followed
+      // is the server's call: new posts there arrive with the next load.
+      if (payload.kind === "updated" || filter.saved || followingOnly) return;
       if (post.author.id === viewerId) {
         // Our own post (from this tab it is already known; from another tab
         // it appears at once, no pill).

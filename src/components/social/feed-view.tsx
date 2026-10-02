@@ -3,6 +3,8 @@
 import { ArrowUp, Loader2, Newspaper } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { toast } from "sonner";
+
 import { EmptyState } from "@/components/feedback/empty-state";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
@@ -68,7 +70,7 @@ export function FeedView({
 
   return (
     <div className="flex flex-col gap-4">
-      {composer && viewer ? <PostComposer viewer={viewer} group={composerGroup} onPublished={feed.insert} /> : null}
+      {composer && viewer ? <PostComposer viewer={viewer} group={composerGroup} onPublished={(post) => (scope === "following" && !filter.group ? toast.success(t("feed.posted_elsewhere")) : feed.insert(post))} /> : null}
 
       {showTabs && viewer ? (
         <div role="tablist" aria-label={t("feed.title")} className="flex gap-1 rounded-2xl bg-card p-1 shadow-panel">
@@ -118,7 +120,7 @@ export function FeedView({
           onChange={(post) => (filter.saved && !post.viewerSaved ? feed.remove(post.id) : feed.replace(post))}
           onRemoved={feed.remove}
           onOpenComments={setCommentsFor}
-          onShared={feed.insert}
+          onShared={(post) => (scope === "following" && !filter.group ? undefined : feed.insert(post))}
         />
       ))}
 
