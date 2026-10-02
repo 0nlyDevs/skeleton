@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { io, type Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 import { publicEnv } from "@/lib/env.public";
 import type { ClientToServerEvents, ServerToClientEvents } from "@/lib/socket/events";
+import { HybridSocket } from "@/lib/socket/hybrid-client";
 
 /**
  * `socket`     — connected; every update is pushed.
@@ -66,24 +67,10 @@ function ensureSocket(): AppClientSocket | null {
 
   setStatus(navigator.onLine === false ? "offline" : "connecting");
 
-  socket = io({
-    path: "/api/socket",
-    // Same origin: the session cookie rides along with the handshake.
-    withCredentials: true,
-    // Long-polling first, then upgrade to WebSocket when the path allows it.
-    // Behind cPanel/Passenger (Apache) the Upgrade header never reaches the
-    // app: a WebSocket-only client would stay disconnected forever, while
-    // polling works everywhere and upgrades silently where it can.
-    transports: ["polling", "websocket"],
-    upgrade: true,
-    tryAllTransports: true,
-    reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 1_000,
-    reconnectionDelayMax: 10_000,
-    randomizationFactor: 0.5,
-    timeout: 10_000,
-  });
+  // The server picks the transport (Socket.IO, or the short-poll relay on
+  // hosts that cap concurrent requests); the API is the same either way.
+  socket = new HybridSocket() as unknown as AppClientSocket;
+  socket.connect();
 
   socket.on("connect", () => {
     failures = 0;

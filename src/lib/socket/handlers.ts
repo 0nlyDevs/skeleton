@@ -47,6 +47,7 @@ import {
 } from "./events";
 import { FEED_ROOM, GLOBAL_PRESENCE_ROOM, chatRoom, groupRoom, parseRoom, postRoom, presenceRoom, userRoom } from "./rooms";
 import { registerCallHandlers } from "./call-handlers";
+import type { RelayClient } from "./relay";
 import { localizeForSocket } from "./locale";
 import { markConnected, markDisconnected, presenceSnapshot } from "./presence";
 
@@ -184,7 +185,17 @@ function registerPublicHandlers(socket: AppSocket, user: AuthUser | null, log: R
   });
 }
 
-async function onConnection(io: AppSocketServer, socket: AppSocket): Promise<void> {
+/**
+ * Attach a relay (short-poll) client: same identity rules, same handlers as a
+ * Socket.IO connection. The relay client implements the subset of the socket
+ * API these handlers use (`on`, `emit`, `join`, `leave`, `rooms`, `data`,
+ * `handshake`, `id`, `disconnect`).
+ */
+export async function acceptRelayClient(io: AppSocketServer | null, client: RelayClient): Promise<void> {
+  await onConnection(io, client as unknown as AppSocket);
+}
+
+async function onConnection(io: AppSocketServer | null, socket: AppSocket): Promise<void> {
   const { identity } = socket.data;
   const log = logger.child({ socketId: socket.id, userId: identity?.userId ?? "guest" });
 

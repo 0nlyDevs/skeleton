@@ -23,6 +23,9 @@ import next from "next";
 
 import { env } from "./src/lib/env";
 import { logger } from "./src/lib/logger";
+import { acceptRelayClient, type AppSocketServer } from "./src/lib/socket/handlers";
+import { getRelayHub } from "./src/lib/socket/relay";
+import { handleRelayRequest } from "./src/lib/socket/relay-http";
 import { attachRealtimeServer } from "./src/lib/socket/server";
 
 const dev = !env.isProduction;
@@ -38,6 +41,7 @@ async function main(): Promise<void> {
 
   const handle = app.getRequestHandler();
 
+  let io: AppSocketServer | null = null;
   const server = createServer((request, response) => {
     /*
      * Publish the socket address to the application.
@@ -54,6 +58,17 @@ async function main(): Promise<void> {
       request.headers["x-connection-ip"] = request.socket.remoteAddress;
     }
 
+    // Realtime relay (short polls): answered here, before Next, so it costs
+    // a few milliseconds and never goes through page rendering.
+    if (request.url?.startsWith("/api/realtime/")) {
+      void handleRelayRequest(request, response, io).catch((error: unknown) => {
+        logger.error("relay request crashed", { error });
+        if (!response.headersSent) response.statusCode = 500;
+        response.end();
+      });
+      return;
+    }
+
     // A rejected request handler must not take the process down with it.
     void handle(request, response).catch((error: unknown) => {
       logger.error("request handler failed", { error, url: request.url });
@@ -68,7 +83,9 @@ async function main(): Promise<void> {
   });
 
   // Realtime shares the HTTP server; see `lib/socket/server.ts`.
-  const io = attachRealtimeServer(server);
+  const realtime = attachRealtimeServer(server);
+  io = realtime;
+  getRelayHub().setConnectionHandler((client) => acceptRelayClient(io, client));
 
   // A stalled socket must not hold a worker open forever.
   server.headersTimeout = 65_000;
@@ -92,7 +109,7 @@ async function main(): Promise<void> {
     logger.info("shutting down", { signal });
 
     // Stop accepting work, then let in-flight requests finish.
-    io.close();
+    realtime.close();
     server.close();
 
     try {
