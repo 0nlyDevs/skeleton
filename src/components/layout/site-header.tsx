@@ -1,11 +1,13 @@
 import Link from "@/components/ui/link";
 
 import { Button } from "@/components/ui/button";
+import { getAuthContext } from "@/lib/auth/session";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 
 import { Brand } from "./brand";
 import { LocaleToggle } from "./locale-toggle";
 import { ThemeToggle } from "./theme-toggle";
+import { UserMenu } from "./user-menu";
 
 /**
  * Public header for the landing and legal pages.
@@ -15,8 +17,9 @@ import { ThemeToggle } from "./theme-toggle";
  * swapping after hydration. Only the two controls need client JavaScript.
  */
 export async function SiteHeader() {
-  const locale = await getLocale();
+  const [locale, context] = await Promise.all([getLocale(), getAuthContext()]);
   const t = getDictionary(locale);
+  const user = context?.user ?? null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
@@ -62,12 +65,18 @@ export async function SiteHeader() {
           </Button>
           <LocaleToggle />
           <ThemeToggle />
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/login">{t["auth.login.submit"]}</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/register">{t["auth.login.create"]}</Link>
-          </Button>
+          {user ? (
+            <UserMenu id={user.id} username={user.username ?? null} name={user.name} email={user.email} image={user.image ?? null} role={user.role} />
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link href="/login">{t["auth.login.submit"]}</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/register">{t["auth.login.create"]}</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
