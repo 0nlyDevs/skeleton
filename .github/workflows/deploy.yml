@@ -12,15 +12,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
-  BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
-  SKIP_MIGRATIONS: "1"
-
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
+      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
+      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,6 +39,10 @@ jobs:
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
+      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
+      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -61,6 +64,10 @@ jobs:
   prisma:
     name: Prisma schema
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
+      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
+      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -83,6 +90,10 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
+      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
+      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -107,6 +118,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
+      BETTER_AUTH_SECRET: "ci-placeholder-secret-never-used-for-signing"
+      SKIP_MIGRATIONS: "1"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -149,4 +164,4 @@ jobs:
           printf -v APP_DIR_ESCAPED '%q' "$APP_DIR"
           ssh -p "${{ secrets.SSH_PORT }}" \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "set -e; cd ${APP_DIR_ESCAPED}; npx prisma migrate deploy"
+            "set -e; cd ${APP_DIR_ESCAPED}; test -x node_modules/.bin/prisma || { echo 'no node_modules/.bin/prisma in APP_DIR - the host has no usable Prisma install' >&2; exit 1; }; npm run db:deploy"
