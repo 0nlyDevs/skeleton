@@ -16,6 +16,7 @@ export const userProfileSelect = {
   firstName: true,
   lastName: true,
   birthDate: true,
+  birthDateEncrypted: true,
   email: true,
   image: true,
   bio: true,
@@ -23,6 +24,8 @@ export const userProfileSelect = {
   emailVerified: true,
   twoFactorEnabled: true,
   createdAt: true,
+  showPresence: true,
+  autoLocation: true,
 } satisfies Prisma.UserSelect;
 
 export const adminUserSelect = {
@@ -45,7 +48,13 @@ export const publicProfileSelect = {
   image: true,
   bio: true,
   createdAt: true,
-  _count: { select: { followers: true, following: true } },
+  _count: {
+    select: {
+      followers: true,
+      following: true,
+      posts: { where: { published: true, deletedAt: null, groupId: null } },
+    },
+  },
 } satisfies Prisma.UserSelect;
 
 export type PublicProfileRow = Prisma.UserGetPayload<{ select: typeof publicProfileSelect }>;
@@ -225,4 +234,8 @@ export async function deleteOtherSessions(userId: string, keepSessionId: string)
 export async function deleteUserSessions(userId: string): Promise<number> {
   const { count } = await prisma.session.deleteMany({ where: { userId } });
   return count;
+}
+
+export async function countCredentialAccounts(userId: string): Promise<number> {
+  return prisma.account.count({ where: { userId, providerId: "credential", password: { not: null } } });
 }

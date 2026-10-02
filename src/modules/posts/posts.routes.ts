@@ -8,6 +8,7 @@
  */
 
 import { apiRoute, publicRoute } from "@/lib/api/route";
+import { rankForYou } from "@/modules/recommendations/recommendations.service";
 import { jsonCreated, jsonOk, noContent } from "@/lib/api/response";
 import { STAFF_ROLES } from "@/lib/auth/roles";
 import { UnauthenticatedError } from "@/lib/errors";
@@ -74,6 +75,11 @@ export const restorePostRoute = apiRoute({
 export const listFeedRoute = publicRoute({
   query: feedQuerySchema,
   handler: async ({ query, auth }) => {
+    if (query.scope === "for_you") {
+      if (!auth) return jsonOk(await listFeed({ ...query, scope: "all" }, null));
+      const offset = query.cursor?.startsWith("r:") ? Number(query.cursor.slice(2)) || 0 : 0;
+      return jsonOk(await rankForYou(auth.user, Math.min(offset, 400), query.limit));
+    }
     if (query.scope === "following") {
       if (!auth) throw new UnauthenticatedError();
       const followingIds = await getFollowingIds(auth.user.id);

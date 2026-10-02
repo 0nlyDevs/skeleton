@@ -61,7 +61,7 @@ export function TwoFactorForm() {
         return;
       }
 
-      router.replace("/dashboard");
+      router.replace("/feed");
       router.refresh();
     } catch {
       setErrorKey("auth.login.network");

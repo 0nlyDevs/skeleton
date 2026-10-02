@@ -23,31 +23,47 @@ import { ServiceUnavailableError } from "@/lib/errors";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
-import { AI_SYSTEM_PROMPT, type ChatMessage } from "./prompts";
+import { AI_SYSTEM_PROMPT, type ChatMessage, type ToolCall, type ToolDefinition } from "./prompts";
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
 export interface CompletionRequest {
   readonly messages: readonly ChatMessage[];
+  /** Server-defined, read-only tools the model may ask the server to run. */
+  readonly tools?: readonly ToolDefinition[];
   readonly maxTokens?: number;
   readonly temperature?: number;
 }
 
 export interface CompletionResult {
   readonly text: string;
+  /** Tool invocations requested by the model; empty for a plain answer. */
+  readonly toolCalls: readonly ToolCall[];
   readonly model: string;
   readonly usage: { readonly promptTokens: number; readonly completionTokens: number };
 }
 
 interface LlmChoice {
+  finish_reason?: string;
   // Most providers send a string; some send typed content parts.
-  message?: { content?: string | Array<{ type?: string; text?: string }> | null };
+  message?: {
+    content?: string | Array<{ type?: string; text?: string }> | null;
+    tool_calls?: ToolCall[];
+  };
 }
 
 interface LlmResponse {
   choices?: LlmChoice[];
   usage?: { prompt_tokens?: number; completion_tokens?: number };
   error?: { message?: string };
+}
+
+/** The configured model does not accept tool definitions. */
+export class ToolsUnsupportedError extends Error {
+  constructor() {
+    super("The AI model does not support tool calling.");
+    this.name = "ToolsUnsupportedError";
+  }
 }
 
 /** A non-2xx answer from the provider, with its status kept for routing. */
@@ -111,6 +127,7 @@ async function callModel(
       messages: request.messages,
       max_tokens: request.maxTokens ?? 600,
       temperature: request.temperature ?? 0.4,
+      ...(request.tools && request.tools.length > 0 ? { tools: request.tools, tool_choice: "auto" } : {}),
     }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     cache: "no-store",
@@ -125,14 +142,19 @@ async function callModel(
   }
 
   const data = (await response.json()) as LlmResponse;
-  const text = extractText(data.choices?.[0]?.message?.content);
+  const message = data.choices?.[0]?.message;
+  const text = extractText(message?.content);
+  const toolCalls = (message?.tool_calls ?? []).filter(
+    (call) => call?.type === "function" && typeof call.function?.name === "string",
+  );
 
-  if (!text) {
+  if (!text && toolCalls.length === 0) {
     throw new Error("AI provider returned an empty completion.");
   }
 
   return {
-    text,
+    text: text ?? "",
+    toolCalls,
     model,
     usage: {
       promptTokens: data.usage?.prompt_tokens ?? 0,
@@ -158,6 +180,16 @@ export async function complete(request: CompletionRequest): Promise<CompletionRe
   try {
     return await callModel(primary, request);
   } catch (primaryError) {
+    if (
+      request.tools &&
+      primaryError instanceof AiProviderError &&
+      [400, 404, 422].includes(primaryError.status)
+    ) {
+      // The model rejected the `tools` parameter; the caller degrades to
+      // retrieval-in-prompt instead of failing.
+      throw new ToolsUnsupportedError();
+    }
+
     if (primaryError instanceof AiProviderError && primaryError.isCredentialError) {
       // Retrying with the fallback model would use the same refused key.
       logger.error("AI provider rejected AI_API_KEY; check the key and AI_BASE_URL", {

@@ -14,6 +14,10 @@
 
 import {
   SOCKET_EVENTS,
+  type MessageHiddenPayload,
+  type ProfileUpdatedPayload,
+  type PresenceStatePayload,
+  type RoomReadPayload,
   type CommentEventPayload,
   type FeedPostPayload,
   type MessagePayload,
@@ -25,7 +29,7 @@ import {
   type TypingPayload,
 } from "./events";
 import { getSocketServer } from "./registry";
-import { FEED_ROOM, chatRoom, postRoom, userRoom } from "./rooms";
+import { chatRoom, groupRoom, postRoom, presenceRoom, userRoom } from "./rooms";
 
 function publish(room: string, event: string, payload: unknown): void {
   getSocketServer()?.to(room).emit(event, payload);
@@ -75,20 +79,34 @@ export function disconnectUserSockets(userId: string): void {
   getSocketServer()?.in(userRoom(userId)).disconnectSockets(true);
 }
 
-/** A published post appeared, changed or disappeared from the public feed. */
-export function publishFeedPost(payload: FeedPostPayload): void {
-  publish(FEED_ROOM, SOCKET_EVENTS.feedPost, payload);
+/**
+ * A post appeared, changed or disappeared, sent only to the feeds allowed to
+ * show it: the public feed room, or one group's room. A private group's post
+ * never reaches a socket outside that group.
+ */
+export function publishFeedPost(payload: FeedPostPayload, audience: readonly string[]): void {
+  const server = getSocketServer();
+  if (!server || audience.length === 0) return;
+  server.to([...audience]).emit(SOCKET_EVENTS.feedPost, payload);
 }
 
 /**
- * New counters for a post, to its open thread and — when the post is public —
- * to every feed card showing it. One emit per room, whatever the audience size.
+ * New counters for a post, to its open thread and to every feed room showing
+ * it. One emit per room, whatever the audience size.
  */
-export function publishEngagement(payload: PostEngagementPayload, isPublic: boolean): void {
+export function publishEngagement(payload: PostEngagementPayload, audience: readonly string[]): void {
   const server = getSocketServer();
   if (!server) return;
-  const rooms = isPublic ? [postRoom(payload.postId), FEED_ROOM] : [postRoom(payload.postId)];
-  server.to(rooms).emit(SOCKET_EVENTS.postEngagement, payload);
+  server.to([postRoom(payload.postId), ...audience]).emit(SOCKET_EVENTS.postEngagement, payload);
+}
+
+/** Add or remove a user's open sockets from a group's live room. */
+export function syncGroupRoom(userId: string, groupId: string, join: boolean): void {
+  const server = getSocketServer();
+  if (!server) return;
+  const target = server.in(userRoom(userId));
+  if (join) target.socketsJoin(groupRoom(groupId));
+  else target.socketsLeave(groupRoom(groupId));
 }
 
 export function publishComment(payload: CommentEventPayload): void {
@@ -98,4 +116,32 @@ export function publishComment(payload: CommentEventPayload): void {
 /** Current number of sockets in a room, straight from the adapter. */
 export function roomSize(roomName: string): number {
   return getSocketServer()?.sockets.adapter.rooms.get(roomName)?.size ?? 0;
+}
+
+/** An edit or a "deleted for everyone" tombstone, to the whole conversation. */
+export function publishMessageUpdated(roomId: string, payload: MessagePayload): void {
+  publish(chatRoom(roomId), SOCKET_EVENTS.messageUpdated, payload);
+}
+
+/** "Deleted for me" is private: only the caller's own tabs hear about it. */
+export function publishMessageHidden(userId: string, payload: MessageHiddenPayload): void {
+  publish(userRoom(userId), SOCKET_EVENTS.messageHidden, payload);
+}
+
+export function publishRoomRead(payload: RoomReadPayload): void {
+  publish(chatRoom(payload.roomId), SOCKET_EVENTS.roomRead, payload);
+}
+
+export function publishPresenceState(payload: PresenceStatePayload): void {
+  publish(presenceRoom(payload.userId), SOCKET_EVENTS.presenceState, payload);
+}
+
+/** Put a user's open sockets into a conversation's live channel. */
+export function grantRoomMembership(userId: string, roomId: string): void {
+  getSocketServer()?.in(userRoom(userId)).socketsJoin(chatRoom(roomId));
+}
+
+/** Public identity changes are public data: everyone connected may re-render. */
+export function publishProfileUpdated(payload: ProfileUpdatedPayload): void {
+  getSocketServer()?.emit(SOCKET_EVENTS.profileUpdated, payload);
 }

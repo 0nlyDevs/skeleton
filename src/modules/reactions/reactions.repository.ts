@@ -100,17 +100,17 @@ export async function findViewerReactions(
 
 export async function findPostCounters(
   postId: string,
-): Promise<{ commentCount: number; reactionCount: number } | null> {
+): Promise<{ commentCount: number; reactionCount: number; shareCount: number } | null> {
   return prisma.post.findUnique({
     where: { id: postId },
-    select: { commentCount: true, reactionCount: true },
+    select: { commentCount: true, reactionCount: true, shareCount: true },
   });
 }
 
 /** Who reacted to a post, newest first, for the "who reacted" list. */
 export async function findReactors(postId: string, take: number) {
   return prisma.postReaction.findMany({
-    where: { postId },
+    where: { postId, user: { banned: false } },
     orderBy: { createdAt: "desc" },
     take,
     select: {

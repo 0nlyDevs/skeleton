@@ -9,10 +9,17 @@
 import { type Prisma } from "@/generated/prisma/client";
 import { createHash } from "node:crypto";
 
+import { encryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
 
 export const messageSenderSelect = {
-  sender: { select: { id: true, name: true, image: true } },
+  sender: { select: { id: true, name: true, username: true, image: true } },
+  upload: { select: { id: true, width: true, height: true } },
+  reactions: {
+    where: { user: { banned: false } },
+    orderBy: { createdAt: "asc" },
+    select: { userId: true, type: true },
+  },
 } satisfies Prisma.MessageInclude;
 
 export const roomListInclude = {
@@ -68,7 +75,13 @@ export async function findRoomsForUser(userId: string): Promise<RoomListRow[]> {
     where: { OR: [{ id: globalRoomId() }, { members: { some: { userId } } }] },
     orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
     take: 100,
-    include: roomListInclude,
+    include: {
+      messages: {
+        ...roomListInclude.messages,
+        // The preview never shows a message the user deleted for themselves.
+        where: { hiddenFor: { none: { userId } } },
+      },
+    },
   });
 }
 
@@ -102,10 +115,12 @@ export async function createMessage(data: {
   roomId: string;
   senderId: string;
   content: string;
+  uploadId?: string | null;
 }): Promise<MessageWithSender> {
   return prisma.$transaction(async (tx) => {
+    // Content is encrypted at rest; `toMessageDto` decrypts on the way out.
     const message = await tx.message.create({
-      data,
+      data: { ...data, content: data.content ? encryptField(data.content) : "" },
       include: messageSenderSelect,
     });
     await tx.room.update({ where: { id: data.roomId }, data: { updatedAt: message.createdAt } });
@@ -119,6 +134,7 @@ export async function createMessage(data: {
  */
 export async function findMessagesSince(args: {
   roomId: string;
+  viewerId: string;
   since: Date;
   afterId?: string;
   take: number;
@@ -126,6 +142,8 @@ export async function findMessagesSince(args: {
   return prisma.message.findMany({
     where: {
       roomId: args.roomId,
+      // "Deleted for me" rows never leave the server for that viewer.
+      hiddenFor: { none: { userId: args.viewerId } },
       ...(args.afterId
         ? {
             OR: [
@@ -144,6 +162,7 @@ export async function findMessagesSince(args: {
 /** The newest page of a room, returned oldest-first for rendering. */
 export async function findLatestMessages(args: {
   roomId: string;
+  viewerId: string;
   take: number;
   before?: Date;
   beforeId?: string;
@@ -151,6 +170,7 @@ export async function findLatestMessages(args: {
   const rows = await prisma.message.findMany({
     where: {
       roomId: args.roomId,
+      hiddenFor: { none: { userId: args.viewerId } },
       ...(args.before
         ? args.beforeId
           ? {
@@ -206,6 +226,51 @@ export async function softDeleteMessage(id: string): Promise<MessageWithSender |
   });
   if (result.count === 0) return null;
   return findMessageById(id);
+}
+
+export async function updateMessageContent(id: string, content: string): Promise<MessageWithSender> {
+  return prisma.message.update({
+    where: { id },
+    data: { content: encryptField(content), editedAt: new Date() },
+    include: messageSenderSelect,
+  });
+}
+
+/** "Delete for me": idempotent. */
+export async function hideMessageForUser(messageId: string, userId: string): Promise<void> {
+  await prisma.messageHide.upsert({
+    where: { messageId_userId: { messageId, userId } },
+    create: { messageId, userId },
+    update: {},
+  });
+}
+
+/** Rooms whose live channel a user's sockets should be in. */
+export async function findMemberRoomIds(userId: string): Promise<string[]> {
+  const rows = await prisma.roomMember.findMany({
+    where: { userId, room: { type: { in: ["DIRECT", "GROUP"] } } },
+    select: { roomId: true },
+    take: 500,
+  });
+  return rows.map((row) => row.roomId);
+}
+
+/** The message just before `createdAt` in a room (for "first unread" checks). */
+export async function findPreviousMessageAt(roomId: string, before: Date, excludeId: string): Promise<Date | null> {
+  const row = await prisma.message.findFirst({
+    where: { roomId, createdAt: { lte: before }, id: { not: excludeId } },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { createdAt: true },
+  });
+  return row?.createdAt ?? null;
+}
+
+/** Is this upload the sender's own, an image, and not attached anywhere? */
+export async function isAttachableImage(uploadId: string, userId: string): Promise<boolean> {
+  const count = await prisma.upload.count({
+    where: { id: uploadId, userId, mime: { startsWith: "image/" }, postMedia: null, message: null },
+  });
+  return count === 1;
 }
 
 export async function findRoomMembers(roomId: string) {
@@ -392,6 +457,29 @@ export async function countUnreadMessages(
       createdAt: { gt: sinceDate },
     },
   });
+}
+
+export async function findMessageReactors(messageId: string) {
+  return prisma.messageReaction.findMany({
+    where: { messageId, user: { banned: false } },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: { type: true, user: { select: { id: true, name: true, username: true, image: true } } },
+  });
+}
+
+/** Set (or with `null`, remove) a member's reaction, then reload the message. */
+export async function setMessageReaction(messageId: string, userId: string, type: string | null): Promise<MessageWithSender | null> {
+  if (type) {
+    await prisma.messageReaction.upsert({
+      where: { messageId_userId: { messageId, userId } },
+      create: { messageId, userId, type },
+      update: { type },
+    });
+  } else {
+    await prisma.messageReaction.deleteMany({ where: { messageId, userId } });
+  }
+  return findMessageById(messageId);
 }
 
 export async function findLatestMessageForRoom(roomId: string): Promise<MessageWithSender | null> {

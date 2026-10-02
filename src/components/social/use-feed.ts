@@ -12,62 +12,94 @@ export interface FeedPageResponse {
   readonly nextCursor: string | null;
 }
 
+export interface FeedScope {
+  readonly scope?: "all" | "following" | "for_you";
+  readonly authorId?: string;
+  readonly group?: { readonly id: string; readonly slug: string };
+  /** The viewer's saved posts: no live inserts, only updates to listed posts. */
+  readonly saved?: boolean;
+}
+
 const PAGE_SIZE = 10;
-/** Only used while the socket is down for good; it is never the main path. */
+/** Only while the socket has failed for good; never the main path. */
 const FALLBACK_POLL_MS = 30_000;
 
 /**
- * Feed state: the server-rendered first page, keyset "load more", and live
- * updates from the `feed` socket room.
+ * Feed state: server-rendered first page, keyset "load more", live updates.
  *
- * New posts from others wait in `pending` behind a "N new posts" banner, so
- * the list never jumps under the reader's thumb; the viewer's own posts are
- * inserted at once. Viewer-specific fields (`viewerReaction`) are kept when a
- * neutral broadcast replaces an item.
+ * Live posts from others wait behind a "N new posts" pill so the list never
+ * jumps under the reader; the viewer's own posts appear at once. Broadcasts
+ * are viewer-neutral, so viewer fields (`viewerReaction`, `viewerCan*`) are
+ * kept when an update replaces an item.
  */
-export function useFeed({
-  initial,
-  authorId,
-  viewerId,
-  scope,
-  followedIds,
-}: {
-  readonly initial: FeedPageResponse;
-  readonly authorId?: string;
-  readonly viewerId: string | null;
-  readonly scope?: "all" | "following";
-  readonly followedIds?: readonly string[];
-}) {
+export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedPageResponse; readonly viewerId: string | null; readonly filter: FeedScope }) {
   const { socket, status } = useSocket();
   const [items, setItems] = useState<FeedItemDto[]>(initial.data);
   const [pending, setPending] = useState<FeedItemDto[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(initial.nextCursor);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const known = useRef(new Set(initial.data.map((item) => item.id)));
 
-  const query = useCallback(
+  const url = useCallback(
     (cursor?: string) =>
-      `/api/feed${toQueryString({ limit: PAGE_SIZE, cursor, authorId, ...(scope === "following" ? { scope } : {}) })}`,
-    [authorId, scope],
+      filter.saved
+        ? `/api/bookmarks${toQueryString({ limit: PAGE_SIZE, cursor })}`
+        : `/api/feed${toQueryString({
+        limit: PAGE_SIZE,
+        cursor,
+        authorId: filter.authorId,
+        groupSlug: filter.group?.slug,
+        scope: filter.scope && filter.scope !== "all" ? filter.scope : undefined,
+      })}`,
+    [filter.authorId, filter.group?.slug, filter.scope, filter.saved],
   );
+
+  // A new filter (tab switch) restarts from the server.
+  const filterKey = `${filter.scope ?? "all"}|${filter.authorId ?? ""}|${filter.group?.id ?? ""}`;
+  const firstKey = useRef(filterKey);
+  useEffect(() => {
+    if (firstKey.current === filterKey) return;
+    firstKey.current = filterKey;
+    let cancelled = false;
+    setItems([]);
+    setPending([]);
+    setLoadingMore(true);
+    void apiFetch<FeedPageResponse>(url())
+      .then((page) => {
+        if (cancelled) return;
+        known.current = new Set(page.data.map((item) => item.id));
+        setItems(page.data);
+        setNextCursor(page.nextCursor);
+      })
+      .catch((error: unknown) => !cancelled && setLoadError(error))
+      .finally(() => !cancelled && setLoadingMore(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [filterKey, url]);
 
   const loadMore = useCallback(async () => {
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true);
+    setLoadError(null);
     try {
-      const page = await apiFetch<FeedPageResponse>(query(nextCursor));
+      const page = await apiFetch<FeedPageResponse>(url(nextCursor));
       const fresh = page.data.filter((item) => !known.current.has(item.id));
       for (const item of fresh) known.current.add(item.id);
       setItems((current) => [...current, ...fresh]);
       setNextCursor(page.nextCursor);
+    } catch (error) {
+      setLoadError(error);
     } finally {
       setLoadingMore(false);
     }
-  }, [nextCursor, loadingMore, query]);
+  }, [nextCursor, loadingMore, url]);
 
   const showPending = useCallback(() => {
     setItems((current) => [...pending, ...current]);
     setPending([]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [pending]);
 
   const insert = useCallback((item: FeedItemDto) => {
@@ -76,73 +108,80 @@ export function useFeed({
     setItems((current) => [item, ...current]);
   }, []);
 
+  const replace = useCallback((item: FeedItemDto) => {
+    const apply = (list: FeedItemDto[]) => list.map((entry) => (entry.id === item.id ? item : entry));
+    setItems(apply);
+    setPending(apply);
+  }, []);
+
   const patch = useCallback((postId: string, update: Partial<FeedItemDto>) => {
-    const apply = (list: FeedItemDto[]) =>
-      list.map((item) => (item.id === postId ? { ...item, ...update } : item));
+    const apply = (list: FeedItemDto[]) => list.map((entry) => (entry.id === postId ? { ...entry, ...update } : entry));
     setItems(apply);
     setPending(apply);
   }, []);
 
   const remove = useCallback((postId: string) => {
     known.current.delete(postId);
-    setItems((current) => current.filter((item) => item.id !== postId));
-    setPending((current) => current.filter((item) => item.id !== postId));
+    setItems((current) => current.filter((entry) => entry.id !== postId));
+    setPending((current) => current.filter((entry) => entry.id !== postId));
   }, []);
 
+  // Home and profiles follow the public feed (members are already in their
+  // groups' rooms); a group page subscribes to that group (guests included).
   useSocketSubscription(
-    (s) => s.emit(SOCKET_EVENTS.feedSubscribe),
-    (s) => s.emit(SOCKET_EVENTS.feedUnsubscribe),
-    "feed",
+    (s) => (filter.group ? s.emit(SOCKET_EVENTS.groupSubscribe, filter.group.id) : s.emit(SOCKET_EVENTS.feedSubscribe)),
+    (s) => (filter.group ? s.emit(SOCKET_EVENTS.groupUnsubscribe, filter.group.id) : s.emit(SOCKET_EVENTS.feedUnsubscribe)),
+    filterKey,
   );
 
   useEffect(() => {
     if (!socket) return;
-
     const onPost = (payload: FeedPostPayload) => {
       if (payload.kind === "deleted" || !payload.post) {
         remove(payload.postId);
         return;
       }
       const post = payload.post;
-      if (authorId && post.author.id !== authorId) return;
-      // The "following" scope is filtered server-side on load; live arrivals
-      // from strangers are left for the next full load rather than guessed at.
-      if (scope === "following" && post.author.id !== viewerId && !followedIds?.includes(post.author.id)) return;
+      if (filter.authorId && post.author.id !== filter.authorId) return;
+      if (filter.group && post.group?.id !== filter.group.id) return;
+      if (!filter.group && !filter.authorId && filter.scope === "following" && post.author.id !== viewerId) return;
 
-      if (payload.kind === "updated" || known.current.has(post.id)) {
-        const { viewerReaction: _neutral, ...shared } = post;
+      if (known.current.has(post.id)) {
+        const { viewerReaction: _r, viewerCanModerate: _m, viewerCanInteract: _i, viewerSaved: _s, ...shared } = post;
         patch(post.id, shared);
         return;
       }
+      if (payload.kind === "updated" || filter.saved) return;
       if (post.author.id === viewerId) {
-        insert(post);
+        // Our own post (from this tab it is already known; from another tab
+        // it appears at once, no pill).
+        insert({ ...post, viewerCanInteract: true });
         return;
       }
       known.current.add(post.id);
-      setPending((current) => [post, ...current]);
+      setPending((current) => [{ ...post, viewerCanInteract: viewerId !== null && !post.group }, ...current]);
     };
-
     const onEngagement = (payload: PostEngagementPayload) => {
       patch(payload.postId, {
         commentCount: payload.commentCount,
         reactionCount: payload.reactionCount,
         reactions: payload.reactions,
+        shareCount: payload.shareCount,
+        poll: payload.poll,
       });
     };
-
     socket.on(SOCKET_EVENTS.feedPost, onPost);
     socket.on(SOCKET_EVENTS.postEngagement, onEngagement);
     return () => {
       socket.off(SOCKET_EVENTS.feedPost, onPost);
       socket.off(SOCKET_EVENTS.postEngagement, onEngagement);
     };
-  }, [socket, authorId, scope, viewerId, followedIds, insert, patch, remove]);
+  }, [socket, filter.authorId, filter.group, filter.scope, filter.saved, viewerId, insert, patch, remove]);
 
-  // Last-resort fallback: only when the socket has failed repeatedly.
   useEffect(() => {
     if (status !== "polling") return;
-    const interval = setInterval(() => {
-      void apiFetch<FeedPageResponse>(query())
+    const timer = setInterval(() => {
+      void apiFetch<FeedPageResponse>(url())
         .then((page) => {
           const fresh = page.data.filter((item) => !known.current.has(item.id));
           for (const item of fresh) known.current.add(item.id);
@@ -150,8 +189,8 @@ export function useFeed({
         })
         .catch(() => undefined);
     }, FALLBACK_POLL_MS);
-    return () => clearInterval(interval);
-  }, [status, query]);
+    return () => clearInterval(timer);
+  }, [status, url]);
 
-  return { items, pending, pendingCount: pending.length, nextCursor, loadingMore, loadMore, showPending, insert, patch, remove };
+  return { items, pending, nextCursor, loadingMore, loadError, loadMore, showPending, insert, replace, remove };
 }

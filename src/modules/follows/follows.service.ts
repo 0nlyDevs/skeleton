@@ -17,7 +17,7 @@ export async function getPublicProfile(username: string, viewer: AuthUser | null
   const row = await findActivePublicProfileByUsername(username.toLowerCase());
   if (!row) throw new NotFoundError("That profile does not exist.");
   const isFollowing = viewer && viewer.id !== row.id ? await findFollow(viewer.id, row.id) : false;
-  return toPublicProfileDto(row, isFollowing);
+  return toPublicProfileDto(row, isFollowing, viewer?.id === row.id);
 }
 
 export async function followUser(targetId: string, actor: AuthUser): Promise<{ following: true }> {

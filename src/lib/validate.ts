@@ -12,7 +12,7 @@
 
 import { z } from "zod";
 
-import { BadRequestError, ValidationError, type FieldErrors } from "./errors";
+import { BadRequestError, PayloadTooLargeError, ValidationError, type FieldErrors } from "./errors";
 
 /** Pragmatic pattern: one `@`, a dotted domain, no whitespace. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
@@ -119,12 +119,22 @@ export function schemaKeys(schema: z.ZodObject<z.ZodRawShape>): string[] {
  * An empty body is `{}` so that an endpoint with only optional fields does not
  * require the client to send one; malformed JSON is a 400, never a 500.
  */
+/** JSON bodies are small by design (the biggest is a 20 000-char post). */
+export const MAX_JSON_BODY_BYTES = 256 * 1024;
+
 export async function parseJsonBody(request: Request): Promise<unknown> {
+  // Refuse oversized bodies before buffering them: an unbounded `text()` is a
+  // memory-exhaustion vector on a shared host.
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (declared > MAX_JSON_BODY_BYTES) throw new PayloadTooLargeError("The request body is too large.");
+
   let raw: string;
   try {
     raw = await request.text();
+    if (Buffer.byteLength(raw) > MAX_JSON_BODY_BYTES) throw new PayloadTooLargeError("The request body is too large.");
   } catch (error) {
-    throw new BadRequestError(`Could not read the request body: ${String(error)}`);
+    if (error instanceof PayloadTooLargeError) throw error;
+    throw new BadRequestError("Could not read the request body.");
   }
 
   if (raw.trim().length === 0) return {};

@@ -41,9 +41,25 @@ export function wrapUserContent(value: string): string {
   return `${OPEN_TAG}\n${neutralizeDelimiters(value)}\n${CLOSE_TAG}`;
 }
 
-export interface ChatMessage {
-  readonly role: "system" | "user" | "assistant";
-  readonly content: string;
+export interface ToolCall {
+  readonly id: string;
+  readonly type: "function";
+  readonly function: { readonly name: string; readonly arguments: string };
+}
+
+/** OpenAI-compatible chat message, including tool-calling turns. */
+export type ChatMessage =
+  | { readonly role: "system" | "user"; readonly content: string }
+  | { readonly role: "assistant"; readonly content: string | null; readonly tool_calls?: readonly ToolCall[] }
+  | { readonly role: "tool"; readonly tool_call_id: string; readonly content: string };
+
+export interface ToolDefinition {
+  readonly type: "function";
+  readonly function: {
+    readonly name: string;
+    readonly description: string;
+    readonly parameters: Record<string, unknown>;
+  };
 }
 
 export const MAX_PROMPT_CHARS = 8_000;

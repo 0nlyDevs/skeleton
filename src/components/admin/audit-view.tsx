@@ -4,6 +4,7 @@ import { Filter, ScrollText, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { TableSkeleton } from "@/components/feedback/loading-skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch, toQueryString } from "@/lib/api/client";
-import { formatDateTime } from "@/lib/format";
 import type { ListMeta } from "@/types";
 import type { AuditLogDto } from "@/modules/audit/audit.dto";
 
@@ -52,6 +52,7 @@ const ACTION_TONES: Record<string, "primary" | "success" | "warning" | "error" |
  */
 export function AuditView() {
   const t = useTranslation();
+  const fmt = useFormatters();
 
   const [action, setAction] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -175,7 +176,7 @@ export function AuditView() {
                       {row.targetType ? `${row.targetType} · ${row.targetId?.slice(0, 8)}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right text-[12.5px] tabular-nums text-muted-foreground">
-                      {formatDateTime(row.createdAt)}
+                      {fmt.dateTime(row.createdAt)}
                     </td>
                   </tr>
                 ))}

@@ -1,187 +1,198 @@
 "use client";
 
-import { CornerDownRight, Send } from "lucide-react";
+import { Loader2, SendHorizontal, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { UserAvatar } from "@/components/shell/user-avatar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { ReportContentButton } from "@/components/social/report-content-button";
-import { useSocket, useSocketSubscription } from "@/hooks/use-socket";
-import { apiFetch, toQueryString } from "@/lib/api/client";
-import { formatRelative } from "@/lib/format";
-import { SOCKET_EVENTS, type CommentEventPayload } from "@/lib/socket/events";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiFetch } from "@/lib/api/client";
+import { describeApiError } from "@/lib/api/error-message";
+import { cn } from "@/lib/utils";
 import type { CommentDto } from "@/modules/comments/comments.dto";
-import type { AuthUser } from "@/types";
 
-interface CommentPageResponse {
-  readonly data: CommentDto[];
-  readonly nextCursor: string | null;
+import { CommentItem } from "./comment-item";
+import { MentionInput, type MentionInputHandle } from "./mention-input";
+import { useComments } from "./use-comments";
+
+export interface ThreadViewer {
+  readonly id: string;
+  readonly name: string;
+  readonly image: string | null;
 }
 
+/** Scrollable thread + composer; the composer stays pinned at the bottom. */
 export function CommentThread({
   postId,
   viewer,
-  initialCount,
+  canComment,
+  canModerate,
+  className,
+  autoFocus = false,
 }: {
   readonly postId: string;
-  readonly viewer: AuthUser | null;
-  readonly initialCount: number;
+  readonly viewer: ThreadViewer | null;
+  readonly canComment: boolean;
+  readonly canModerate: boolean;
+  readonly className?: string;
+  readonly autoFocus?: boolean;
 }) {
   const t = useTranslation();
-  const { socket } = useSocket();
-  const [comments, setComments] = useState<CommentDto[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [body, setBody] = useState("");
-  const [replyingTo, setReplyingTo] = useState<CommentDto | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const mergeEvent = useCallback((payload: CommentEventPayload) => {
-    if (payload.postId !== postId) return;
-    setComments((current) => {
-      const walk = (items: CommentDto[]): { items: CommentDto[]; found: boolean } => {
-        let found = false;
-        const next = items.map((item) => {
-          if (item.id === payload.comment.id) {
-            found = true;
-            return payload.comment;
-          }
-          const nested = walk(item.replies);
-          if (nested.found) {
-            found = true;
-            return { ...item, replies: nested.items };
-          }
-          return item;
-        });
-        return { items: next, found };
-      };
-      const updated = walk(current);
-      if (updated.found || payload.kind === "deleted") return updated.items;
-      if (payload.comment.parentId) {
-        const appendReply = (items: CommentDto[]): CommentDto[] => items.map((item) =>
-          item.id === payload.comment.parentId
-            ? { ...item, replies: [...item.replies, payload.comment] }
-            : { ...item, replies: appendReply(item.replies) },
-        );
-        return appendReply(updated.items);
-      }
-      return [...updated.items, payload.comment];
-    });
-  }, [postId]);
-
-  useSocketSubscription(
-    (instance) => instance.emit(SOCKET_EVENTS.postSubscribe, postId),
-    (instance) => instance.emit(SOCKET_EVENTS.postUnsubscribe, postId),
-    postId,
-  );
+  const { comments, nextCursor, loading, error, load, apply } = useComments(postId);
+  const [draft, setDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<CommentDto | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const input = useRef<MentionInputHandle>(null);
+  const bottom = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!socket) return;
-    socket.on(SOCKET_EVENTS.comment, mergeEvent);
-    return () => { socket.off(SOCKET_EVENTS.comment, mergeEvent); };
-  }, [socket, mergeEvent]);
+    if (autoFocus) input.current?.focus();
+  }, [autoFocus]);
 
-  useEffect(() => {
-    let cancelled = false;
-    void apiFetch<CommentPageResponse>(`/api/posts/${encodeURIComponent(postId)}/comments?limit=20`)
-      .then((response) => {
-        if (!cancelled) {
-          setComments((current) => {
-            const liveById = new Map(current.map((comment) => [comment.id, comment]));
-            const loadedIds = new Set(response.data.map((comment) => comment.id));
-            return [
-              ...response.data.map((comment) => liveById.get(comment.id) ?? comment),
-              ...current.filter((comment) => !loadedIds.has(comment.id)),
-            ];
-          });
-          setNextCursor(response.nextCursor);
-        }
-      })
-      .catch(() => { if (!cancelled) toast.error(t("feedback.network")); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [postId, t]);
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const cleanBody = body.trim();
-    if (!cleanBody || !viewer || busy) return;
-    setBusy(true);
+  const send = async () => {
+    const body = draft.trim();
+    if (!body || sending) return;
+    setSending(true);
+    setSendError(null);
     try {
       const response = await apiFetch<{ data: CommentDto }>(`/api/posts/${encodeURIComponent(postId)}/comments`, {
         method: "POST",
-        body: { body: cleanBody, ...(replyingTo ? { parentId: replyingTo.id } : {}) },
+        body: { body, ...(replyTo ? { parentId: replyTo.id } : {}) },
       });
-      mergeEvent({ kind: "created", postId, comment: response.data });
-      setBody("");
-      setReplyingTo(null);
-    } catch {
-      toast.error(t("feedback.error.body"));
+      apply(response.data);
+      setDraft("");
+      setReplyTo(null);
+      requestAnimationFrame(() => bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" }));
+    } catch (caught) {
+      // The draft stays: nothing typed is ever lost to a failed request.
+      setSendError(describeApiError(caught, t));
     } finally {
-      setBusy(false);
+      setSending(false);
     }
   };
-
-  const loadMore = async () => {
-    if (!nextCursor || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const response = await apiFetch<CommentPageResponse>(`/api/posts/${encodeURIComponent(postId)}/comments${toQueryString({ limit: 20, cursor: nextCursor })}`);
-      setComments((current) => {
-        const known = new Set(current.map((comment) => comment.id));
-        return [...current, ...response.data.filter((comment) => !known.has(comment.id))];
-      });
-      setNextCursor(response.nextCursor);
-    } catch {
-      toast.error(t("feedback.network"));
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const renderComment = (comment: CommentDto, nested = false) => (
-    <article key={comment.id} className={nested ? "border-l border-border/70 pl-4" : ""}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[12px]">
-            {comment.author?.username ? <Link className="font-semibold hover:underline" href={`/u/${encodeURIComponent(comment.author.username)}`}>{comment.author.name}</Link> : <span className="font-semibold">{comment.author?.name ?? t("comments.deleted")}</span>}
-            <time dateTime={comment.createdAt} className="text-muted-foreground">{formatRelative(comment.createdAt)}</time>
-            {comment.editedAt ? <span className="text-muted-foreground">· {t("feed.edited")}</span> : null}
-          </div>
-          <p className={`mt-1 whitespace-pre-line break-words text-sm leading-relaxed ${comment.deleted ? "italic text-muted-foreground" : ""}`}>
-            {comment.deleted ? t("comments.removed") : comment.body}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {!nested && viewer && !comment.deleted ? <Button variant="ghost" size="sm" onClick={() => setReplyingTo(comment)}><CornerDownRight />{t("comments.reply")}</Button> : null}
-          {viewer && comment.author && comment.author.id !== viewer.id && !comment.deleted ? <ReportContentButton targetType="comment" targetId={comment.id} signedIn label={t("comments.report")} compact /> : null}
-        </div>
-      </div>
-      {comment.replies.length > 0 ? <div className="mt-3 flex flex-col gap-3">{comment.replies.map((reply) => renderComment(reply, true))}</div> : null}
-    </article>
-  );
-
-  const count = Math.max(initialCount, comments.reduce((total, comment) => total + 1 + comment.replies.length, 0));
 
   return (
-    <section id="comments" className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">{t("comments.title")} <span className="text-sm font-normal text-muted-foreground">({count})</span></h2>
-      {viewer ? (
-        <Card className="p-3 sm:p-4">
-          {replyingTo ? <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground"><span>{t("comments.replying_to", { name: replyingTo.author?.name ?? t("comments.deleted") })}</span><Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)}>{t("common.cancel")}</Button></div> : null}
-          <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-2">
-            <Textarea value={body} onChange={(event) => setBody(event.target.value)} placeholder={replyingTo ? t("comments.reply_placeholder", { name: replyingTo.author?.name ?? t("comments.deleted") }) : t("comments.placeholder")} aria-label={t("comments.placeholder")} maxLength={2_000} required />
-            <div className="flex justify-end"><Button type="submit" size="sm" disabled={busy || body.trim().length === 0}><Send />{t("comments.send")}</Button></div>
-          </form>
-        </Card>
-      ) : <p className="text-sm text-muted-foreground"><Link href="/login" className="font-medium text-primary hover:underline">{t("comments.sign_in")}</Link></p>}
-      {loading ? <p className="py-3 text-sm text-muted-foreground">{t("common.loading")}</p> : comments.length === 0 ? <p className="py-3 text-sm text-muted-foreground">{t("comments.empty")}</p> : <div className="flex flex-col gap-4">{comments.map((comment) => renderComment(comment))}</div>}
-      {nextCursor ? <Button variant="secondary" disabled={loadingMore} onClick={() => void loadMore()}>{t("comments.load_more")}</Button> : null}
-    </section>
+    <div className={cn("flex min-h-0 flex-col", className)}>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3" aria-live="polite">
+        {loading && comments.length === 0 ? (
+          <div className="flex flex-col gap-3">
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="flex gap-2.5">
+                <Skeleton className="size-9 rounded-full" />
+                <Skeleton className="h-12 w-2/3 rounded-2xl" />
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <p className="text-[13px] text-muted-foreground">{describeApiError(error, t)}</p>
+            <Button size="sm" variant="secondary" onClick={() => void load()}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        ) : comments.length === 0 ? (
+          <p className="py-6 text-center text-[13.5px] text-muted-foreground">{t("comments.empty")}</p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {comments.map((thread) => (
+              <li key={thread.id} className="flex flex-col gap-2">
+                <CommentItem
+                  comment={thread}
+                  viewerId={viewer?.id ?? null}
+                  canModerate={canModerate}
+                  onReply={(comment) => {
+                    setReplyTo(comment);
+                    input.current?.focus();
+                  }}
+                  onChanged={apply}
+                />
+                {thread.replies.map((reply) => (
+                  <CommentItem
+                    key={reply.id}
+                    comment={reply}
+                    isReply
+                    viewerId={viewer?.id ?? null}
+                    canModerate={canModerate}
+                    onReply={(comment) => {
+                      setReplyTo(comment);
+                      input.current?.focus();
+                    }}
+                    onChanged={apply}
+                  />
+                ))}
+              </li>
+            ))}
+          </ul>
+        )}
+        {nextCursor ? (
+          <button
+            type="button"
+            onClick={() => void load(nextCursor)}
+            disabled={loading}
+            className="mt-3 text-[13px] font-semibold text-muted-foreground hover:underline"
+          >
+            {t("comments.load_more")}
+          </button>
+        ) : null}
+        <div ref={bottom} />
+      </div>
+
+      <div className="border-t border-border/60 bg-card px-4 py-3">
+        {!viewer ? (
+          <p className="text-center text-[13px] text-muted-foreground">
+            <Link href="/login" className="font-semibold text-primary hover:underline">
+              {t("comments.sign_in")}
+            </Link>
+          </p>
+        ) : !canComment ? (
+          <p className="text-center text-[13px] text-muted-foreground">{t("comments.join_group")}</p>
+        ) : (
+          <>
+            {replyTo ? (
+              <div className="mb-2 flex items-center justify-between rounded-lg bg-accent px-3 py-1.5 text-[12.5px] text-accent-foreground">
+                <span>{t("comments.replying_to", { name: replyTo.author?.name ?? "…" })}</span>
+                <button type="button" onClick={() => setReplyTo(null)} aria-label={t("comments.cancel_reply")}>
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ) : null}
+            <div className="flex items-end gap-2">
+              <UserAvatar name={viewer.name} image={viewer.image} size="sm" />
+              <div className="flex min-w-0 flex-1 items-end rounded-2xl bg-surface-muted focus-within:ring-2 focus-within:ring-ring/25">
+                <MentionInput
+                  ref={input}
+                  value={draft}
+                  onChange={(value) => {
+                    setDraft(value);
+                    setSendError(null);
+                  }}
+                  onSubmit={() => void send()}
+                  placeholder={replyTo ? t("comments.reply_placeholder", { name: replyTo.author?.name ?? "" }) : t("comments.placeholder")}
+                  maxLength={2000}
+                  maxRows={6}
+                  suggestions="above"
+                />
+                <button
+                  type="button"
+                  onClick={() => void send()}
+                  disabled={sending}
+                  aria-label={t("comments.send")}
+                  className={cn(
+                    "m-1 grid size-8 shrink-0 place-items-center rounded-full transition-colors",
+                    draft.trim() ? "text-primary hover:bg-accent" : "text-muted-foreground",
+                  )}
+                >
+                  {sending ? <Loader2 className="size-4 animate-spin" /> : <SendHorizontal className="size-4" />}
+                </button>
+              </div>
+            </div>
+            {sendError ? <p role="alert" className="mt-1.5 text-[12.5px] text-error">{sendError}</p> : null}
+          </>
+        )}
+      </div>
+    </div>
   );
 }

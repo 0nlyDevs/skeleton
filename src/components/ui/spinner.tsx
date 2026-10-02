@@ -18,7 +18,7 @@ export function Spinner({
     <span
       role="status"
       aria-live="polite"
-      aria-label={label ?? "Loading"}
+      aria-label={label ?? "Chargement"}
       className={cn("inline-flex items-center justify-center", className)}
     >
       <span

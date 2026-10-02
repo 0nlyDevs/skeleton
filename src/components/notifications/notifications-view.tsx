@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useNotifications } from "@/hooks/use-notifications";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { ListSkeleton } from "@/components/feedback/loading-skeleton";
@@ -13,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { formatRelative } from "@/lib/format";
 import type { MessageKey } from "@/lib/i18n";
 
 /**
@@ -28,6 +28,7 @@ import type { MessageKey } from "@/lib/i18n";
  */
 export function NotificationsView() {
   const t = useTranslation();
+  const fmt = useFormatters();
   const router = useRouter();
 
   const { items, meta, loading, error, unreadOnly, setUnreadOnly, setPage, markRead, markAllRead } =
@@ -113,7 +114,7 @@ export function NotificationsView() {
                       {t(typeKey)}
                       <span aria-hidden>·</span>
                       <time dateTime={item.createdAt} className="normal-case">
-                        {formatRelative(item.createdAt)}
+                        {fmt.relative(item.createdAt)}
                       </time>
                     </span>
                   </div>

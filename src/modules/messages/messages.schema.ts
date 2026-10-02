@@ -2,16 +2,36 @@ import { z } from "zod";
 
 import { MAX_MESSAGE_LENGTH } from "./messages.constants";
 
-export const sendMessageSchema = z.object({
-  roomId: z.string().trim().min(1).max(120),
-  content: z
-    .string()
-    .transform((value) => value.trim())
-    .refine((value) => value.length > 0, "Write a message first.")
-    .refine(
-      (value) => value.length <= MAX_MESSAGE_LENGTH,
-      `Keep messages under ${MAX_MESSAGE_LENGTH} characters.`,
-    ),
+const contentField = z
+  .string()
+  .max(MAX_MESSAGE_LENGTH * 2)
+  .transform((value) => value.trim())
+  .refine(
+    (value) => value.length <= MAX_MESSAGE_LENGTH,
+    `Keep messages under ${MAX_MESSAGE_LENGTH} characters.`,
+  );
+
+export const sendMessageSchema = z
+  .object({
+    roomId: z.string().trim().min(1).max(120),
+    content: contentField.default(""),
+    /** An image uploaded beforehand by the sender. */
+    uploadId: z.string().trim().min(1).max(64).optional(),
+  })
+  .refine((value) => value.content.length > 0 || Boolean(value.uploadId), {
+    message: "Write a message or add an image.",
+    path: ["content"],
+  });
+
+export const messageIdParamSchema = z.object({ id: z.string().trim().min(1).max(64) });
+
+export const editMessageSchema = z.object({
+  content: contentField.refine((value) => value.length > 0, "A message cannot be empty."),
+});
+
+export const deleteMessageQuerySchema = z.object({
+  /** `me` hides it for the caller only; `everyone` removes it for all. */
+  scope: z.enum(["me", "everyone"]).default("me"),
 });
 
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;

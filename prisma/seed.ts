@@ -11,6 +11,7 @@
  */
 
 import { hashPassword } from "../src/lib/auth/password";
+import { encryptField } from "../src/lib/crypto/field-encryption";
 // The shared client, not a fresh one: Prisma 7 needs a driver adapter to
 // construct it, and `lib/db/prisma.ts` is the single place that knows how to
 // turn DATABASE_URL into driver pool options.
@@ -146,7 +147,8 @@ function profileOf(account: (typeof ACCOUNTS)[number]) {
     displayUsername: account.username,
     firstName: account.firstName,
     lastName: account.lastName,
-    birthDate: new Date(`${account.birthDate}T00:00:00Z`),
+    birthDate: null,
+    birthDateEncrypted: encryptField(account.birthDate),
   };
 }
 

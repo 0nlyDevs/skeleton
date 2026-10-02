@@ -9,13 +9,19 @@
  * sender.
  */
 
+import { z } from "zod";
+
 import { apiRoute } from "@/lib/api/route";
-import { jsonCreated, jsonOk } from "@/lib/api/response";
+import { jsonCreated, jsonOk, noContent } from "@/lib/api/response";
 import { RATE_LIMITS } from "@/lib/rate-limit";
+import { REACTION_TYPES } from "@/types";
 
 import {
   addMemberSchema,
   createRoomSchema,
+  deleteMessageQuerySchema,
+  editMessageSchema,
+  messageIdParamSchema,
   listMessagesQuerySchema,
   roomParamSchema,
   sendMessageSchema,
@@ -23,6 +29,11 @@ import {
 import {
   addMemberToGroup,
   createGroup,
+  deleteMessage,
+  editMessage,
+  reactToMessage,
+  listMessageReactors,
+  getUnreadSummary,
   getOrCreateDirectRoom,
   getRoomMembersList,
   leaveGroupRoom,
@@ -43,7 +54,9 @@ export const listRoomsRoute = apiRoute({
 
 export const createRoomRoute = apiRoute({
   body: createRoomSchema,
-  rateLimit: RATE_LIMITS.conversation,
+  // Opening an existing direct conversation goes through here too, so the
+  // budget is generous; group creation is bounded separately in the service.
+  rateLimit: RATE_LIMITS.openConversation,
   rateLimitScope: "messages:create-room",
   handler: async ({ body, auth }) => {
     if (body.type === "DIRECT") {
@@ -101,3 +114,44 @@ export const sendMessageRoute = apiRoute({
   body: sendMessageSchema,
   handler: async ({ body, auth }) => jsonCreated(await sendMessage(body, { user: auth.user })),
 });
+
+export const editMessageRoute = apiRoute({
+  params: messageIdParamSchema,
+  body: editMessageSchema,
+  handler: async ({ params, body, auth, ip }) =>
+    jsonOk({ data: await editMessage(params.id, body.content, { user: auth.user, ip }) }),
+});
+
+/** `DELETE /api/messages/:id?scope=me|everyone` */
+export const deleteMessageRoute = apiRoute({
+  params: messageIdParamSchema,
+  query: deleteMessageQuerySchema,
+  handler: async ({ params, query, auth, ip }) => {
+    await deleteMessage(params.id, query.scope, { user: auth.user, ip });
+    return noContent();
+  },
+});
+
+export const unreadSummaryRoute = apiRoute({
+  handler: async ({ auth }) => jsonOk({ data: await getUnreadSummary(auth.user) }),
+});
+
+const messageReactionSchema = z.object({ type: z.enum(REACTION_TYPES) });
+
+/** `PUT /api/messages/:id/reaction` sets the caller's reaction; `DELETE` removes it. */
+export const setMessageReactionRoute = apiRoute({
+  params: messageIdParamSchema,
+  body: messageReactionSchema,
+  handler: async ({ params, body, auth, ip }) => jsonOk({ data: await reactToMessage(params.id, body.type, { user: auth.user, ip }) }),
+});
+
+export const listMessageReactorsRoute = apiRoute({
+  params: messageIdParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await listMessageReactors(params.id, auth.user) }),
+});
+
+export const removeMessageReactionRoute = apiRoute({
+  params: messageIdParamSchema,
+  handler: async ({ params, auth, ip }) => jsonOk({ data: await reactToMessage(params.id, null, { user: auth.user, ip }) }),
+});
+

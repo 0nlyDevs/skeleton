@@ -47,13 +47,13 @@ export class ErrorBoundary extends Component<Props, State> {
         className="flex flex-col items-start gap-3 rounded-xl border border-error/25 bg-error/6 p-5"
       >
         <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium">This section could not be displayed.</p>
+          <p className="text-sm font-medium">Cette section n&apos;a pas pu s&apos;afficher.</p>
           <p className="text-[13px] text-muted-foreground">
-            The rest of the page is unaffected. Reload the section to try again.
+            Le reste de la page fonctionne. Rechargez la section pour réessayer.
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={this.reset}>
-          Reload section
+          Recharger la section
         </Button>
       </div>
     );

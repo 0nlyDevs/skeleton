@@ -9,6 +9,7 @@
  */
 
 import type { CommentDto } from "@/modules/comments/comments.dto";
+import type { MessageDto } from "@/modules/messages/messages.dto";
 import type { FeedItemDto, PostEngagementDto } from "@/modules/posts/posts.dto";
 
 /** Socket.IO event names. */
@@ -51,6 +52,30 @@ export const SOCKET_EVENTS = {
   postEngagement: "post:engagement",
   /** Server → client: a comment was added, edited or removed. */
   comment: "comment:event",
+  /** Server → client: a message was edited or deleted for everyone. */
+  messageUpdated: "message:updated",
+  /** Server → client (own sockets only): a message was deleted for me. */
+  messageHidden: "message:hidden",
+  /** Server → client: a member's read cursor moved (read receipts). */
+  roomRead: "room:read",
+  /** Client → server: follow the presence of these users (ack: snapshot). */
+  presenceWatch: "presence:watch",
+  /** Server → client: someone came online or went offline. */
+  presenceState: "presence:state",
+  /** Client → server: follow a community group's live feed. */
+  groupSubscribe: "group:subscribe",
+  groupUnsubscribe: "group:unsubscribe",
+  /** Calls (WebRTC signalling). */
+  callInvite: "call:invite",
+  callAccept: "call:accept",
+  callDecline: "call:decline",
+  callHangup: "call:hangup",
+  callSignal: "call:signal",
+  callIncoming: "call:incoming",
+  callAccepted: "call:accepted",
+  callEnded: "call:ended",
+  /** Server → everyone: a user's public identity (name/avatar/handle) changed. */
+  profileUpdated: "profile:updated",
 } as const;
 
 export type SocketEventName = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
@@ -66,24 +91,73 @@ export interface FeedPostPayload {
 
 export type PostEngagementPayload = PostEngagementDto;
 
+/** Every socket send is acknowledged, with the message or the reason. */
+export type SendMessageAck =
+  | { readonly ok: true; readonly message: MessagePayload }
+  | { readonly ok: false; readonly code: string; readonly message: string };
+
+export interface IceServerPayload {
+  readonly urls: string | string[];
+  readonly username?: string;
+  readonly credential?: string;
+}
+
+export type CallAck =
+  | { readonly ok: true; readonly callId: string; readonly iceServers: IceServerPayload[] }
+  | { readonly ok: false; readonly code: string; readonly message: string };
+
+export interface CallIncomingPayload {
+  readonly callId: string;
+  readonly roomId: string;
+  readonly kind: "audio" | "video";
+  readonly from: { readonly id: string; readonly name: string; readonly image: string | null };
+}
+
+export interface CallSignalPayload {
+  readonly callId: string;
+  readonly data:
+    | { readonly type: "offer" | "answer"; readonly sdp: string }
+    | { readonly type: "candidate"; readonly candidate: { candidate: string; sdpMid?: string | null; sdpMLineIndex?: number | null } };
+}
+
+export interface CallEndedPayload {
+  readonly callId: string;
+  readonly reason: "declined" | "hangup" | "missed" | "busy" | "failed";
+}
+
+export interface ProfileUpdatedPayload {
+  readonly userId: string;
+  readonly name: string;
+  readonly username: string | null;
+  readonly image: string | null;
+}
+
+export interface RoomReadPayload {
+  readonly roomId: string;
+  readonly userId: string;
+  readonly lastReadAt: string;
+}
+
+export interface MessageHiddenPayload {
+  readonly roomId: string;
+  readonly messageId: string;
+}
+
+export interface PresenceStatePayload {
+  readonly userId: string;
+  readonly online: boolean;
+  /** `null` when the user hides their presence or was never seen. */
+  readonly lastSeenAt: string | null;
+}
+
 export interface CommentEventPayload {
   readonly kind: "created" | "updated" | "deleted";
   readonly postId: string;
   readonly comment: CommentDto;
 }
 
-export interface MessagePayload {
-  readonly id: string;
-  readonly roomId: string;
-  readonly content: string;
-  readonly deleted: boolean;
-  readonly createdAt: string;
-  readonly sender: {
-    readonly id: string;
-    readonly name: string;
-    readonly image: string | null;
-  };
-}
+/** The wire shape of a message is exactly the API's DTO. */
+export type MessagePayload = MessageDto;
 
 export interface NotificationPayload {
   readonly id: string;
@@ -136,10 +210,18 @@ export interface ClientToServerEvents {
   [SOCKET_EVENTS.leaveRoom]: (roomId: string) => void;
   [SOCKET_EVENTS.notificationRead]: (notificationId: string) => void;
   [SOCKET_EVENTS.sendMessage]: (
-    payload: { roomId: string; content: string },
-    acknowledge?: (message: MessagePayload) => void,
+    payload: { roomId: string; content: string; uploadId?: string },
+    acknowledge: (result: SendMessageAck) => void,
   ) => void;
   [SOCKET_EVENTS.typing]: (payload: { roomId: string; typing: boolean }) => void;
+  [SOCKET_EVENTS.presenceWatch]: (userIds: string[], ack?: (snapshot: PresenceStatePayload[]) => void) => void;
+  [SOCKET_EVENTS.groupSubscribe]: (groupId: string) => void;
+  [SOCKET_EVENTS.callInvite]: (payload: { roomId: string; kind: "audio" | "video" }, ack: (result: CallAck) => void) => void;
+  [SOCKET_EVENTS.callAccept]: (callId: string, ack: (result: CallAck) => void) => void;
+  [SOCKET_EVENTS.callDecline]: (callId: string) => void;
+  [SOCKET_EVENTS.callHangup]: (callId: string) => void;
+  [SOCKET_EVENTS.callSignal]: (payload: CallSignalPayload) => void;
+  [SOCKET_EVENTS.groupUnsubscribe]: (groupId: string) => void;
   [SOCKET_EVENTS.feedSubscribe]: () => void;
   [SOCKET_EVENTS.feedUnsubscribe]: () => void;
   [SOCKET_EVENTS.postSubscribe]: (postId: string) => void;
@@ -159,4 +241,13 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.feedPost]: (payload: FeedPostPayload) => void;
   [SOCKET_EVENTS.postEngagement]: (payload: PostEngagementPayload) => void;
   [SOCKET_EVENTS.comment]: (payload: CommentEventPayload) => void;
+  [SOCKET_EVENTS.messageUpdated]: (payload: MessagePayload) => void;
+  [SOCKET_EVENTS.messageHidden]: (payload: MessageHiddenPayload) => void;
+  [SOCKET_EVENTS.roomRead]: (payload: RoomReadPayload) => void;
+  [SOCKET_EVENTS.presenceState]: (payload: PresenceStatePayload) => void;
+  [SOCKET_EVENTS.profileUpdated]: (payload: ProfileUpdatedPayload) => void;
+  [SOCKET_EVENTS.callIncoming]: (payload: CallIncomingPayload) => void;
+  [SOCKET_EVENTS.callAccepted]: (payload: { callId: string }) => void;
+  [SOCKET_EVENTS.callEnded]: (payload: CallEndedPayload) => void;
+  [SOCKET_EVENTS.callSignal]: (payload: CallSignalPayload) => void;
 }

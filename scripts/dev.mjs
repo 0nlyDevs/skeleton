@@ -110,35 +110,44 @@ async function main() {
 
   const { metafile } = await buildServer({ dev: true, outfile, metafile: true });
 
-  const inputs = collectInputs(metafile);
-  console.log(`[webcup] watching ${inputs.length} server file(s)`);
+  const watched = new Set();
 
-  for (const input of inputs) {
-    // `fs.watch` on a single file is cheapest and works on every platform; the
-    // 250 ms debounce absorbs editors that write twice per save.
-    const watcher = fs.watch(input, { persistent: true }, () => {
-      if (shuttingDown) return;
+  const onChange = () => {
+    if (shuttingDown) return;
 
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        void (async () => {
-          try {
-            await buildServer({ dev: true, outfile, metafile: false });
-            await restart(outfile);
-          } catch (error) {
-            console.error("[webcup] rebuild failed:", error.message);
-          }
-        })();
-      }, DEBOUNCE_MS);
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const rebuilt = await buildServer({ dev: true, outfile, metafile: true });
+          // A file imported for the first time since startup joins the watch set.
+          watch(collectInputs(rebuilt.metafile));
+          await restart(outfile);
+        } catch (error) {
+          console.error("[webcup] rebuild failed:", error.message);
+        }
+      })();
+    }, DEBOUNCE_MS);
+  };
 
+  const watch = (inputs) => {
+    for (const input of inputs) {
+      if (watched.has(input)) continue;
+      watched.add(input);
+      // `fs.watch` on a single file is cheapest and works on every platform; the
+      // debounce absorbs editors that write twice per save.
+      const watcher = fs.watch(input, { persistent: true }, onChange);
       watcher.unref?.();
-    });
+      watcher.on("error", () => {
+        // A deleted file must not crash the launcher.
+        watcher.close();
+        watched.delete(input);
+      });
+    }
+  };
 
-    watcher.on("error", () => {
-      // A deleted file must not crash the launcher.
-      watcher.close();
-    });
-  }
+  watch(collectInputs(metafile));
+  console.log(`[webcup] watching ${watched.size} server file(s)`);
 
   startChild(outfile);
 
