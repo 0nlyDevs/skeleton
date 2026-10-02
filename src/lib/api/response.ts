@@ -9,6 +9,8 @@
 import { NextResponse } from "next/server";
 
 import { RateLimitedError, toErrorPayload } from "@/lib/errors";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config";
+import { localizeServerMessage } from "@/lib/i18n/server-messages";
 import type { Logger } from "@/lib/logger";
 
 /** Mark a response as per-session and uncacheable. */
@@ -34,8 +36,27 @@ export function noContent(): NextResponse {
  * authorization failures are logged at `warn`, because a spike in either is the
  * signal an intrusion attempt is in progress.
  */
-export function errorResponse(error: unknown, log: Logger, requestId: string): NextResponse {
-  const { status, payload, isInternal } = toErrorPayload(error);
+export function errorResponse(
+  error: unknown,
+  log: Logger,
+  requestId: string,
+  locale: Locale = DEFAULT_LOCALE,
+): NextResponse {
+  const { status, payload: raw, isInternal } = toErrorPayload(error);
+  // Logged in English (below, via `code`), shown in the caller's language.
+  const payload = {
+    error: {
+      ...raw.error,
+      message: localizeServerMessage(raw.error.message, locale),
+      ...(raw.error.fields
+        ? {
+            fields: Object.fromEntries(
+              Object.entries(raw.error.fields).map(([field, message]) => [field, localizeServerMessage(message, locale)]),
+            ),
+          }
+        : {}),
+    },
+  };
 
   const meta = {
     requestId,
@@ -63,4 +84,11 @@ export function errorResponse(error: unknown, log: Logger, requestId: string): N
   }
 
   return NextResponse.json(payload, { status, headers });
+}
+
+/** The caller's interface language, from the same cookie the pages use. */
+export function requestLocale(request: Request): Locale {
+  const match = /(?:^|;\s*)webcup_locale=([^;]+)/.exec(request.headers.get("cookie") ?? "");
+  const value = match?.[1];
+  return isLocale(value) ? value : DEFAULT_LOCALE;
 }

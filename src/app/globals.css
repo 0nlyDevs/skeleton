@@ -50,7 +50,8 @@
   --emerald-600: oklch(0.58 0.14 160);
 
   /* --- semantic (light) --- */
-  --background: var(--neutral-50);
+  /* A cool grey canvas so white cards read as surfaces, like a social feed. */
+  --background: oklch(0.962 0.006 265);
   --foreground: var(--neutral-900);
 
   --surface: oklch(1 0 0);
@@ -91,8 +92,8 @@
   --ring: var(--brand-500);
 
   /* --- component knobs --- */
-  --radius: 0.65rem;
-  --radius-card: calc(var(--radius) + 0.15rem);
+  --radius: 0.7rem;
+  --radius-card: 1rem;
   --radius-control: var(--radius);
 
   --shadow-panel: 0 1px 2px 0 oklch(0.19 0.009 250 / 0.04),

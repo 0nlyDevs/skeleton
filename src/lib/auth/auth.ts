@@ -34,7 +34,7 @@ import {
 } from "@/lib/mail/transactional";
 import { clearLimits, rateLimitKey } from "@/lib/rate-limit";
 
-import { authBeforeHook } from "./auth-hooks";
+import { authAfterHook, authBeforeHook } from "./auth-hooks";
 import { resolveBanState } from "./ban";
 import { hashPassword, verifyPassword } from "./password";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./password-policy";
@@ -105,7 +105,9 @@ export const auth = betterAuth({
       // Accepted at sign-up only; `authBeforeHook` validates them first.
       firstName: { type: "string", required: false, input: true },
       lastName: { type: "string", required: false, input: true },
-      birthDate: { type: "date", required: false, input: true },
+      // Set only by `authBeforeHook` from a validated birth date (the hook
+      // overwrites anything a client sends), and never echoed back.
+      birthDateEncrypted: { type: "string", required: false, input: true, returned: false },
       banned: { type: "boolean", required: false, defaultValue: false, input: false },
       banReason: { type: "string", required: false, input: false },
       banExpires: { type: "date", required: false, input: false },
@@ -160,6 +162,8 @@ export const auth = betterAuth({
   },
 
   account: {
+    // Provider access/refresh tokens are encrypted at rest by BetterAuth.
+    encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
       // Google verifies email ownership, so linking on it is safe. GitHub is
@@ -195,6 +199,8 @@ export const auth = betterAuth({
     // Password policy and the one limiter for the whole pipeline — see
     // `auth-hooks.ts` for why these live inside BetterAuth rather than in front.
     before: authBeforeHook,
+    // New-device detection ("est-ce bien vous ?").
+    after: authAfterHook,
   },
 
   databaseHooks: {

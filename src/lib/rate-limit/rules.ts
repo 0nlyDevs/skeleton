@@ -49,6 +49,37 @@ export const RATE_LIMITS = {
   /** User directory searches per user. */
   userSearch: { limit: 60, windowMs: 60_000 },
 
+  /** Posts published per user. */
+  postCreate: { limit: 20, windowMs: 10 * 60_000 },
+
+  /** Password change attempts per signed-in account. */
+  passwordChange: { limit: 5, windowMs: 15 * 60_000 },
+
+  /** Conversations opened or created per user. */
+  openConversation: { limit: 120, windowMs: 10 * 60_000 },
+
+  /** Geocoding lookups per user (upstream allows ~1/s for the whole app). */
+  places: { limit: 30, windowMs: 60_000 },
+
+  /** Call attempts per user. */
+  call: { limit: 20, windowMs: 10 * 60_000 },
+
+  /** Groups created per user. */
+  groupCreate: { limit: 5, windowMs: 60 * 60_000 },
+  pageCreate: { limit: 10, windowMs: 60 * 60_000 },
+  pageUpdate: { limit: 120, windowMs: 10 * 60_000 },
+  /** One counted view per visitor and page every 6 hours. */
+  pageView: { limit: 1, windowMs: 6 * 60 * 60_000 },
+
+  /** Username availability probes per IP (public, typed live in a form). */
+  usernameCheck: { limit: 60, windowMs: 60_000 },
+
+  /** AI tool-assisted answers per user. */
+  aiTools: { limit: 20, windowMs: 60_000 },
+
+  /** Message edits and deletions per user. */
+  messageEdit: { limit: 30, windowMs: 60_000 },
+
   /** Content reports per user. */
   report: { limit: 10, windowMs: 60 * 60_000 },
 

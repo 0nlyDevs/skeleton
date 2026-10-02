@@ -44,8 +44,11 @@ const PUBLIC_PATHS = new Set([
   "/2fa",
 ]);
 
+/** Readable without an account (content-level rules still apply server-side). */
+const PUBLIC_PREFIXES = ["/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
+
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/feed/") || pathname.startsWith("/u/");
+  return PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 /** Redirected away from when a session already exists. */
@@ -103,7 +106,7 @@ function isPassThrough(pathname: string): boolean {
   return PASS_THROUGH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-function buildContentSecurityPolicy(nonce: string, isDev: boolean): string {
+function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string): string {
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
@@ -117,11 +120,16 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean): string {
     // Inline styles are required: Next inlines critical CSS and Tailwind's
     // runtime injects style tags.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
+    // OpenStreetMap tiles for maps; provider avatars for OAuth accounts.
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://tile.openstreetmap.org",
     "font-src 'self' data:",
     // `ws:`/`wss:` for Socket.IO; the app is otherwise same-origin.
-    "connect-src 'self' ws: wss:",
+    // Sockets to this host only (any-host `ws:` would let injected code
+    // exfiltrate to an attacker's socket server).
+    `connect-src 'self' wss://${host}${isDev ? ` ws://${host}` : ""}`,
     "media-src 'self'",
+    // Video blocks on user pages: privacy-enhanced players only, loaded on click.
+    "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",
@@ -145,7 +153,7 @@ export function proxy(request: NextRequest): NextResponse {
   }
 
   const nonce = btoa(crypto.randomUUID());
-  const csp = buildContentSecurityPolicy(nonce, isDev);
+  const csp = buildContentSecurityPolicy(nonce, isDev, request.nextUrl.host);
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
@@ -162,7 +170,7 @@ export function proxy(request: NextRequest): NextResponse {
 
   if (hasSession && GUEST_ONLY_PATHS.has(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/feed";
     url.search = "";
     return NextResponse.redirect(url);
   }

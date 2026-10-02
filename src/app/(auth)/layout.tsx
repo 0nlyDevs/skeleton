@@ -17,7 +17,7 @@ import { getCurrentUser } from "@/lib/auth/session";
  */
 export default async function AuthLayout({ children }: { readonly children: ReactNode }) {
   const user = await getCurrentUser();
-  if (user) redirect("/dashboard");
+  if (user) redirect("/feed");
 
   return (
     <div className="flex min-h-dvh flex-col bg-surface/40">

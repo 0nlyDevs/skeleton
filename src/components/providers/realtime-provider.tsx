@@ -3,10 +3,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useProfileOverridesListener } from "@/hooks/use-profile-overrides";
 import { useSocket, type SocketStatus } from "@/hooks/use-socket";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
-import { SOCKET_EVENTS, type NotificationPayload } from "@/lib/socket/events";
+import { SOCKET_EVENTS, type NotificationPayload, type ReadyPayload, type RoomReadPayload } from "@/lib/socket/events";
 import type { ListMeta, NotificationType } from "@/types";
 
 interface RealtimeContextValue {
@@ -14,6 +15,11 @@ interface RealtimeContextValue {
   readonly notifications: readonly NotificationPayload[];
   readonly unreadCount: number;
   readonly loading: boolean;
+  /** Unread messages per private conversation, live. */
+  readonly messageUnread: Readonly<Record<string, number>>;
+  readonly messageUnreadTotal: number;
+  readonly viewerId: string | null;
+  clearRoomUnread: (roomId: string) => void;
   refresh: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
@@ -42,8 +48,44 @@ const BELL_LIMIT = 12;
  * The second path is what makes the polling fallback sufficient: if WebSockets
  * are blocked entirely, the bell still fills in on every navigation and refresh.
  */
-export function RealtimeProvider({ children }: { children: React.ReactNode }) {
+export function RealtimeProvider({
+  children,
+  viewerId,
+}: {
+  children: React.ReactNode;
+  readonly viewerId: string | null;
+}) {
   const { socket, status } = useSocket();
+  // One listener for live identity changes (avatars, names) app-wide.
+  useProfileOverridesListener();
+
+  /*
+   * The socket is authenticated once, at handshake. A tab that signs in or out
+   * through client-side navigation keeps the same socket, which would then speak
+   * for the previous identity (a guest socket after sign-in: every chat event is
+   * refused). The server announces who it thinks we are in `session:ready`; when
+   * that disagrees with the session the page was rendered for, re-handshake.
+   */
+  const handshakeUser = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!socket) return;
+    const onReady = (payload: ReadyPayload) => {
+      handshakeUser.current = payload.user?.id ?? null;
+      if (handshakeUser.current !== viewerId) {
+        socket.disconnect();
+        socket.connect();
+      }
+    };
+    socket.on(SOCKET_EVENTS.ready, onReady);
+    // The identity may already be known from an earlier handshake.
+    if (handshakeUser.current !== undefined && handshakeUser.current !== viewerId && socket.connected) {
+      socket.disconnect();
+      socket.connect();
+    }
+    return () => {
+      socket.off(SOCKET_EVENTS.ready, onReady);
+    };
+  }, [socket, viewerId]);
   const t = useTranslation();
 
   const [notifications, setNotifications] = useState<readonly NotificationPayload[]>([]);
@@ -74,15 +116,65 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // --- unread messages -----------------------------------------------------
+  const [messageUnread, setMessageUnread] = useState<Readonly<Record<string, number>>>({});
+  const refreshMessageUnread = useCallback(async () => {
+    try {
+      const response = await apiFetch<{ data: { rooms: Record<string, number> } }>("/api/messages/unread");
+      setMessageUnread(response.data.rooms);
+    } catch {
+      // Keep the previous counts; the next reconnect reconciles.
+    }
+  }, []);
+  const clearRoomUnread = useCallback((roomId: string) => {
+    setMessageUnread((current) => (current[roomId] ? { ...current, [roomId]: 0 } : current));
+  }, []);
+
   useEffect(() => {
+    if (!viewerId) {
+      setMessageUnread({});
+      return;
+    }
+    void refreshMessageUnread();
+  }, [viewerId, refreshMessageUnread, status]);
+
+  useEffect(() => {
+    if (!socket || !viewerId) return;
+    const onUnread = (payload: { roomId: string; increment: number }) => {
+      setMessageUnread((current) => ({ ...current, [payload.roomId]: (current[payload.roomId] ?? 0) + payload.increment }));
+    };
+    const onRead = (payload: RoomReadPayload) => {
+      if (payload.userId === viewerId) clearRoomUnread(payload.roomId);
+    };
+    socket.on(SOCKET_EVENTS.roomUnread, onUnread);
+    socket.on(SOCKET_EVENTS.roomRead, onRead);
+    return () => {
+      socket.off(SOCKET_EVENTS.roomUnread, onUnread);
+      socket.off(SOCKET_EVENTS.roomRead, onRead);
+    };
+  }, [socket, viewerId, clearRoomUnread]);
+
+  const messageUnreadTotal = useMemo(
+    () => Object.values(messageUnread).reduce((sum, count) => sum + count, 0),
+    [messageUnread],
+  );
+
+  // Guests have no notifications: skip the request instead of collecting 401s.
+  useEffect(() => {
+    if (!viewerId) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
     void refresh();
-  }, [refresh]);
+  }, [refresh, viewerId]);
 
   // Reconcile after a reconnect, when frames may have been missed.
   useEffect(() => {
-    if (status !== "socket") return;
+    if (status !== "socket" || !viewerId) return;
     void refresh();
-  }, [status, refresh]);
+  }, [status, refresh, viewerId]);
 
   useEffect(() => {
     if (!socket) return;
@@ -94,6 +186,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
       setNotifications((current) => [payload, ...current].slice(0, BELL_LIMIT));
       if (!payload.read) setUnreadCount((count) => count + 1);
+
+      // A message notification while the inbox is open is noise.
+      if (payload.type === "NEW_MESSAGE" && window.location.pathname.startsWith("/messages")) return;
 
       toast(payload.title, {
         description: payload.body ?? undefined,
@@ -137,8 +232,32 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   }, [refresh, t]);
 
   const value = useMemo<RealtimeContextValue>(
-    () => ({ status, notifications, unreadCount, loading, refresh, markRead, markAllRead }),
-    [status, notifications, unreadCount, loading, refresh, markRead, markAllRead],
+    () => ({
+      status,
+      notifications,
+      unreadCount,
+      loading,
+      messageUnread,
+      messageUnreadTotal,
+      viewerId,
+      clearRoomUnread,
+      refresh,
+      markRead,
+      markAllRead,
+    }),
+    [
+      status,
+      notifications,
+      unreadCount,
+      loading,
+      messageUnread,
+      messageUnreadTotal,
+      viewerId,
+      clearRoomUnread,
+      refresh,
+      markRead,
+      markAllRead,
+    ],
   );
 
   return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>;

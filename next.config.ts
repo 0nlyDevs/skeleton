@@ -16,7 +16,9 @@ const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "off" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    // Same-origin only: calls need camera/microphone, "Ma position" needs
+    // geolocation; no third-party frame may ask for any of them.
+    value: "camera=(self), microphone=(self), geolocation=(self), payment=(), usb=(), display-capture=(self)",
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
@@ -53,7 +55,7 @@ const nextConfig: NextConfig = {
    * application code and *is* bundled — but the MariaDB driver it now depends on
    * opens sockets and does runtime `require`, so it stays external.
    */
-  serverExternalPackages: ["@prisma/adapter-mariadb", "mariadb", "qrcode", "@node-rs/argon2"],
+  serverExternalPackages: ["@prisma/adapter-mariadb", "mariadb", "qrcode", "@node-rs/argon2", "sharp"],
 
   /*
    * The build tracer copies a fraction of what the runtime needs (next

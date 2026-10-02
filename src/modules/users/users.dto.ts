@@ -12,7 +12,13 @@
  * response" gate is checking for.
  */
 
+import { decryptNullable } from "@/lib/crypto/field-encryption";
 import { formatBirthDate } from "@/lib/validation/profile";
+
+/** Encrypted column first; the legacy plaintext column only for old rows. */
+function readBirthDate(row: { birthDate: Date | null; birthDateEncrypted: string | null }): string | null {
+  return decryptNullable(row.birthDateEncrypted) || formatBirthDate(row.birthDate);
+}
 import type { Role } from "@/types";
 
 import type { AdminUserRow, UserProfileRow } from "./users.repository";
@@ -25,6 +31,8 @@ export interface PublicUserDto {
 }
 
 export interface UserProfileDto {
+  readonly showPresence: boolean;
+  readonly autoLocation: boolean;
   readonly id: string;
   readonly name: string;
   readonly username: string | null;
@@ -55,13 +63,15 @@ export function toPublicUserDto(row: PublicUserDto): PublicUserDto {
 
 export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
   return {
+    showPresence: row.showPresence,
+    autoLocation: row.autoLocation,
     id: row.id,
     name: row.name,
     username: row.username,
     displayUsername: row.displayUsername,
     firstName: row.firstName,
     lastName: row.lastName,
-    birthDate: formatBirthDate(row.birthDate),
+    birthDate: readBirthDate(row),
     email: row.email,
     image: row.image,
     bio: row.bio,
@@ -74,13 +84,15 @@ export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
 
 export function toAdminUserDto(row: AdminUserRow): AdminUserDto {
   return {
+    showPresence: row.showPresence,
+    autoLocation: row.autoLocation,
     id: row.id,
     name: row.name,
     username: row.username,
     displayUsername: row.displayUsername,
     firstName: row.firstName,
     lastName: row.lastName,
-    birthDate: formatBirthDate(row.birthDate),
+    birthDate: readBirthDate(row),
     email: row.email,
     image: row.image,
     bio: row.bio,

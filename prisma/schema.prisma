@@ -9,15 +9,13 @@
 //     BetterAuth's official layout verbatim — do not rename their fields.
 // ============================================================================
 
-/*
+/**
  * Prisma 7 generates TypeScript into the source tree instead of `node_modules`,
  * which is why `output` is required and why imports read
  * `@/generated/prisma/client` rather than `@prisma/client`.
- *
  * `moduleFormat = "cjs"` keeps the generated client requireable: the custom
  * server is bundled to CommonJS and PM2 loads a CJS ecosystem file, so an
  * ESM-only client would force `"type": "module"` on the whole project.
- *
  * There is no `binaryTargets` here on purpose — the Rust query engine is gone in
  * v7 (the driver adapter does the talking), so the per-platform binary tuning
  * that v6 needed is no longer required.
@@ -28,7 +26,7 @@ generator client {
   moduleFormat = "cjs"
 }
 
-/*
+/**
  * The connection URL lives in `prisma.config.ts` (v7 moved it there so the CLI
  * reads it from one typed place). `url` here would be a deprecated duplicate.
  */
@@ -64,6 +62,29 @@ enum NotificationType {
   NEW_FOLLOWER
   GROUP_INVITE
   MODERATION
+  GROUP_ACTIVITY
+  POST_SHARE
+  SECURITY
+}
+
+/// Who can see a group's posts and member list.
+enum GroupPrivacy {
+  PUBLIC
+  PRIVATE
+}
+
+/// Group-scoped authority, independent of the platform `Role`.
+enum GroupRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum GroupMemberStatus {
+  ACTIVE
+  PENDING
+  BANNED
 }
 
 enum ReactionType {
@@ -113,30 +134,51 @@ model User {
   displayUsername String? @db.VarChar(30)
 
   // Application profile
-  firstName String?   @db.VarChar(50)
-  lastName  String?   @db.VarChar(50)
-  birthDate DateTime? @db.Date
-  bio       String?   @db.Text
+  firstName          String?   @db.VarChar(50)
+  lastName           String?   @db.VarChar(50)
+  /// Legacy plaintext column: cleared on every write, read only as a fallback.
+  birthDate          DateTime? @db.Date
+  /// `YYYY-MM-DD`, AES-256-GCM encrypted at rest (see lib/crypto).
+  birthDateEncrypted String?   @db.Text
+  bio                String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions       Session[]
-  accounts       Account[]
-  twoFactors     TwoFactor[]
-  posts          Post[]
-  comments       Comment[]
-  reactions      PostReaction[]
-  messages       Message[]
-  notifications  Notification[]
-  preferences    NotificationPreference?
-  auditLogs      AuditLog[]
-  uploads        Upload[]
-  reportsMade    Report[]             @relation("ReportReporter")
-  reportsHandled Report[]             @relation("ReportResolver")
-  roomMembers    RoomMember[]
-  followers      Follow[]             @relation("UserFollowers")
-  following      Follow[]             @relation("UserFollowing")
+  sessions         Session[]
+  accounts         Account[]
+  twoFactors       TwoFactor[]
+  posts            Post[]
+  comments         Comment[]
+  reactions        PostReaction[]
+  bookmarks        PostBookmark[]
+  messages         Message[]
+  notifications    Notification[]
+  preferences      NotificationPreference?
+  auditLogs        AuditLog[]
+  uploads          Upload[]
+  reportsMade      Report[]                @relation("ReportReporter")
+  reportsHandled   Report[]                @relation("ReportResolver")
+  roomMembers      RoomMember[]
+  followers        Follow[]                @relation("UserFollowers")
+  following        Follow[]                @relation("UserFollowing")
+  groupsOwned      Group[]                 @relation("GroupOwner")
+  groupMemberships GroupMember[]
+  mentionsReceived Mention[]               @relation("MentionTarget")
+  mentionsMade     Mention[]               @relation("MentionAuthor")
+  hiddenMessages   MessageHide[]
+  knownDevices     KnownDevice[]
+
+  /// Presence: written when the last socket of the user disconnects.
+  lastSeenAt       DateTime?
+  /// Privacy: when false, others never see "online" or "last seen".
+  showPresence     Boolean           @default(true)
+  /// Suggest the user's town on new posts and centre the map on them.
+  autoLocation     Boolean           @default(true)
+  pollVotes        PollVote[]
+  pages            Page[]
+  pageLikes        PageLike[]
+  messageReactions MessageReaction[]
 
   @@index([role])
   @@index([banned])
@@ -199,16 +241,16 @@ model Verification {
 
 /// TOTP secret + hashed single-use recovery codes (BetterAuth two-factor).
 model TwoFactor {
-  id                     String    @id
-  secret                 String    @db.Text
-  backupCodes            String    @db.Text
-  userId                 String
-  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  verified               Boolean   @default(true)
-  failedVerificationCount Int      @default(0)
-  lockedUntil            DateTime?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                      String    @id
+  secret                  String    @db.Text
+  backupCodes             String    @db.Text
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   @@index([userId])
   @@map("twoFactor")
@@ -236,8 +278,33 @@ model Post {
   commentCount  Int @default(0)
   reactionCount Int @default(0)
 
+  /// Set when the author edits the text after publishing.
+  editedAt DateTime?
+
+  /// Group the post was shared in; `null` for the author's own timeline.
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  /// Optional place. Coordinates are rounded to 3 decimals (~100 m) before
+  /// storage so a post never pinpoints someone's home.
+  placeName String? @db.VarChar(160)
+  latitude  Float?
+  longitude Float?
+
+  /// A share of another post (always the original, never a share of a share).
+  /// SetNull keeps the sharer's caption if the original is hard-deleted.
+  repostOfId String?
+  repostOf   Post?   @relation("Reposts", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts    Post[]  @relation("Reposts")
+  shareCount Int     @default(0)
+
   comments  Comment[]
   reactions PostReaction[]
+  media     PostMedia[]
+  mentions  Mention[]
+  embedding PostEmbedding?
+  bookmarks PostBookmark[]
+  poll      Poll?
 
   @@index([userId])
   @@index([published])
@@ -246,7 +313,237 @@ model Post {
   @@index([userId, deletedAt])
   // The public feed: published, not deleted, newest first.
   @@index([published, deletedAt, createdAt])
+  @@index([groupId, deletedAt, createdAt])
+  @@index([repostOfId])
+  @@index([latitude, longitude])
   @@map("post")
+}
+
+/// A poll attached to a post; the post text is the question.
+/// Counters are recomputed from `pollVote` inside the voting transaction, so
+/// they cannot drift under concurrent votes.
+model Poll {
+  id          String       @id @default(cuid())
+  postId      String       @unique
+  post        Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  multiple    Boolean      @default(false)
+  closesAt    DateTime?
+  totalVoters Int          @default(0)
+  createdAt   DateTime     @default(now())
+  options     PollOption[]
+  votes       PollVote[]
+
+  @@map("poll")
+}
+
+model PollOption {
+  id        String     @id @default(cuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label     String     @db.VarChar(80)
+  position  Int
+  voteCount Int        @default(0)
+  votes     PollVote[]
+
+  @@index([pollId, position])
+  @@map("pollOption")
+}
+
+/// Who voted for what. Never exposed: results are aggregate only.
+model PollVote {
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@id([optionId, userId])
+  @@index([pollId, userId])
+  @@index([userId])
+  @@map("pollVote")
+}
+
+/// Who can open a published page. Drafts (unpublished) are owner-only.
+enum PageVisibility {
+  /// Listed in the discovery page and readable by anyone.
+  PUBLIC
+  /// Readable by anyone with the link, never listed.
+  UNLISTED
+}
+
+/// A user-built public page (landing page, tribute, farewell, fictional site…)
+/// made of typed blocks. `blocks` is validated by a strict Zod schema on every
+/// write and rendered as text only: no HTML from users ever reaches the DOM.
+model Page {
+  id         String         @id @default(cuid())
+  slug       String         @unique @db.VarChar(60)
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String         @db.VarChar(120)
+  tagline    String?        @db.VarChar(200)
+  theme      String         @default("aurora") @db.VarChar(20)
+  font       String         @default("sans") @db.VarChar(10)
+  coverId    String?        @db.VarChar(40)
+  blocks     Json
+  visibility PageVisibility @default(PUBLIC)
+  published  Boolean        @default(false)
+  viewCount  Int            @default(0)
+  likeCount  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  deletedAt  DateTime?
+  media      PageMedia[]
+  likes      PageLike[]
+
+  @@index([userId, deletedAt])
+  @@index([published, visibility, deletedAt, createdAt])
+  @@map("page")
+}
+
+/// Images used by a page: ties each upload to exactly one page so file access
+/// follows the page's visibility (see `canViewPrivateUpload`).
+model PageMedia {
+  pageId   String
+  page     Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  uploadId String @unique
+  upload   Upload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@id([pageId, uploadId])
+  @@map("pageMedia")
+}
+
+model PageLike {
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([pageId, userId])
+  @@index([userId])
+  @@map("pageLike")
+}
+
+/// One emoji reaction per member per message (switching replaces it).
+model MessageReaction {
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @db.VarChar(10)
+  createdAt DateTime @default(now())
+
+  @@id([messageId, userId])
+  @@index([userId])
+  @@map("messageReaction")
+}
+
+/// A post the user saved for later. Private: only its owner ever sees it.
+model PostBookmark {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+  @@index([userId, createdAt])
+  @@index([postId])
+  @@map("postBookmark")
+}
+
+/// Semantic vector of a post (search, "similar posts", "Pour vous" ranking).
+/// Kept out of `post` so feed queries never read the blob.
+model PostEmbedding {
+  postId    String   @id
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// Embedding source, e.g. `local-hash-v1` or a provider model id. Vectors
+  /// from different models are never compared.
+  model     String   @db.VarChar(120)
+  /// Little-endian Float32 array, L2-normalised.
+  vector    Bytes
+  updatedAt DateTime @updatedAt
+
+  @@index([model])
+  @@map("postEmbedding")
+}
+
+/// Ordered images attached to a post. Each upload belongs to one post at most.
+model PostMedia {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  uploadId  String   @unique
+  upload    Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([postId, position])
+  @@map("postMedia")
+}
+
+/// A structural `@username` reference in a post or a comment. Stored at write
+/// time so rendering never guesses from raw text, and a renamed user still
+/// resolves.
+model Mention {
+  id              String   @id @default(cuid())
+  mentionedUserId String
+  mentionedUser   User     @relation("MentionTarget", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User     @relation("MentionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  postId          String?
+  post            Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId       String?
+  comment         Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+
+  @@unique([postId, mentionedUserId])
+  @@unique([commentId, mentionedUserId])
+  @@index([mentionedUserId, createdAt])
+  @@index([authorId])
+  @@map("mention")
+}
+
+model Group {
+  id          String       @id @default(cuid())
+  slug        String       @unique @db.VarChar(60)
+  name        String       @db.VarChar(80)
+  description String?      @db.Text
+  privacy     GroupPrivacy @default(PUBLIC)
+  coverImage  String?      @db.VarChar(200)
+  ownerId     String
+  owner       User         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  /// Denormalised, maintained with membership changes.
+  memberCount Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  members GroupMember[]
+  posts   Post[]
+
+  @@index([privacy, deletedAt, memberCount])
+  @@index([ownerId])
+  @@map("group")
+}
+
+model GroupMember {
+  id        String            @id @default(cuid())
+  groupId   String
+  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      GroupRole         @default(MEMBER)
+  status    GroupMemberStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([groupId, userId])
+  @@index([userId, status])
+  @@index([groupId, status, role])
+  @@map("groupMember")
 }
 
 /// One level of threading: a reply points at a top-level comment.
@@ -264,6 +561,8 @@ model Comment {
   updatedAt DateTime  @updatedAt
   editedAt  DateTime?
   deletedAt DateTime?
+
+  mentions Mention[]
 
   @@index([postId, createdAt])
   @@index([parentId])
@@ -337,19 +636,60 @@ model Follow {
 }
 
 model Message {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   roomId    String
-  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   senderId  String
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  content   String   @db.Text
+  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content   String    @db.Text
+  /// Optional image; served through the authorised file route.
+  uploadId  String?   @unique
+  upload    Upload?   @relation(fields: [uploadId], references: [id], onDelete: SetNull)
+  editedAt  DateTime?
+  /// "Deleted for everyone": the row stays as a tombstone so the thread keeps
+  /// its shape, but its content is never sent again.
   deletedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+
+  hiddenFor MessageHide[]
+  reactions MessageReaction[]
 
   // Drives the hot path: "latest N messages in this room, newer than X".
   @@index([roomId, createdAt])
   @@index([senderId])
   @@map("message")
+}
+
+/// A browser that has signed in to the account before. Only a hash of the
+/// device cookie is stored, so a database leak cannot be replayed as cookies.
+/// An unknown device signing in triggers a "was this you?" alert.
+model KnownDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceHash  String   @db.VarChar(64)
+  label       String   @db.VarChar(120)
+  lastIp      String?  @db.VarChar(64)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([userId, deviceHash])
+  @@index([userId, lastSeenAt])
+  @@map("knownDevice")
+}
+
+/// "Deleted for me": hides one message from one member only.
+model MessageHide {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@map("messageHide")
 }
 
 model Notification {
@@ -368,9 +708,9 @@ model Notification {
 }
 
 model NotificationPreference {
-  id      String @id @default(cuid())
-  userId  String @unique
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailOnMessage Boolean @default(false)
   emailOnMention Boolean @default(true)
   emailOnSystem  Boolean @default(true)
@@ -401,15 +741,21 @@ model AuditLog {
 }
 
 model Upload {
-  id           String   @id @default(cuid())
+  id           String           @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   filename     String           @unique
   originalName String
   mime         String
   size         Int
   visibility   UploadVisibility @default(PRIVATE)
+  width        Int?
+  height       Int?
   createdAt    DateTime         @default(now())
+
+  postMedia PostMedia?
+  message   Message?
+  pageMedia PageMedia?
 
   @@index([userId])
   @@index([createdAt])
@@ -422,24 +768,25 @@ model Upload {
 /// every entity the contest subject introduces, without a schema change.
 /// Targets are soft-deleted, so a report can never dangle.
 model Report {
-  id          String       @id @default(cuid())
-  reporterId  String
-  reporter    User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
-  targetType  String
-  targetId    String
-  reason      String       @db.Text
-  status      ReportStatus @default(OPEN)
-  resolvedById String?
-  resolvedBy  User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
-  resolutionNote String?   @db.Text
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String       @id @default(cuid())
+  reporterId     String
+  reporter       User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType     String
+  targetId       String
+  reason         String       @db.Text
+  status         ReportStatus @default(OPEN)
+  resolvedById   String?
+  resolvedBy     User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolutionNote String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   /// `(reporter, target)` collapsed into one column, set only while the report
   /// is OPEN. The unique index rejects a second flag from the same reporter;
   /// resolution clears it (MySQL treats each NULL as distinct), so the reporter
   /// can flag the target again if staff got it wrong or the content reoffends.
   duplicateKey String? @unique
+
   /// Standalone index for the `reporterId` FK: InnoDB otherwise borrows the
   /// leftmost prefix of whichever index happens to start with that column, and
   /// dropping such an index fails with "needed in a foreign key constraint"

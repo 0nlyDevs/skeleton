@@ -21,10 +21,10 @@ import { env } from "@/lib/env";
 import {
   NotFoundError,
   PayloadTooLargeError,
-  UnauthenticatedError,
   UnsupportedMediaTypeError,
 } from "@/lib/errors";
 import { isStaff } from "@/lib/auth/guards";
+import { sanitizeImage } from "@/lib/storage/image";
 import { detectMimeType, extensionForMime } from "@/lib/storage/mime";
 import { readUpload, removeUpload, saveUpload } from "@/lib/storage/disk";
 import type { AuthUser } from "@/types";
@@ -32,7 +32,9 @@ import type { AuthUser } from "@/types";
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { toUploadDto, type UploadDto } from "./uploads.dto";
-import { createUpload, findUploadById } from "./uploads.repository";
+import { loadReadablePost } from "../posts/posts.service";
+import { isRoomMember } from "../messages/messages.repository";
+import { createUpload, findUploadAttachment, findUploadById } from "./uploads.repository";
 
 /** First 191 chars of a filename fit the `originalName` column comfortably. */
 const ORIGINAL_NAME_MAX = 191;
@@ -63,17 +65,23 @@ export async function uploadFileForActor(
     );
   }
 
-  const mime = detectMimeType(input.bytes);
-  if (!mime) {
+  const detected = detectMimeType(input.bytes);
+  if (!detected) {
     throw new UnsupportedMediaTypeError("Only JPEG, PNG, WebP and PDF files are accepted.");
   }
+
+  // Images are decoded and re-encoded (metadata stripped, size capped); what
+  // is stored is our own WebP, never the bytes the client sent.
+  const image = detected.startsWith("image/") ? await sanitizeImage(input.bytes) : null;
+  const mime = image ? image.mime : detected;
+  const bytes = image ? image.bytes : input.bytes;
 
   // The stored name is generated, never derived from user input: a filename is
   // attacker-controlled data and must not reach the filesystem.
   const filename = `${randomUUID()}.${extensionForMime(mime)}`;
   const originalName = input.filename.slice(0, ORIGINAL_NAME_MAX) || filename;
 
-  await saveUpload(filename, input.bytes);
+  await saveUpload(filename, bytes);
 
   try {
     const row = await createUpload({
@@ -81,8 +89,10 @@ export async function uploadFileForActor(
       filename,
       originalName,
       mime,
-      size: input.bytes.byteLength,
+      size: bytes.byteLength,
       visibility: input.visibility ?? "PRIVATE",
+      width: image?.width ?? null,
+      height: image?.height ?? null,
     });
 
     await recordAudit({
@@ -103,6 +113,38 @@ export async function uploadFileForActor(
   }
 }
 
+/**
+ * A private upload is visible to its owner and staff — and, once attached, to
+ * exactly the audience of what it is attached to: the readers of the post, or
+ * the members of the conversation. Access follows the content, so moving a
+ * post into a private group or leaving a chat revokes the image too.
+ */
+async function canViewPrivateUpload(
+  row: { id: string; userId: string },
+  viewer: AuthUser | null,
+): Promise<boolean> {
+  if (viewer && (row.userId === viewer.id || isStaff(viewer))) return true;
+
+  const attachment = await findUploadAttachment(row.id);
+  if (attachment?.postMedia) {
+    try {
+      const post = await loadReadablePost(attachment.postMedia.postId, viewer);
+      return post.deletedAt === null;
+    } catch {
+      return false;
+    }
+  }
+  if (attachment?.pageMedia) {
+    // A page image is public exactly while the page is.
+    const page = attachment.pageMedia.page;
+    return page.published && page.deletedAt === null && !page.user.banned;
+  }
+  if (attachment?.message && viewer && !attachment.message.deletedAt) {
+    return isRoomMember(attachment.message.roomId, viewer.id);
+  }
+  return false;
+}
+
 export interface StoredFile {
   readonly bytes: Buffer;
   readonly mime: string;
@@ -117,12 +159,9 @@ export async function getFileForViewer(id: string, viewer: AuthUser | null): Pro
   const row = await findUploadById(id);
   if (!row) throw new NotFoundError();
 
-  if (row.visibility === "PRIVATE") {
-    if (!viewer) throw new UnauthenticatedError();
-    if (row.userId !== viewer.id && !isStaff(viewer)) {
-      // A private file's existence is not disclosed to strangers: 404, not 403.
-      throw new NotFoundError();
-    }
+  if (row.visibility === "PRIVATE" && !(await canViewPrivateUpload(row, viewer))) {
+    // A private file's existence is not disclosed to strangers: 404, not 403.
+    throw new NotFoundError();
   }
 
   let bytes: Buffer;

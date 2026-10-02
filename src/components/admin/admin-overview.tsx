@@ -13,9 +13,9 @@ import {
 import Link from "next/link";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatRelative } from "@/lib/format";
 import { formatBytes } from "@/lib/utils";
 import type { AdminOverview } from "@/modules/stats/stats.service";
 import { APP_VERSION } from "@/lib/version";
@@ -29,6 +29,7 @@ import { APP_VERSION } from "@/lib/version";
  */
 export function AdminOverview({ data }: { readonly data: AdminOverview }) {
   const t = useTranslation();
+  const fmt = useFormatters();
 
   const cards = [
     {
@@ -135,7 +136,7 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
                       <span className="truncate text-[13.5px] font-medium">{report.reason}</span>
                       <span className="text-[12px] text-muted-foreground">
                         {report.targetType} · {report.reporterName ?? "—"} ·{" "}
-                        {formatRelative(report.createdAt)}
+                        {fmt.relative(report.createdAt)}
                       </span>
                     </div>
                   </li>

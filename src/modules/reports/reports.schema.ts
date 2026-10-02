@@ -10,7 +10,7 @@ import { idSchema } from "@/lib/validate";
  * looking the target up again, and an unknown type would silently produce a row
  * nobody can act on.
  */
-export const REPORT_TARGET_TYPES = ["post", "comment", "message", "user"] as const;
+export const REPORT_TARGET_TYPES = ["post", "comment", "message", "user", "page"] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
 export const reportStatusSchema = z.enum(["OPEN", "RESOLVED", "DISMISSED"]);

@@ -10,7 +10,10 @@ export interface PublicProfileDto {
   readonly createdAt: string;
   readonly followerCount: number;
   readonly followingCount: number;
+  readonly postCount: number;
   readonly isFollowing: boolean;
+  /** True when the viewer is looking at their own profile. */
+  readonly isSelf: boolean;
 }
 
 export interface SearchUserDto {
@@ -21,7 +24,7 @@ export interface SearchUserDto {
   readonly isFollowing: boolean;
 }
 
-export function toPublicProfileDto(row: PublicProfileRow, isFollowing: boolean): PublicProfileDto {
+export function toPublicProfileDto(row: PublicProfileRow, isFollowing: boolean, isSelf = false): PublicProfileDto {
   return {
     id: row.id,
     name: row.name,
@@ -32,7 +35,9 @@ export function toPublicProfileDto(row: PublicProfileRow, isFollowing: boolean):
     createdAt: row.createdAt.toISOString(),
     followerCount: row._count.followers,
     followingCount: row._count.following,
+    postCount: row._count.posts,
     isFollowing,
+    isSelf,
   };
 }
 

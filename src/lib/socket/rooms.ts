@@ -25,6 +25,16 @@ export const GLOBAL_PRESENCE_ROOM = "presence:global";
 /** Public feed: new, edited and removed published posts, plus their counters. */
 export const FEED_ROOM = "feed:public";
 
+/** One community group's live feed. Joined server-side for active members. */
+export function groupRoom(groupId: string): string {
+  return `group:${groupId}`;
+}
+
+/** Presence of one user, followed by whoever displays them. */
+export function presenceRoom(userId: string): string {
+  return `presence:${userId}`;
+}
+
 /** One post's live thread: comments and reaction counters. */
 export function postRoom(postId: string): string {
   return `post:${postId}`;

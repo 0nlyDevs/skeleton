@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Loader2, PartyPopper } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { UsernameField, type UsernameState } from "@/components/forms/username-field";
+import { patchProfile } from "@/hooks/use-profile-overrides";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import type { MessageKey } from "@/lib/i18n";
 import {
@@ -40,12 +43,14 @@ export function ProfileForm({
   readonly welcome?: boolean;
 }) {
   const t = useTranslation();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const email = profile.email;
 
   const [firstName, setFirstName] = useState(profile.firstName ?? "");
   const [lastName, setLastName] = useState(profile.lastName ?? "");
   const [username, setUsername] = useState(profile.displayUsername ?? profile.username ?? "");
+  const [usernameState, setUsernameState] = useState<UsernameState>("idle");
   const [birthDate, setBirthDate] = useState(profile.birthDate ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [image, setImage] = useState(profile.image);
@@ -55,7 +60,7 @@ export function ProfileForm({
   const invalid = {
     firstName: personNameViolation(firstName) !== null,
     lastName: personNameViolation(lastName) !== null,
-    username: usernameViolation(username) !== null,
+    username: usernameViolation(username) !== null || usernameState === "taken",
     // Optional for accounts created before it existed or through OAuth.
     birthDate: birthDate !== "" && birthDateViolation(birthDate) !== null,
   };
@@ -84,12 +89,16 @@ export function ProfileForm({
       });
 
       // Persist the choice immediately so a refresh does not revert it.
-      await apiFetch("/api/users/me", {
+      const saved = await apiFetch<UserProfileDto>("/api/users/me", {
         method: "PATCH",
         body: { image: response.data.url },
       });
 
       setImage(response.data.url);
+      // Every avatar on screen (shell, feed, chat) switches now; the server
+      // broadcast does the same for everyone else's open tabs.
+      patchProfile({ userId: saved.id, name: saved.name, username: saved.username, image: saved.image });
+      router.refresh();
       toast.success(t("settings.profile.saved"));
     } catch (caught) {
       if (caught instanceof ApiRequestError) {
@@ -112,7 +121,7 @@ export function ProfileForm({
     setSaving(true);
     setServerErrors({});
     try {
-      await apiFetch("/api/users/me", {
+      const saved = await apiFetch<UserProfileDto>("/api/users/me", {
         method: "PATCH",
         body: {
           firstName: firstName.trim(),
@@ -122,6 +131,8 @@ export function ProfileForm({
           bio: bio.trim(),
         },
       });
+      patchProfile({ userId: saved.id, name: saved.name, username: saved.username, image: saved.image });
+      router.refresh();
       toast.success(t("settings.profile.saved"));
     } catch (caught) {
       if (caught instanceof ApiRequestError && caught.status === 409) {
@@ -241,28 +252,19 @@ export function ProfileForm({
               label={t("profile.username")}
               hint={t("profile.username_hint")}
               required
-              {...errorFor("username", "profile.error.username")}
+              {...(serverErrors.username ? { error: t(serverErrors.username) } : {})}
             >
               {(field) => (
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground">
-                    @
-                  </span>
-                  <Input
-                    {...field}
-                    value={username}
-                    onChange={(event) => {
-                      setServerErrors((current) => ({ ...current, username: undefined }));
-                      setUsername(event.target.value.replace(/\s/g, ""));
-                    }}
-                    maxLength={30}
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    autoComplete="username"
-                    className="pl-7"
-                    required
-                  />
-                </div>
+                <UsernameField
+                  inputProps={field}
+                  value={username}
+                  current={profile.username}
+                  onStateChange={setUsernameState}
+                  onChange={(value) => {
+                    setServerErrors((current) => ({ ...current, username: undefined }));
+                    setUsername(value);
+                  }}
+                />
               )}
             </FormField>
 

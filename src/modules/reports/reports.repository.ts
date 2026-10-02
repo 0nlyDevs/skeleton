@@ -1,5 +1,6 @@
 import { type Prisma } from "@/generated/prisma/client";
 
+import { decryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
 
 export const reportInclude = {
@@ -121,7 +122,7 @@ export async function findReportedTargetSummaries(
     idsByType.set(target.targetType, ids);
   }
 
-  const [posts, comments, messages, users] = await Promise.all([
+  const [posts, comments, messages, users, pages] = await Promise.all([
     prisma.post.findMany({
       where: { id: { in: idsByType.get("post") ?? [] } },
       select: { id: true, title: true, body: true },
@@ -138,6 +139,10 @@ export async function findReportedTargetSummaries(
       where: { id: { in: idsByType.get("user") ?? [] } },
       select: { id: true, name: true, username: true, bio: true },
     }),
+    prisma.page.findMany({
+      where: { id: { in: idsByType.get("page") ?? [] } },
+      select: { id: true, slug: true, title: true, tagline: true, deletedAt: true },
+    }),
   ]);
 
   const summaries = new Map<string, ReportedTargetSummary>();
@@ -150,15 +155,15 @@ export async function findReportedTargetSummaries(
   }
   for (const comment of comments) {
     summaries.set(`comment:${comment.id}`, {
-      label: comment.deletedAt ? "Removed comment" : "Comment",
+      label: comment.deletedAt ? "Commentaire supprimé" : "Commentaire",
       summary: comment.deletedAt ? null : comment.body.slice(0, 320),
       href: `/feed/${encodeURIComponent(comment.postId)}#comments`,
     });
   }
   for (const message of messages) {
     summaries.set(`message:${message.id}`, {
-      label: message.deletedAt ? "Removed message" : "Message",
-      summary: message.deletedAt ? null : message.content.slice(0, 320),
+      label: message.deletedAt ? "Message supprimé" : "Message",
+      summary: message.deletedAt ? null : decryptField(message.content).slice(0, 320),
       href: null,
     });
   }
@@ -167,6 +172,14 @@ export async function findReportedTargetSummaries(
       label: user.username ? `@${user.username}` : user.name,
       summary: user.bio?.slice(0, 320) ?? null,
       href: user.username ? `/u/${encodeURIComponent(user.username)}` : null,
+    });
+  }
+
+  for (const page of pages) {
+    summaries.set(`page:${page.id}`, {
+      label: page.deletedAt ? "Page supprimée" : `Page « ${page.title} »`,
+      summary: page.tagline,
+      href: page.deletedAt ? null : `/p/${encodeURIComponent(page.slug)}`,
     });
   }
 

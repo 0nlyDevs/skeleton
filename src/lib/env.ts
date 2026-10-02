@@ -35,6 +35,15 @@ const envSchema = z.object({
     .string()
     .min(16, "BETTER_AUTH_SECRET must be at least 16 characters"),
   BETTER_AUTH_URL: z.string().min(1).optional(),
+  /**
+   * Key material for encryption at rest (private messages, notification
+   * bodies, birth dates). Generate with `openssl rand -base64 32`. Changing
+   * it makes existing encrypted values unreadable — rotate, never replace.
+   */
+  DATA_ENCRYPTION_KEY: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().min(32, "DATA_ENCRYPTION_KEY must be at least 32 characters").optional(),
+  ),
   CORS_ALLOWED_ORIGINS: z.string().default(""),
 
   // --- OAuth ----------------------------------------------------------------
@@ -78,6 +87,15 @@ const envSchema = z.object({
   AI_BASE_URL: z.string().min(1).default("https://openrouter.ai/api/v1"),
   AI_MODEL: z.string().min(1).default("google/gemini-2.0-flash-exp:free"),
   AI_FALLBACK_MODEL: optionalText,
+  /** Provider embedding model (e.g. `text-embedding-3-small`); unset = local embedding. */
+  AI_EMBEDDING_MODEL: optionalText,
+
+  // --- Calls (WebRTC) -------------------------------------------------------
+  /** Comma-separated STUN URLs. */
+  WEBRTC_STUN_URLS: z.string().default("stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302"),
+  /** Optional TURN relay (coturn `use-auth-secret`), e.g. `turn:turn.example.com:3478`. */
+  TURN_URL: optionalText,
+  TURN_SECRET: optionalText,
 
   // --- Uploads --------------------------------------------------------------
   UPLOAD_DIR: z.string().min(1).default("./uploads"),
@@ -95,6 +113,8 @@ const envSchema = z.object({
   CRON_SECRET: optionalText,
   TRUST_PROXY: z.enum(["0", "1"]).default("0"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  /** Reject passwords found in known breaches (HIBP k-anonymity range API). */
+  PASSWORD_BREACH_CHECK: z.enum(["0", "1"]).default("1"),
   RATE_LIMIT_STORE: z.enum(["memory", "database"]).default("memory"),
 });
 

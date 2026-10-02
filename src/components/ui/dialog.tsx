@@ -55,7 +55,7 @@ export function DialogContent({
             )}
           >
             <X className="size-4" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">Fermer</span>
           </DialogPrimitive.Close>
         ) : null}
       </DialogPrimitive.Content>

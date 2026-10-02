@@ -22,15 +22,17 @@ export function Brand({
     <>
       <span
         aria-hidden
-        className="grid size-7 shrink-0 place-items-center rounded-[9px] bg-primary text-[11px] font-bold text-primary-foreground"
+        className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-primary to-[oklch(0.62_0.2_310)] text-primary-foreground shadow-sm shadow-primary/30"
       >
-        W
+        {/* A tiny social graph: three linked nodes. */}
+        <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <path d="M7 16.5 12 7.5l5 9" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="6.5" r="2.4" fill="currentColor" stroke="none" />
+          <circle cx="6.2" cy="17.5" r="2.4" fill="currentColor" stroke="none" />
+          <circle cx="17.8" cy="17.5" r="2.4" fill="currentColor" stroke="none" />
+        </svg>
       </span>
-      {!compact ? (
-        <span className="text-[15px] font-semibold tracking-tight">
-          Webcup<span className="text-muted-foreground"> Base</span>
-        </span>
-      ) : null}
+      {!compact ? <span className="text-[17px] font-bold tracking-tight">Skeleton</span> : null}
     </>
   );
 
@@ -39,7 +41,7 @@ export function Brand({
   if (!href) return <div className={classes}>{content}</div>;
 
   return (
-    <Link href={href} className={classes} aria-label="Webcup Base">
+    <Link href={href} className={classes} aria-label="Skeleton">
       {content}
     </Link>
   );

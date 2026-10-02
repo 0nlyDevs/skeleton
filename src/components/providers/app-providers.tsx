@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Dictionary, Locale } from "@/lib/i18n";
 
 import { I18nProvider } from "./i18n-provider";
+import { CallProvider } from "@/components/calls/call-provider";
+
 import { RealtimeProvider } from "./realtime-provider";
 import { ThemeProvider } from "./theme-provider";
 
@@ -22,19 +24,26 @@ import { ThemeProvider } from "./theme-provider";
 export function AppProviders({
   locale,
   dictionary,
+  viewerId,
+  nonce,
   children,
 }: {
   locale: Locale;
   dictionary: Dictionary;
+  /** The signed-in user, resolved on the server; `null` for guests. */
+  viewerId: string | null;
+  nonce?: string;
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
+    <ThemeProvider {...(nonce ? { nonce } : {})}>
       <I18nProvider locale={locale} dictionary={dictionary}>
         <TooltipProvider delayDuration={300}>
-          <RealtimeProvider>
-            {children}
-            <Toaster />
+          <RealtimeProvider viewerId={viewerId}>
+            <CallProvider viewerId={viewerId}>
+              {children}
+              <Toaster />
+            </CallProvider>
           </RealtimeProvider>
         </TooltipProvider>
       </I18nProvider>

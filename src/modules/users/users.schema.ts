@@ -31,6 +31,10 @@ export const updateProfileSchema = z
       .refine((value) => value.length <= 500, "Keep your bio under 500 characters.")
       .optional(),
     image: avatarPathSchema.nullable().optional(),
+    /** Privacy: show others when I am online and when I was last seen. */
+    showPresence: z.boolean().optional(),
+    /** Suggest my town on new posts and centre the map on me. */
+    autoLocation: z.boolean().optional(),
   })
   .refine(hasAtLeastOneDefined, { message: "Provide at least one field to update." });
 
@@ -76,9 +80,33 @@ export const updateUserBanSchema = z
 
 export type UpdateUserBanInput = z.infer<typeof updateUserBanSchema>;
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Enter your current password.").max(128),
-  newPassword: passwordSchema,
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password.").max(128),
+    newPassword: passwordSchema,
+    confirmPassword: z.string().max(128),
+  })
+  .superRefine((value, context) => {
+    if (value.newPassword !== value.confirmPassword) {
+      context.addIssue({ code: "custom", path: ["confirmPassword"], message: "The two passwords do not match." });
+    }
+    if (value.newPassword === value.currentPassword) {
+      context.addIssue({
+        code: "custom",
+        path: ["newPassword"],
+        message: "Choose a password different from the current one.",
+      });
+    }
+  });
+
+/** First password for an account created through Google/GitHub. */
+export const setInitialPasswordSchema = z
+  .object({ newPassword: passwordSchema, confirmPassword: z.string().max(128) })
+  .refine((value) => value.newPassword === value.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "The two passwords do not match.",
+  });
+
+export type SetInitialPasswordInput = z.infer<typeof setInitialPasswordSchema>;
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

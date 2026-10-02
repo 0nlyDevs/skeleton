@@ -12,7 +12,7 @@ import type { AuthUser, ReactionType } from "@/types";
 import { notifyInBackground, notifyPostReaction } from "../notifications/notifications.service";
 import { broadcastEngagement, getEngagement } from "../posts/posts.engagement";
 import type { PostEngagementDto } from "../posts/posts.dto";
-import { isPublicPost, loadInteractivePost, loadReadablePost } from "../posts/posts.service";
+import { loadInteractivePost, postAudience, loadReadablePost } from "../posts/posts.service";
 import { deleteReaction, findReactors, upsertReaction } from "./reactions.repository";
 
 export interface ReactionResult {
@@ -40,7 +40,7 @@ export async function reactToPost(
   }
 
   const engagement =
-    change === "unchanged" ? await getEngagement(postId) : await broadcastEngagement(postId, isPublicPost(post));
+    change === "unchanged" ? await getEngagement(postId) : await broadcastEngagement(postId, postAudience(post));
 
   return { engagement, viewerReaction: type };
 }
@@ -50,7 +50,7 @@ export async function removeReaction(postId: string, actor: AuthUser): Promise<R
   const removed = await deleteReaction(postId, actor.id);
 
   const engagement = removed
-    ? await broadcastEngagement(postId, isPublicPost(post))
+    ? await broadcastEngagement(postId, postAudience(post))
     : await getEngagement(postId);
 
   return { engagement, viewerReaction: null };

@@ -28,6 +28,7 @@ const EXTERNAL = [
   "next",
   // Native binaries: bundling them breaks the dynamic `.node` lookup.
   "@node-rs/argon2",
+  "sharp",
   // Prisma 7's client is generated into `src/` and is bundled like any other
   // application code, but the MariaDB driver underneath opens sockets and uses
   // runtime `require`, so it stays a real dependency.

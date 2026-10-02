@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/shell/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -19,7 +19,6 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { signOut } from "@/lib/auth/client";
 import type { Role } from "@/types";
-import { initials } from "@/lib/utils";
 
 /**
  * Account menu in the topbar.
@@ -31,11 +30,15 @@ import { initials } from "@/lib/utils";
  * place, which is how a signed-out user can still see their dashboard.
  */
 export function UserMenu({
+  id,
+  username,
   name,
   email,
   image,
   role,
 }: {
+  readonly id: string;
+  readonly username: string | null;
   readonly name: string;
   readonly email: string;
   readonly image: string | null;
@@ -66,10 +69,7 @@ export function UserMenu({
         aria-label={name}
         className="inline-flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
       >
-        <Avatar className="size-8">
-          {image ? <AvatarImage src={image} alt="" /> : null}
-          <AvatarFallback>{initials(name)}</AvatarFallback>
-        </Avatar>
+        <UserAvatar userId={id} name={name} image={image} size="xs" className="size-8" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="min-w-60">
@@ -94,9 +94,16 @@ export function UserMenu({
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href="/settings/profile">
+          <Link href={username ? `/profile/${encodeURIComponent(username)}` : "/settings/profile"}>
             <User />
-            {t("nav.profile")}
+            {t("nav.my_profile")}
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link href="/settings/profile">
+            <Settings />
+            {t("nav.settings")}
           </Link>
         </DropdownMenuItem>
 

@@ -17,6 +17,7 @@ import type { MessageKey } from "@/lib/i18n";
 import { isNetworkFailure, registerErrorMessageKey } from "./auth-errors";
 import { PasswordRequirements, PasswordStrength } from "./password-strength";
 import { isPasswordAcceptable } from "@/lib/auth/password-policy";
+import { UsernameField, type UsernameState } from "@/components/forms/username-field";
 import {
   birthDateViolation,
   composeDisplayName,
@@ -47,6 +48,7 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
+  const [usernameState, setUsernameState] = useState<UsernameState>("idle");
   const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
   // Field errors appear once a field has been left, not while typing.
@@ -56,7 +58,7 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
   const invalid = {
     firstName: personNameViolation(firstName) !== null,
     lastName: personNameViolation(lastName) !== null,
-    username: usernameViolation(username) !== null,
+    username: usernameViolation(username) !== null || usernameState === "taken",
     birthDate: birthDateViolation(birthDate) !== null,
   };
   const fieldError = (field: keyof typeof invalid, key: MessageKey) =>
@@ -69,6 +71,19 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (status === "submitting") return;
+
+    // Never a silently disabled button: submitting an incomplete form shows
+    // every field's reason and a summary at the top.
+    const problems =
+      Object.values(invalid).some(Boolean) ||
+      !/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(email.trim()) ||
+      !isPasswordAcceptable(password) ||
+      !accepted;
+    if (problems) {
+      setTouched(new Set(["firstName", "lastName", "username", "birthDate", "email", "password", "terms"]));
+      setErrorKey("auth.register.fix_fields");
+      return;
+    }
 
     setStatus("submitting");
     setErrorKey(null);
@@ -84,7 +99,7 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         birthDate,
         email: email.trim(),
         password,
-        callbackURL: "/dashboard",
+        callbackURL: "/feed",
       } as Parameters<typeof signUp.email>[0]);
 
       if (result.error) {
@@ -175,27 +190,17 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         label={t("profile.username")}
         hint={t("profile.username_hint")}
         required
-        {...fieldError("username", "profile.error.username")}
       >
         {(field) => (
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground">
-              @
-            </span>
-            <Input
-              {...field}
-              name="username"
-              autoComplete="username"
-              autoCapitalize="none"
-              spellCheck={false}
-              required
-              maxLength={30}
-              className="pl-7"
-              value={username}
-              onBlur={() => touch("username")}
-              onChange={(event) => setUsername(event.target.value.replace(/\s/g, ""))}
-            />
-          </div>
+          <UsernameField
+            inputProps={field}
+            value={username}
+            onStateChange={setUsernameState}
+            onChange={(value) => {
+              touch("username");
+              setUsername(value);
+            }}
+          />
         )}
       </FormField>
 
@@ -220,7 +225,11 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         )}
       </FormField>
 
-      <FormField label={t("auth.register.email")} required>
+      <FormField
+        label={t("auth.register.email")}
+        required
+        {...(touched.has("email") && !/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(email.trim()) ? { error: t("auth.register.email_invalid") } : {})}
+      >
         {(field) => (
           <Input
             {...field}
@@ -280,19 +289,13 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
       <Button
         type="submit"
         size="lg"
-        disabled={
-          status === "submitting" ||
-          !accepted ||
-          Object.values(invalid).some(Boolean) ||
-          email.trim().length === 0 ||
-          !isPasswordAcceptable(password)
-        }
+        disabled={status === "submitting"}
       >
         {status === "submitting" ? <Spinner className="size-4" /> : null}
         {status === "submitting" ? t("common.loading") : t("auth.register.submit")}
       </Button>
 
-      <OAuthButtons availability={oauth} callbackURL="/dashboard" />
+      <OAuthButtons availability={oauth} callbackURL="/feed" />
     </form>
   );
 }

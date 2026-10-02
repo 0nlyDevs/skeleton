@@ -15,6 +15,7 @@
 
 import type { NotificationType } from "@/generated/prisma/client";
 
+import { encryptNullable } from "@/lib/crypto/field-encryption";
 import { logger } from "@/lib/logger";
 import { sendNotificationEmail } from "@/lib/mail/transactional";
 import { paginate, toPagination, type Paginated } from "@/lib/pagination";
@@ -61,7 +62,8 @@ export async function createNotification(
     userId: input.userId,
     type: input.type,
     title: input.title,
-    body: input.body ?? null,
+    // Bodies quote private content (message previews, comments): encrypted at rest.
+    body: encryptNullable(input.body ?? null),
     link: input.link ?? null,
   });
 
@@ -86,12 +88,14 @@ async function deliverEmail(input: CreateNotificationInput): Promise<void> {
 
   // Conversation-style activity (mentions, comments, replies) follows the
   // mention switch; direct messages and group invites follow the message one.
+  // Security alerts are not optional: they are how an owner learns of a takeover.
   const wantsEmail =
-    input.type === "MENTION" || input.type === "POST_COMMENT" || input.type === "COMMENT_REPLY"
+    input.type === "SECURITY" ||
+    (input.type === "MENTION" || input.type === "POST_COMMENT" || input.type === "COMMENT_REPLY"
       ? (preferences?.emailOnMention ?? true)
       : input.type === "NEW_MESSAGE" || input.type === "GROUP_INVITE"
         ? (preferences?.emailOnMessage ?? false)
-        : (preferences?.emailOnSystem ?? true);
+        : (preferences?.emailOnSystem ?? true));
 
   if (!wantsEmail) return;
 
@@ -123,7 +127,7 @@ export async function notifyRoleChanged(userId: string, role: string): Promise<v
     type: "ROLE_CHANGED",
     title: "Votre rôle a changé",
     body: `Votre compte est maintenant ${role.toLowerCase()}. Déconnectez-vous puis reconnectez-vous si le changement n'est pas encore visible.`,
-    link: "/dashboard",
+    link: "/feed",
     email: true,
   });
 }
@@ -139,7 +143,7 @@ export async function notifyNewMessage(input: {
     type: "NEW_MESSAGE",
     title: `Nouveau message de ${input.senderName}`,
     body: truncate(input.preview, 140),
-    link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    link: `/messages?room=${encodeURIComponent(input.roomId)}`,
     email: true,
   });
 }
@@ -155,7 +159,7 @@ export async function notifyMention(input: {
     type: "MENTION",
     title: `${input.senderName} vous a mentionné`,
     body: truncate(input.preview, 140),
-    link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    link: `/messages?room=${encodeURIComponent(input.roomId)}`,
     email: true,
   });
 }
@@ -257,21 +261,53 @@ export async function notifyGroupInvite(input: {
     userId: input.userId,
     type: "GROUP_INVITE",
     title: `${actorHandle(input.actor)} vous a ajouté au groupe « ${truncate(input.groupName, 60)} »`,
-    link: `/chat?room=${encodeURIComponent(input.roomId)}`,
+    link: `/messages?room=${encodeURIComponent(input.roomId)}`,
     email: true,
+  });
+}
+
+export async function notifyPostShare(input: { userId: string; actor: { name: string }; postId: string }): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "POST_SHARE",
+    title: `${input.actor.name} a partagé votre publication`,
+    link: `/feed/${encodeURIComponent(input.postId)}`,
+  });
+}
+
+/** Membership events in a community group (request, approval, role change). */
+export async function notifyGroupActivity(input: {
+  userId: string;
+  title: string;
+  body?: string | null;
+  groupSlug: string;
+  path?: string;
+}): Promise<void> {
+  await createNotification({
+    userId: input.userId,
+    type: "GROUP_ACTIVITY",
+    title: truncate(input.title, 180),
+    body: input.body ? truncate(input.body, 200) : null,
+    link: input.path ?? `/groups/${encodeURIComponent(input.groupSlug)}`,
   });
 }
 
 /** Staff removed something the user wrote; they deserve to know, and why. */
 export async function notifyModeration(input: {
   userId: string;
-  what: string;
+  what: "post" | "comment" | "message" | "page";
   reason?: string | null;
 }): Promise<void> {
+  const title = {
+    post: "Votre publication a été retirée par la modération",
+    comment: "Votre commentaire a été retiré par la modération",
+    message: "Votre message a été retiré par la modération",
+    page: "Votre page a été retirée par la modération",
+  }[input.what];
   await createNotification({
     userId: input.userId,
     type: "MODERATION",
-    title: `Votre ${input.what} a été retiré par la modération`,
+    title,
     body: input.reason ? truncate(input.reason, 200) : "Il ne respectait pas les règles de la communauté.",
     link: "/notifications",
     email: true,

@@ -17,15 +17,19 @@
  * sign-ins never consume the budget and only failures accumulate.
  */
 
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import type { BetterAuthOptions } from "better-auth";
 
 import { env } from "@/lib/env";
 import { resolveClientIp } from "@/lib/http/client-ip";
+import { BREACHED_PASSWORD_MESSAGE, isBreachedPassword } from "@/lib/auth/breached-passwords";
 import { findPasswordViolation } from "@/lib/auth/password-policy";
+import { encryptField } from "@/lib/crypto/field-encryption";
+import { DEVICE_COOKIE, DEVICE_COOKIE_MAX_AGE, isDeviceId, newDeviceId, recordSignIn } from "@/modules/devices/devices.service";
 import {
   birthDateViolation,
   composeDisplayName,
+  formatBirthDate,
   parseBirthDate,
   personNameViolation,
   usernameViolation,
@@ -130,7 +134,7 @@ export const PASSWORD_FIELDS: Readonly<Record<string, string>> = {
   "/set-password": "newPassword",
 };
 
-function enforcePasswordPolicy(ctx: unknown, path: string): void {
+async function enforcePasswordPolicy(ctx: unknown, path: string): Promise<void> {
   const field = PASSWORD_FIELDS[path];
   if (!field) return;
 
@@ -145,6 +149,9 @@ function enforcePasswordPolicy(ctx: unknown, path: string): void {
 
   if (violation) {
     throw new APIError("BAD_REQUEST", { message: violation, code: "PASSWORD_TOO_WEAK" });
+  }
+  if (await isBreachedPassword(password)) {
+    throw new APIError("BAD_REQUEST", { message: BREACHED_PASSWORD_MESSAGE, code: "PASSWORD_BREACHED" });
   }
 }
 
@@ -179,7 +186,9 @@ function enforceSignUpProfile(ctx: unknown): void {
   fields.firstName = firstName.trim().replace(/\s+/g, " ");
   fields.lastName = lastName.trim().replace(/\s+/g, " ");
   fields.name = composeDisplayName(firstName, lastName);
-  fields.birthDate = parseBirthDate(birthDate);
+  // Encrypted at rest; the plaintext column is never written.
+  fields.birthDateEncrypted = encryptField(formatBirthDate(parseBirthDate(birthDate)) ?? "");
+  delete fields.birthDate;
   // Casing is kept for display; the plugin stores the lowercase handle.
   fields.displayUsername = username.trim();
 }
@@ -204,7 +213,7 @@ export const authBeforeHook: AuthBeforeMiddleware = async (ctx) => {
   }
 
   if (path === "/sign-up/email") enforceSignUpProfile(ctx);
-  enforcePasswordPolicy(ctx, path);
+  await enforcePasswordPolicy(ctx, path);
   await authRateLimitHook(ctx);
 };
 
@@ -246,3 +255,31 @@ export const authRateLimitHook: AuthBeforeMiddleware = async (ctx) => {
     });
   }
 };
+
+/**
+ * After any endpoint that just created a session (password, username, OAuth
+ * callback, 2FA completion): tag the browser with a device cookie and alert
+ * the owner when the device is new.
+ */
+export const authAfterHook = createAuthMiddleware(async (ctx) => {
+  const created = ctx.context.newSession;
+  if (!created) return;
+
+  const existing = ctx.getCookie(DEVICE_COOKIE);
+  const deviceId = isDeviceId(existing) ? existing : newDeviceId();
+
+  await recordSignIn({
+    userId: String(created.user.id),
+    deviceId,
+    userAgent: typeof created.session.userAgent === "string" ? created.session.userAgent : null,
+    ip: typeof created.session.ipAddress === "string" ? created.session.ipAddress : null,
+  });
+
+  ctx.setCookie(DEVICE_COOKIE, deviceId, {
+    httpOnly: true,
+    secure: env.isProduction,
+    sameSite: "lax",
+    path: "/",
+    maxAge: DEVICE_COOKIE_MAX_AGE,
+  });
+});

@@ -55,6 +55,7 @@ export function registerErrorMessageKey(error: AuthErrorLike): MessageKey | null
   const code = codeOf(error);
   if (code.includes("ALREADY_EXISTS")) return null;
   if (code === "PASSWORD_TOO_WEAK") return "auth.password.too_weak";
+  if (code === "PASSWORD_BREACHED") return "auth.password.breached";
   if (code === "USERNAME_IS_ALREADY_TAKEN") return "profile.error.username_taken";
   if (code.includes("USERNAME")) return "profile.error.username";
   if (code === "INVALID_FIRST_NAME" || code === "INVALID_LAST_NAME") return "profile.error.name";
@@ -82,6 +83,7 @@ export function resetPasswordErrorMessageKey(error: AuthErrorLike): MessageKey {
     return "auth.verify.failed";
   }
   if (code === "PASSWORD_TOO_WEAK") return "auth.password.too_weak";
+  if (code === "PASSWORD_BREACHED") return "auth.password.breached";
   if (code.includes("PASSWORD")) return "error.VALIDATION_ERROR";
 
   return "error.INTERNAL_ERROR";
