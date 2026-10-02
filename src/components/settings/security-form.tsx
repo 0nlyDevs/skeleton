@@ -8,6 +8,7 @@ import { LinkedAccounts } from "./linked-accounts";
 import { PasswordCard } from "./password-card";
 import { SecurityAlert } from "./security-alert";
 import { SessionsCard, type SessionInfo } from "./sessions-card";
+import { DataRightsCard } from "./data-rights-card";
 import { TwoFactorCard } from "./two-factor-card";
 
 /** Account & security: password, two-factor, linked providers, devices. */
@@ -34,6 +35,7 @@ export function SecurityForm({
       <TwoFactorCard enabled={twoFactorEnabled} hasPassword={hasPassword} />
       <LinkedAccounts availability={oauth} />
       <SessionsCard sessions={sessions} currentSessionId={currentSessionId} />
+      <DataRightsCard hasPassword={hasPassword} />
     </div>
   );
 }
