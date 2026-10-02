@@ -1,8 +1,10 @@
 "use client";
 
-import { Home, RotateCcw, ServerCrash } from "lucide-react";
+import { Home, Loader2, RotateCcw, ServerCrash } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import Link from "@/components/ui/link";
-import { useEffect } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
@@ -21,10 +23,46 @@ export function ServerErrorPage({
   readonly fullScreen?: boolean;
 }) {
   const t = useTranslation();
+  const router = useRouter();
+  // Most failures on a busy shared host are transient (the request was
+  // refused before reaching the app). Retry once, quietly, before showing
+  // anything; a second failure within half a minute shows the page.
+  const [retrying, setRetrying] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return Date.now() - Number(sessionStorage.getItem(`skeleton:retry:${window.location.pathname}`) ?? 0) >= 30_000;
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
     console.error(error);
-  }, [error]);
+    if (!retrying) return;
+    const key = `skeleton:retry:${window.location.pathname}`;
+    try {
+      sessionStorage.setItem(key, String(Date.now()));
+    } catch {
+      // ignore
+    }
+    const timer = setTimeout(() => {
+      router.refresh();
+      reset();
+    }, 700);
+    const giveUp = setTimeout(() => setRetrying(false), 6_000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(giveUp);
+    };
+  }, [error, reset, router, retrying]);
+
+  if (retrying) {
+    return (
+      <main className={fullScreen ? "flex min-h-dvh items-center justify-center" : "flex items-center justify-center py-24"} aria-busy="true">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label={t("common.loading")} />
+      </main>
+    );
+  }
 
   return (
     <main className={fullScreen ? "flex min-h-dvh items-center justify-center px-4 py-20" : "flex items-center justify-center px-4 py-16"}>
