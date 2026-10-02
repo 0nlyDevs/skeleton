@@ -61,16 +61,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy and run migrations
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
         with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+
+      - name: Deploy and run migrations
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             set -e
-            APP_DIR="/home/nlydevs/.hodifly/8c57e5b89786d068/current"
+            if [ "${{ github.ref_name }}" = "prod" ]; then
+              APP_DIR="/home/nlydevs/.hodifly/8c57e5b89786d068/current"
+            else
+              APP_DIR="/home/nlydevs/.hodifly/8c57e5b89786d068/current"
+            fi
             cd "$APP_DIR"
             npx prisma migrate deploy
-            echo "Initiate deployment"
+          '
