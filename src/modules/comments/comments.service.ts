@@ -11,15 +11,17 @@
  */
 
 import { isStaff } from "@/lib/auth/guards";
+import { findBlockedIds, isBlockedBetween } from "../blocks/blocks.service";
 import { findStaffRoles, type GroupStaffRole } from "../groups/groups.repository";
 import { BadRequestError, NotFoundError } from "@/lib/errors";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { publishComment } from "@/lib/socket/emit";
-import type { AuthUser } from "@/types";
+import type { AuthUser, ReactionType } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import {
+  notifyCommentReaction,
   notifyCommentReply,
   notifyContentMention,
   notifyInBackground,
@@ -32,6 +34,8 @@ import { resolveMentions, syncCommentMentions } from "../mentions/mentions.servi
 import { toCommentDto, type CommentDto } from "./comments.dto";
 import {
   findCommentById,
+  findCommentReactors,
+  setCommentReaction,
   findRepliesFor,
   findTopLevelComments,
   insertComment,
@@ -254,3 +258,29 @@ export async function removeCommentAsStaff(id: string, actor: ActorContext, reas
     { commentId: id },
   );
 }
+
+/** React to a comment (one reaction per person; `null` removes it). */
+export async function reactToComment(id: string, type: ReactionType | null, actor: AuthUser): Promise<CommentDto> {
+  const existing = await findCommentById(id);
+  if (!existing || existing.deletedAt) throw new NotFoundError("This comment no longer exists.");
+  const post = await loadInteractivePost(existing.postId, actor);
+  if (await isBlockedBetween(actor.id, existing.userId)) throw new NotFoundError("This comment no longer exists.");
+  await enforceThenRecord([{ key: rateLimitKey("comment:react", actor.id), rule: RATE_LIMITS.reaction }]);
+
+  const change = await setCommentReaction(id, actor.id, type);
+  if (change === "created" && existing.userId !== actor.id) {
+    notifyInBackground(notifyCommentReaction({ userId: existing.userId, actor, postId: post.id, preview: existing.body }), { commentId: id });
+  }
+  const row = (await findCommentById(id)) ?? existing;
+  const comment = toCommentDto(row, [], await staffRolesFor(post.groupId, [row.user.id]));
+  publishComment({ kind: "updated", postId: row.postId, comment });
+  return comment;
+}
+
+export async function listCommentReactors(id: string, viewer: AuthUser | null) {
+  const existing = await findCommentById(id);
+  if (!existing || existing.deletedAt) throw new NotFoundError("This comment no longer exists.");
+  await loadReadablePost(existing.postId, viewer);
+  return (await findCommentReactors(id)).map((row) => ({ type: row.type as ReactionType, user: row.user }));
+}
+

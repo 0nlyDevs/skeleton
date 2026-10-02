@@ -1,3 +1,7 @@
+import { z } from "zod";
+
+import { REACTION_TYPES } from "@/types";
+
 import { apiRoute, publicRoute } from "@/lib/api/route";
 import { jsonCreated, jsonOk, noContent } from "@/lib/api/response";
 
@@ -8,7 +12,7 @@ import {
   postCommentsParamsSchema,
   updateCommentSchema,
 } from "./comments.schema";
-import { createComment, deleteComment, editComment, listComments } from "./comments.service";
+import { listCommentReactors, reactToComment, createComment, deleteComment, editComment, listComments } from "./comments.service";
 
 /** Public: a guest may read the thread of a published post. */
 export const listCommentsRoute = publicRoute({
@@ -38,3 +42,22 @@ export const deleteCommentRoute = apiRoute({
     return noContent();
   },
 });
+
+const commentParams = z.object({ id: z.string().trim().min(1).max(64) });
+
+export const reactToCommentRoute = apiRoute({
+  params: commentParams,
+  body: z.object({ type: z.enum(REACTION_TYPES) }),
+  handler: async ({ params, body, auth }) => jsonOk({ data: await reactToComment(params.id, body.type, auth.user) }),
+});
+
+export const removeCommentReactionRoute = apiRoute({
+  params: commentParams,
+  handler: async ({ params, auth }) => jsonOk({ data: await reactToComment(params.id, null, auth.user) }),
+});
+
+export const listCommentReactorsRoute = publicRoute({
+  params: commentParams,
+  handler: async ({ params, auth }) => jsonOk({ data: await listCommentReactors(params.id, auth?.user ?? null) }),
+});
+

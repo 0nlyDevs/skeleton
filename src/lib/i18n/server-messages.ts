@@ -10,6 +10,9 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "This comment no longer exists.": "Ce commentaire n'existe plus.",
+  "You cannot block yourself.": "Vous ne pouvez pas vous bloquer vous-même.",
+  "You cannot message this person.": "Vous ne pouvez pas écrire à cette personne.",
   "The message you are replying to no longer exists.": "Le message auquel vous répondez n'existe plus.",
   "This conversation cannot be deleted.": "Cette conversation ne peut pas être supprimée.",
   "Only group conversations can be deleted for everyone.": "Seuls les groupes peuvent être supprimés pour tout le monde.",

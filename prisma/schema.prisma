@@ -183,6 +183,7 @@ model User {
   pages             Page[]
   pageLikes         PageLike[]
   messageReactions  MessageReaction[]
+  commentReactions  CommentReaction[]
 
   @@index([role])
   @@index([banned])
@@ -454,6 +455,20 @@ model MessageReaction {
   @@map("messageReaction")
 }
 
+/// One emoji reaction per user per comment.
+model CommentReaction {
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @db.VarChar(10)
+  createdAt DateTime @default(now())
+
+  @@id([commentId, userId])
+  @@index([userId])
+  @@map("commentReaction")
+}
+
 /// A post the user saved for later. Private: only its owner ever sees it.
 model PostBookmark {
   userId    String
@@ -579,7 +594,8 @@ model Comment {
   editedAt  DateTime?
   deletedAt DateTime?
 
-  mentions Mention[]
+  mentions  Mention[]
+  reactions CommentReaction[]
 
   @@index([postId, createdAt])
   @@index([parentId])
