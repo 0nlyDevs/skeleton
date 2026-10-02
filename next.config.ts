@@ -40,6 +40,17 @@ const nextConfig: NextConfig = {
   // Never ship source maps to the browser in production.
   productionBrowserSourceMaps: false,
 
+  /*
+   * The production build uses webpack (`next build --webpack`): on the
+   * contest host the account is capped at 2 GB of RAM, and a cold Turbopack
+   * build peaks around 2.4 GB and is killed mid-compile. Webpack with these
+   * options stays under the cap. `next dev` keeps Turbopack.
+   */
+  experimental: {
+    webpackMemoryOptimizations: true,
+    webpackBuildWorker: true,
+  },
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
