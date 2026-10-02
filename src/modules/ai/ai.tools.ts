@@ -43,6 +43,13 @@ function describePost(post: FeedItemDto) {
     images: post.media.length,
     reactions: post.reactionCount,
     comments: post.commentCount,
+    poll: post.poll
+      ? {
+          closed: post.poll.closed,
+          voters: post.poll.totalVoters,
+          options: post.poll.options.map((option) => ({ label: clip(option.label, 80), votes: option.votes })),
+        }
+      : null,
   };
 }
 

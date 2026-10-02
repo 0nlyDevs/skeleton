@@ -10,13 +10,16 @@ import { logger } from "@/lib/logger";
 import { publishEngagement } from "@/lib/socket/emit";
 import type { ReactionCounts } from "@/types";
 
+import { toPollDto } from "../polls/polls.dto";
+import { findPollByPost } from "../polls/polls.repository";
 import { countReactionsByType, findPostCounters } from "../reactions/reactions.repository";
 import type { PostEngagementDto } from "./posts.dto";
 
 export async function getEngagement(postId: string): Promise<PostEngagementDto | null> {
-  const [counters, byType] = await Promise.all([
+  const [counters, byType, poll] = await Promise.all([
     findPostCounters(postId),
     countReactionsByType([postId]),
+    findPollByPost(postId),
   ]);
   if (!counters) return null;
 
@@ -26,6 +29,7 @@ export async function getEngagement(postId: string): Promise<PostEngagementDto |
     reactionCount: counters.reactionCount,
     shareCount: counters.shareCount,
     reactions: byType.get(postId) ?? ({} as ReactionCounts),
+    poll: poll ? toPollDto(poll) : null,
   };
 }
 

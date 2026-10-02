@@ -28,7 +28,7 @@ export function PostPermalink({ post: initial, viewer }: { readonly post: FeedIt
     if (!socket) return;
     const onEngagement = (payload: PostEngagementPayload) => {
       if (payload.postId !== post.id) return;
-      setPost((current) => ({ ...current, commentCount: payload.commentCount, reactionCount: payload.reactionCount, reactions: payload.reactions, shareCount: payload.shareCount }));
+      setPost((current) => ({ ...current, commentCount: payload.commentCount, reactionCount: payload.reactionCount, reactions: payload.reactions, shareCount: payload.shareCount, poll: payload.poll }));
     };
     socket.on(SOCKET_EVENTS.postEngagement, onEngagement);
     return () => {

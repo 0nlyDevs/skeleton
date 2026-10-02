@@ -8,6 +8,7 @@
  */
 
 import type { ReactionCounts, ReactionType } from "@/types";
+import { toPollDto, type PollDto } from "../polls/polls.dto";
 
 import { toMentionDtos, type MentionDto } from "../mentions/mentions.service";
 
@@ -63,6 +64,7 @@ export interface PostDto {
   /** Set when the post was a share whose original no longer exists at all. */
   readonly wasRepost: boolean;
   readonly shareCount: number;
+  readonly poll: PollDto | null;
   readonly location: { readonly name: string; readonly latitude: number; readonly longitude: number } | null;
   readonly editedAt: string | null;
   readonly createdAt: string;
@@ -81,6 +83,8 @@ export interface FeedItemDto extends PostDto {
   readonly viewerCanInteract: boolean;
   /** Whether the viewer saved it (private to the viewer). */
   readonly viewerSaved: boolean;
+  /** Poll option ids the viewer voted for (empty when none or no poll). */
+  readonly viewerPollVotes: readonly string[];
 }
 
 /** The live counters pushed to every viewer of a post or of the feed. */
@@ -90,6 +94,8 @@ export interface PostEngagementDto {
   readonly reactionCount: number;
   readonly shareCount: number;
   readonly reactions: ReactionCounts;
+  /** Live poll totals, when the post has a poll. */
+  readonly poll: PollDto | null;
 }
 
 export function toFeedItemDto(
@@ -99,8 +105,9 @@ export function toFeedItemDto(
   viewerCanModerate = false,
   viewerCanInteract = false,
   viewerSaved = false,
+  viewerPollVotes: readonly string[] = [],
 ): FeedItemDto {
-  return { ...toPostDto(row), reactions, viewerReaction, viewerCanModerate, viewerCanInteract, viewerSaved };
+  return { ...toPostDto(row), reactions, viewerReaction, viewerCanModerate, viewerCanInteract, viewerSaved, viewerPollVotes };
 }
 
 /** `tags` is a `Json` column, so it arrives untyped. Normalize on the way out. */
@@ -137,6 +144,7 @@ export function toPostDto(row: PostWithAuthor): PostDto {
     repostOf: row.repostOf ? toRepostedDto(row.repostOf) : null,
     wasRepost: false,
     shareCount: row.shareCount,
+    poll: row.poll ? toPollDto(row.poll) : null,
     location:
       row.placeName && row.latitude !== null && row.longitude !== null
         ? { name: row.placeName, latitude: row.latitude, longitude: row.longitude }

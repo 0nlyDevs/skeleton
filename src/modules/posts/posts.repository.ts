@@ -13,6 +13,8 @@ import { type Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 
+import { pollSelect } from "../polls/polls.repository";
+
 export const postAuthorSelect = {
   user: { select: { id: true, name: true, username: true, image: true } },
   group: { select: { id: true, slug: true, name: true, privacy: true, deletedAt: true } },
@@ -23,6 +25,7 @@ export const postAuthorSelect = {
   mentions: {
     select: { mentionedUser: { select: { id: true, username: true, name: true, banned: true } } },
   },
+  poll: { select: pollSelect },
   repostOf: {
     select: {
       id: true,

@@ -172,7 +172,8 @@ model User {
   /// Presence: written when the last socket of the user disconnects.
   lastSeenAt   DateTime?
   /// Privacy: when false, others never see "online" or "last seen".
-  showPresence Boolean   @default(true)
+  showPresence Boolean    @default(true)
+  pollVotes    PollVote[]
 
   @@index([role])
   @@index([banned])
@@ -298,6 +299,7 @@ model Post {
   mentions  Mention[]
   embedding PostEmbedding?
   bookmarks PostBookmark[]
+  poll      Poll?
 
   @@index([userId])
   @@index([published])
@@ -310,6 +312,52 @@ model Post {
   @@index([repostOfId])
   @@index([latitude, longitude])
   @@map("post")
+}
+
+/// A poll attached to a post; the post text is the question.
+/// Counters are recomputed from `pollVote` inside the voting transaction, so
+/// they cannot drift under concurrent votes.
+model Poll {
+  id          String       @id @default(cuid())
+  postId      String       @unique
+  post        Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  multiple    Boolean      @default(false)
+  closesAt    DateTime?
+  totalVoters Int          @default(0)
+  createdAt   DateTime     @default(now())
+  options     PollOption[]
+  votes       PollVote[]
+
+  @@map("poll")
+}
+
+model PollOption {
+  id        String     @id @default(cuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label     String     @db.VarChar(80)
+  position  Int
+  voteCount Int        @default(0)
+  votes     PollVote[]
+
+  @@index([pollId, position])
+  @@map("pollOption")
+}
+
+/// Who voted for what. Never exposed: results are aggregate only.
+model PollVote {
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@id([optionId, userId])
+  @@index([pollId, userId])
+  @@index([userId])
+  @@map("pollVote")
 }
 
 /// A post the user saved for later. Private: only its owner ever sees it.

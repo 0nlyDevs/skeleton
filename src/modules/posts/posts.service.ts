@@ -39,6 +39,7 @@ import {
 } from "../notifications/notifications.service";
 import { broadcastEngagement } from "./posts.engagement";
 import { findViewerBookmarks } from "../bookmarks/bookmarks.repository";
+import { findViewerPollVotes } from "../polls/polls.repository";
 import { countReactionsByType, findViewerReactions } from "../reactions/reactions.repository";
 import { findAttachableImages } from "../uploads/uploads.repository";
 import { toFeedItemDto, toPostDto, toPostDtos, type FeedItemDto, type PostDto } from "./posts.dto";
@@ -214,11 +215,13 @@ export function postAudience(row: { published: boolean; deletedAt: Date | null; 
 async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Promise<FeedItemDto[]> {
   const ids = rows.map((row) => row.id);
   const groupIds = [...new Set(rows.map((row) => row.groupId).filter((id): id is string => id !== null))];
-  const [counts, mine, memberships, saved] = await Promise.all([
+  const pollIds = rows.map((row) => row.poll?.id).filter((id): id is string => id !== undefined);
+  const [counts, mine, memberships, saved, ballots] = await Promise.all([
     countReactionsByType(ids),
     viewer ? findViewerReactions(ids, viewer.id) : Promise.resolve(new Map<string, never>()),
     viewer ? findMemberships(viewer.id, groupIds) : Promise.resolve(new Map()),
     viewer ? findViewerBookmarks(ids, viewer.id) : Promise.resolve(new Set<string>()),
+    viewer ? findViewerPollVotes(pollIds, viewer.id) : Promise.resolve(new Map<string, string[]>()),
   ]);
 
   return rows.map((row) => {
@@ -232,6 +235,7 @@ async function toFeedItems(rows: PostWithAuthor[], viewer: AuthUser | null): Pro
       staff || access?.canModerate === true,
       canInteract,
       saved.has(row.id),
+      row.poll ? (ballots.get(row.poll.id) ?? []) : [],
     );
   });
 }
@@ -508,6 +512,17 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
       tags: input.tags,
       groupId: input.groupId ?? null,
       repostOfId,
+      ...(input.poll
+        ? {
+            poll: {
+              create: {
+                multiple: input.poll.multiple,
+                closesAt: input.poll.durationHours ? new Date(Date.now() + input.poll.durationHours * 3_600_000) : null,
+                options: { create: input.poll.options.map((label, position) => ({ label, position })) },
+              },
+            },
+          }
+        : {}),
       ...(input.location
         ? {
             placeName: input.location.name,

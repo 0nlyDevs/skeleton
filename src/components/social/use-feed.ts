@@ -167,6 +167,7 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
         reactionCount: payload.reactionCount,
         reactions: payload.reactions,
         shareCount: payload.shareCount,
+        poll: payload.poll,
       });
     };
     socket.on(SOCKET_EVENTS.feedPost, onPost);

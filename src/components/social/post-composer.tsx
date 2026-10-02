@@ -1,6 +1,6 @@
 "use client";
 
-import { AtSign, ImagePlus, Loader2, MapPin, X } from "lucide-react";
+import { AtSign, BarChart3, ImagePlus, Loader2, MapPin, Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -49,11 +49,22 @@ export function PostComposer({
   const uploads = useImageUploads(MAX_IMAGES);
   const [place, setPlace] = useState<PickedPlace | null>(null);
   const [picking, setPicking] = useState(false);
+  const [poll, setPoll] = useState<PollDraft | null>(null);
 
   const publish = async () => {
     if (publishing) return;
     if (uploads.uploading) {
       setHint(t("composer.uploading"));
+      return;
+    }
+    const pollOptions = poll ? poll.options.map((option) => option.trim()).filter(Boolean) : [];
+    if (poll && body.trim().length === 0) {
+      setHint(t("poll.need_question"));
+      input.current?.focus();
+      return;
+    }
+    if (poll && (pollOptions.length < 2 || new Set(pollOptions.map((option) => option.toLocaleLowerCase())).size !== pollOptions.length)) {
+      setHint(t("poll.need_options"));
       return;
     }
     if (body.trim().length === 0 && uploads.readyIds.length === 0) {
@@ -77,10 +88,12 @@ export function PostComposer({
           published: true,
           ...(group ? { groupId: group.id } : {}),
           ...(place ? { location: place } : {}),
+          ...(poll ? { poll: { options: pollOptions, multiple: poll.multiple, durationHours: poll.durationHours } } : {}),
         },
       });
       setBody("");
       setPlace(null);
+      setPoll(null);
       uploads.reset();
       onPublished(response.data);
       toast.success(t("composer.published"));
@@ -103,7 +116,7 @@ export function PostComposer({
               setBody(value);
               if (hint) setHint(null);
             }}
-            placeholder={group ? t("composer.placeholder_group") : t("composer.placeholder", { name: viewer.name.split(" ")[0] ?? viewer.name })}
+            placeholder={poll ? t("poll.question_placeholder") : group ? t("composer.placeholder_group") : t("composer.placeholder", { name: viewer.name.split(" ")[0] ?? viewer.name })}
             minRows={2}
             maxRows={14}
             maxLength={MAX_BODY}
@@ -140,6 +153,8 @@ export function PostComposer({
         </ul>
       ) : null}
 
+      {poll ? <PollEditor draft={poll} onChange={setPoll} /> : null}
+
       {hint || uploads.rejection ? (
         <p role="status" className="mt-2 text-[12.5px] font-medium text-error">
           {hint ?? uploads.rejection}
@@ -162,6 +177,16 @@ export function PostComposer({
         >
           <AtSign className="text-primary" />
           {t("composer.mention")}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-pressed={poll !== null}
+          onClick={() => setPoll((current) => (current ? null : { options: ["", ""], multiple: false, durationHours: 24 }))}
+        >
+          <BarChart3 className="text-warning" />
+          {poll ? t("poll.remove") : t("poll.add")}
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => setPicking(true)}>
           <MapPin className="text-error" />
@@ -198,5 +223,83 @@ export function PostComposer({
         />
       </div>
     </Card>
+  );
+}
+
+interface PollDraft {
+  readonly options: readonly string[];
+  readonly multiple: boolean;
+  readonly durationHours: number | null;
+}
+
+const MAX_POLL_OPTIONS = 6;
+const DURATIONS = [24, 72, 168, null] as const;
+
+function PollEditor({ draft, onChange }: { readonly draft: PollDraft; readonly onChange: (draft: PollDraft) => void }) {
+  const t = useTranslation();
+  const setOption = (index: number, value: string) =>
+    onChange({ ...draft, options: draft.options.map((option, position) => (position === index ? value : option)) });
+
+  return (
+    <fieldset className="mt-3 flex flex-col gap-2 rounded-2xl border border-border/70 p-3">
+      <legend className="px-1 text-[12.5px] font-semibold text-muted-foreground">{t("poll.label")}</legend>
+      {draft.options.map((option, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <input
+            value={option}
+            maxLength={80}
+            onChange={(event) => setOption(index, event.target.value)}
+            placeholder={t("poll.option", { n: index + 1 })}
+            aria-label={t("poll.option", { n: index + 1 })}
+            className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          />
+          {draft.options.length > 2 ? (
+            <button
+              type="button"
+              aria-label={t("poll.remove_option")}
+              onClick={() => onChange({ ...draft, options: draft.options.filter((_, position) => position !== index) })}
+              className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-surface-muted"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
+      ))}
+      <div className="flex flex-wrap items-center gap-3 pt-1 text-[13px]">
+        {draft.options.length < MAX_POLL_OPTIONS ? (
+          <button
+            type="button"
+            onClick={() => onChange({ ...draft, options: [...draft.options, ""] })}
+            className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+          >
+            <Plus className="size-4" />
+            {t("poll.add_option")}
+          </button>
+        ) : null}
+        <label className="inline-flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={draft.multiple}
+            onChange={(event) => onChange({ ...draft, multiple: event.target.checked })}
+            className="size-4 accent-[var(--color-primary)]"
+          />
+          {t("poll.multiple")}
+        </label>
+        <label className="ml-auto inline-flex items-center gap-2">
+          <span className="text-muted-foreground">{t("poll.duration")}</span>
+          <select
+            value={draft.durationHours ?? "none"}
+            onChange={(event) => onChange({ ...draft, durationHours: event.target.value === "none" ? null : Number(event.target.value) })}
+            className="h-8 rounded-lg border border-border bg-surface px-2 text-[13px]"
+          >
+            {DURATIONS.map((hours) => (
+              <option key={hours ?? "none"} value={hours ?? "none"}>
+                {t(hours ? (`poll.duration.${hours}` as "poll.duration.24") : "poll.duration.none")}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </fieldset>
   );
 }

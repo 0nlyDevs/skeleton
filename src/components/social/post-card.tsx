@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
 import { MediaGrid } from "./media-grid";
+import { PollView } from "./poll-view";
 import { PostEditDialog } from "./post-edit-dialog";
 import { ReactionButton, ReactionSummary } from "./reaction-picker";
 import { ReportDialog } from "./report-dialog";
@@ -257,6 +258,19 @@ export function PostCard({
               {showAll ? t("post.see_less") : t("post.see_more")}
             </button>
           ) : null}
+        </div>
+      ) : null}
+
+      {post.poll ? (
+        <div className="px-4 pt-3">
+          <PollView
+            postId={post.id}
+            poll={post.poll}
+            viewerVotes={post.viewerPollVotes}
+            canVote={post.viewerCanInteract}
+            showResults={isAuthor}
+            onChange={(poll, viewerPollVotes) => onChange({ ...post, poll, viewerPollVotes })}
+          />
         </div>
       ) : null}
 
