@@ -31,7 +31,7 @@ jobs:
         run: npm run lint
 
   typecheck:
-    name: Typecheck
+    name: Type and schema check 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -48,6 +48,12 @@ jobs:
 
       - name: Run type check
         run: npm run typecheck
+
+      - name: Prisma validate
+        run: npx prisma validate
+
+      - name: Prisma format check
+        run: npx prisma format --check
 
   test:
     name: Test
@@ -68,43 +74,5 @@ jobs:
       - name: Run tests
         run: npm test
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
       - name: Build application
         run: npm run build
-
-  schema-check:
-    name: Schema check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Prisma validate
-        run: npx prisma validate
-
-      - name: Prisma format check
-        run: npx prisma format --check
