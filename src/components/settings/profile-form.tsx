@@ -245,7 +245,11 @@ export function ProfileForm({
 
             <FormField
               label={t("profile.username")}
-              hint={t("profile.username_hint")}
+              hint={
+                profile.usernameChangeAvailableAt
+                  ? t("profile.username_locked", { date: new Date(profile.usernameChangeAvailableAt).toLocaleDateString() })
+                  : t("profile.username_hint_cooldown")
+              }
               required
               {...(serverErrors.username ? { error: t(serverErrors.username) } : {})}
             >

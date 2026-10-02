@@ -170,15 +170,17 @@ model User {
   knownDevices     KnownDevice[]
 
   /// Presence: written when the last socket of the user disconnects.
-  lastSeenAt       DateTime?
+  lastSeenAt        DateTime?
   /// Privacy: when false, others never see "online" or "last seen".
-  showPresence     Boolean           @default(true)
+  showPresence      Boolean           @default(true)
   /// Suggest the user's town on new posts and centre the map on them.
-  autoLocation     Boolean           @default(true)
-  pollVotes        PollVote[]
-  pages            Page[]
-  pageLikes        PageLike[]
-  messageReactions MessageReaction[]
+  autoLocation      Boolean           @default(true)
+  /// Last time the handle changed: a handle can change once every 30 days.
+  usernameChangedAt DateTime?
+  pollVotes         PollVote[]
+  pages             Page[]
+  pageLikes         PageLike[]
+  messageReactions  MessageReaction[]
 
   @@index([role])
   @@index([banned])

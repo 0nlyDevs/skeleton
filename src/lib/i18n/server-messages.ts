@@ -201,6 +201,7 @@ const FR: Readonly<Record<string, string>> = {
 const FR_PATTERNS: ReadonlyArray<readonly [RegExp, (match: RegExpMatchArray) => string]> = [
   [/^The (request body|query parameters|URL parameters|input) is invalid\.$/, () => "Certaines informations sont invalides."],
   [/^Use between (\d+) and (\d+) characters\.$/, (m) => `Utilisez entre ${m[1]} et ${m[2]} caractères.`],
+  [/^You can change your username again on (\d{4})-(\d{2})-(\d{2})\.$/, (m) => `Vous pourrez changer de nom d'utilisateur le ${m[3]}/${m[2]}/${m[1]}.`],
   [/^Use at least (\d+) characters\.$/, (m) => `Utilisez au moins ${m[1]} caractères.`],
   [/^Use at most (\d+) characters\.$/, (m) => `Utilisez au plus ${m[1]} caractères.`],
   [/^Keep comments under (\d+) characters\.$/, (m) => `Un commentaire doit faire moins de ${m[1]} caractères.`],

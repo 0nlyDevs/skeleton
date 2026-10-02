@@ -760,6 +760,8 @@ export const en: Dictionary = {
   "connections.no_followers": "Nobody follows this profile yet.",
   "connections.no_following": "This profile does not follow anyone yet.",
   "connections.more": "Show more",
+  "profile.username_locked": "You can change your username again on {date}.",
+  "profile.username_hint_cooldown": "Visible to everyone. Can be changed once every 30 days.",
   "auth.password.rules_title": "Your password must contain:",
   "auth.password.rule.length": "At least {min} characters",
   "auth.password.rule.lower": "A lowercase letter",

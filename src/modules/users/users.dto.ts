@@ -33,6 +33,8 @@ export interface PublicUserDto {
 export interface UserProfileDto {
   readonly showPresence: boolean;
   readonly autoLocation: boolean;
+  /** When the handle may change again (`null`: now). */
+  readonly usernameChangeAvailableAt: string | null;
   readonly id: string;
   readonly name: string;
   readonly username: string | null;
@@ -65,6 +67,10 @@ export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
   return {
     showPresence: row.showPresence,
     autoLocation: row.autoLocation,
+    usernameChangeAvailableAt:
+      row.usernameChangedAt && Date.now() - row.usernameChangedAt.getTime() < 30 * 24 * 60 * 60 * 1000
+        ? new Date(row.usernameChangedAt.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        : null,
     id: row.id,
     name: row.name,
     username: row.username,
@@ -86,6 +92,7 @@ export function toAdminUserDto(row: AdminUserRow): AdminUserDto {
   return {
     showPresence: row.showPresence,
     autoLocation: row.autoLocation,
+    usernameChangeAvailableAt: null,
     id: row.id,
     name: row.name,
     username: row.username,

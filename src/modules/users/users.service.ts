@@ -48,6 +48,8 @@ import {
   updateUserProfile,
   updateUserRoleAdmin,
 } from "./users.repository";
+
+const USERNAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 import type {
   AdminListUsersQuery,
   ChangePasswordInput,
@@ -280,6 +282,15 @@ export async function updateOwnProfile(
   const data: Prisma.UserUncheckedUpdateInput = {};
 
   if (input.username !== undefined && input.username !== current.username) {
+    // A handle is how people find and mention someone: it may change once a
+    // month, so it cannot be used to dodge reports or impersonate in a hurry.
+    const changedAt = current.usernameChangedAt;
+    if (changedAt && Date.now() - changedAt.getTime() < USERNAME_COOLDOWN_MS) {
+      const next = new Date(changedAt.getTime() + USERNAME_COOLDOWN_MS);
+      throw new ConflictError(`You can change your username again on ${next.toISOString().slice(0, 10)}.`, {
+        username: `You can change your username again on ${next.toISOString().slice(0, 10)}.`,
+      });
+    }
     const holder = await findUserIdByUsername(input.username);
     if (holder && holder !== actor.user.id) {
       throw new ConflictError("This username is already taken.", {
@@ -288,6 +299,7 @@ export async function updateOwnProfile(
     }
     data.username = input.username;
     data.displayUsername = input.username;
+    data.usernameChangedAt = new Date();
   }
   if (input.firstName !== undefined) data.firstName = input.firstName;
   if (input.lastName !== undefined) data.lastName = input.lastName;

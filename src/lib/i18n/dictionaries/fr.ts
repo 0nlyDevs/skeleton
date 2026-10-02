@@ -763,6 +763,8 @@ export const fr = {
   "connections.no_followers": "Personne ne suit ce profil pour l'instant.",
   "connections.no_following": "Ce profil ne suit personne pour l'instant.",
   "connections.more": "Voir plus",
+  "profile.username_locked": "Vous pourrez changer votre nom d'utilisateur le {date}.",
+  "profile.username_hint_cooldown": "Visible par tous. Modifiable une fois tous les 30 jours.",
   "auth.password.rules_title": "Votre mot de passe doit contenir :",
   "auth.password.rule.length": "Au moins {min} caractères",
   "auth.password.rule.lower": "Une lettre minuscule",
