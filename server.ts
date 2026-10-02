@@ -24,7 +24,7 @@ import next from "next";
 import { env } from "./src/lib/env";
 import { logger } from "./src/lib/logger";
 import { acceptRelayClient, type AppSocketServer } from "./src/lib/socket/handlers";
-import { getRelayHub } from "./src/lib/socket/relay";
+import { getRelayHub, relayPreferred } from "./src/lib/socket/relay";
 import { handleRelayRequest } from "./src/lib/socket/relay-http";
 import { attachRealtimeServer } from "./src/lib/socket/server";
 
@@ -60,6 +60,11 @@ async function main(): Promise<void> {
 
     // Realtime relay (short polls): answered here, before Next, so it costs
     // a few milliseconds and never goes through page rendering.
+    if (!io && request.url?.startsWith("/api/socket")) {
+      response.writeHead(410, { "Content-Type": "application/json", "Cache-Control": "no-store", Connection: "close" });
+      response.end('{"error":"realtime moved to /api/realtime"}');
+      return;
+    }
     if (request.url?.startsWith("/api/realtime/")) {
       void handleRelayRequest(request, response, io).catch((error: unknown) => {
         logger.error("relay request crashed", { error });
@@ -82,10 +87,21 @@ async function main(): Promise<void> {
     });
   });
 
-  // Realtime shares the HTTP server; see `lib/socket/server.ts`.
-  const realtime = attachRealtimeServer(server);
+  // Realtime shares the HTTP server; see `lib/socket/server.ts`. Behind
+  // Passenger (Hodifly) Socket.IO is not attached at all: Apache breaks
+  // WebSocket upgrades and every long-poll or half-open upgrade pins one of
+  // the account's few concurrent connections, which made unrelated requests
+  // queue and fail. The short-poll relay carries realtime there instead, and
+  // stale clients asking for /api/socket get an immediate answer.
+  const useRelay = relayPreferred();
+  const realtime = useRelay ? null : attachRealtimeServer(server);
   io = realtime;
   getRelayHub().setConnectionHandler((client) => acceptRelayClient(io, client));
+  if (useRelay) {
+    server.on("upgrade", (_request, socket) => {
+      socket.end("HTTP/1.1 410 Gone\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
+    });
+  }
 
   // A stalled socket must not hold a worker open forever.
   server.headersTimeout = 65_000;
@@ -96,7 +112,7 @@ async function main(): Promise<void> {
     logger.info("server listening", {
       url: `http://${hostname}:${port}`,
       mode: dev ? "development" : "production",
-      realtime: "socket.io",
+      realtime: realtime ? "socket.io" : "relay",
     });
   });
 
@@ -109,7 +125,7 @@ async function main(): Promise<void> {
     logger.info("shutting down", { signal });
 
     // Stop accepting work, then let in-flight requests finish.
-    realtime.close();
+    realtime?.close();
     server.close();
 
     try {

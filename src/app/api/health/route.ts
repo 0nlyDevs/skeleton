@@ -6,6 +6,7 @@ import { cacheStats } from "@/lib/cache";
 import { isDatabaseReachable } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
 import { RATE_LIMITS } from "@/lib/rate-limit";
+import { relayPreferred } from "@/lib/socket/relay";
 import { isRealtimeAvailable } from "@/lib/socket/registry";
 
 const BUILD_VERSION = process.env.npm_package_version ?? "1.0.0";
@@ -36,7 +37,7 @@ export const GET = publicRoute({
         database: databaseUp ? "up" : "down",
         email: env.emailEnabled ? "configured" : "disabled",
         ai: isAiConfigured() ? "configured" : "disabled",
-        realtime: isRealtimeAvailable() ? "up" : "polling-fallback",
+        realtime: isRealtimeAvailable() ? "up" : relayPreferred() ? "relay" : "polling-fallback",
         rateLimitStore: env.RATE_LIMIT_STORE,
         apiBurstLimitPerMinute: RATE_LIMITS.api.limit,
         cacheEntries: cacheStats().entries,
