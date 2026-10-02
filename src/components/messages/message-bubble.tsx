@@ -24,6 +24,7 @@ import type { MessageDto } from "@/modules/messages/messages.dto";
 import { REACTION_TYPES, type ReactionType } from "@/types";
 import type { RoomMemberDto } from "@/modules/messages/messages.dto";
 
+import { PostLinkPreview, sharedPostId } from "./post-link-preview";
 import type { ThreadMessage } from "./use-thread";
 
 const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -113,6 +114,7 @@ export function MessageBubble({
                   <img src={message.image.url} alt={t("messages.photo")} loading="lazy" className="max-h-72 max-w-full object-cover" />
                 </a>
               ) : null}
+              {sharedPostId(message.content) ? <PostLinkPreview postId={sharedPostId(message.content) as string} /> : null}
               {message.content ? (
                 <p
                   title={fmt.dateTime(message.createdAt)}
