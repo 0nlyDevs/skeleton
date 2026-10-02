@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ImagePlus, Loader2, LogOut, MoreVertical, Pencil, Phone, SendHorizontal, UserPlus, UsersRound, Video, X } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,7 +11,8 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/components/social/use-image-uploads";
+import { IMAGE_INPUT_ACCEPT, uploadImage } from "@/components/social/use-image-uploads";
+import { imagesFromClipboard, UnsupportedImageError } from "@/lib/images/prepare-image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -66,6 +67,7 @@ export function ConversationThread({
   const [confirmAll, setConfirmAll] = useState<ThreadMessage | null>(null);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [attachment, setAttachment] = useState<{ previewUrl: string; upload: Promise<{ id: string; url: string }>; failed: boolean } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
@@ -114,31 +116,55 @@ export function ConversationThread({
       }
       return;
     }
+    if (attachment) {
+      if (attachment.failed) {
+        toast.error(t("messages.image_failed"));
+        return;
+      }
+      const staged = attachment;
+      setDraft("");
+      setAttachment(null);
+      stickToBottom.current = true;
+      try {
+        const uploaded = await staged.upload;
+        await thread.send(content, uploaded.id, staged.previewUrl);
+      } catch {
+        // The upload error was already shown when it happened.
+      }
+      return;
+    }
     if (!content) return;
     setDraft("");
     stickToBottom.current = true;
     await thread.send(content);
   };
 
-  const sendImage = async (file: File) => {
-    if (!(ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type) || file.size > MAX_IMAGE_BYTES) {
+  /*
+   * A picked or pasted image is staged above the input with a preview: it
+   * uploads in the background and leaves with the text when Send is pressed.
+   */
+  const stageImage = (file: File) => {
+    if (!file.type.startsWith("image/")) {
       toast.error(t("composer.image_type"));
       return;
     }
+    if (attachment) URL.revokeObjectURL(attachment.previewUrl);
+    const previewUrl = URL.createObjectURL(file);
+    const upload = uploadImage(file);
+    setAttachment({ previewUrl, upload, failed: false });
     setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("visibility", "PRIVATE");
-      const response = await apiFetch<{ data: { id: string; url: string } }>("/api/upload", { method: "POST", body: form });
-      stickToBottom.current = true;
-      await thread.send(draft.trim(), response.data.id, response.data.url);
-      setDraft("");
-    } catch (error) {
-      toast.error(describeApiError(error, t));
-    } finally {
-      setUploading(false);
-    }
+    upload
+      .catch((error: unknown) => {
+        toast.error(error instanceof UnsupportedImageError ? t("composer.image_type") : describeApiError(error, t));
+        setAttachment((current) => (current?.upload === upload ? { ...current, failed: true } : current));
+      })
+      .finally(() => setUploading(false));
+    input.current?.focus();
+  };
+
+  const clearAttachment = () => {
+    if (attachment) URL.revokeObjectURL(attachment.previewUrl);
+    setAttachment(null);
   };
 
   const deleteMessage = async (message: ThreadMessage, scope: "me" | "everyone") => {
@@ -202,13 +228,9 @@ export function ConversationThread({
                 key={kind}
                 type="button"
                 aria-label={t(kind === "audio" ? "call.audio" : "call.video")}
-                title={presence?.online ? t(kind === "audio" ? "call.audio" : "call.video") : t("call.offline")}
+                title={t(kind === "audio" ? "call.audio" : "call.video")}
                 disabled={callState.phase !== "idle"}
                 onClick={() => {
-                  if (!presence?.online) {
-                    toast(t("call.offline"));
-                    return;
-                  }
                   void startCall(room.id, { id: peer.id, name: peer.name, image: peer.image }, kind);
                 }}
                 className="grid size-9 place-items-center rounded-full text-primary hover:bg-surface-muted disabled:opacity-50"
@@ -323,6 +345,28 @@ export function ConversationThread({
             </button>
           </div>
         ) : null}
+        {attachment && !editing ? (
+          <div className="mb-2 flex items-center gap-2">
+            <div className="relative size-16 overflow-hidden rounded-xl bg-surface-muted">
+              {/* eslint-disable-next-line @next/next/no-img-element -- local preview of the staged image */}
+              <img src={attachment.previewUrl} alt={t("messages.image")} className="size-full object-cover" />
+              {uploading ? (
+                <span className="absolute inset-0 grid place-items-center bg-black/30">
+                  <Loader2 className="size-5 animate-spin text-white" />
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={clearAttachment}
+                aria-label={t("composer.remove_image")}
+                className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/60 text-white"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+            <span className="text-[12px] text-muted-foreground">{attachment.failed ? t("messages.image_failed") : t("messages.image_ready")}</span>
+          </div>
+        ) : null}
         <div className="flex items-end gap-2">
           {!editing ? (
             <Button variant="ghost" size="icon" onClick={() => fileInput.current?.click()} disabled={uploading} aria-label={t("messages.image")}>
@@ -350,21 +394,29 @@ export function ConversationThread({
                 setDraft("");
               }
             }}
+            onPaste={(event) => {
+              // A pasted screenshot or copied image is sent like a picked one.
+              const [image] = imagesFromClipboard(event);
+              if (image && !editing) {
+                event.preventDefault();
+                stageImage(image);
+              }
+            }}
             placeholder={t("messages.placeholder")}
             aria-label={t("messages.placeholder")}
             className="min-h-10 flex-1 resize-none rounded-2xl bg-surface-muted px-4 py-2.5 text-[14.5px] leading-5 outline-none focus:ring-2 focus:ring-ring/25"
           />
-          <Button size="icon" className="rounded-full" onClick={() => void submit()} aria-label={t("messages.send")} disabled={uploading}>
+          <Button size="icon" className="rounded-full" onClick={() => void submit()} aria-label={t("messages.send")}>
             <SendHorizontal />
           </Button>
           <input
             ref={fileInput}
             type="file"
-            accept={ACCEPTED_IMAGE_TYPES.join(",")}
+            accept={IMAGE_INPUT_ACCEPT}
             hidden
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) void sendImage(file);
+              if (file) stageImage(file);
               event.target.value = "";
             }}
           />

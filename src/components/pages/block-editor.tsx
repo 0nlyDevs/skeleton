@@ -5,10 +5,10 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/components/social/use-image-uploads";
+import { IMAGE_INPUT_ACCEPT, uploadImage } from "@/components/social/use-image-uploads";
+import { UnsupportedImageError } from "@/lib/images/prepare-image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -22,19 +22,16 @@ export function useImageUploader(onUploaded: (image: PageImageDto) => void) {
   const t = useTranslation();
   const [busy, setBusy] = useState(false);
   const upload = async (file: File) => {
-    if (!(ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type) || file.size > MAX_IMAGE_BYTES) {
+    if (!file.type.startsWith("image/")) {
       toast.error(t("composer.image_type"));
       return;
     }
     setBusy(true);
-    const form = new FormData();
-    form.append("file", file);
-    form.append("visibility", "PRIVATE");
     try {
-      const response = await apiFetch<{ data: { id: string; url: string } }>("/api/upload", { method: "POST", body: form });
-      onUploaded({ id: response.data.id, url: response.data.url, width: null, height: null });
+      const uploaded = await uploadImage(file);
+      onUploaded({ id: uploaded.id, url: uploaded.url, width: null, height: null });
     } catch (error) {
-      toast.error(describeApiError(error, t));
+      toast.error(error instanceof UnsupportedImageError ? t("composer.image_type") : describeApiError(error, t));
     } finally {
       setBusy(false);
     }
@@ -71,7 +68,7 @@ export function ImagePicker({ image, onPick, onClear, label }: { image: PageImag
       <input
         ref={input}
         type="file"
-        accept={ACCEPTED_IMAGE_TYPES.join(",")}
+        accept={IMAGE_INPUT_ACCEPT}
         hidden
         onChange={(event) => {
           const file = event.target.files?.[0];

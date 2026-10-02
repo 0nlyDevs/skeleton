@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, FileText, Heart, Lock, Plus, Search } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useEffect, useRef, useState } from "react";
 
 import { EmptyState } from "@/components/feedback/empty-state";

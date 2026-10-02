@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Eye, ShieldCheck, UserRound } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { usePathname } from "next/navigation";
 
 import { useTranslation } from "@/components/providers/i18n-provider";

@@ -136,7 +136,19 @@ async function main() {
       watched.add(input);
       // `fs.watch` on a single file is cheapest and works on every platform; the
       // debounce absorbs editors that write twice per save.
-      const watcher = fs.watch(input, { persistent: true }, onChange);
+      const watcher = fs.watch(input, { persistent: true }, (eventType) => {
+        if (eventType === "rename") {
+          // `git checkout`, `git stash` and many editors replace the file
+          // instead of writing to it: the old watch is now on a dead inode.
+          // Watch the new file once it is in place.
+          watcher.close();
+          watched.delete(input);
+          setTimeout(() => {
+            if (fs.existsSync(input)) watch([input]);
+          }, 50);
+        }
+        onChange();
+      });
       watcher.unref?.();
       watcher.on("error", () => {
         // A deleted file must not crash the launcher.

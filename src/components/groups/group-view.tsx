@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, Check, Globe, Lock, LogOut, Settings, ShieldBan, UserPlus } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

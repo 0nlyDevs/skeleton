@@ -7,6 +7,7 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { apiFetch } from "@/lib/api/client";
+import { imagesFromClipboard } from "@/lib/images/prepare-image";
 import { cn } from "@/lib/utils";
 
 interface Suggestion {
@@ -81,9 +82,11 @@ export const MentionInput = forwardRef<
     readonly onSubmit?: () => void;
     /** Where suggestions open: below (top-of-page composers) or above (pinned footers). */
     readonly suggestions?: "below" | "above";
+    /** Receives pasted image files (screenshots, copied pictures). */
+    readonly onPasteImages?: (files: File[]) => void;
   }
 >(function MentionInput(
-  { value, onChange, placeholder, maxLength, minRows = 1, maxRows = 10, autoFocus, disabled, className, ariaLabel, onSubmit, suggestions = "below" },
+  { value, onChange, placeholder, maxLength, minRows = 1, maxRows = 10, autoFocus, disabled, className, ariaLabel, onSubmit, suggestions = "below", onPasteImages },
   ref,
 ) {
   const t = useTranslation();
@@ -169,6 +172,13 @@ export const MentionInput = forwardRef<
           setMention(activeMention(event.target.value, event.target.selectionStart));
         }}
         onClick={(event) => setMention(activeMention(value, event.currentTarget.selectionStart))}
+        onPaste={(event) => {
+          if (!onPasteImages) return;
+          const files = imagesFromClipboard(event);
+          if (files.length === 0) return;
+          event.preventDefault();
+          onPasteImages(files);
+        }}
         onBlur={() => setTimeout(() => setMention(null), 150)}
         onScroll={(event) => {
           if (backdrop.current) backdrop.current.scrollTop = event.currentTarget.scrollTop;

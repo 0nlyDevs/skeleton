@@ -1,5 +1,5 @@
 import { ShieldCheck, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n";

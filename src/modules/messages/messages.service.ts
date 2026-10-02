@@ -17,7 +17,7 @@ import { isStaff } from "@/lib/auth/guards";
 import { parseDateInput } from "@/lib/utils";
 import type { AuthUser, ReactionType } from "@/types";
 
-import {
+import { publishMessageAlert,
   grantRoomMembership,
   publishMessage,
   publishMessageHidden,
@@ -30,7 +30,7 @@ import {
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
-import { notifyGroupInvite, notifyInBackground, notifyMention, notifyModeration, notifyNewMessage } from "../notifications/notifications.service";
+import { notifyGroupInvite, notifyInBackground, notifyMention, notifyModeration } from "../notifications/notifications.service";
 import { findPostById } from "../posts/posts.repository";
 import { findActiveUserById, findActiveUsersByIds, findActiveUsersByUsernames } from "../users/users.repository";
 import {
@@ -55,7 +55,6 @@ import {
   findLatestMessages,
   findMessageById,
   findMessagesSince,
-  findPreviousMessageAt,
   findRoomById,
   findRoomMember,
   findRoomMembers,
@@ -309,10 +308,8 @@ export async function sendMessage(
   // Throws `RateLimitedError`, which the route wrapper serializes as a 429 with
   // a `Retry-After` header.
   await enforceThenRecord([
-    {
-      key: rateLimitKey("chat:send", actor.user.id),
-      rule: RATE_LIMITS.chatMessage,
-    },
+    { key: rateLimitKey("chat:send", actor.user.id), rule: RATE_LIMITS.chatMessage },
+    { key: rateLimitKey("chat:send:sustained", actor.user.id), rule: RATE_LIMITS.chatMessageSustained },
   ]);
 
   if (input.uploadId && !(await isAttachableImage(input.uploadId, actor.user.id))) {
@@ -368,7 +365,6 @@ async function notifyRoomAboutMessage(message: MessageDto, sender: AuthUser): Pr
 
   if (room.type === "DIRECT" || room.type === "GROUP") {
     const members = await findRoomMembers(message.roomId);
-    const previousAt = await findPreviousMessageAt(message.roomId, new Date(message.createdAt), message.id);
 
     for (const member of members) {
       if (member.userId === sender.id) continue;
@@ -379,10 +375,13 @@ async function notifyRoomAboutMessage(message: MessageDto, sender: AuthUser): Pr
         await notifyMention({ userId: member.userId, senderName: sender.name, roomId: message.roomId, preview });
         continue;
       }
-      const caughtUp = !previousAt || (member.lastReadAt !== null && member.lastReadAt >= previousAt);
-      if (caughtUp) {
-        await notifyNewMessage({ userId: member.userId, senderName: sender.name, roomId: message.roomId, preview });
-      }
+      // A popup only: messages are counted by the inbox badge, not the bell.
+      publishMessageAlert(member.userId, {
+        roomId: message.roomId,
+        senderName: sender.name,
+        senderImage: sender.image ?? null,
+        preview: preview.slice(0, 140),
+      });
     }
     return;
   }

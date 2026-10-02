@@ -14,6 +14,7 @@
 
 import {
   SOCKET_EVENTS,
+  type MessageAlertPayload,
   type MessageHiddenPayload,
   type ProfileUpdatedPayload,
   type PresenceStatePayload,
@@ -28,16 +29,74 @@ import {
   type RoomMembersPayload,
   type TypingPayload,
 } from "./events";
+import { getRelayHub } from "./relay";
 import { getSocketServer } from "./registry";
 import { chatRoom, groupRoom, postRoom, presenceRoom, userRoom } from "./rooms";
 
+/**
+ * One broadcast operator over both transports: Socket.IO sockets and relay
+ * (short-poll) clients join the same named rooms, so every publish below
+ * reaches a tab whichever way it is connected.
+ */
+export interface BroadcastOperator {
+  except(room: string | readonly string[]): BroadcastOperator;
+  emit(event: string, ...args: unknown[]): void;
+  socketsJoin(room: string | readonly string[]): void;
+  socketsLeave(room: string): void;
+  disconnectSockets(): void;
+}
+
+function operator(rooms: readonly string[], excepts: readonly string[] = []): BroadcastOperator {
+  const io = getSocketServer();
+  const relay = getRelayHub();
+  const ioOp = () => {
+    if (!io) return null;
+    const base = io.to([...rooms]);
+    return excepts.length > 0 ? base.except([...excepts]) : base;
+  };
+  const relayOp = () => {
+    const base = relay.to(rooms);
+    return excepts.length > 0 ? base.except(excepts) : base;
+  };
+  return {
+    except: (room) => operator(rooms, [...excepts, ...(typeof room === "string" ? [room] : room)]),
+    emit: (event, ...args) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typed at the call sites
+      (ioOp() as any)?.emit(event, ...args);
+      relayOp().emit(event, ...args);
+    },
+    socketsJoin: (room) => {
+      if (io) io.in([...rooms]).socketsJoin(typeof room === "string" ? room : [...room]);
+      relayOp().socketsJoin(room);
+    },
+    socketsLeave: (room) => {
+      if (io) io.in([...rooms]).socketsLeave(room);
+      relayOp().socketsLeave(room);
+    },
+    disconnectSockets: () => {
+      if (io) io.in([...rooms]).disconnectSockets(true);
+      relayOp().disconnectSockets();
+    },
+  };
+}
+
+/** Broadcast to rooms (names or socket ids) on every transport. */
+export function broadcastTo(room: string | readonly string[]): BroadcastOperator {
+  return operator(typeof room === "string" ? [room] : room);
+}
+
 function publish(room: string, event: string, payload: unknown): void {
-  getSocketServer()?.to(room).emit(event, payload);
+  broadcastTo(room).emit(event, payload);
 }
 
 /** Deliver a notification to every device the user has open. */
 export function publishNotification(userId: string, payload: NotificationPayload): void {
   publish(userRoom(userId), SOCKET_EVENTS.notification, payload);
+}
+
+/** Ephemeral "new message" popup for one user (no bell entry). */
+export function publishMessageAlert(userId: string, payload: MessageAlertPayload): void {
+  publish(userRoom(userId), SOCKET_EVENTS.messageAlert, payload);
 }
 
 /** Fan a persisted message out to everyone in the room. */
@@ -47,7 +106,9 @@ export function publishMessage(roomId: string, payload: MessagePayload): void {
 
 /** Ephemeral typing indicator; never persisted. */
 export function publishTyping(roomId: string, payload: TypingPayload): void {
-  publish(chatRoom(roomId), SOCKET_EVENTS.typingUpdate, payload);
+  // Never echoed to the typer, in any of their tabs: "X is typing" is only
+  // ever about someone else.
+  broadcastTo(chatRoom(roomId)).except(userRoom(payload.userId)).emit(SOCKET_EVENTS.typingUpdate, payload);
 }
 
 export function publishPresence(roomId: string, online: number): void {
@@ -67,16 +128,14 @@ export function publishRoomMembers(payload: RoomMembersPayload): void {
 
 /** Remove every open device for a user from a room after access is revoked. */
 export function revokeRoomMembership(userId: string, roomId: string): void {
-  const server = getSocketServer();
-  if (!server) return;
   const room = chatRoom(roomId);
-  server.in(userRoom(userId)).socketsLeave(room);
+  broadcastTo(userRoom(userId)).socketsLeave(room);
   publishPresence(roomId, Math.max(0, roomSize(room)));
 }
 
 /** Force a fresh authenticated handshake after a ban or privileged role change. */
 export function disconnectUserSockets(userId: string): void {
-  getSocketServer()?.in(userRoom(userId)).disconnectSockets(true);
+  broadcastTo(userRoom(userId)).disconnectSockets();
 }
 
 /**
@@ -85,9 +144,8 @@ export function disconnectUserSockets(userId: string): void {
  * never reaches a socket outside that group.
  */
 export function publishFeedPost(payload: FeedPostPayload, audience: readonly string[]): void {
-  const server = getSocketServer();
-  if (!server || audience.length === 0) return;
-  server.to([...audience]).emit(SOCKET_EVENTS.feedPost, payload);
+  if (audience.length === 0) return;
+  broadcastTo(audience).emit(SOCKET_EVENTS.feedPost, payload);
 }
 
 /**
@@ -95,16 +153,12 @@ export function publishFeedPost(payload: FeedPostPayload, audience: readonly str
  * it. One emit per room, whatever the audience size.
  */
 export function publishEngagement(payload: PostEngagementPayload, audience: readonly string[]): void {
-  const server = getSocketServer();
-  if (!server) return;
-  server.to([postRoom(payload.postId), ...audience]).emit(SOCKET_EVENTS.postEngagement, payload);
+  broadcastTo([postRoom(payload.postId), ...audience]).emit(SOCKET_EVENTS.postEngagement, payload);
 }
 
 /** Add or remove a user's open sockets from a group's live room. */
 export function syncGroupRoom(userId: string, groupId: string, join: boolean): void {
-  const server = getSocketServer();
-  if (!server) return;
-  const target = server.in(userRoom(userId));
+  const target = broadcastTo(userRoom(userId));
   if (join) target.socketsJoin(groupRoom(groupId));
   else target.socketsLeave(groupRoom(groupId));
 }
@@ -115,7 +169,7 @@ export function publishComment(payload: CommentEventPayload): void {
 
 /** Current number of sockets in a room, straight from the adapter. */
 export function roomSize(roomName: string): number {
-  return getSocketServer()?.sockets.adapter.rooms.get(roomName)?.size ?? 0;
+  return (getSocketServer()?.sockets.adapter.rooms.get(roomName)?.size ?? 0) + getRelayHub().roomSize(roomName);
 }
 
 /** An edit or a "deleted for everyone" tombstone, to the whole conversation. */
@@ -138,10 +192,11 @@ export function publishPresenceState(payload: PresenceStatePayload): void {
 
 /** Put a user's open sockets into a conversation's live channel. */
 export function grantRoomMembership(userId: string, roomId: string): void {
-  getSocketServer()?.in(userRoom(userId)).socketsJoin(chatRoom(roomId));
+  broadcastTo(userRoom(userId)).socketsJoin(chatRoom(roomId));
 }
 
 /** Public identity changes are public data: everyone connected may re-render. */
 export function publishProfileUpdated(payload: ProfileUpdatedPayload): void {
   getSocketServer()?.emit(SOCKET_EVENTS.profileUpdated, payload);
+  getRelayHub().broadcastAll(SOCKET_EVENTS.profileUpdated, payload);
 }

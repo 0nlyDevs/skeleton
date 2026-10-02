@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { FormField } from "@/components/forms/form-field";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { IMAGE_INPUT_ACCEPT, uploadImage } from "@/components/social/use-image-uploads";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,16 +78,10 @@ export function ProfileForm({
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
       // An avatar is rendered for every viewer of a post, so it must be
-      // PUBLIC — the upload endpoint defaults to PRIVATE.
-      formData.append("visibility", "PUBLIC");
-
-      const response = await apiFetch<{ data: { url: string } }>("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      // PUBLIC — the upload endpoint defaults to PRIVATE. Prepared in the
+      // browser first (any format, scaled down: an avatar never needs more).
+      const response = { data: await uploadImage(file, "PUBLIC") };
 
       // Persist the choice immediately so a refresh does not revert it.
       const saved = await apiFetch<UserProfileDto>("/api/users/me", {
@@ -208,7 +203,7 @@ export function ProfileForm({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept={IMAGE_INPUT_ACCEPT}
             className="hidden"
             onChange={(event) => void handleAvatarSelected(event.target.files?.[0])}
           />

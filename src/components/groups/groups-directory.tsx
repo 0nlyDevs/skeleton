@@ -1,7 +1,7 @@
 "use client";
 
 import { Lock, Plus, Search, UsersRound } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useEffect, useState } from "react";
 
 import { EmptyState } from "@/components/feedback/empty-state";

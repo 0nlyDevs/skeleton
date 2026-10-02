@@ -1,7 +1,7 @@
 "use client";
 
 import { Crosshair, MapPin } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";

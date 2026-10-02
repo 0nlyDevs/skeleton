@@ -74,6 +74,8 @@ export const SOCKET_EVENTS = {
   callIncoming: "call:incoming",
   callAccepted: "call:accepted",
   callEnded: "call:ended",
+  /** Server → client: a new message arrived in one of my conversations (popup only). */
+  messageAlert: "message:alert",
   /** Server → everyone: a user's public identity (name/avatar/handle) changed. */
   profileUpdated: "profile:updated",
 } as const;
@@ -123,6 +125,13 @@ export interface CallSignalPayload {
 export interface CallEndedPayload {
   readonly callId: string;
   readonly reason: "declined" | "hangup" | "missed" | "busy" | "failed";
+}
+
+export interface MessageAlertPayload {
+  readonly roomId: string;
+  readonly senderName: string;
+  readonly senderImage: string | null;
+  readonly preview: string;
 }
 
 export interface ProfileUpdatedPayload {
@@ -246,6 +255,7 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.roomRead]: (payload: RoomReadPayload) => void;
   [SOCKET_EVENTS.presenceState]: (payload: PresenceStatePayload) => void;
   [SOCKET_EVENTS.profileUpdated]: (payload: ProfileUpdatedPayload) => void;
+  [SOCKET_EVENTS.messageAlert]: (payload: MessageAlertPayload) => void;
   [SOCKET_EVENTS.callIncoming]: (payload: CallIncomingPayload) => void;
   [SOCKET_EVENTS.callAccepted]: (payload: { callId: string }) => void;
   [SOCKET_EVENTS.callEnded]: (payload: CallEndedPayload) => void;

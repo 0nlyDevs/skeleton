@@ -305,7 +305,8 @@ export async function listFeed(
     });
   }
 
-  if (followingIds) conditions.push({ userId: { in: [...followingIds, ...(viewer ? [viewer.id] : [])] } });
+  // "Abonnements" is other people only: one's own posts live on the profile.
+  if (followingIds) conditions.push({ userId: { in: [...followingIds].filter((id) => id !== viewer?.id) } });
   if (query.q) {
     conditions.push({ OR: [{ title: { contains: query.q } }, { body: { contains: query.q } }] });
   }

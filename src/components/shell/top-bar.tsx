@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { Suspense } from "react";
 
 import { Brand } from "@/components/layout/brand";
