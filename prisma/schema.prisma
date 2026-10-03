@@ -206,6 +206,7 @@ model User {
   sessions            Session[]
   accounts            Account[]
   twoFactors          TwoFactor[]
+  passkeys            Passkey[]
   posts               Post[]
   cityRequests        CityRequest[]           @relation("CityRequestCitizen")
   assignedRequests    CityRequest[]           @relation("CityRequestAssignee")
@@ -326,6 +327,28 @@ model TwoFactor {
 
   @@index([userId])
   @@map("twoFactor")
+}
+
+/// D02 — a passkey (WebAuthn): sign-in with the device's face, fingerprint or
+/// PIN. Only the public key is stored; the face or fingerprint never leaves the
+/// device. Managed by BetterAuth's passkey plugin.
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String    @db.Text
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String    @db.VarChar(512)
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  aaguid       String?
+  createdAt    DateTime? @default(now())
+
+  @@index([userId])
+  @@index([credentialID])
+  @@map("passkey")
 }
 
 // ---------------------------------------------------------------------------

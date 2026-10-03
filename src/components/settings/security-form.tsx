@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { OAuthAvailability } from "@/components/auth/oauth-buttons";
 
 import { LinkedAccounts } from "./linked-accounts";
+import { PasskeysCard } from "./passkeys-card";
 import { PasswordCard } from "./password-card";
 import { SecurityAlert } from "./security-alert";
 import { SessionsCard, type SessionInfo } from "./sessions-card";
@@ -31,6 +32,7 @@ export function SecurityForm({
   return (
     <div className="flex flex-col gap-4">
       {alert ? <SecurityAlert onSecured={() => router.refresh()} /> : null}
+      <PasskeysCard />
       <PasswordCard hasPassword={hasPassword} onCreated={() => router.refresh()} />
       <TwoFactorCard enabled={twoFactorEnabled} hasPassword={hasPassword} />
       <LinkedAccounts availability={oauth} />

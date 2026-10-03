@@ -30,6 +30,8 @@ export const auditActions = {
   userTwoFactorEnabled: "user.two_factor_enabled",
   userTwoFactorDisabled: "user.two_factor_disabled",
   userSessionsRevoked: "user.sessions_revoked",
+  passkeyAdded: "user.passkey_added",
+  passkeyRemoved: "user.passkey_removed",
   postCreated: "post.created",
   postUpdated: "post.updated",
   postDeleted: "post.deleted",
