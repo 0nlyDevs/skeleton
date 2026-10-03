@@ -86,6 +86,8 @@ export const RATE_LIMITS = {
   dataExport: { limit: 3, windowMs: 60 * 60_000 },
   /** Requests to the city per citizen. */
   cityRequestCreate: { limit: 10, windowMs: 60 * 60_000 },
+  /** F76 — comments on a service per resident: room to speak, not to flood. */
+  serviceFeedback: { limit: 8, windowMs: 60 * 60_000 },
   /** Appointments booked per resident: enough to rebook, not to hoard slots. */
   appointmentBook: { limit: 6, windowMs: 60 * 60_000 },
   /** Slot openings per agent. */

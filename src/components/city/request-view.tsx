@@ -8,6 +8,7 @@ import { ContextTip } from "@/components/feedback/context-tip";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
+import Link from "@/components/ui/link";
 import { Term } from "@/components/ui/term";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useSocket } from "@/hooks/use-socket";
@@ -17,6 +18,7 @@ import { SOCKET_EVENTS, type CityRequestUpdatedPayload } from "@/lib/socket/even
 import { cn } from "@/lib/utils";
 import type { CityRequestDto } from "@/modules/city-requests/city-requests.dto";
 
+import { FeedbackForm } from "./feedback-form";
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
 import { RequestComposer } from "./request-composer";
 import { RequestProgress } from "./request-progress";
@@ -99,6 +101,27 @@ export function RequestView({
 
       {/* F49 — what the current state means and what to do, for the resident. */}
       {!agent ? <RequestStatusGuide status={request.status} /> : null}
+
+      {/* F76 — once the request is over, the resident can say how it went. */}
+      {!agent && request.service && (request.status === "RESOLVED" || request.status === "CLOSED") ? (
+        request.feedback ? (
+          <p role="status" className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm">
+            <CheckCircle2 className="size-4 shrink-0 text-success" aria-hidden />
+            {t("tn.feedback.request_done", { reference: request.feedback.reference })}
+            <Link href={`/space/feedback#${request.feedback.reference}`} className="font-medium text-primary hover:underline">
+              {t("tn.feedback.follow")}
+            </Link>
+          </p>
+        ) : (
+          <section className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-panel" aria-labelledby="request-feedback">
+            <div className="flex flex-col gap-0.5">
+              <h2 id="request-feedback" className="font-semibold">{t("tn.feedback.request_title")}</h2>
+              <p className="text-[0.8438rem] text-muted-foreground">{t("tn.feedback.request_body", { service: request.service.name })}</p>
+            </div>
+            <FeedbackForm serviceSlug={request.service.slug} serviceName={request.service.name} requestReference={request.reference} idPrefix="request-feedback" />
+          </section>
+        )
+      ) : null}
 
       <header className="flex flex-col gap-2 px-1">
         <div className="flex flex-wrap items-center gap-1.5">

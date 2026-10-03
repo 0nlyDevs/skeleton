@@ -1,4 +1,4 @@
-import { Megaphone } from "lucide-react";
+import { Landmark, Megaphone } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AnnouncementCard } from "@/components/city/announcement-card";
@@ -11,6 +11,7 @@ import { getServerDictionary } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
 import { ANNOUNCEMENT_CATEGORIES, listAnnouncementsQuerySchema } from "@/modules/announcements/announcements.schema";
+import { getCurrentOfficialMessage } from "@/modules/official-messages/official-messages.service";
 
 export const metadata: Metadata = { title: "Annonces de la ville" };
 
@@ -27,7 +28,7 @@ export default async function AnnouncementsPage({ searchParams }: { readonly sea
   const query = listAnnouncementsQuerySchema.safeParse(await searchParams).data ?? { page: 1, limit: 12 };
   const { t } = await getServerDictionary();
   const context = await getAuthContext();
-  const result = await listAnnouncements({ ...query, drafts: undefined }, context?.user ?? null);
+  const [result, official] = await Promise.all([listAnnouncements({ ...query, drafts: undefined }, context?.user ?? null), getCurrentOfficialMessage()]);
 
   const filters: { value: string | undefined; label: string }[] = [
     { value: undefined, label: t("tn.category.all") },
@@ -40,6 +41,24 @@ export default async function AnnouncementsPage({ searchParams }: { readonly sea
         <h1 className="text-2xl font-semibold tracking-tight">{t("tn.news.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("tn.news.subtitle")}</p>
       </header>
+
+      {/* F73 — the official message stays readable here after "J'ai lu". */}
+      {official ? (
+        <section aria-labelledby="official-current" className="flex flex-col gap-1.5 rounded-2xl border border-primary/30 bg-card p-4 shadow-panel">
+          <p className="flex items-center gap-2 text-[0.75rem] font-semibold text-primary">
+            <Landmark className="size-3.5" aria-hidden />
+            {t("tn.official.label")}
+          </p>
+          <h2 id="official-current" className="text-[1.0625rem] font-semibold leading-snug">{official.title}</h2>
+          <p className="text-[0.9062rem]">{official.body}</p>
+          {official.action ? (
+            <p className="rounded-xl bg-surface-muted px-3 py-2 text-[0.9062rem]">
+              <span className="font-semibold">{t("tn.official.todo")} </span>
+              {official.action}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <nav aria-label={t("common.filter")} className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
         {filters.map((filter) => {
