@@ -17,18 +17,20 @@ import { encryptField } from "../src/lib/crypto/field-encryption";
 // turn DATABASE_URL into driver pool options.
 import { prisma } from "../src/lib/db/prisma";
 
+import { seedTerraNova } from "./seed-terra-nova";
+
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "";
 if (SEED_PASSWORD.length < 10) {
   throw new Error("Set SEED_PASSWORD (at least 10 characters) before seeding.");
 }
 
 const ACCOUNTS = [
-  { email: "cocobrowniees@gmail.com", username: "coco.admin", firstName: "Coco", lastName: "Brownies", birthDate: "1998-03-14", role: "ADMIN" as const, bio: "Administratrice de la plateforme." },
-  { email: "hei.colombe@gmail.com", username: "colombe.mod", firstName: "Colombe", lastName: "Hei", birthDate: "2001-07-09", role: "MODERATOR" as const, bio: "Modératrice — signalements et contenus." },
-  { email: "hei.tafita.2@gmail.com", username: "tafita", firstName: "Tafita", lastName: "Hei", birthDate: "2002-11-02", role: "USER" as const, bio: "Compte utilisateur de test." },
-  { email: "hei.harena.2@gmail.com", username: "harena", firstName: "Harena", lastName: "Hei", birthDate: "2003-05-27", role: "USER" as const, bio: "Second compte utilisateur, pour tester les droits entre comptes." },
-  { email: "colomberakotonjanahary@gmail.com", username: "colombe.admin", firstName: "Colombe", lastName: "Rakotonjanahary", birthDate: "2000-02-18", role: "ADMIN" as const, bio: "Administratrice de la plateforme." },
-  { email: "hei.jonathan.3@gmail.com", username: "jonathan.mod", firstName: "Jonathan", lastName: "Hei", birthDate: "2001-09-30", role: "MODERATOR" as const, bio: "Modérateur — signalements et contenus." },
+  { email: "cocobrowniees@gmail.com", username: "coco.admin", firstName: "Coco", lastName: "Brownies", birthDate: "1998-03-14", role: "ADMIN" as const, bio: "Administration de la plateforme Terra Nova." },
+  { email: "hei.colombe@gmail.com", username: "colombe.mod", firstName: "Colombe", lastName: "Hei", birthDate: "2001-07-09", role: "MODERATOR" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
+  { email: "hei.tafita.2@gmail.com", username: "tafita", firstName: "Tafita", lastName: "Hei", birthDate: "2002-11-02", role: "USER" as const, bio: "Module B-12, secteur B." },
+  { email: "hei.harena.2@gmail.com", username: "harena", firstName: "Harena", lastName: "Hei", birthDate: "2003-05-27", role: "USER" as const, bio: "Secteur Ouest, près des serres." },
+  { email: "colomberakotonjanahary@gmail.com", username: "colombe.admin", firstName: "Colombe", lastName: "Rakotonjanahary", birthDate: "2000-02-18", role: "ADMIN" as const, bio: "Administration de la plateforme Terra Nova." },
+  { email: "hei.jonathan.3@gmail.com", username: "jonathan.mod", firstName: "Jonathan", lastName: "Hei", birthDate: "2001-09-30", role: "MODERATOR" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
 ].map((account) => ({ ...account, name: `${account.firstName} ${account.lastName}` }));
 
 const GLOBAL_ROOM = "global";
@@ -307,6 +309,8 @@ async function main() {
     update: {},
   });
   console.log("  feature flags: 2");
+
+  await seedTerraNova(prisma, users);
 
   console.log("\nTest accounts (password: SEED_PASSWORD):");
   for (const account of ACCOUNTS) {
