@@ -8,6 +8,7 @@ import {
   FileText,
   Globe2,
   LayoutDashboard,
+  Leaf,
   Map as MapIcon,
   Megaphone,
   MessageCircle,
@@ -80,6 +81,7 @@ export const MORE_NAV: readonly ShellNavItem[] = [
   { href: "/map", labelKey: "nav.map", icon: MapIcon },
   { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
   { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
+  { href: "/eco", labelKey: "tn.eco.nav", icon: Leaf },
 ];
 
 /** What a guest can open without an account. */
@@ -92,6 +94,7 @@ export const GUEST_NAV: readonly ShellNavItem[] = [
   { href: "/feed", labelKey: "nav.feed", icon: Newspaper },
   { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
   { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
+  { href: "/eco", labelKey: "tn.eco.nav", icon: Leaf },
 ];
 
 /** Staff: one door each; their workspaces have their own navigation. */
