@@ -44,14 +44,15 @@ const nextConfig: NextConfig = {
    * The production build uses webpack (`next build --webpack`): on the
    * contest host the account is capped at 2 GB of RAM, and a cold Turbopack
    * build peaks around 2.4 GB and is killed mid-compile, and the running app
-   * shares that budget. Webpack with these options peaks around 1.5 GB.
+   * shares that budget. Webpack with these options, and a 768 MB heap set by
+   * the build script, completes within 1 GB.
    * `next dev` keeps Turbopack.
    */
   experimental: {
     webpackMemoryOptimizations: true,
-    // The build worker is a second Node process holding its own copy of the
-    // module graph; compiling in the main process roughly halves peak memory.
-    webpackBuildWorker: false,
+    // Compile in a separate process that exits afterwards, so the main
+    // process stays small for page data and build traces.
+    webpackBuildWorker: true,
     serverSourceMaps: false,
     // One worker for page data and static generation (each is a process).
     cpus: 1,
@@ -71,6 +72,12 @@ const nextConfig: NextConfig = {
    * keeps a page load well under that while staying cacheable (immutable).
    */
   webpack(config, { isServer, dev }) {
+    if (!dev) {
+      // No persistent cache (serialising it doubles peak memory, and every
+      // host build starts clean anyway) and one module at a time.
+      config.cache = false;
+      config.parallelism = 1;
+    }
     if (!isServer && !dev && config.optimization?.splitChunks) {
       config.optimization.splitChunks = {
         ...config.optimization.splitChunks,
