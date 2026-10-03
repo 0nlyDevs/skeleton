@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 
+import { OfficialMessageBand } from "@/components/city/official-message-band";
 import { AppProviders } from "@/components/providers/app-providers";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CONTRAST_COOKIE, TEXT_SIZE_COOKIE, parseTextSize } from "@/lib/display";
@@ -94,6 +95,8 @@ export default async function RootLayout({
           viewerId={viewer?.id ?? null}
           {...(nonce ? { nonce } : {})}
         >
+          {/* F73 — the High Council's official message reaches every screen. */}
+          <OfficialMessageBand />
           {children}
         </AppProviders>
       </body>

@@ -190,6 +190,7 @@ export async function getCityRequest(reference: string, actor: AuthUser): Promis
   const agent = isStaff(actor);
   const visible = row.messages.filter((message) => agent || !message.internal);
   const last = [...visible].reverse().find((message) => !message.internal);
+  const feedback = await prisma.serviceFeedback.findUnique({ where: { userId_requestId: { userId: row.citizenId, requestId: row.id } }, select: { reference: true } });
   return {
     ...toSummaryDto({ ...row, lastFromCitizen: last?.authorId === row.citizenId }, agent),
     message: decryptBody(row.message),
@@ -197,6 +198,7 @@ export async function getCityRequest(reference: string, actor: AuthUser): Promis
     latitude: row.latitude,
     longitude: row.longitude,
     closedAt: row.closedAt?.toISOString() ?? null,
+    feedback,
     messages: visible.map((message) => ({
       id: message.id,
       body: decryptBody(message.body),

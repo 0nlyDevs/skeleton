@@ -243,6 +243,9 @@ model User {
   mentionsMade        Mention[]               @relation("MentionAuthor")
   hiddenMessages      MessageHide[]
   knownDevices        KnownDevice[]
+  officialMessages    OfficialMessage[]
+  serviceFeedback     ServiceFeedback[]       @relation("ServiceFeedbackAuthor")
+  feedbackReplies     ServiceFeedback[]       @relation("ServiceFeedbackReplier")
 
   /// Presence: written when the last socket of the user disconnects.
   lastSeenAt            DateTime?
@@ -1021,6 +1024,11 @@ model MunicipalService {
   active       Boolean   @default(true)
   /// Highlighted at the top of the catalogue and on the home page (F28).
   featured     Boolean   @default(false)
+  /// F74 — run by a partner association rather than by the city itself.
+  partner      Boolean   @default(false)
+  /// F74 — weekly opening hours, `{ "mon": { "open": "08:30", "close": "17:00" }, "sun": null, … }`.
+  /// Lets the app say "open now, closes at 17:00" instead of a sentence to decode.
+  openingHours Json?
   /// Other-language copies of the text fields, keyed by locale (F27):
   /// `{ "en": { name, summary, description, howTo } }`. French is the base.
   translations Json?
@@ -1043,11 +1051,13 @@ model MunicipalService {
   announcements Announcement[]
   agentSlots    AgentSlot[]
   appointments  Appointment[]
+  feedback      ServiceFeedback[]
 
   @@index([active, sortOrder])
   @@index([emergency])
   @@index([availability])
   @@index([alternativeServiceId])
+  @@index([partner, active])
   @@map("municipalService")
 }
 
@@ -1153,6 +1163,7 @@ model CityRequest {
 
   messages CityRequestMessage[]
   events   CityRequestEvent[]
+  feedback ServiceFeedback[]
 
   @@index([citizenId, createdAt])
   @@index([status, createdAt])
@@ -1323,4 +1334,72 @@ model Appointment {
   @@index([agentId, startsAt])
   @@index([status, startsAt])
   @@map("appointment")
+}
+
+/// F73 — an official message from the High Council, shown at the top of every
+/// screen (signed in or not) from the moment it is published until it expires
+/// or is withdrawn.
+model OfficialMessage {
+  id          String    @id @default(cuid())
+  title       String    @db.VarChar(140)
+  /// What residents must know, in one or two sentences.
+  body        String    @db.VarChar(600)
+  /// What residents must do, if anything.
+  action      String?   @db.VarChar(300)
+  /// An in-app page that lets them act right away (`/services`, `/alerts`…).
+  linkHref    String?   @db.VarChar(200)
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt DateTime  @default(now())
+  /// The message leaves every screen at this time; null until withdrawn.
+  expiresAt   DateTime?
+  withdrawnAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([withdrawnAt, expiresAt, publishedAt])
+  @@index([authorId])
+  @@map("officialMessage")
+}
+
+enum ServiceFeedbackStatus {
+  RECEIVED
+  READ
+  ANSWERED
+}
+
+/// F76 — a resident's comment after using a service. The resident keeps a
+/// reference and sees each step: received, read by the service, answered.
+model ServiceFeedback {
+  id          String                @id @default(cuid())
+  /// Human reference shown to the resident, e.g. AV-000123.
+  reference   String                @unique @db.VarChar(20)
+  userId      String
+  user        User                  @relation("ServiceFeedbackAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     MunicipalService      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  /// The request the comment is about, when it follows one.
+  requestId   String?
+  request     CityRequest?          @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  /// 1 (very unhappy) to 5 (very happy).
+  rating      Int                   @db.TinyInt
+  /// Encrypted at rest (may hold personal details).
+  comment     String                @db.Text
+  status      ServiceFeedbackStatus @default(RECEIVED)
+  readAt      DateTime?
+  /// The service's answer, encrypted at rest.
+  reply       String?               @db.Text
+  repliedById String?
+  repliedBy   User?                 @relation("ServiceFeedbackReplier", fields: [repliedById], references: [id], onDelete: SetNull)
+  repliedAt   DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@unique([userId, requestId])
+  @@index([userId, createdAt])
+  @@index([serviceId, createdAt])
+  @@index([status, createdAt])
+  @@index([requestId])
+  @@index([repliedById])
+  @@map("serviceFeedback")
 }

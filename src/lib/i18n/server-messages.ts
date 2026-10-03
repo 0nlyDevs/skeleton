@@ -10,6 +10,19 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Could not allocate a feedback reference.": "Impossible d'attribuer une référence à l'avis. Réessayez.",
+  "Choose how it went.": "Choisissez comment ça s'est passé.",
+  "Write a few words about how it went.": "Écrivez quelques mots sur la façon dont ça s'est passé.",
+  "Write an answer of a few words.": "Écrivez une réponse de quelques mots.",
+  "You already left a comment on this request.": "Vous avez déjà laissé un avis sur cette demande.",
+  "Only city agents can read every comment.": "Seuls les agents de la ville peuvent lire tous les avis.",
+  "This comment does not exist.": "Cet avis n'existe pas.",
+  "Enter the time as HH:MM.": "Indiquez l'heure au format HH:MM.",
+  "Closing time must come after opening time.": "L'heure de fermeture doit venir après l'heure d'ouverture.",
+  "Give the message a title.": "Donnez un titre au message.",
+  "Say what residents must know.": "Indiquez ce que les habitants doivent savoir.",
+  "Only the High Council can publish an official message.": "Seul le Haut Conseil peut publier un message officiel.",
+  "This official message does not exist.": "Ce message officiel n'existe pas.",
   "Give both map coordinates, or neither.": "Indiquez les deux coordonnées sur la carte, ou aucune.",
   "Place the service inside the city, on land.": "Placez le service dans la ville, sur la terre ferme.",
   "Type a name or choose a role.": "Tapez un nom ou choisissez un rôle.",

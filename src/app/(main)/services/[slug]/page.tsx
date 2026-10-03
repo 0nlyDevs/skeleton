@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { AnnouncementCard } from "@/components/city/announcement-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
+import { OpenStateLine, WeekHours } from "@/components/city/opening-hours";
+import { ServiceFeedbackSection } from "@/components/city/service-feedback-section";
 import { ServiceIcon } from "@/components/city/service-icon";
 import { ServiceAvailabilityBadge, ServiceAvailabilityNotice } from "@/components/city/service-availability-notice";
 import { ServiceLocationCard } from "@/components/city/service-location-card";
@@ -18,6 +20,7 @@ import { getServerDictionary } from "@/lib/i18n/server";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
 import { getService } from "@/modules/city-services/city-services.service";
 import { serviceSlugParamSchema } from "@/modules/city-services/city-services.schema";
+import { serviceSatisfaction } from "@/modules/service-feedback/service-feedback.service";
 
 export const metadata: Metadata = { title: "Service municipal" };
 
@@ -36,9 +39,10 @@ export default async function ServicePage({ params }: { readonly params: Promise
     : null;
   if (!service) return <NotFoundPanel backHref="/services" />;
 
-  const news = await listAnnouncements({ service: service.slug, page: 1, limit: 3 }, viewer);
+  const [news, feedback] = await Promise.all([listAnnouncements({ service: service.slug, page: 1, limit: 3 }, viewer), serviceSatisfaction(service.id)]);
   const contact = [
-    { icon: Clock, label: t("tn.services.hours"), value: service.hours },
+    // F74 — structured hours get their own block; the sentence is the fallback.
+    { icon: Clock, label: t("tn.services.hours"), value: service.openingHours ? null : service.hours },
     { icon: MapPin, label: t("tn.services.address"), value: service.address },
     { icon: Phone, label: t("tn.services.phone"), value: service.phone, href: service.phone ? `tel:${service.phone.replace(/\s+/g, "")}` : null },
     { icon: Mail, label: t("tn.services.email"), value: service.email, href: service.email ? `mailto:${service.email}` : null },
@@ -78,10 +82,12 @@ export default async function ServicePage({ params }: { readonly params: Promise
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{service.category}</Badge>
             {!service.active ? <Badge variant="warning">{t("tn.services.inactive")}</Badge> : null}
+            {service.partner ? <Badge variant="outline">{t("tn.hours.partner")}</Badge> : null}
             <ServiceAvailabilityBadge availability={service.availability} />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">{service.name}</h1>
           <p className="text-[0.9375rem] text-muted-foreground">{service.summary}</p>
+          {service.openState ? <OpenStateLine state={service.openState} t={t} className="text-[0.875rem]" /> : null}
         </div>
         <div className="flex shrink-0 flex-col gap-2">
           <Button asChild>
@@ -111,6 +117,8 @@ export default async function ServicePage({ params }: { readonly params: Promise
               <p className="prose-body text-[0.9375rem]">{service.howTo}</p>
             </section>
           ) : null}
+          {/* F76 — say how it went, and see what happened to what you said. */}
+          <ServiceFeedbackSection serviceSlug={service.slug} serviceName={service.name} signedIn={viewer !== null} summary={feedback} />
           {news.data.length > 0 ? (
             <section className="flex flex-col gap-3" aria-labelledby="related-news">
               <h2 id="related-news" className="px-1 font-semibold">{t("tn.services.related_news")}</h2>
@@ -130,6 +138,14 @@ export default async function ServicePage({ params }: { readonly params: Promise
             emergency={service.emergency}
             labels={{ title: t("tn.services.where"), zone: t(cityZoneLabelKey(service.location.zone)), openMap: t("alerts.map.open_map") }}
           />
+        ) : null}
+        {service.openingHours && service.openState ? (
+          <section className="h-fit rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="week-hours">
+            <h2 id="week-hours" className="mb-1 font-semibold">{t("tn.services.hours")}</h2>
+            <OpenStateLine state={service.openState} t={t} className="mb-2" />
+            <WeekHours hours={service.openingHours} today={service.openState.today} t={t} />
+            {service.hours ? <p className="mt-2 text-[0.7812rem] text-muted-foreground">{service.hours}</p> : null}
+          </section>
         ) : null}
         {contact.length > 0 ? (
           <aside className="h-fit rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="contact">
