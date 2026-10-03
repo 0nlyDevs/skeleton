@@ -416,16 +416,6 @@ html[data-contrast="high"].dark {
  * <main>. A resting background fill is the only reason to skip an underline;
  * "current page" covers that in the left rail, and a button role is not a link
  * anyway. */
-/*
- * F43 — a link inside running text is recognisable without colour: it is
- * underlined, whatever the theme. Links that look like buttons, cards or
- * navigation items carry their own shape and are left alone.
- */
-main :is(p, li, dd, td) > a:not([class*="rounded"]):not([class*="bg-"]):not([role]) {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 html[data-contrast="high"] a:not([role]):not([aria-current="page"]) {
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -448,6 +438,17 @@ html[data-contrast="high"] :focus-visible {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/*
+ * F43 — a link inside running text is recognisable without colour: it is
+ * underlined, whatever the theme. The rule targets links that sit directly in
+ * a sentence (paragraph, definition, table cell); links styled as buttons,
+ * cards or menu items are not inside running text, so they keep their shape.
+ */
+:where(p, dd, td) > a:not([role]) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -623,4 +624,84 @@ html[data-contrast="high"] .tn-hero-scrim {
 html[data-contrast="high"] .tn-landing header nav {
   background: #000;
   border-color: #fff;
+}
+
+/* City map labels (CSS2D, positioned by three.js), styled like a familiar map app. */
+.tn-map-zone {
+  pointer-events: none;
+  transition: opacity var(--duration-normal) var(--ease-out-soft);
+}
+.tn-map-zone-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #3c3b37;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 6px #fff;
+}
+.tn-map-zone-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px #fff;
+}
+.tn-map-place {
+  pointer-events: auto;
+}
+.tn-map-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transform: translate(0.75rem, 0);
+  cursor: pointer;
+}
+.tn-map-pin-icon {
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 999px;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+.tn-map-pin-name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #202124;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff;
+}
+.tn-map-pin:hover .tn-map-pin-icon {
+  transform: scale(1.12);
+}
+/* "You are here": a blue dot with a soft pulsing halo. */
+.tn-map-home {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+}
+.tn-map-home-dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #1a73e8;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+.tn-map-home-halo {
+  position: absolute;
+  inset: -0.75rem;
+  border-radius: 999px;
+  background: rgb(26 115 232 / 0.22);
+  animation: tn-map-halo 2.2s ease-out infinite;
+}
+@keyframes tn-map-halo {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
 }

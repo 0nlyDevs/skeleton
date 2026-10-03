@@ -76,6 +76,8 @@ export const RATE_LIMITS = {
   dataExport: { limit: 3, windowMs: 60 * 60_000 },
   /** Requests to the city per citizen. */
   cityRequestCreate: { limit: 10, windowMs: 60 * 60_000 },
+  /** City alerts are high impact; keep a generous per-staff hourly limit. */
+  cityAlert: { limit: 12, windowMs: 60 * 60_000 },
   pageUpdate: { limit: 120, windowMs: 10 * 60_000 },
   /** One counted view per visitor and page every 6 hours. */
   pageView: { limit: 1, windowMs: 6 * 60 * 60_000 },

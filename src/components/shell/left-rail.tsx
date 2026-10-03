@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, UsersRound } from "lucide-react";
+import { ChevronDown, MapPin } from "lucide-react";
 import Link from "@/components/ui/link";
 import { usePathname } from "next/navigation";
 
@@ -9,9 +9,10 @@ import { useRealtime } from "@/components/providers/realtime-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { cityZoneLabelKey, type CityZoneId } from "@/modules/alerts/city-zones";
 
-import { CITY_NAV, MAIN_NAV, STAFF_NAV, isActive, type ShellNavItem } from "./nav-config";
-import type { ShellRail, ShellViewer } from "./shell-types";
+import { GUEST_NAV, MORE_NAV, NAV_GROUPS, STAFF_NAV, isActive, type ShellNavItem } from "./nav-config";
+import type { ShellViewer } from "./shell-types";
 import { UserAvatar } from "./user-avatar";
 
 function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge: number }) {
@@ -24,19 +25,14 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.875rem] font-medium transition-colors duration-[var(--duration-fast)]",
-        active ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25" : "text-foreground/80 hover:bg-surface-muted",
+        "flex items-center gap-3 rounded-xl px-3 py-2 text-[0.875rem] font-medium transition-colors duration-[var(--duration-fast)]",
+        active ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-surface-muted",
       )}
     >
-      <Icon className="size-[18px] shrink-0" aria-hidden />
+      <Icon className={cn("size-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")} aria-hidden />
       <span className="flex-1">{t(item.labelKey)}</span>
       {badge > 0 ? (
-        <span
-          className={cn(
-            "grid min-w-5 place-items-center rounded-full px-1.5 text-[0.6875rem] font-bold leading-5",
-            active ? "bg-primary-foreground/20" : "bg-error text-white",
-          )}
-        >
+        <span className="grid min-w-5 place-items-center rounded-full bg-error px-1.5 text-[0.6875rem] font-bold leading-5 text-white">
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}
@@ -44,24 +40,24 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
   );
 }
 
-/** What a guest can open without an account. */
-const PUBLIC_CITY_PATHS = new Set(["/", "/services", "/announcements", "/glossary", "/accessibility"]);
+function GroupLabel({ children }: { readonly children: string }) {
+  return <p className="px-3 pb-1 pt-4 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{children}</p>;
+}
 
-export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null; readonly rail: ShellRail | null }) {
+/**
+ * The resident's compass: who I am and where I live, then a short list of
+ * destinations grouped by what people come to do. Everything else is one
+ * click away under "More", so the first screen never overwhelms.
+ */
+export function LeftRail({ viewer, zone }: { readonly viewer: ShellViewer | null; readonly zone: CityZoneId | null }) {
   const t = useTranslation();
+  const pathname = usePathname();
   const { unreadCount, messageUnreadTotal } = useRealtime();
   const badges = { messages: messageUnreadTotal, notifications: unreadCount } as const;
 
   if (!viewer) {
     return (
       <div className="flex flex-col gap-4">
-        <Card className="p-2">
-          <nav aria-label={t("nav.label")} className="flex flex-col gap-0.5">
-            {CITY_NAV.filter((item) => PUBLIC_CITY_PATHS.has(item.href)).map((item) => (
-              <NavLink key={item.href} item={item} badge={0} />
-            ))}
-          </nav>
-        </Card>
         <Card className="flex flex-col gap-3 p-5">
           <h2 className="text-[1rem] font-semibold">{t("shell.join_title")}</h2>
           <p className="text-[0.8438rem] leading-relaxed text-muted-foreground">{t("shell.join_body")}</p>
@@ -72,101 +68,80 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
             <Link href="/login">{t("nav.sign_in")}</Link>
           </Button>
         </Card>
+        <Card className="p-2">
+          <nav aria-label={t("nav.label")} className="flex flex-col gap-0.5">
+            {GUEST_NAV.map((item) => (
+              <NavLink key={item.href} item={item} badge={0} />
+            ))}
+          </nav>
+        </Card>
       </div>
     );
   }
 
   const profileHref = viewer.username ? `/profile/${encodeURIComponent(viewer.username)}` : "/settings/profile";
   const staff = STAFF_NAV.filter((item) => !item.roles || item.roles.includes(viewer.role));
+  const moreActive = MORE_NAV.some((item) => isActive(pathname, item.href));
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="p-4">
+      <Card className="flex flex-col gap-2 p-3">
         <Link href={profileHref} className="flex items-center gap-3 rounded-xl p-1 hover:bg-surface-muted">
           <UserAvatar userId={viewer.id} name={viewer.name} image={viewer.image} size="md" />
           <span className="min-w-0">
             <span className="block truncate text-[0.9062rem] font-semibold">{viewer.name}</span>
-            {viewer.username ? (
-              <span className="block truncate text-[0.7812rem] text-muted-foreground">@{viewer.username}</span>
-            ) : null}
+            {viewer.username ? <span className="block truncate text-[0.7812rem] text-muted-foreground">@{viewer.username}</span> : null}
           </span>
         </Link>
-        {rail ? (
-          <dl className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-surface-muted p-2 text-center">
-            {(
-              [
-                ["shell.followers", rail.followers],
-                ["shell.following", rail.following],
-                ["shell.posts", rail.posts],
-              ] as const
-            ).map(([key, value]) => (
-              <div key={key}>
-                <dd className="text-[0.9375rem] font-bold tabular-nums">{value}</dd>
-                <dt className="text-[0.6875rem] text-muted-foreground">{t(key)}</dt>
-              </div>
-            ))}
-          </dl>
-        ) : null}
+        <Link
+          href={zone ? "/city-map" : "/settings/profile"}
+          className="flex items-center gap-2 rounded-xl bg-surface-muted px-3 py-2 text-[0.8125rem] hover:bg-accent"
+        >
+          <MapPin className="size-4 shrink-0 text-primary" aria-hidden />
+          {zone ? (
+            <span className="min-w-0 truncate">
+              <span className="text-muted-foreground">{t("tn.nav.my_district")} · </span>
+              <span className="font-medium">{t(cityZoneLabelKey(zone))}</span>
+            </span>
+          ) : (
+            <span className="font-medium text-primary">{t("tn.nav.choose_district")}</span>
+          )}
+        </Link>
       </Card>
 
       <Card className="p-2">
-        <nav aria-label={t("nav.label")} className="flex flex-col gap-0.5">
-          {CITY_NAV.map((item) => (
-            <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
+        <nav aria-label={t("nav.label")} className="flex flex-col">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.labelKey ?? "hub"} className="flex flex-col gap-0.5">
+              {group.labelKey ? <GroupLabel>{t(group.labelKey)}</GroupLabel> : null}
+              {group.items.map((item) => (
+                <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
+              ))}
+            </div>
           ))}
-        </nav>
-        <p className="px-3 pb-1 pt-3 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("tn.nav.city_life")}
-        </p>
-        <nav aria-label={t("tn.nav.city_life")} className="flex flex-col gap-0.5">
-          {MAIN_NAV.map((item) => (
-            <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
-          ))}
-        </nav>
-        {staff.length > 0 ? (
-          <>
-            <p className="px-3 pb-1 pt-3 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("nav.staff")}
-            </p>
-            <nav aria-label={t("nav.staff")} className="flex flex-col gap-0.5">
+
+          <details className="group mt-2" open={moreActive}>
+            <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-2 text-[0.8125rem] font-medium text-muted-foreground hover:bg-surface-muted [&::-webkit-details-marker]:hidden">
+              <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+              {t("tn.nav.more")}
+            </summary>
+            <div className="flex flex-col gap-0.5 pt-0.5">
+              {MORE_NAV.map((item) => (
+                <NavLink key={item.href} item={item} badge={0} />
+              ))}
+            </div>
+          </details>
+
+          {staff.length > 0 ? (
+            <div className="flex flex-col gap-0.5">
+              <GroupLabel>{t("tn.nav.staff")}</GroupLabel>
               {staff.map((item) => (
                 <NavLink key={item.href} item={item} badge={0} />
               ))}
-            </nav>
-          </>
-        ) : null}
+            </div>
+          ) : null}
+        </nav>
       </Card>
-
-      {rail && rail.groups.length > 0 ? (
-        <Card className="p-3">
-          <p className="px-2 pb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("nav.your_groups")}
-          </p>
-          <ul className="flex flex-col gap-0.5">
-            {rail.groups.map((group) => (
-              <li key={group.slug}>
-                <Link
-                  href={`/groups/${group.slug}`}
-                  className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[0.8438rem] hover:bg-surface-muted"
-                >
-                  <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent text-[0.75rem] font-bold text-accent-foreground">
-                    {group.name.slice(0, 1).toUpperCase()}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{group.name}</span>
-                  {group.privacy === "PRIVATE" ? <Lock className="size-3.5 text-muted-foreground" aria-hidden /> : null}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link
-            href="/groups"
-            className="mt-1 flex items-center gap-2 rounded-xl px-2 py-1.5 text-[0.8125rem] font-medium text-primary hover:bg-accent"
-          >
-            <UsersRound className="size-4" aria-hidden />
-            {t("nav.see_all")}
-          </Link>
-        </Card>
-      ) : null}
 
       <p className="px-2 text-[0.7188rem] leading-relaxed text-muted-foreground">
         <Link href="/privacy" className="hover:underline">
@@ -176,7 +151,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
         <Link href="/terms" className="hover:underline">
           {t("footer.terms")}
         </Link>
-        {" · "}Skeleton © {new Date().getFullYear()}
+        {" · "}Terra Nova © {new Date().getFullYear()}
       </p>
     </div>
   );

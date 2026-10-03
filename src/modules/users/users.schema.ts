@@ -9,6 +9,7 @@ import {
   hasAtLeastOneDefined,
   idSchema,
 } from "@/lib/validate";
+import { CITY_ZONE_IDS } from "@/modules/alerts/city-zones";
 
 /** Local upload path only — an external URL here would be a tracking beacon. */
 const avatarPathSchema = z
@@ -36,6 +37,8 @@ export const updateProfileSchema = z
     showPresence: z.boolean().optional(),
     /** Suggest my town on new posts and centre the map on me. */
     autoLocation: z.boolean().optional(),
+    /** Broad home district for location-scoped city alerts. */
+    cityZone: z.enum(CITY_ZONE_IDS).nullable().optional(),
   })
   .refine(hasAtLeastOneDefined, { message: "Provide at least one field to update." });
 

@@ -9,11 +9,13 @@ import { KeyboardShortcuts } from "./keyboard-shortcuts";
 import { LeftRail } from "./left-rail";
 import { MobileNav } from "./mobile-nav";
 import { RightRail } from "./right-rail";
-import type { ShellRail, ShellViewer } from "./shell-types";
+import type { ShellViewer } from "./shell-types";
+import type { CityZoneId } from "@/modules/alerts/city-zones";
 import { TopBar } from "./top-bar";
+import { AlertWatcher } from "@/components/alerts/alert-watcher";
 
 /** Pages that need the full width of the centre column. */
-const WIDE_PREFIXES = ["/messages", "/settings", "/admin", "/assistant", "/notifications"];
+const WIDE_PREFIXES = ["/messages", "/settings", "/admin", "/assistant", "/notifications", "/alerts", "/city-map"];
 
 /**
  * The one layout of the product: a top bar, the left rail (identity +
@@ -23,11 +25,12 @@ const WIDE_PREFIXES = ["/messages", "/settings", "/admin", "/assistant", "/notif
  */
 export function AppShell({
   viewer,
-  rail,
+  zone,
   children,
 }: {
   readonly viewer: ShellViewer | null;
-  readonly rail: ShellRail | null;
+  /** The viewer's district, shown in the rail and used to personalise alerts. */
+  readonly zone: CityZoneId | null;
   readonly children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -46,9 +49,10 @@ export function AppShell({
         )}
       >
         <aside className="sticky top-20 hidden h-[calc(100dvh-6rem)] overflow-y-auto pb-4 lg:block [scrollbar-width:thin]">
-          <LeftRail viewer={viewer} rail={rail} />
+          <LeftRail viewer={viewer} zone={zone} />
         </aside>
         <main id="content" className="min-w-0">
+          {viewer ? <AlertWatcher /> : null}
           {children}
         </main>
         {showRight ? (
@@ -57,7 +61,7 @@ export function AppShell({
           </aside>
         ) : null}
       </div>
-      <MobileNav viewer={viewer} rail={rail} />
+      <MobileNav viewer={viewer} zone={zone} />
       <KeyboardShortcuts />
     </div>
   );

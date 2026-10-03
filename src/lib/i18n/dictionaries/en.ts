@@ -960,6 +960,8 @@ export const en: Dictionary = {
   "notifications.type.MENTION": "Mention",
   "notifications.type.SYSTEM": "System",
   "notifications.type.ROLE_CHANGED": "Role changed",
+  "notifications.type.ALERT": "City safety alert",
+  "notifications.alert_view": "View alert",
 
   // --- Assistant ---
   "ai.title": "AI assistant",

@@ -964,6 +964,8 @@ export const fr = {
   "notifications.type.MENTION": "Mention",
   "notifications.type.SYSTEM": "Système",
   "notifications.type.ROLE_CHANGED": "Rôle modifié",
+  "notifications.type.ALERT": "Alerte de sécurité municipale",
+  "notifications.alert_view": "Voir l'alerte",
 
   // --- Assistant ---
   "ai.title": "Assistant IA",

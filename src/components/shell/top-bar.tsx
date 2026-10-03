@@ -6,10 +6,7 @@ import { Suspense } from "react";
 
 import { Brand } from "@/components/layout/brand";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
-import { RealtimeStatus } from "@/components/layout/realtime-status";
 import { DisplayMenu } from "@/components/layout/display-menu";
-import { EcoToggle } from "@/components/layout/eco-toggle";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -36,11 +33,8 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
         </div>
 
         <div className="ml-auto flex items-center gap-1 md:ml-0">
-          <RealtimeStatus className="hidden lg:inline-flex" />
           <LocaleToggle className="hidden sm:inline-flex" />
           <DisplayMenu />
-          <EcoToggle />
-          <ThemeToggle />
           {viewer ? (
             <>
               <Link
@@ -48,7 +42,7 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
                 aria-label={
                   messageUnreadTotal > 0 ? `${t("nav.messages")} (${messageUnreadTotal})` : t("nav.messages")
                 }
-                className="relative inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground lg:hidden"
+                className="relative inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
               >
                 <MessageCircle className="size-[18px]" />
                 {messageUnreadTotal > 0 ? (
@@ -60,9 +54,7 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
                   </span>
                 ) : null}
               </Link>
-              {/* On large screens the left rail carries Messages and Notifications;
-                  the top bar keeps them only where the rail is hidden. */}
-              <NotificationBell className="lg:hidden" />
+              <NotificationBell />
               <span className="ml-1">
                 <UserMenu id={viewer.id} username={viewer.username} name={viewer.name} email={viewer.email} image={viewer.image} role={viewer.role} />
               </span>

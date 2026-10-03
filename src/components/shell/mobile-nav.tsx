@@ -12,10 +12,11 @@ import { cn } from "@/lib/utils";
 
 import { LeftRail } from "./left-rail";
 import { ALL_NAV, isActive } from "./nav-config";
-import type { ShellRail, ShellViewer } from "./shell-types";
+import type { ShellViewer } from "./shell-types";
+import type { CityZoneId } from "@/modules/alerts/city-zones";
 
 /** Phones: four primary destinations + a drawer holding the full left rail. */
-export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | null; readonly rail: ShellRail | null }) {
+export function MobileNav({ viewer, zone }: { readonly viewer: ShellViewer | null; readonly zone: CityZoneId | null }) {
   const t = useTranslation();
   const pathname = usePathname();
   const { unreadCount, messageUnreadTotal } = useRealtime();
@@ -23,7 +24,7 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
   useEffect(() => setOpen(false), [pathname]);
 
   // The four destinations used most on a phone; everything else is in the drawer.
-  const tabs = ["/", "/services", "/space", "/notifications"]
+  const tabs = (viewer ? ["/space", "/services", "/alerts", "/messages"] : ["/services", "/alerts", "/city-map", "/announcements"])
     .map((href) => ALL_NAV.find((item) => item.href === href))
     .filter((item): item is (typeof ALL_NAV)[number] => item !== undefined);
   const badges = { messages: messageUnreadTotal, notifications: unreadCount } as const;
@@ -75,7 +76,7 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto bg-background p-4">
           <SheetTitle className="sr-only">{t("nav.menu")}</SheetTitle>
-          <LeftRail viewer={viewer} rail={rail} />
+          <LeftRail viewer={viewer} zone={zone} />
         </SheetContent>
       </Sheet>
     </>

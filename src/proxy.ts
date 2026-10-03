@@ -49,7 +49,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 /** Readable without an account (content-level rules still apply server-side). */
-const PUBLIC_PREFIXES = ["/models/", "/accessibility", "/glossary", "/services", "/announcements", "/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
+const PUBLIC_PREFIXES = ["/models/", "/accessibility", "/glossary", "/services", "/announcements", "/alerts", "/city-map", "/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
