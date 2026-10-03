@@ -120,9 +120,13 @@ export async function createMessage(data: {
   content: string;
   uploadId?: string | null;
   replyToId?: string | null;
+  /** When set, creates a system event message (e.g. MEMBER_JOINED). */
+  systemKind?: string | null;
 }): Promise<MessageWithSender> {
   return prisma.$transaction(async (tx) => {
     // Content is encrypted at rest; `toMessageDto` decrypts on the way out.
+    // System messages store no content — the client derives the label from
+    // `systemKind` + sender name via i18n.
     const message = await tx.message.create({
       data: { ...data, content: data.content ? encryptField(data.content) : "" },
       include: messageSenderSelect,

@@ -24,7 +24,7 @@ export async function deleteFollow(followerId: string, followingId: string): Pro
   await prisma.follow.deleteMany({ where: { followerId, followingId } });
 }
 
-const connectionUser = { select: { id: true, name: true, username: true, image: true } } as const;
+const connectionUser = { select: { id: true, name: true, username: true, image: true, role: true } } as const;
 
 /** People following `userId` (or followed by them), newest first, keyset by follow id. */
 export async function findConnections(
@@ -32,7 +32,7 @@ export async function findConnections(
   kind: "followers" | "following",
   cursor: string | null,
   take: number,
-): Promise<{ followId: string; user: { id: string; name: string; username: string | null; image: string | null } }[]> {
+): Promise<{ followId: string; user: { id: string; name: string; username: string | null; image: string | null; role: "USER" | "AGENT" | "ADMIN" } }[]> {
   const rows = await prisma.follow.findMany({
     where:
       kind === "followers"
@@ -62,4 +62,3 @@ export async function findFollowerIdsAmong(userId: string, ids: readonly string[
   const rows = await prisma.follow.findMany({ where: { followingId: userId, followerId: { in: [...ids] } }, select: { followerId: true } });
   return rows.map((row) => row.followerId);
 }
-

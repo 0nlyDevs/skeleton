@@ -20,6 +20,7 @@ function preview(message: MessagePayload): RoomDto["lastMessage"] {
     senderId: message.sender.id,
     senderName: message.sender.name,
     hasImage: message.image !== null,
+    systemKind: message.systemKind ?? null,
     createdAt: message.createdAt,
   };
 }

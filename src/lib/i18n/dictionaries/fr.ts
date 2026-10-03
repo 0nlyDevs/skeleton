@@ -448,6 +448,12 @@ export const fr = {
   "messages.general": "Salon général",
   "messages.photo": "Photo",
   "messages.you": "Vous",
+  "messages.system.member_joined": "{name} a rejoint le groupe",
+  "messages.system.member_left": "{name} a quitté le groupe",
+  "messages.system.member_removed": "{name} a été supprimé du groupe",
+  "messages.group_members": "Membres du groupe",
+  "messages.remove_member": "Supprimer",
+  "messages.manage_members": "Gérer les membres",
   "settings.tabs.profile": "Profil",
   "settings.tabs.account": "Compte et sécurité",
   "settings.tabs.privacy": "Confidentialité",
@@ -952,6 +958,9 @@ export const fr = {
   "chat.connection_wait": "La messagerie se reconnecte. Votre message pourra être envoyé au retour de la connexion.",
   "chat.member_added": "Membre ajouté au groupe.",
   "chat.no_members": "Aucun membre dans ce groupe.",
+  "chat.member_removed": "Membre supprimé du groupe.",
+  "chat.removed_from_group": "a été retiré du groupe",
+  "chat.remove_confirm": "Cette personne perdra l'accès au groupe.",
 
   // --- Notifications ---
   "notifications.title": "Notifications",

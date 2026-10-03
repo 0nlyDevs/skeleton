@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import type { MessageReplyDto, RoomDto, RoomMemberDto } from "@/modules/messages/messages.dto";
 
 import { EditGroupDialog } from "./edit-group-dialog";
+import { ManageGroupMembersDialog } from "./manage-group-members-dialog";
 import { AddPeopleDialog } from "./new-conversation-dialog";
 import { MessageBubble } from "./message-bubble";
 import { useThread, type ThreadMessage } from "./use-thread";
@@ -69,6 +70,7 @@ export function ConversationThread({
   const [editing, setEditing] = useState<ThreadMessage | null>(null);
   const [confirmAll, setConfirmAll] = useState<ThreadMessage | null>(null);
   const [adding, setAdding] = useState(false);
+  const [managingMembers, setManagingMembers] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [replyingTo, setReplyingTo] = useState<MessageReplyDto | null>(null);
   const [confirmClear, setConfirmClear] = useState<"me" | "everyone" | null>(null);
@@ -278,10 +280,16 @@ export function ConversationThread({
                     {t("messages.add_member")}
                   </DropdownMenuItem>
                   {isGroupAdmin ? (
-                    <DropdownMenuItem onSelect={() => setEditingGroup(true)}>
-                      <Pencil />
-                      {t("messages.edit_group")}
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onSelect={() => setEditingGroup(true)}>
+                        <Pencil />
+                        {t("messages.edit_group")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setManagingMembers(true)}>
+                        <UsersRound />
+                        {t("messages.manage_members")}
+                      </DropdownMenuItem>
+                    </>
                   ) : null}
                 </>
               ) : null}
@@ -343,6 +351,7 @@ export function ConversationThread({
             {thread.messages.map((message, index) => {
               const previous = thread.messages[index - 1];
               const next = thread.messages[index + 1];
+              const isSystem = Boolean(message.systemKind);
               const mine = message.sender.id === viewer.id;
               const sameAsPrevious = previous?.sender.id === message.sender.id;
               const sameAsNext = next?.sender.id === message.sender.id;
@@ -351,8 +360,8 @@ export function ConversationThread({
                   key={message.id}
                   message={message}
                   mine={mine}
-                  showAuthor={room.type === "GROUP" && !sameAsPrevious}
-                  showAvatar={!sameAsNext}
+                  showAuthor={room.type === "GROUP" && !sameAsPrevious && !isSystem}
+                  showAvatar={!sameAsNext && !isSystem}
                   readers={receipts.get(message.id) ?? []}
                   status={message.id === lastMine?.id ? deliveryStatus : null}
                   onEdit={() => {
@@ -523,6 +532,16 @@ export function ConversationThread({
           roomId={room.id}
           existing={thread.members.map((member) => member.userId)}
           onAdded={() => void thread.reloadMembers()}
+        />
+      ) : null}
+      {room.type === "GROUP" ? (
+        <ManageGroupMembersDialog
+          open={managingMembers}
+          onOpenChange={setManagingMembers}
+          roomId={room.id}
+          members={thread.members}
+          viewerId={viewer.id}
+          onRemoved={() => void thread.reloadMembers()}
         />
       ) : null}
     </div>
