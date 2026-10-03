@@ -9,6 +9,7 @@ import { isAdmin, isStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import type { Locale } from "@/lib/i18n/config";
+import { matchesSearch } from "@/lib/search";
 import { slugify } from "@/lib/utils";
 import type { AuthUser } from "@/types";
 
@@ -96,13 +97,31 @@ export async function listServices(
     where: {
       ...(showInactive ? {} : { active: true }),
       ...(query.category ? { category: query.category } : {}),
-      ...(query.q ? { OR: [{ name: { contains: query.q } }, { summary: { contains: query.q } }, { category: { contains: query.q } }] } : {}),
     },
     // F28 — highlighted services first, then the editorial order.
     orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
     take: 200,
   });
-  return rows.map((row) => toDto(row, locale));
+  const services = rows.map((row) => toDto(row, locale));
+  const term = query.q?.trim();
+  if (!term) return services;
+
+  return services.filter((service) =>
+    matchesSearch(
+      [
+        service.name,
+        service.category,
+        service.summary,
+        service.description,
+        service.howTo,
+        service.hours,
+        service.address,
+        service.email,
+        service.phone,
+      ],
+      term,
+    ),
+  );
 }
 
 export async function getService(slug: string, viewer: AuthUser | null, locale: Locale = "fr"): Promise<ServiceDto> {
