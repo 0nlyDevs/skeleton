@@ -82,6 +82,7 @@ export async function listConnections(
         name: user.name,
         username: user.username ?? "",
         image: user.image,
+        role: user.role,
         isFollowing,
         followsYou,
         isFriend: isFollowing && followsYou,
@@ -91,4 +92,3 @@ export async function listConnections(
     nextCursor: rows.length > query.limit ? (page.at(-1)?.followId ?? null) : null,
   };
 }
-
