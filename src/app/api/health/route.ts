@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { publicRoute } from "@/lib/api/route";
 import { getAiQuota, isAiConfigured, isAiReachable } from "@/lib/ai/provider";
 import { cacheStats } from "@/lib/cache";
+import { encryptionHealth } from "@/lib/crypto/field-encryption";
 import { isDatabaseReachable } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
 import { RATE_LIMITS } from "@/lib/rate-limit";
@@ -27,6 +28,7 @@ export const GET = publicRoute({
   handler: async () => {
     const databaseUp = await isDatabaseReachable();
     const aiQuota = await getAiQuota();
+    const encryption = encryptionHealth();
 
     const payload = {
       status: databaseUp ? "ok" : "degraded",
@@ -36,7 +38,7 @@ export const GET = publicRoute({
       checks: {
         database: databaseUp ? "up" : "down",
         email: env.emailEnabled ? "configured" : "disabled",
-        // "refused" distinguishes a missing key from a key the provider rejects:
+// "refused" distinguishes a missing key from a key the provider rejects:
         // the first is expected on a fresh deploy, the second is a live bug.
         ai: !isAiConfigured() ? "disabled" : isAiReachable() ? "configured" : "key-refused",
         realtime: isRealtimeAvailable() ? "up" : relayPreferred() ? "relay" : "polling-fallback",
@@ -45,6 +47,18 @@ export const GET = publicRoute({
         cacheEntries: cacheStats().entries,
         aiQuotaRemainingUsd: aiQuota?.remainingUsd ?? null,
       },
+      // Present only when it is wrong: values encrypted under a key this
+      // process does not hold cannot be read, and the count is what turns a
+      // silent data loss into a visible one.
+      ...(encryption.healthy
+        ? {}
+        : {
+            encryption: {
+              failures: encryption.failures,
+              lastFailureAt: encryption.lastFailureAt,
+              keySource: encryption.keySource,
+            },
+          }),
     };
 
     return NextResponse.json(payload, {
