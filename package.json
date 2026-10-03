@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:next": "next dev",
-    "build": "node scripts/migrate-on-build.mjs && prisma generate && next build --webpack && npm run build:server && node scripts/publish-server.mjs",
+    "build": "node scripts/migrate-on-build.mjs && prisma generate && NODE_OPTIONS=--max-old-space-size=768 next build --webpack && npm run build:server && node scripts/publish-server.mjs",
     "build:server": "node scripts/esbuild-server.mjs",
     "start": "node server.cjs",
     "start:next": "next start",
