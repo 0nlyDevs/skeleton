@@ -7,6 +7,8 @@
  * anyone having to run a job.
  */
 
+import { APIError } from "better-auth/api";
+
 export interface BanStateInput {
   readonly banned: boolean;
   readonly banExpires: Date | null;
@@ -41,4 +43,20 @@ export function resolveBanState(
 export function describeBan(state: BanState, formatter: (date: Date) => string): string {
   if (!state.banned) return state.expired ? "expired" : "active";
   return state.until ? `until ${formatter(state.until)}` : "indefinite";
+}
+
+/**
+ * The answer BetterAuth returns when a suspended account asks for a session.
+ *
+ * The caller only ever reaches session creation **after** the password, the
+ * passkey or the OAuth identity has been verified, so telling this account why
+ * it is suspended does not tell a stranger that the address exists — a wrong
+ * password still fails earlier, with the same generic sentence as an unknown
+ * address.
+ *
+ * It is a 403 rather than a 401 for a second reason: only a rejected password
+ * counts against the brute-force budget, and being suspended is not a guess.
+ */
+export function bannedAccountError(state: BanState): APIError {
+  return new APIError("FORBIDDEN", { code: "BANNED_USER", message: state.reason ?? "" });
 }

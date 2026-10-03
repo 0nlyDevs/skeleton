@@ -134,6 +134,7 @@ export const en: Dictionary = {
   "auth.login.unverified":
     "Confirm your email address first — we have just resent the link.",
   "auth.login.banned": "This account is suspended. Contact an administrator.",
+  "auth.login.banned_reason": "This account is suspended: {reason}. Contact an administrator.",
   "auth.register.neutral":
     "If this address is new, a confirmation message has just been sent. Check your spam folder.",
   "auth.login.too_many": "Too many attempts. Wait a minute and try again.",

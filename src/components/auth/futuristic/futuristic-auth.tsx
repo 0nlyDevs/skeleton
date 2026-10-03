@@ -15,7 +15,7 @@ import {
   personNameViolation,
   usernameViolation,
 } from "@/lib/validation/profile";
-import { loginErrorMessageKey } from "../auth-errors";
+import { loginErrorMessageKey, loginErrorText } from "../auth-errors";
 import { AttemptsLeft, LoginLockout, ProtectedSignInNote, SlowDown, useLoginProtection } from "../login-protection-notice";
 import { FuturisticAuthScene, type SceneState } from "./auth-scene";
 import "./auth-styles.css";
@@ -514,7 +514,7 @@ export function FuturisticAuth({
       if (result.error) {
         // A pause is shown by the lockout panel instead of a red line.
         const key = loginErrorMessageKey(result.error);
-        setLoginErr(key === "auth.login.too_many" ? null : t(key));
+        setLoginErr(key === "auth.login.too_many" ? null : loginErrorText(result.error, t));
         setLoginPass("");
         setLoginSubmitting(false);
         shakeFields(["fa-login-email", "fa-login-pass"]);

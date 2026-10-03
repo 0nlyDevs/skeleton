@@ -1,4 +1,4 @@
-import type { MessageKey } from "@/lib/i18n";
+import type { MessageKey, Translator } from "@/lib/i18n";
 
 /**
  * Translating BetterAuth errors into user-facing messages.
@@ -35,11 +35,40 @@ export function loginErrorMessageKey(error: AuthErrorLike): MessageKey {
 
   const code = codeOf(error);
   if (code.includes("NOT_VERIFIED")) return "auth.login.unverified";
-  // Username sign-in rejects malformed handles with their own codes; they must
-  // read exactly like a wrong password.
+  // A suspension is the one failure the resident can act on, and it only ever
+  // arrives after the credentials have been verified — see `banReasonOf`.
   if (code.includes("BANNED")) return "auth.login.banned";
 
   return "auth.login.failed";
+}
+
+/**
+ * The moderator's own reason for a suspension, carried in the error message.
+ *
+ * This is data rather than prose: it was written once, by whoever applied the
+ * ban, in whatever language they used — the same reason the admin table and the
+ * citizen list already render verbatim from `user.banReason`. So there is
+ * nothing here to translate, and the "never render the server's prose" rule
+ * does not apply to it.
+ *
+ * It only ever reaches this function once the password has been verified, which
+ * is why repeating it does not confirm that an address is registered.
+ */
+export function banReasonOf(error: AuthErrorLike | null | undefined): string | null {
+  if (!error || !codeOf(error).includes("BANNED")) return null;
+  // One trailing full stop is dropped, so a reason written as a sentence does
+  // not end the message it is dropped into twice.
+  const reason = (error.message ?? "").trim().replace(/\.$/, "");
+  return reason.length > 0 ? reason : null;
+}
+
+/** The sentence a failed sign-in should show, with a suspension's reason in it. */
+export function loginErrorText(error: AuthErrorLike, t: Translator): string {
+  const key = loginErrorMessageKey(error);
+  if (key !== "auth.login.banned") return t(key);
+
+  const reason = banReasonOf(error);
+  return reason ? t("auth.login.banned_reason", { reason }) : t(key);
 }
 
 /**
