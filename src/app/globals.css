@@ -409,12 +409,24 @@ html[data-contrast="high"].dark {
   --input: oklch(1 0 0 / 70%);
   --ring: oklch(1 0 0);
 }
-html[data-contrast="high"] main a:not([class*="bg-"]):not([role]) {
+/* High contrast (F23): links are underlined wherever they are, so a colour-only
+ * distinction can never be the only thing telling a link from body text. The old
+ * rule was a class-substring test that also matched hover-only backgrounds
+ * (e.g. `hover:bg-surface-muted`) and skipped the nav rail, which lives outside
+ * <main>. A resting background fill is the only reason to skip an underline;
+ * "current page" covers that in the left rail, and a button role is not a link
+ * anyway. */
+html[data-contrast="high"] a:not([role]):not([aria-current="page"]) {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+/* Form primitives ship with `focus-visible:outline-none` + a ring shadow, which
+ * removes the outline entirely. Setting only `outline-width` could not put it
+ * back, because `outline-style` stayed `none`. Write the shorthand so style,
+ * width and colour are all owned here. */
 html[data-contrast="high"] :focus-visible {
-  outline-width: 3px;
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
