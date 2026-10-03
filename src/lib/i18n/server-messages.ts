@@ -254,6 +254,7 @@ const FR: Readonly<Record<string, string>> = {
   "You cannot ban your own account.": "Vous ne pouvez pas exclure votre propre compte.",
   "Agents can only manage resident accounts.": "Les agents ne peuvent gérer que les comptes des habitants.",
   "Only city agents can see the history.": "Seuls les agents de la ville peuvent consulter l'historique.",
+  "That device does not exist.": "Cet appareil n'existe pas.",
   "Only city agents can create accounts for residents.": "Seuls les agents de la ville peuvent créer des comptes pour les habitants.",
   "Add at least one resident.": "Ajoutez au moins un habitant.",
   "Create at most 50 accounts at a time.": "Créez au plus 50 comptes à la fois.",

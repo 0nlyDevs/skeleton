@@ -13,6 +13,8 @@ import { PasswordCard } from "./password-card";
 import { SecurityAlert } from "./security-alert";
 import { SessionsCard, type SessionInfo } from "./sessions-card";
 import { DataRightsCard } from "./data-rights-card";
+import { DevicesCard } from "./devices-card";
+import { ProtectionSummary } from "./protection-summary";
 import { FailedSignInsCard } from "./failed-sign-ins-card";
 import { TwoFactorCard } from "./two-factor-card";
 
@@ -24,6 +26,8 @@ export function SecurityForm({
   currentSessionId,
   oauth,
   alert = false,
+  alertDeviceId = null,
+  passkeys = 0,
   lockAlert = false,
   failedSignIns,
   mustSetSecret = false,
@@ -34,6 +38,10 @@ export function SecurityForm({
   readonly currentSessionId: string;
   readonly oauth: OAuthAvailability;
   readonly alert?: boolean;
+  /** F54 — the device the new-sign-in alert is about. */
+  readonly alertDeviceId?: string | null;
+  /** F53 — passkeys on the account, for the protection summary. */
+  readonly passkeys?: number;
   /** Arrived from the "account locked" notification. */
   readonly lockAlert?: boolean;
   readonly failedSignIns: { readonly total: number; readonly items: readonly FailedSignInDto[] };
@@ -50,7 +58,8 @@ export function SecurityForm({
           <p className="text-sm">{t("tn.assisted.setup.body")}</p>
         </section>
       ) : null}
-      {alert ? <SecurityAlert onSecured={() => router.refresh()} /> : null}
+      <ProtectionSummary hasPassword={hasPassword} passkeys={passkeys} twoFactor={twoFactorEnabled} />
+      {alert ? <SecurityAlert deviceId={alertDeviceId} onSecured={() => router.refresh()} /> : null}
       {lockAlert ? (
         <FailedSignInsCard {...failedSignIns} highlight twoFactorEnabled={twoFactorEnabled} />
       ) : null}
@@ -58,6 +67,7 @@ export function SecurityForm({
       <PasswordCard hasPassword={hasPassword} onCreated={() => router.refresh()} />
       <TwoFactorCard enabled={twoFactorEnabled} hasPassword={hasPassword} />
       <LinkedAccounts availability={oauth} />
+      <DevicesCard />
       <SessionsCard sessions={sessions} currentSessionId={currentSessionId} />
       {!lockAlert ? <FailedSignInsCard {...failedSignIns} highlight={false} twoFactorEnabled={twoFactorEnabled} /> : null}
       <DataRightsCard hasPassword={hasPassword} />

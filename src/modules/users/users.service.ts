@@ -38,6 +38,7 @@ import { assertOwnPublicImage } from "../uploads/uploads.service";
 import {
   countAdmins,
   countCredentialAccounts,
+  countPasskeys,
   countUsers,
   deleteOtherSessions,
   deleteOwnSession,
@@ -547,6 +548,11 @@ export async function checkUsernameAvailability(
     return { username, available: false, reason: "taken", message: "This username is already taken." };
   }
   return { username, available: true, reason: null, message: null };
+}
+
+/** F53 — how many passkeys protect the account (for the protection summary). */
+export async function passkeyCount(userId: string): Promise<number> {
+  return countPasskeys(userId);
 }
 
 export async function hasPasswordCredential(userId: string): Promise<boolean> {

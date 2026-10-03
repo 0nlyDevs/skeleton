@@ -6,13 +6,17 @@ import { apiRoute } from "@/lib/api/route";
 import { jsonOk } from "@/lib/api/response";
 import { auth } from "@/lib/auth/auth";
 
+import { auditActions } from "../audit/audit.schema";
+import { recordAudit } from "../audit/audit.service";
 import { deleteMyAccount, exportMyData } from "./account.service";
 
 /** `GET /api/users/me/export` — a JSON file with everything about the caller. */
 export const exportMyDataRoute = apiRoute({
-  handler: async ({ auth }) => {
+  handler: async ({ auth, ip }) => {
     const data = await exportMyData(auth.user);
-    const name = `skeleton-${auth.user.username ?? "compte"}-${new Date().toISOString().slice(0, 10)}.json`;
+    // F55 — every copy of the personal data that leaves the platform is traced.
+    await recordAudit({ actorId: auth.user.id, action: auditActions.dataExported, targetType: "user", targetId: auth.user.id, ip });
+    const name = `terra-nova-${auth.user.username ?? "compte"}-${new Date().toISOString().slice(0, 10)}.json`;
     return new Response(JSON.stringify(data, null, 2), {
       headers: {
         "content-type": "application/json; charset=utf-8",

@@ -158,6 +158,11 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
             <Term id="procedure">{t("tn.space.requests")}</Term>
           </h2>
           {openCount + doneCount > 0 ? (
+            <Link href="/space/summary" className="w-fit px-1 text-[0.8125rem] font-medium text-primary underline underline-offset-2">
+              {t("tn.summary.link")}
+            </Link>
+          ) : null}
+          {openCount + doneCount > 0 ? (
             <nav aria-label={t("tn.space.history.label")} className="-mx-1 flex gap-1.5 overflow-x-auto px-1">
               {historyTabs.map((tab) => (
                 <Link
