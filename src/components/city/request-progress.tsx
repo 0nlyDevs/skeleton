@@ -3,6 +3,8 @@
 import { Check } from "lucide-react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { Term } from "@/components/ui/term";
+import type { GlossaryId } from "@/lib/glossary";
 import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +20,13 @@ function stepsFor(status: string, assigned: boolean): { keys: MessageKey[]; curr
   if (status === "IN_PROGRESS" || status === "WAITING_CITIZEN") return { keys, current: 2 };
   return { keys, current: assigned ? 1 : 0 };
 }
+
+/** D13 — steps whose word may need explaining link to the glossary definition. */
+const GLOSSARY_FOR_STEP: Partial<Record<MessageKey, GlossaryId>> = {
+  "tn.progress.assigned": "taken_on",
+  "tn.progress.waiting": "waiting",
+  "tn.progress.resolved": "resolved",
+};
 
 export function RequestProgress({
   status,
@@ -76,7 +85,7 @@ export function RequestProgress({
               <span className={cn("h-0.5 flex-1", index === keys.length - 1 ? "bg-transparent" : done ? "bg-primary" : "bg-border")} aria-hidden />
             </span>
             <span className={cn("text-[0.75rem] leading-tight", active ? "font-semibold text-foreground" : "text-muted-foreground")}>
-              {t(key)}
+              {GLOSSARY_FOR_STEP[key] ? <Term id={GLOSSARY_FOR_STEP[key]}>{t(key)}</Term> : t(key)}
               <span className="sr-only"> ({state})</span>
             </span>
           </li>
