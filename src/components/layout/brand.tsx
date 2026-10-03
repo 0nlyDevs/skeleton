@@ -32,7 +32,7 @@ export function Brand({
           <circle cx="17.8" cy="17.5" r="2.4" fill="currentColor" stroke="none" />
         </svg>
       </span>
-      {!compact ? <span className="text-[17px] font-bold tracking-tight">Skeleton</span> : null}
+      {!compact ? <span className="text-[17px] font-bold tracking-tight">Terra Nova</span> : null}
     </>
   );
 
@@ -41,7 +41,7 @@ export function Brand({
   if (!href) return <div className={classes}>{content}</div>;
 
   return (
-    <Link href={href} className={classes} aria-label="Skeleton">
+    <Link href={href} className={classes} aria-label="Terra Nova">
       {content}
     </Link>
   );

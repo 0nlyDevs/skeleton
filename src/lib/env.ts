@@ -97,6 +97,13 @@ const envSchema = z.object({
   TURN_URL: optionalText,
   TURN_SECRET: optionalText,
 
+  // --- Terra Nova official API (24H by Webcup) -----------------------------
+  /** Server-only key; sent as `X-Webcup-Api-Key`, never exposed to browsers. */
+  WEBCUP_API_KEY: optionalText,
+  WEBCUP_API_URL: z.string().url().default("https://24h.webcup.fr/wp-json/webcup/v1/requests"),
+  /** Seconds between polls of the feed (the organisers suggest 15 to 30). */
+  WEBCUP_POLL_SECONDS: z.coerce.number().int().min(10).max(600).default(30),
+
   // --- Uploads --------------------------------------------------------------
   UPLOAD_DIR: z.string().min(1).default("./uploads"),
   UPLOAD_MAX_BYTES: z.coerce

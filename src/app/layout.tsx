@@ -12,12 +12,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.appUrl),
   title: {
-    default: "Skeleton",
-    template: "%s · Skeleton",
+    default: "Terra Nova",
+    template: "%s · Terra Nova",
   },
   description:
-    "Skeleton — a social network to share posts, talk in real time and gather in groups.",
-  applicationName: "Skeleton",
+    "Terra Nova — le portail des habitants : services municipaux, annonces de la ville, démarches et échanges avec l'administration.",
+  applicationName: "Terra Nova",
   // The app is authenticated; there is nothing here for a crawler to index.
   robots: { index: false, follow: false },
 };

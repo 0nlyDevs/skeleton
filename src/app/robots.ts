@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 export default function robots(): MetadataRoute.Robots {
   const base = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
   return {
-    rules: [{ userAgent: "*", allow: ["/", "/feed", "/p/", "/pages", "/groups", "/profile/"], disallow: ["/api/", "/admin", "/settings", "/messages", "/notifications", "/saved"] }],
+    rules: [{ userAgent: "*", allow: ["/", "/services", "/annonces", "/feed", "/p/", "/pages", "/groups", "/profile/"], disallow: ["/api/", "/agent", "/espace", "/contact", "/admin", "/settings", "/messages", "/notifications", "/saved"] }],
     sitemap: `${base}/sitemap.xml`,
   };
 }

@@ -29,28 +29,28 @@ export async function SiteHeader() {
 
         <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label={t["landing.nav_label"]}>
           <Link
+            href="/services"
+            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+          >
+            {t["tn.nav.services"]}
+          </Link>
+          <Link
+            href="/annonces"
+            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+          >
+            {t["tn.nav.announcements"]}
+          </Link>
+          <Link
+            href="/contact"
+            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+          >
+            {t["tn.nav.contact"]}
+          </Link>
+          <Link
             href="/feed"
             className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
-            {t["nav.feed"]}
-          </Link>
-          <Link
-            href="/search"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
-          >
-            {t["nav.search"]}
-          </Link>
-          <Link
-            href="/#features"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
-          >
-            {t["landing.features.title"]}
-          </Link>
-          <Link
-            href="/#stack"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
-          >
-            {t["landing.stack.title"]}
+            {t["tn.nav.city_life"]}
           </Link>
           <Link
             href="/privacy"
@@ -62,7 +62,7 @@ export async function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-1.5">
           <Button asChild variant="ghost" size="sm" className="md:hidden">
-            <Link href="/feed">{t["nav.feed"]}</Link>
+            <Link href="/services">{t["tn.nav.services"]}</Link>
           </Button>
           <LocaleToggle />
           <EcoToggle />

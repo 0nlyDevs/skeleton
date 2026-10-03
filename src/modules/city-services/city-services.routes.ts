@@ -1,0 +1,29 @@
+import { apiRoute, publicRoute } from "@/lib/api/route";
+import { jsonOk } from "@/lib/api/response";
+
+import { listServicesQuerySchema, serviceInputSchema, serviceSlugParamSchema } from "./city-services.schema";
+import { createService, getService, listServices, updateService } from "./city-services.service";
+
+export const listServicesRoute = publicRoute({
+  query: listServicesQuerySchema,
+  handler: async ({ query, auth }) =>
+    jsonOk({ data: await listServices({ q: query.q, category: query.category, includeInactive: query.includeInactive === "1" }, auth?.user ?? null) }),
+});
+
+export const getServiceRoute = publicRoute({
+  params: serviceSlugParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await getService(params.slug, auth?.user ?? null) }),
+});
+
+export const createServiceRoute = apiRoute({
+  roles: ["ADMIN"],
+  body: serviceInputSchema,
+  handler: async ({ body, auth, ip }) => jsonOk({ data: await createService(body, auth.user, ip) }, 201),
+});
+
+export const updateServiceRoute = apiRoute({
+  roles: ["ADMIN"],
+  params: serviceSlugParamSchema,
+  body: serviceInputSchema,
+  handler: async ({ params, body, auth, ip }) => jsonOk({ data: await updateService(params.slug, body, auth.user, ip) }),
+});

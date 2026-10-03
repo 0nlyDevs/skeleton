@@ -19,6 +19,7 @@ import { createServer } from "node:http";
 
 import { installFileLog } from "./src/lib/file-log";
 import { recoverReleaseUploads } from "./src/lib/storage/disk";
+import { startWebcupPoller } from "./src/modules/webcup/webcup.poller";
 
 import next from "next";
 
@@ -111,6 +112,9 @@ async function main(): Promise<void> {
   server.headersTimeout = 65_000;
   server.requestTimeout = 60_000;
   server.keepAliveTimeout = 61_000;
+
+  const stopWebcupPoller = startWebcupPoller();
+  server.on("close", stopWebcupPoller);
 
   server.listen(port, hostname, () => {
     logger.info("server listening", {

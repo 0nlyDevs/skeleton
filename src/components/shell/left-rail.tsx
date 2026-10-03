@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import { MAIN_NAV, STAFF_NAV, isActive, type ShellNavItem } from "./nav-config";
+import { CITY_NAV, MAIN_NAV, STAFF_NAV, isActive, type ShellNavItem } from "./nav-config";
 import type { ShellRail, ShellViewer } from "./shell-types";
 import { UserAvatar } from "./user-avatar";
 
@@ -44,6 +44,9 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
   );
 }
 
+/** What a guest can open without an account. */
+const PUBLIC_CITY_PATHS = new Set(["/", "/services", "/annonces"]);
+
 export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null; readonly rail: ShellRail | null }) {
   const t = useTranslation();
   const { unreadCount, messageUnreadTotal } = useRealtime();
@@ -51,16 +54,25 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
 
   if (!viewer) {
     return (
-      <Card className="flex flex-col gap-3 p-5">
-        <h2 className="text-[16px] font-semibold">{t("shell.join_title")}</h2>
-        <p className="text-[13.5px] leading-relaxed text-muted-foreground">{t("shell.join_body")}</p>
-        <Button asChild>
-          <Link href="/register">{t("nav.join")}</Link>
-        </Button>
-        <Button asChild variant="secondary">
-          <Link href="/login">{t("nav.sign_in")}</Link>
-        </Button>
-      </Card>
+      <div className="flex flex-col gap-4">
+        <Card className="p-2">
+          <nav aria-label={t("nav.label")} className="flex flex-col gap-0.5">
+            {CITY_NAV.filter((item) => PUBLIC_CITY_PATHS.has(item.href)).map((item) => (
+              <NavLink key={item.href} item={item} badge={0} />
+            ))}
+          </nav>
+        </Card>
+        <Card className="flex flex-col gap-3 p-5">
+          <h2 className="text-[16px] font-semibold">{t("shell.join_title")}</h2>
+          <p className="text-[13.5px] leading-relaxed text-muted-foreground">{t("shell.join_body")}</p>
+          <Button asChild>
+            <Link href="/register">{t("nav.join")}</Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href="/login">{t("nav.sign_in")}</Link>
+          </Button>
+        </Card>
+      </div>
     );
   }
 
@@ -99,6 +111,14 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
 
       <Card className="p-2">
         <nav aria-label={t("nav.label")} className="flex flex-col gap-0.5">
+          {CITY_NAV.map((item) => (
+            <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
+          ))}
+        </nav>
+        <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("tn.nav.city_life")}
+        </p>
+        <nav aria-label={t("tn.nav.city_life")} className="flex flex-col gap-0.5">
           {MAIN_NAV.map((item) => (
             <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
           ))}

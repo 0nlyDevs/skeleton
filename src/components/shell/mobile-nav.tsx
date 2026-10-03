@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 import { LeftRail } from "./left-rail";
-import { MAIN_NAV, isActive } from "./nav-config";
+import { ALL_NAV, isActive } from "./nav-config";
 import type { ShellRail, ShellViewer } from "./shell-types";
 
 /** Phones: four primary destinations + a drawer holding the full left rail. */
@@ -23,9 +23,9 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
   useEffect(() => setOpen(false), [pathname]);
 
   // The four destinations used most on a phone; everything else is in the drawer.
-  const tabs = ["/feed", "/messages", "/groups", "/notifications"]
-    .map((href) => MAIN_NAV.find((item) => item.href === href))
-    .filter((item): item is (typeof MAIN_NAV)[number] => item !== undefined);
+  const tabs = ["/", "/services", "/espace", "/notifications"]
+    .map((href) => ALL_NAV.find((item) => item.href === href))
+    .filter((item): item is (typeof ALL_NAV)[number] => item !== undefined);
   const badges = { messages: messageUnreadTotal, notifications: unreadCount } as const;
 
   return (

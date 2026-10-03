@@ -1,4 +1,5 @@
 import type { Dictionary } from "./fr";
+import { enTerraNova } from "./terra-nova.en";
 
 /**
  * English dictionary.
@@ -7,6 +8,7 @@ import type { Dictionary } from "./fr";
  * key or an invented one fails `pnpm typecheck` rather than shipping.
  */
 export const en: Dictionary = {
+  ...enTerraNova,
   // --- Generic ---
   "app.name": "Webcup Base",
   "app.tagline": "The production-grade foundation for the 24H by Webcup sprint",
@@ -101,8 +103,8 @@ export const en: Dictionary = {
   "landing.demo.title": "Demo accounts",
   "landing.demo.body":
     "One account per role, with realistic data already in place. Credentials are in the README.",
-  "role.user": "User",
-  "role.moderator": "Moderator",
+  "role.user": "Citizen",
+  "role.moderator": "City agent",
   "role.admin": "Administrator",
   "landing.stats.title": "This instance, live",
   "landing.stats.members": "Members",
@@ -273,7 +275,7 @@ export const en: Dictionary = {
   "search.empty.title": "No profiles found",
   "search.empty.body": "Try another name or handle.",
   "search.error": "People could not be loaded. Try again.",
-  "app.brand": "Skeleton",
+  "app.brand": "Terra Nova",
   "nav.messages": "Messages",
   "nav.groups": "Groups",
   "nav.my_profile": "My profile",
@@ -282,13 +284,13 @@ export const en: Dictionary = {
   "nav.menu": "Menu",
   "nav.search_placeholder": "Search people, groups, posts…",
   "nav.sign_in": "Sign in",
-  "nav.join": "Join Skeleton",
+  "nav.join": "Join Terra Nova",
   "nav.staff": "Staff",
   "shell.followers": "Followers",
   "shell.following": "Following",
   "shell.posts": "Posts",
-  "shell.join_title": "Join the conversation",
-  "shell.join_body": "Post, react, chat privately and create your groups.",
+  "shell.join_title": "Live Terra Nova online",
+  "shell.join_body": "Create your account to write to the city, follow your requests and take part in city life.",
   "contacts.title": "Contacts",
   "contacts.filter": "Filter contacts",
   "contacts.empty": "Follow people or start a conversation to see them here.",

@@ -21,6 +21,11 @@ export const NOTIFICATION_TYPES = [
   "NEW_FOLLOWER",
   "GROUP_INVITE",
   "MODERATION",
+  "GROUP_ACTIVITY",
+  "POST_SHARE",
+  "SECURITY",
+  "CITY_REQUEST",
+  "ANNOUNCEMENT",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

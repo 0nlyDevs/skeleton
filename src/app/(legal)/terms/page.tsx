@@ -6,7 +6,7 @@ export default function TermsPage() {
   return (
     <>
       <h1>Conditions d&apos;utilisation</h1>
-      <p>En utilisant Skeleton, vous acceptez les règles ci-dessous. Elles existent pour que chacun puisse s&apos;exprimer en sécurité.</p>
+      <p>En utilisant Terra Nova, vous acceptez les règles ci-dessous. Elles existent pour que chacun puisse s&apos;exprimer en sécurité.</p>
 
       <h2>Votre compte</h2>
       <ul>

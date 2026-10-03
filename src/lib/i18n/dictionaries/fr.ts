@@ -1,3 +1,5 @@
+import { frTerraNova } from "./terra-nova.fr";
+
 /**
  * French dictionary — the source of truth for message keys.
  *
@@ -9,6 +11,7 @@
  * than four levels of object access, and a typo is caught by TypeScript.
  */
 export const fr = {
+  ...frTerraNova,
   // --- Generic ---
   "app.name": "Webcup Base",
   "app.tagline": "La base de production pour le sprint 24H by Webcup",
@@ -102,8 +105,8 @@ export const fr = {
   "landing.demo.title": "Comptes de démonstration",
   "landing.demo.body":
     "Un compte par rôle, avec des données réalistes déjà en place. Les identifiants sont dans le README.",
-  "role.user": "Utilisateur",
-  "role.moderator": "Modérateur",
+  "role.user": "Citoyen",
+  "role.moderator": "Agent municipal",
   "role.admin": "Administrateur",
   "landing.stats.title": "L'instance en direct",
   "landing.stats.members": "Membres",
@@ -276,7 +279,7 @@ export const fr = {
   "search.empty.title": "Aucun profil trouvé",
   "search.empty.body": "Essayez un autre nom ou identifiant.",
   "search.error": "Impossible de charger les profils. Réessayez.",
-  "app.brand": "Skeleton",
+  "app.brand": "Terra Nova",
   "nav.messages": "Messages",
   "nav.groups": "Groupes",
   "nav.my_profile": "Mon profil",
@@ -285,13 +288,13 @@ export const fr = {
   "nav.menu": "Menu",
   "nav.search_placeholder": "Rechercher des personnes, groupes, publications…",
   "nav.sign_in": "Se connecter",
-  "nav.join": "Rejoindre Skeleton",
+  "nav.join": "Rejoindre Terra Nova",
   "nav.staff": "Équipe",
   "shell.followers": "Abonnés",
   "shell.following": "Abonnements",
   "shell.posts": "Publications",
-  "shell.join_title": "Rejoignez la conversation",
-  "shell.join_body": "Publiez, réagissez, discutez en privé et créez vos groupes.",
+  "shell.join_title": "Habitez Terra Nova en ligne",
+  "shell.join_body": "Créez votre compte pour écrire à la mairie, suivre vos démarches et participer à la vie de la cité.",
   "contacts.title": "Contacts",
   "contacts.filter": "Filtrer les contacts",
   "contacts.empty": "Suivez des personnes ou démarrez une conversation pour les voir ici.",
