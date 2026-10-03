@@ -14,6 +14,7 @@
 
 import {
   SOCKET_EVENTS,
+  type CityRequestUpdatedPayload,
   type MessageAlertPayload,
   type MessageHiddenPayload,
   type ProfileUpdatedPayload,
@@ -199,4 +200,10 @@ export function grantRoomMembership(userId: string, roomId: string): void {
 export function publishProfileUpdated(payload: ProfileUpdatedPayload): void {
   getSocketServer()?.emit(SOCKET_EVENTS.profileUpdated, payload);
   getRelayHub().broadcastAll(SOCKET_EVENTS.profileUpdated, payload);
+}
+
+/** Tell the people on a city request (citizen and agents) to reload it. */
+export function publishCityRequestUpdated(userIds: readonly string[], payload: CityRequestUpdatedPayload): void {
+  if (userIds.length === 0) return;
+  broadcastTo(userIds.map(userRoom)).emit(SOCKET_EVENTS.cityRequestUpdated, payload);
 }

@@ -7,5 +7,5 @@ import { getWebcupFeed } from "@/modules/webcup/webcup.service";
 export const metadata: Metadata = { title: "Flux Nova Terra" };
 
 export default async function AgentFeedPage() {
-  return withAgentAccess("/agent/flux", async (user) => <WebcupFeedView initial={await getWebcupFeed(user)} />);
+  return withAgentAccess("/agent/feed", async (user) => <WebcupFeedView initial={await getWebcupFeed(user)} />);
 }

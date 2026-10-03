@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Modération" };
 
 export default async function ModerationPage() {
   const context = await requireStaff().catch(() => null);
-  if (!context) redirect("/espace");
+  if (!context) redirect("/space");
 
   return <ModerationQueue />;
 }

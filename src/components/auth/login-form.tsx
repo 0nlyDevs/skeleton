@@ -36,7 +36,7 @@ import { OAuthButtons, type OAuthAvailability } from "./oauth-buttons";
 export function LoginForm({
   oauth,
   initialError,
-  redirectTo = "/espace",
+  redirectTo = "/space",
 }: {
   readonly oauth: OAuthAvailability;
   readonly initialError?: string;

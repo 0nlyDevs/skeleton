@@ -1,13 +1,16 @@
 "use client";
 
 import { ArrowLeft, CheckCircle2, Hourglass, Lock } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { RequestControls } from "@/components/agent/request-controls";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import Link from "@/components/ui/link";
 import { useFormatters } from "@/hooks/use-formatters";
+import { useSocket } from "@/hooks/use-socket";
+import { apiFetch } from "@/lib/api/client";
+import { SOCKET_EVENTS, type CityRequestUpdatedPayload } from "@/lib/socket/events";
 import { cn } from "@/lib/utils";
 import type { CityRequestDto } from "@/modules/city-requests/city-requests.dto";
 
@@ -35,13 +38,43 @@ export function RequestView({
   const t = useTranslation();
   const fmt = useFormatters();
   const [request, setRequest] = useState(initial);
+  const { socket } = useSocket();
   const agent = mode === "agent";
+  const reference = initial.reference;
+
+  const reload = useCallback(async () => {
+    try {
+      setRequest((await apiFetch<{ data: CityRequestDto }>(`/api/city-requests/${reference}`)).data);
+    } catch {
+      // The next push or poll tries again; the thread on screen stays.
+    }
+  }, [reference]);
+
+  // The other side answered: append it without a page reload.
+  useEffect(() => {
+    if (!socket) return;
+    const onUpdated = (payload: CityRequestUpdatedPayload) => {
+      if (payload.reference === reference) void reload();
+    };
+    socket.on(SOCKET_EVENTS.cityRequestUpdated, onUpdated);
+    return () => {
+      socket.off(SOCKET_EVENTS.cityRequestUpdated, onUpdated);
+    };
+  }, [socket, reference, reload]);
+
+  // Safety net when the realtime channel is down or a push was missed.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void reload();
+    }, 20_000);
+    return () => clearInterval(timer);
+  }, [reload]);
   const closed = request.status === "CLOSED";
 
   return (
     <div className="mx-auto flex w-full max-w-[920px] flex-col gap-5">
       <Link
-        href={agent ? "/agent/demandes" : "/espace"}
+        href={agent ? "/agent/requests" : "/space"}
         className="inline-flex items-center gap-1.5 px-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden />

@@ -4,7 +4,7 @@
  * browser could resolve to another origin (`//evil`, `/\\evil`, schemes,
  * control characters) falls back to the feed. Prevents open redirects.
  */
-export function safeNextPath(value: string | null | undefined, fallback = "/espace"): string {
+export function safeNextPath(value: string | null | undefined, fallback = "/space"): string {
   if (!value || value.length > 300) return fallback;
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return fallback;
   if (/[\u0000-\u001f\\]/.test(value)) return fallback;

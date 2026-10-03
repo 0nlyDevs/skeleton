@@ -26,7 +26,7 @@ export default async function AgentServicesPage() {
               <p className="text-sm text-muted-foreground">{t("tn.agent.services.subtitle")}</p>
             </div>
             <Button asChild>
-              <Link href="/agent/services/nouveau">
+              <Link href="/agent/services/new">
                 <Plus aria-hidden />
                 {t("tn.agent.services.new")}
               </Link>

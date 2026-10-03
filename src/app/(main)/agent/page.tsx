@@ -37,7 +37,7 @@ export default async function AgentDashboardPage() {
           {counters.map((counter) => (
             <li key={counter.status}>
               <Link
-                href={`/agent/demandes?status=${counter.status}`}
+                href={`/agent/requests?status=${counter.status}`}
                 className="flex h-full flex-col gap-1 rounded-2xl border border-border/70 bg-card p-4 shadow-panel hover:border-primary/40"
               >
                 <counter.icon className={`size-4 ${counter.tone}`} aria-hidden />
@@ -52,7 +52,7 @@ export default async function AgentDashboardPage() {
           <section className="flex flex-col gap-3" aria-labelledby="to-handle">
             <div className="flex items-center justify-between gap-2 px-1">
               <h2 id="to-handle" className="font-semibold">{t("tn.agent.dash.needs_action")}</h2>
-              <Link href="/agent/demandes?status=OPEN" className="inline-flex items-center gap-1 text-[13px] text-primary hover:underline">
+              <Link href="/agent/requests?status=OPEN" className="inline-flex items-center gap-1 text-[13px] text-primary hover:underline">
                 {t("tn.agent.dash.open_inbox")}
                 <ArrowRight className="size-3.5" aria-hidden />
               </Link>
@@ -60,7 +60,7 @@ export default async function AgentDashboardPage() {
             {open.data.length === 0 ? (
               <EmptyState icon={Inbox} title={t("tn.agent.dash.empty")} />
             ) : (
-              <RequestList requests={open.data} hrefBase="/agent/demandes" agentView />
+              <RequestList requests={open.data} hrefBase="/agent/requests" agentView />
             )}
           </section>
 
@@ -77,7 +77,7 @@ export default async function AgentDashboardPage() {
             ) : null}
             {!feed.configured ? <p className="text-[13px] text-warning">{t("tn.agent.feed.not_configured")}</p> : null}
             <Button asChild size="sm" variant="secondary">
-              <Link href="/agent/flux">{t("tn.agent.dash.open_feed")}</Link>
+              <Link href="/agent/feed">{t("tn.agent.dash.open_feed")}</Link>
             </Button>
           </section>
         </div>

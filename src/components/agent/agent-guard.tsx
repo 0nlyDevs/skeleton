@@ -23,7 +23,7 @@ export async function withAgentAccess(
     <ForbiddenPanel
       title={level === "admin" && staff ? t("tn.agent.admin_only_title") : t("tn.agent.forbidden_title")}
       body={level === "admin" && staff ? t("tn.agent.admin_only_body") : t("tn.agent.forbidden_body")}
-      backHref={staff ? "/agent" : "/espace"}
+      backHref={staff ? "/agent" : "/space"}
       backLabel={staff ? t("tn.agent.title") : t("tn.nav.my_space")}
     />
   );

@@ -19,7 +19,7 @@ function pageHref(category: string | undefined, page: number): string {
   if (category) params.set("category", category);
   if (page > 1) params.set("page", String(page));
   const query = params.toString();
-  return query ? `/annonces?${query}` : "/annonces";
+  return query ? `/announcements?${query}` : "/announcements";
 }
 
 /** D06 — the city's announcements, filterable by category, pinned first. */

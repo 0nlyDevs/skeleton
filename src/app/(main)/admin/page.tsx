@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Administration" };
  */
 export default async function AdminPage() {
   const context = await requireStaff().catch(() => null);
-  if (!context) redirect("/espace");
+  if (!context) redirect("/space");
 
   const data = await getAdminOverview();
 

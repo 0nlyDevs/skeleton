@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Modifier l'annonce" };
 
 export default async function EditAnnouncementPage({ params }: { readonly params: Promise<{ slug: string }> }) {
   const raw = await params;
-  return withAgentAccess(`/agent/annonces/${encodeURIComponent(raw.slug)}`, async (user) => {
+  return withAgentAccess(`/agent/announcements/${encodeURIComponent(raw.slug)}`, async (user) => {
     const parsed = announcementSlugParamSchema.safeParse(raw);
     const [announcement, services] = await Promise.all([
       parsed.success
@@ -23,7 +23,7 @@ export default async function EditAnnouncementPage({ params }: { readonly params
         : null,
       listServices({}, user),
     ]);
-    if (!announcement) return <NotFoundPanel backHref="/agent/annonces" />;
+    if (!announcement) return <NotFoundPanel backHref="/agent/announcements" />;
     return <AnnouncementEditor initial={announcement} services={services.map(({ id, name, slug }) => ({ id, name, slug }))} />;
   });
 }

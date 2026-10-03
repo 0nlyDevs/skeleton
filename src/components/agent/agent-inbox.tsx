@@ -144,7 +144,7 @@ export function AgentInbox({ initialStatus }: { readonly initialStatus: string }
       ) : result.data.length === 0 ? (
         <EmptyState icon={Inbox} title={t("tn.agent.inbox.empty_title")} description={t("tn.agent.inbox.empty_body")} />
       ) : (
-        <RequestList requests={result.data} hrefBase="/agent/demandes" agentView />
+        <RequestList requests={result.data} hrefBase="/agent/requests" agentView />
       )}
 
       {result && result.pageCount > 1 ? (

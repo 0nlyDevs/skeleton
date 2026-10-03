@@ -35,7 +35,7 @@ export async function SiteHeader() {
             {t["tn.nav.services"]}
           </Link>
           <Link
-            href="/annonces"
+            href="/announcements"
             className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             {t["tn.nav.announcements"]}

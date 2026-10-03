@@ -7,7 +7,7 @@ import { listServices } from "@/modules/city-services/city-services.service";
 export const metadata: Metadata = { title: "Nouvelle annonce" };
 
 export default async function NewAnnouncementPage() {
-  return withAgentAccess("/agent/annonces/nouvelle", async (user) => {
+  return withAgentAccess("/agent/announcements/new", async (user) => {
     const services = await listServices({}, user);
     return <AnnouncementEditor initial={null} services={services.map(({ id, name, slug }) => ({ id, name, slug }))} />;
   });
