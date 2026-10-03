@@ -2,6 +2,10 @@ import { redirect } from "next/navigation";
 import { TerraNovaExplorer } from "@/components/city/terra-nova-explorer";
 import { CITY_ZONE_IDS, type CityZoneId } from "@/modules/alerts/city-zones";
 
+
+import { TerraNovaExplorer } from "@/components/city/terra-nova-explorer";
+import { CITY_ZONE_IDS, type CityZoneId } from "@/modules/alerts/city-zones";
+
 export const metadata: Metadata = { title: "Carte" };
 
 /** The city map: Terra Nova's districts and landmarks (never a real-world map). */

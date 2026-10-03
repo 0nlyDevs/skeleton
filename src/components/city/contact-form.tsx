@@ -248,7 +248,11 @@ export function ContactForm({
             </aside>
           ) : null}
 =======
+<<<<<<< HEAD
 >>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
+=======
+>>>>>>> 2e938c3 (feat: put request and post places on the Terra Nova city map)
+>>>>>>> 214229b (feat: put request and post places on the Terra Nova city map)
         </div>
       ) : null}
 

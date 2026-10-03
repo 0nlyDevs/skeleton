@@ -453,7 +453,11 @@ export const frTerraNova = {
   "tn.myrequests.empty_title": "Aucune demande",
   "tn.myrequests.empty_body": "Aucune demande ne correspond à ces filtres pour le moment.",
 =======
+<<<<<<< HEAD
 >>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
+=======
+>>>>>>> 2e938c3 (feat: put request and post places on the Terra Nova city map)
+>>>>>>> 214229b (feat: put request and post places on the Terra Nova city map)
   "tn.home.quick.report": "Signaler un problème",
   "tn.home.quick.report_body": "Lampadaire cassé, fuite, déchets : indiquez quoi et où.",
   "tn.wizard.step": "Étape {current} sur {total}",

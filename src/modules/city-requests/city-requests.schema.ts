@@ -36,7 +36,11 @@ export const createCityRequestSchema = z
     /** F81 — the form's token and its hidden trap field (see lib/security/form-guard). */
     guard: z.object({ token: z.string().max(200).nullable().optional(), trap: z.string().max(200).optional() }).strict().optional(),
 =======
+<<<<<<< HEAD
 >>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
+=======
+>>>>>>> 2e938c3 (feat: put request and post places on the Terra Nova city map)
+>>>>>>> 214229b (feat: put request and post places on the Terra Nova city map)
   })
   .strict()
   .superRefine((value, context) => {

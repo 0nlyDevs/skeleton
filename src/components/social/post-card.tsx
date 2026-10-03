@@ -195,7 +195,11 @@ export function PostCard({
                 href={post.location.zone ? `/city-map?zone=${post.location.zone}` : "/city-map"}
 =======
                 href={post.location.zone ? `/map?zone=${post.location.zone}` : "/map"}
+<<<<<<< HEAD
 >>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
+=======
+>>>>>>> 2e938c3 (feat: put request and post places on the Terra Nova city map)
+>>>>>>> 214229b (feat: put request and post places on the Terra Nova city map)
                 className="inline-flex min-w-0 items-center gap-0.5 hover:underline"
               >
                 · <MapPin className="size-3 shrink-0" aria-hidden />

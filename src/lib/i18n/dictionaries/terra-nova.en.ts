@@ -448,7 +448,11 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.myrequests.empty_title": "No request",
   "tn.myrequests.empty_body": "No request matches these filters right now.",
 =======
+<<<<<<< HEAD
 >>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
+=======
+>>>>>>> 2e938c3 (feat: put request and post places on the Terra Nova city map)
+>>>>>>> 214229b (feat: put request and post places on the Terra Nova city map)
   "tn.home.quick.report": "Report a problem",
   "tn.home.quick.report_body": "Broken light, leak, rubbish: say what and where.",
   "tn.wizard.step": "Step {current} of {total}",
