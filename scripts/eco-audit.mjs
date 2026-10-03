@@ -5,7 +5,8 @@
  * Loads each page in headless Chrome through the DevTools protocol, the way a
  * resident's browser would, and records what EcoIndex scores: the number of
  * DOM elements, the number of requests and the bytes transferred — including
- * everything a page fetches after its first paint (3D models, lazy chunks).
+ * everything a page fetches in the 10 s after it loads (3D models, lazy chunks,
+ * background polling).
  * Each page is measured twice: as served normally, and in the light mode
  * (cookie `skeleton_eco=1`) that slow connections now get automatically. A
  * third pass under an emulated slow 3G link times how long the page takes to
@@ -127,19 +128,16 @@ async function measure(cdp, url, { eco, throttle }) {
 
   const requests = new Map();
   const urls = new Map();
-  let lastActivity = Date.now();
   let loaded = false;
   const onMessage = (message) => {
     if (message.sessionId !== sessionId) return;
     const { method, params } = message;
     if (method === "Network.requestWillBeSent") {
-      lastActivity = Date.now();
       if (!params.request.url.startsWith("data:")) {
         requests.set(params.requestId, 0);
         urls.set(params.requestId, params.request.url);
       }
     } else if (method === "Network.loadingFinished" && requests.has(params.requestId)) {
-      lastActivity = Date.now();
       requests.set(params.requestId, params.encodedDataLength);
     } else if (method === "Page.loadEventFired") {
       loaded = true;
@@ -160,8 +158,11 @@ async function measure(cdp, url, { eco, throttle }) {
   await send("Page.navigate", { url });
   while (!loaded && Date.now() - started < 120_000) await sleep(100);
   const loadMs = Date.now() - started;
-  // Let late requests (lazy chunks, 3D models) settle: 4 s without network activity.
-  while (Date.now() - lastActivity < 4000 && Date.now() - started < 180_000) await sleep(200);
+  // Count what the page fetches in the 10 s after it loads (lazy chunks, 3D
+  // models, background polling). A fixed window, rather than "until the
+  // network is quiet", is the same for every version of the site: a page that
+  // polls every second would otherwise never finish.
+  await sleep(10_000);
 
   const { result } = await send("Runtime.evaluate", { expression: "document.getElementsByTagName('*').length", returnByValue: true });
   if (process.env.ECO_DEBUG) {
