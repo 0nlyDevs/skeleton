@@ -94,8 +94,11 @@ export interface SearchResultsDto {
   readonly posts: FeedItemDto[];
 }
 
-export async function searchEverything(q: string, viewer: AuthUser | null, role?: "USER" | "AGENT" | "ADMIN"): Promise<SearchResultsDto> {
+export async function searchEverything(q: string, viewer: AuthUser | null, requestedRole?: "USER" | "AGENT" | "ADMIN"): Promise<SearchResultsDto> {
   const term = q.trim();
+  // Listing staff accounts by role is for signed-in residents only: an
+  // anonymous visitor must not get a ready-made list of administrators.
+  const role = viewer ? requestedRole : undefined;
   // A role on its own lists the people of that role ("show me the agents").
   if (term.length < 2 && role) {
     const people = await prisma.user.findMany({

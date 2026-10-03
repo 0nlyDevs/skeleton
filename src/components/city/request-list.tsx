@@ -50,6 +50,7 @@ export function RequestList({
                   {request.issueType ? <Badge variant="warning">{t("tn.request.report")}</Badge> : null}
                   {agentView ? <RequestPriorityBadge priority={request.priority} /> : null}
                   {agentView && request.needsAction ? <NeedsActionBadge /> : null}
+                  {waitingCitizen ? <Badge variant="warning">{t("tn.request.guide.action_badge")}</Badge> : null}
                 </span>
                 <span className="truncate font-medium">{request.subject}</span>
                 {agentView ? null : <RequestProgress status={request.status} assigned={request.assignee !== null} compact />}
