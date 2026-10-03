@@ -5,6 +5,8 @@
  */
 export const WELCOME_HIDDEN_COOKIE = "tn_welcome_hidden";
 export const WELCOME_SERVICE_COOKIE = "tn_welcome_service";
+/** The first-login wizard was finished or skipped in this browser. */
+export const WIZARD_DONE_COOKIE = "tn_welcome_wizard";
 
 const YEAR = 60 * 60 * 24 * 365;
 

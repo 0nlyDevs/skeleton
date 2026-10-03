@@ -5,16 +5,18 @@ import { cookies } from "next/headers";
 import { AnnouncementCard } from "@/components/city/announcement-card";
 import { RequestList } from "@/components/city/request-list";
 import { WelcomeGuide } from "@/components/city/welcome-guide";
+import { WelcomeWizard } from "@/components/city/welcome-wizard";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
 import { requirePageAuth } from "@/lib/auth/page-guards";
 import { formatLongDate } from "@/lib/format";
 import type { MessageKey } from "@/lib/i18n";
-import { WELCOME_HIDDEN_COOKIE, WELCOME_SERVICE_COOKIE } from "@/lib/onboarding";
+import { WELCOME_HIDDEN_COOKIE, WELCOME_SERVICE_COOKIE, WIZARD_DONE_COOKIE } from "@/lib/onboarding";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
 import { cityRequestStats, listCityRequests } from "@/modules/city-requests/city-requests.service";
+import { listServices } from "@/modules/city-services/city-services.service";
 import { getUnreadCount } from "@/modules/notifications/notifications.service";
 
 export const metadata: Metadata = { title: "Mon espace" };
@@ -48,7 +50,15 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
     service: cookieStore.get(WELCOME_SERVICE_COOKIE)?.value === "1" || requests.data.some((request) => request.service !== null),
     request: total > 0,
   };
-  const showWelcome = cookieStore.get(WELCOME_HIDDEN_COOKIE)?.value !== "1" && !(welcome.profile && welcome.service && welcome.request);
+  const onboarded = welcome.profile && welcome.service && welcome.request;
+  const showWelcome = cookieStore.get(WELCOME_HIDDEN_COOKIE)?.value !== "1" && !onboarded;
+  // The wizard opens on the first visit only; the checklist above stays after.
+  const showWizard = cookieStore.get(WIZARD_DONE_COOKIE)?.value !== "1" && !onboarded && total === 0;
+  const wizardServices = showWizard
+    ? (await listServices({}, user, locale))
+        .slice(0, 3)
+        .map(({ slug, name, summary, icon }) => ({ slug, name, summary, icon }))
+    : [];
 
   const historyTabs: { key: HistoryFilter; label: string }[] = [
     { key: "all", label: t("tn.space.history.all", { count: openCount + doneCount }) },
@@ -79,6 +89,7 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
       </header>
 
       {showWelcome ? <WelcomeGuide name={user.name.split(" ")[0] ?? user.name} steps={welcome} /> : null}
+      {showWizard ? <WelcomeWizard name={user.name.split(" ")[0] ?? user.name} image={user.image} services={wizardServices} /> : null}
 
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {counters.map((counter) => {
