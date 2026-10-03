@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { publicRoute } from "@/lib/api/route";
-import { getAiQuota, isAiConfigured } from "@/lib/ai/provider";
+import { getAiQuota, isAiConfigured, isAiReachable } from "@/lib/ai/provider";
 import { cacheStats } from "@/lib/cache";
 import { isDatabaseReachable } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
@@ -36,7 +36,9 @@ export const GET = publicRoute({
       checks: {
         database: databaseUp ? "up" : "down",
         email: env.emailEnabled ? "configured" : "disabled",
-        ai: isAiConfigured() ? "configured" : "disabled",
+        // "refused" distinguishes a missing key from a key the provider rejects:
+        // the first is expected on a fresh deploy, the second is a live bug.
+        ai: !isAiConfigured() ? "disabled" : isAiReachable() ? "configured" : "key-refused",
         realtime: isRealtimeAvailable() ? "up" : relayPreferred() ? "relay" : "polling-fallback",
         rateLimitStore: env.RATE_LIMIT_STORE,
         apiBurstLimitPerMinute: RATE_LIMITS.api.limit,

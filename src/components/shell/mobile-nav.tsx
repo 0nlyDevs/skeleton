@@ -15,7 +15,15 @@ import { MAIN_NAV, isActive } from "./nav-config";
 import type { ShellRail, ShellViewer } from "./shell-types";
 
 /** Phones: four primary destinations + a drawer holding the full left rail. */
-export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | null; readonly rail: ShellRail | null }) {
+export function MobileNav({
+  viewer,
+  rail,
+  aiEnabled,
+}: {
+  readonly viewer: ShellViewer | null;
+  readonly rail: ShellRail | null;
+  readonly aiEnabled: boolean;
+}) {
   const t = useTranslation();
   const pathname = usePathname();
   const { unreadCount, messageUnreadTotal } = useRealtime();
@@ -75,7 +83,7 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto bg-background p-4">
           <SheetTitle className="sr-only">{t("nav.menu")}</SheetTitle>
-          <LeftRail viewer={viewer} rail={rail} />
+          <LeftRail viewer={viewer} rail={rail} aiEnabled={aiEnabled} />
         </SheetContent>
       </Sheet>
     </>

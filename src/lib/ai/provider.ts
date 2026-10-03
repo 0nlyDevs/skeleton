@@ -17,6 +17,13 @@
  *   * **No key, no crash.** Without credentials the app must still run; the
  *     caller receives a `ServiceUnavailableError` and the UI shows a friendly
  *     message. AI is never on the critical path.
+ *   * **A refused key opens a circuit.** On the shared host, Apache caps the
+ *     account at roughly eleven concurrent requests. A rejected key takes
+ *     seconds to answer, so every assistant click holds one of those eleven
+ *     slots for the duration and every other visitor gets a 500. After the
+ *     first refusal the breaker fails fast for a cooldown window, so the cost is
+ *     paid once instead of once per click. It closes on its own, so fixing the
+ *     key needs no restart.
  */
 
 import { ServiceUnavailableError } from "@/lib/errors";
@@ -98,6 +105,37 @@ const KEY_REJECTED_MESSAGE =
   "The assistant is misconfigured on this deployment (its API key was refused). Everything else works as usual.";
 
 /**
+ * How long a refused key keeps the circuit open. Long enough that a jury
+ * clicking around does not re-pay the timeout on every visit, short enough
+ * that a corrected key recovers without a redeploy.
+ */
+const CIRCUIT_COOLDOWN_MS = 60_000;
+
+/** Set when the provider refuses the key; cleared by the cooldown, never by hand. */
+let circuitOpenedAt = 0;
+
+/**
+ * Whether the assistant should be hidden from navigation.
+ *
+ * Read on the server when rendering the shell, so a deployment with a dead key
+ * does not advertise a feature that cannot work. Distinct from
+ * `isAiConfigured()`: the key is present but refused, which only a live request
+ * can discover.
+ */
+export function isAiReachable(): boolean {
+  return isAiConfigured() && Date.now() - circuitOpenedAt >= CIRCUIT_COOLDOWN_MS;
+}
+
+function openCircuit(): void {
+  circuitOpenedAt = Date.now();
+}
+
+/** A closed circuit must not block the next attempt. */
+function closeCircuit(): void {
+  circuitOpenedAt = 0;
+}
+
+/**
  * Resolve the AI API key from the generic var, with backward-compatible
  * fallback to OPENROUTER_API_KEY for existing deployments.
  */
@@ -174,6 +212,12 @@ export async function complete(request: CompletionRequest): Promise<CompletionRe
     );
   }
 
+  // Fail fast while the breaker is open: the key was already refused, so waiting
+  // on the provider again would only hold another Apache slot open for nothing.
+  if (Date.now() - circuitOpenedAt < CIRCUIT_COOLDOWN_MS) {
+    throw new ServiceUnavailableError(KEY_REJECTED_MESSAGE);
+  }
+
   const primary = env.AI_MODEL;
   const fallback = env.AI_FALLBACK_MODEL;
 
@@ -192,6 +236,7 @@ export async function complete(request: CompletionRequest): Promise<CompletionRe
 
     if (primaryError instanceof AiProviderError && primaryError.isCredentialError) {
       // Retrying with the fallback model would use the same refused key.
+      openCircuit();
       logger.error("AI provider rejected AI_API_KEY; check the key and AI_BASE_URL", {
         status: primaryError.status,
         baseUrl: env.AI_BASE_URL,
@@ -199,6 +244,8 @@ export async function complete(request: CompletionRequest): Promise<CompletionRe
       throw new ServiceUnavailableError(KEY_REJECTED_MESSAGE);
     }
 
+    // The primary failed but the key is fine, so the circuit must not latch.
+    closeCircuit();
     logger.warn("primary AI model failed", { model: primary, error: primaryError });
 
     if (!fallback || fallback === primary) {
