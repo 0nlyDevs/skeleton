@@ -7,6 +7,7 @@ import { ECO_COOKIE } from "@/lib/eco";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { publicEnv } from "@/lib/env.public";
 
+import { boska, generalSans } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -59,6 +60,7 @@ export default async function RootLayout({
       lang={locale}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
+      className={`${generalSans.variable} ${boska.variable}`}
       {...(eco ? { "data-eco": "" } : {})}
     >
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
