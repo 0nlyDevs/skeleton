@@ -43,6 +43,9 @@ export function RequestControls({
   };
 
   const mine = request.assignee?.id === viewerId;
+  // Bug — a request must be in someone's hands before its status can move.
+  // The server refuses otherwise; the select says so before the agent tries.
+  const taken = request.assignee !== null;
 
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-panel" aria-labelledby="handling">
@@ -53,11 +56,12 @@ export function RequestControls({
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="request-status">{t("tn.agent.req.status")}</Label>
-        <select id="request-status" className={SELECT_CLASS} value={request.status} disabled={busy} onChange={(event) => void update({ status: event.target.value })}>
+        <select id="request-status" className={SELECT_CLASS} value={request.status} disabled={busy || !taken} onChange={(event) => void update({ status: event.target.value })}>
           {CITY_REQUEST_STATUSES.map((status) => (
             <option key={status} value={status}>{t(`tn.status.${status}` as MessageKey)}</option>
           ))}
         </select>
+        {!taken ? <p className="text-sm text-muted-foreground">{t("tn.agent.req.take_first")}</p> : null}
       </div>
 
       <div className="flex flex-col gap-1.5">

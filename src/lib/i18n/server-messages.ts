@@ -75,6 +75,7 @@ const FR: Readonly<Record<string, string>> = {
   "Invalid reference.": "Référence invalide.",
   "Write a message.": "Écrivez un message.",
   "Nothing to update.": "Rien à modifier.",
+  "Take charge of this request before changing its status.": "Prenez la demande en charge avant de changer son statut.",
   "Could not allocate a request reference.": "Impossible d'attribuer une référence à la demande. Réessayez.",
   "Only city agents can see every request.": "Seuls les agents municipaux voient toutes les demandes.",
   "This request does not exist.": "Cette demande n'existe pas.",
