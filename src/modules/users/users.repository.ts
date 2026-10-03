@@ -235,6 +235,15 @@ export async function deleteOtherSessions(userId: string, keepSessionId: string)
 }
 
 /** Revoke every session for a user, e.g. immediately after a ban. */
+export async function findOnboardingCompletedAt(userId: string): Promise<Date | null> {
+  const row = await prisma.user.findUnique({ where: { id: userId }, select: { onboardingCompletedAt: true } });
+  return row?.onboardingCompletedAt ?? null;
+}
+
+export async function markOnboardingCompleted(userId: string): Promise<void> {
+  await prisma.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });
+}
+
 export async function deleteUserSessions(userId: string): Promise<number> {
   const { count } = await prisma.session.deleteMany({ where: { userId } });
   return count;

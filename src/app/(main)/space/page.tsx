@@ -13,12 +13,13 @@ import Link from "@/components/ui/link";
 import { requirePageAuth } from "@/lib/auth/page-guards";
 import { formatLongDate } from "@/lib/format";
 import type { MessageKey } from "@/lib/i18n";
-import { WELCOME_HIDDEN_COOKIE, WELCOME_SERVICE_COOKIE, WIZARD_DONE_COOKIE } from "@/lib/onboarding";
+import { WELCOME_HIDDEN_COOKIE, WELCOME_SERVICE_COOKIE } from "@/lib/onboarding";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
 import { cityRequestStats, listCityRequests } from "@/modules/city-requests/city-requests.service";
 import { listServices } from "@/modules/city-services/city-services.service";
 import { getUnreadCount } from "@/modules/notifications/notifications.service";
+import { needsOnboarding } from "@/modules/users/users.service";
 
 export const metadata: Metadata = { title: "Mon espace" };
 
@@ -29,16 +30,18 @@ type HistoryFilter = keyof typeof HISTORY_FILTERS;
  * D03 — the resident's personal space: their details and every request they
  * made. F26 — the history can be narrowed to ongoing or finished requests.
  */
-export default async function CitizenSpacePage({ searchParams }: { readonly searchParams: Promise<{ history?: string }> }) {
+export default async function CitizenSpacePage({ searchParams }: { readonly searchParams: Promise<{ history?: string; guide?: string }> }) {
   const { user } = await requirePageAuth("/space");
   const { t, locale } = await getServerDictionary();
-  const raw = (await searchParams).history;
+  const params = await searchParams;
+  const raw = params.history;
   const history: HistoryFilter = raw === "open" || raw === "done" ? raw : "all";
-  const [requests, stats, unread, news] = await Promise.all([
+  const [requests, stats, unread, news, firstVisit] = await Promise.all([
     listCityRequests({ scope: "mine", page: 1, limit: 50, status: HISTORY_FILTERS[history] }, user),
     cityRequestStats(user, "mine"),
     getUnreadCount(user.id),
     listAnnouncements({ page: 1, limit: 3 }, user),
+    needsOnboarding(user.id),
   ]);
 
   const openCount = (stats.NEW ?? 0) + (stats.IN_PROGRESS ?? 0) + (stats.WAITING_CITIZEN ?? 0);
@@ -54,7 +57,8 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
   const onboarded = welcome.profile && welcome.service && welcome.request;
   const showWelcome = cookieStore.get(WELCOME_HIDDEN_COOKIE)?.value !== "1" && !onboarded;
   // The wizard opens on the first visit only; the checklist above stays after.
-  const showWizard = cookieStore.get(WIZARD_DONE_COOKIE)?.value !== "1" && !onboarded && total === 0;
+  // D12 — once per account (saved on the user), or again on demand from the top bar.
+  const showWizard = params.guide === "1" || firstVisit;
   const wizardServices = showWizard
     ? (await listServices({}, user, locale))
         .slice(0, 3)

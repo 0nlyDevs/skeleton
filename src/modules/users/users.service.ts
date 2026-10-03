@@ -42,9 +42,11 @@ import {
   deleteOwnSession,
   deleteUserSessions,
   findAdminUserById,
+  findOnboardingCompletedAt,
   findUserIdByUsername,
   findUserProfileById,
   findUsers,
+  markOnboardingCompleted,
   updateUserBan,
   updateUserProfile,
   updateUserRoleAdmin,
@@ -105,6 +107,16 @@ export async function listUsersForAdmin(
     limit: pagination.limit,
     total,
   });
+}
+
+/** D12 — whether the welcome guide still has to open by itself for this account. */
+export async function needsOnboarding(userId: string): Promise<boolean> {
+  return (await findOnboardingCompletedAt(userId)) === null;
+}
+
+/** The resident finished or skipped the guide: it will not open by itself again, on any device. */
+export async function completeOnboarding(userId: string): Promise<void> {
+  await markOnboardingCompleted(userId);
 }
 
 /**

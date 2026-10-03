@@ -57,9 +57,9 @@ export async function findDistinctAuditActions(): Promise<string[]> {
 }
 
 /** Retention: drop rows older than the cutoff. Called from the cron endpoint. */
-export async function deleteAuditLogsOlderThan(cutoff: Date): Promise<number> {
+export async function deleteAuditLogsOlderThan(cutoff: Date, keepActions: readonly string[] = []): Promise<number> {
   const { count } = await prisma.auditLog.deleteMany({
-    where: { createdAt: { lt: cutoff } },
+    where: { createdAt: { lt: cutoff }, ...(keepActions.length > 0 ? { action: { notIn: [...keepActions] } } : {}) },
   });
   return count;
 }

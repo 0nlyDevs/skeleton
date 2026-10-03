@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { withAgentAccess } from "@/components/agent/agent-guard";
+import { EntityHistory } from "@/components/agent/activity-history";
 import { ServiceEditor } from "@/components/agent/service-editor";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
 import { NotFoundError } from "@/lib/errors";
@@ -22,7 +23,12 @@ export default async function EditServicePage({ params }: { readonly params: Pro
           })
         : null;
       if (!service) return <NotFoundPanel backHref="/agent/services" />;
-      return <ServiceEditor initial={service} />;
+      return (
+        <div className="flex flex-col gap-6">
+          <ServiceEditor initial={service} />
+          <EntityHistory targetType="service" targetId={service.id} />
+        </div>
+      );
     },
     "admin",
   );

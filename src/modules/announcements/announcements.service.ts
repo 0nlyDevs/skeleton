@@ -12,6 +12,7 @@ import { slugify } from "@/lib/utils";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
+import { changedFields } from "../audit/audit.diff";
 import { recordAudit } from "../audit/audit.service";
 import { notifyInBackground } from "../notifications/notifications.service";
 import { assertOwnPublicImage } from "../uploads/uploads.service";
@@ -132,7 +133,7 @@ export async function createAnnouncement(input: AnnouncementInput, actor: AuthUs
     },
     include,
   });
-  await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: row.id, metadata: { op: "create", published: input.published }, ip });
+  await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: row.id, metadata: { op: "create", title: row.title, slug: row.slug, category: row.category, published: input.published }, ip });
   if (row.publishedAt) notifyInBackground(broadcastAnnouncement(row.slug, row.title, row.category === "ALERT"), { announcementId: row.id });
   return toDto(row);
 }
@@ -158,7 +159,19 @@ export async function updateAnnouncement(slug: string, input: AnnouncementInput,
     },
     include,
   });
-  await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: row.id, metadata: { op: "update" }, ip });
+  const changed = changedFields(
+    { ...existing, serviceId: existing.serviceId, published: existing.publishedAt !== null } as Record<string, unknown>,
+    { title: row.title, summary: row.summary, body: row.body, category: row.category, pinned: row.pinned, coverImage: row.coverImage, serviceId: row.serviceId, published: row.publishedAt !== null },
+    ["title", "summary", "body", "category", "pinned", "coverImage", "serviceId", "published"],
+  );
+  await recordAudit({
+    actorId: actor.id,
+    action: auditActions.announcementChanged,
+    targetType: "announcement",
+    targetId: row.id,
+    metadata: { op: publishNow ? "publish" : existing.publishedAt && !row.publishedAt ? "unpublish" : "update", title: row.title, slug: row.slug, changed },
+    ip,
+  });
   if (publishNow) notifyInBackground(broadcastAnnouncement(row.slug, row.title, row.category === "ALERT"), { announcementId: row.id });
   return toDto(row);
 }
@@ -168,5 +181,5 @@ export async function deleteAnnouncement(slug: string, actor: AuthUser, ip: stri
   const existing = await prisma.announcement.findUnique({ where: { slug } });
   if (!existing || existing.deletedAt) throw new NotFoundError("This announcement does not exist.");
   await prisma.announcement.update({ where: { id: existing.id }, data: { deletedAt: new Date() } });
-  await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: existing.id, metadata: { op: "delete" }, ip });
+  await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: existing.id, metadata: { op: "delete", title: existing.title, slug: existing.slug }, ip });
 }

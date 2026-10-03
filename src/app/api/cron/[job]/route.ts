@@ -6,6 +6,7 @@ import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { deleteAuditLogsOlderThan } from "@/modules/audit/audit.repository";
+import { ADMIN_ACTIONS } from "@/modules/audit/audit.schema";
 import { deleteReadNotificationsOlderThan } from "@/modules/notifications/notifications.repository";
 import { getRateLimitStore } from "@/lib/rate-limit";
 import { PrismaRateLimitStore } from "@/lib/rate-limit/prisma-store";
@@ -56,7 +57,8 @@ export const POST = publicRoute({
     const now = Date.now();
 
     const [auditRemoved, notificationsRemoved, rateLimitRemoved] = await Promise.all([
-      deleteAuditLogsOlderThan(new Date(now - AUDIT_RETENTION_DAYS * 86_400_000)),
+      // Administrative actions are kept for good: the city must be able to justify them.
+      deleteAuditLogsOlderThan(new Date(now - AUDIT_RETENTION_DAYS * 86_400_000), ADMIN_ACTIONS),
       deleteReadNotificationsOlderThan(
         new Date(now - NOTIFICATION_RETENTION_DAYS * 86_400_000),
       ),

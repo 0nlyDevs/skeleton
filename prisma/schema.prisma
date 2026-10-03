@@ -179,20 +179,23 @@ model User {
   knownDevices        KnownDevice[]
 
   /// Presence: written when the last socket of the user disconnects.
-  lastSeenAt        DateTime?
+  lastSeenAt            DateTime?
   /// Privacy: when false, others never see "online" or "last seen".
-  showPresence      Boolean           @default(true)
+  showPresence          Boolean           @default(true)
   /// Suggest the user's town on new posts and centre the map on them.
-  autoLocation      Boolean           @default(true)
+  autoLocation          Boolean           @default(true)
   /// Last time the handle changed: a handle can change once every 30 days.
-  usernameChangedAt DateTime?
-  pollVotes         PollVote[]
-  pages             Page[]
-  pageLikes         PageLike[]
-  messageReactions  MessageReaction[]
-  blocking          UserBlock[]       @relation("Blocker")
-  blockedBy         UserBlock[]       @relation("Blocked")
-  commentReactions  CommentReaction[]
+  usernameChangedAt     DateTime?
+  /// D12 — when this resident finished or skipped the welcome guide; it opens
+  /// automatically only while this is empty (once per account, any device).
+  onboardingCompletedAt DateTime?
+  pollVotes             PollVote[]
+  pages                 Page[]
+  pageLikes             PageLike[]
+  messageReactions      MessageReaction[]
+  blocking              UserBlock[]       @relation("Blocker")
+  blockedBy             UserBlock[]       @relation("Blocked")
+  commentReactions      CommentReaction[]
 
   @@index([role])
   @@index([banned])

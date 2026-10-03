@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import { Compass, MessageCircle } from "lucide-react";
 import Link from "@/components/ui/link";
 import { Suspense } from "react";
 
@@ -42,6 +42,15 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
           <ThemeToggle />
           {viewer ? (
             <>
+              {/* D12 — the welcome guide opens by itself once; here it can be replayed at will. */}
+              <Link
+                href="/space?guide=1"
+                aria-label={t("tn.wizard.replay")}
+                title={t("tn.wizard.replay")}
+                className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+              >
+                <Compass className="size-[1.125rem]" aria-hidden />
+              </Link>
               <Link
                 href="/messages"
                 aria-label={
