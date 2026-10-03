@@ -3,7 +3,7 @@
  * citizen requests with answers, so every screen has something real to show.
  *
  * Idempotent: services and announcements are upserted by slug, and sample
- * requests are only created for a citizen who has none yet.
+ * requests (owned by the first citizen account) are created once per reference.
  */
 
 import { encryptField } from "../src/lib/crypto/field-encryption";
@@ -216,7 +216,6 @@ const ANNOUNCEMENTS = [
 
 const REQUESTS = [
   {
-    citizen: 2,
     service: "eau-oxygene",
     subject: "Odeur inhabituelle dans le module B-12",
     message: "Depuis ce matin, une odeur métallique persiste dans mon module B-12, surtout près de la ventilation. Est-ce dangereux ?",
@@ -228,7 +227,6 @@ const REQUESTS = [
     ],
   },
   {
-    citizen: 2,
     service: "transports",
     subject: "Abonnement navette pour un nouvel arrivant",
     message: "Je viens d'arriver à Terra Nova. Comment obtenir un abonnement mensuel pour la navette entre le Dôme central et les serres ?",
@@ -239,7 +237,6 @@ const REQUESTS = [
     ],
   },
   {
-    citizen: 3,
     service: "logement",
     subject: "Porte du sas qui ferme mal",
     message: "La porte intérieure du sas de mon module se bloque à mi-course depuis deux jours.",
@@ -248,7 +245,6 @@ const REQUESTS = [
     replies: [],
   },
   {
-    citizen: 3,
     service: null,
     subject: "Question sur la fête de la récolte",
     message: "Bonjour, les enfants peuvent-ils participer aux visites des serres dimanche ?",
@@ -291,12 +287,16 @@ export async function seedTerraNova(prisma: Client, users: readonly SeedUser[]):
   }
   console.log(`  announcements: ${ANNOUNCEMENTS.length}`);
 
+  // Sample requests belong to the first citizen account.
+  const citizen = users.find((user) => user.role === "USER");
+  if (!citizen) return;
   let created = 0;
   for (const [index, request] of REQUESTS.entries()) {
-    const citizen = users[request.citizen];
-    if (!citizen) continue;
     const reference = `TN-${String(100_001 + index).padStart(6, "0")}`;
-    if (await prisma.cityRequest.findUnique({ where: { reference }, select: { id: true } })) continue;
+    const existing = await prisma.cityRequest.findUnique({ where: { reference }, select: { id: true, citizenId: true } });
+    if (existing?.citizenId === citizen.id) continue;
+    // A sample seeded under an account that is no longer the citizen is rebuilt.
+    if (existing) await prisma.cityRequest.delete({ where: { id: existing.id } });
     const assigned = request.status !== "NEW";
     await prisma.cityRequest.create({
       data: {
