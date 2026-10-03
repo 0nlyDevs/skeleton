@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
-import { FuturisticAuth } from "@/components/auth/futuristic/futuristic-auth";
-import { env } from "@/lib/env";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = { title: "Inscription" };
 
+/** New residents ask for their account at the citizens' registry, on the landing. */
 export default function RegisterPage() {
-  return (
-    <FuturisticAuth
-      initialView="s1"
-      oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }}
-    />
-  );
+  redirect("/?registre=inscription");
 }

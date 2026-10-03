@@ -242,6 +242,11 @@ export function FuturisticAuth({
   // View transition logic
   const goTo = (next: "login" | "s1" | "s2" | "done" | "forgot" | "2fa" | "reset" | "verify") => {
     if (busy || next === mode) return;
+    // Signing in and asking for an account happen at the citizens' registry, on the landing.
+    if (next === "login" || next === "s1") {
+      router.push(next === "login" ? "/login" : "/register");
+      return;
+    }
     setBusy(true);
 
     const prev = mode;
