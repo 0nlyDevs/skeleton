@@ -190,6 +190,9 @@ export function RealtimeProvider({
       // A message notification while the inbox is open is noise.
       if (payload.type === "NEW_MESSAGE" && window.location.pathname.startsWith("/messages")) return;
 
+      // City alerts get their own dialog and banner (AlertWatcher), not a second toast.
+      if (payload.type === "ALERT") return;
+
       toast(payload.title, {
         description: payload.body ?? undefined,
         action: payload.link

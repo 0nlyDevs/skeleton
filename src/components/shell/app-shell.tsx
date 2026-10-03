@@ -10,9 +10,10 @@ import { MobileNav } from "./mobile-nav";
 import { RightRail } from "./right-rail";
 import type { ShellRail, ShellViewer } from "./shell-types";
 import { TopBar } from "./top-bar";
+import { AlertWatcher } from "@/components/alerts/alert-watcher";
 
 /** Pages that need the full width of the centre column. */
-const WIDE_PREFIXES = ["/messages", "/settings", "/admin", "/assistant", "/notifications"];
+const WIDE_PREFIXES = ["/messages", "/settings", "/admin", "/assistant", "/notifications", "/alerts", "/city-map"];
 
 /**
  * The one layout of the product: a top bar, the left rail (identity +
@@ -48,6 +49,7 @@ export function AppShell({
           <LeftRail viewer={viewer} rail={rail} />
         </aside>
         <main id="content" className="min-w-0">
+          {viewer ? <AlertWatcher /> : null}
           {children}
         </main>
         {showRight ? (
