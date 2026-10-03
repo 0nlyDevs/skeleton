@@ -30,6 +30,8 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { publicEnv } from "@/lib/env.public";
+
 /** Reachable without a session. Everything else requires one. */
 const PUBLIC_PATHS = new Set([
   "/",
@@ -110,13 +112,62 @@ function isPassThrough(pathname: string): boolean {
   return PASS_THROUGH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string): string {
+/**
+ * The WebSocket origin for the CSP, from configuration rather than the request.
+ *
+ * Three constraints, and the value has to satisfy all of them:
+ *
+ * 1. **Not the request.** `request.nextUrl.host` is not reliable behind
+ *    Passenger — on the live host it resolved to the bind address
+ *    (`0.0.0.0:3000`) instead of the public domain, so the production policy
+ *    carried `connect-src ... wss://0.0.0.0:3000` and every socket was blocked.
+ *    The app survived on the polling fallback, which is why it presented as a
+ *    realtime problem rather than a policy problem. It is also attacker-
+ *    controllable: a spoofed `Host` could otherwise widen `connect-src` to a
+ *    socket server of the attacker's choosing, which is exactly what the
+ *    same-host restriction exists to prevent.
+ *
+ * 2. **Read at runtime, not baked in.** `NEXT_PUBLIC_*` is inlined into the
+ *    bundle by Next at build time, so `publicEnv.appUrl` cannot be corrected by
+ *    changing the variable on a running server. `BETTER_AUTH_URL` is a plain
+ *    runtime variable and names the same origin.
+ *
+ * 3. **Safe on a runtime that has no `process.env`.** On an edge runtime the
+ *    fallback is the baked public value, which is still better than the Host
+ *    header.
+ *
+ * Returns "" when nothing usable is configured, leaving `connect-src 'self'`
+ * alone: a broken origin must not widen the policy, and same-origin is correct
+ * for everything except the socket.
+ */
+export function socketOrigin(isDev: boolean): string {
+  const candidate = (
+    process.env.BETTER_AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    publicEnv.appUrl
+  ).trim();
+
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    // Plain `ws:` in production is blocked by `upgrade-insecure-requests`
+    // anyway; a dev-only `ws:` is what keeps the local server working.
+    const scheme = url.protocol === "https:" ? "wss:" : isDev ? "ws:" : "wss:";
+    return `${scheme}//${url.host}`;
+  } catch {
+    return "";
+  }
+}
+
+function buildContentSecurityPolicy(nonce: string, isDev: boolean): string {
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
     // Turbopack's dev runtime evaluates generated code; production does not.
     ...(isDev ? ["'unsafe-eval'"] : []),
   ].join(" ");
+
+  const socket = socketOrigin(isDev);
 
   return [
     "default-src 'self'",
@@ -128,9 +179,9 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string)
     "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://tile.openstreetmap.org",
     "font-src 'self' data:",
     // `ws:`/`wss:` for Socket.IO; the app is otherwise same-origin.
-    // Sockets to this host only (any-host `ws:` would let injected code
+    // Sockets to this origin only (any-host `ws:` would let injected code
     // exfiltrate to an attacker's socket server).
-    `connect-src 'self' wss://${host}${isDev ? ` ws://${host}` : ""}`,
+    `connect-src 'self'${socket ? ` ${socket}` : ""}`,
     "media-src 'self'",
     // Video blocks on user pages: privacy-enhanced players only, loaded on click.
     "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
@@ -157,7 +208,7 @@ export function proxy(request: NextRequest): NextResponse {
   }
 
   const nonce = btoa(crypto.randomUUID());
-  const csp = buildContentSecurityPolicy(nonce, isDev, request.nextUrl.host);
+  const csp = buildContentSecurityPolicy(nonce, isDev);
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);

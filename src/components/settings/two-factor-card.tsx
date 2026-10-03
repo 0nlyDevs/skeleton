@@ -3,6 +3,7 @@
 import { Check, Copy, Download, Loader2, ShieldCheck } from "lucide-react";
 import QRCode from "qrcode";
 import { useState } from "react";
+import { brand } from "@/lib/brand";
 import { toast } from "sonner";
 
 import { FormField } from "@/components/forms/form-field";
@@ -123,7 +124,7 @@ export function TwoFactorCard({ enabled: initial, hasPassword }: { readonly enab
   };
 
   const download = () => {
-    const blob = new Blob([`Skeleton — backup codes\n\n${codes.join("\n")}\n`], { type: "text/plain" });
+    const blob = new Blob([`${brand.name} — backup codes\n\n${codes.join("\n")}\n`], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

@@ -8,6 +8,9 @@
  *
  * Idempotent: every step is an upsert or a guarded create, so running the seed
  * twice neither duplicates nor destroys.
+ *
+ * This file owns the mechanism. The content lives in `./demo-data.ts`, which is
+ * the single place to edit when the subject is known — see the note there.
  */
 
 import { hashPassword } from "../src/lib/auth/password";
@@ -17,129 +20,19 @@ import { encryptField } from "../src/lib/crypto/field-encryption";
 // turn DATABASE_URL into driver pool options.
 import { prisma } from "../src/lib/db/prisma";
 
-const JURY_PASSWORD = "Webcup-2026!jury";
+import {
+  DEMO_MESSAGES,
+  DEMO_NOTIFICATIONS,
+  DEMO_POSTS,
+  JURY_ACCOUNTS as ACCOUNTS,
+  JURY_PASSWORD,
+} from "./demo-data";
 
-const ACCOUNTS = [
-  {
-    email: "admin@webcup.demo",
-    username: "colombe.admin",
-    firstName: "Colombe",
-    lastName: "Admin",
-    birthDate: "1995-04-12",
-    name: "Colombe Admin",
-    role: "ADMIN" as const,
-    bio: "Administratrice de la plateforme de démonstration.",
-  },
-  {
-    email: "moderator@webcup.demo",
-    username: "marc.moderateur",
-    firstName: "Marc",
-    lastName: "Modérateur",
-    birthDate: "1990-09-03",
-    name: "Marc Modérateur",
-    role: "MODERATOR" as const,
-    bio: "Modérateur — file de signalements et contenu signalé.",
-  },
-  {
-    email: "user@webcup.demo",
-    username: "aline",
-    firstName: "Aline",
-    lastName: "Utilisatrice",
-    birthDate: "2000-01-22",
-    name: "Aline Utilisatrice",
-    role: "USER" as const,
-    bio: "Compte de démonstration standard.",
-  },
-  {
-    email: "user2@webcup.demo",
-    username: "bilal",
-    firstName: "Bilal",
-    lastName: "Deuxième",
-    birthDate: "1998-06-30",
-    name: "Bilal Deuxième",
-    role: "USER" as const,
-    bio: "Second compte standard, pour tester les droits d'accès entre utilisateurs.",
-  },
-] as const;
-
+/** Fixed id, so re-seeding updates the global room instead of adding another. */
 const GLOBAL_ROOM = "global";
 
-const POSTS: ReadonlyArray<{
-  author: number;
-  title: string;
-  body: string;
-  tags: string[];
-  published: boolean;
-}> = [
-  {
-    author: 0,
-    title: "Bienvenue sur le socle Webcup",
-    body:
-      "Ce socle réunit l'authentification, les rôles, les publications, la messagerie temps réel, les notifications et l'assistant IA.\n\nChaque domaine vit dans son propre module : schéma, dépôt, service, DTO, routes. Copiez un module pour créer une entité métier en quelques minutes.",
-    tags: ["webcup", "skeleton"],
-    published: true,
-  },
-  {
-    author: 0,
-    title: "Comment fonctionne la modération",
-    body:
-      "Un signalement crée une entrée dans la file de modération. Un modérateur peut retirer le contenu (suppression douce, réversible) ou écarter le signalement.\n\nChaque décision est inscrite au journal d'audit avec son auteur.",
-    tags: ["moderation", "audit"],
-    published: true,
-  },
-  {
-    author: 1,
-    title: "Le temps réel et son filet de sécurité",
-    body:
-      "La messagerie passe par Socket.IO, monté sur le même serveur HTTP que Next.js. Si l'hébergeur filtre les WebSocket, l'interface bascule automatiquement sur le polling HTTP.\n\nL'indicateur en haut à droite montre le transport actif.",
-    tags: ["realtime", "socketio"],
-    published: true,
-  },
-  {
-    author: 1,
-    title: "Brouillon : plan pour la finale",
-    body: "Notes internes sur la répartition des rôles pendant l'épreuve. Ce brouillon n'est visible que de son auteur et de l'équipe Staff.",
-    tags: ["draft"],
-    published: false,
-  },
-  {
-    author: 2,
-    title: "Mon premier article",
-    body:
-      "Un article de démonstration publié par un compte standard.\n\nEssayez de l'ouvrir avec un autre compte : la modification et la suppression sont refusées par le serveur, pas seulement cachées dans l'interface.",
-    tags: ["demo", "crud"],
-    published: true,
-  },
-  {
-    author: 2,
-    title: "Brouillon personnel",
-    body: "Ce brouillon ne doit apparaître que pour Aline. Si vous le voyez avec un autre compte, c'est un bug d'access control.",
-    tags: [],
-    published: false,
-  },
-  {
-    author: 3,
-    title: "Tester la sécurité entre comptes",
-    body:
-      "Connectez-vous avec user@webcup.demo puis essayez d'éditer cette publication : l'API répond 404, jamais 403, pour ne pas révéler l'existence des ressources d'autrui.",
-    tags: ["security", "idor"],
-    published: true,
-  },
-  {
-    author: 3,
-    title: "L'assistant IA en pratique",
-    body:
-      "L'assistant résume les publications et propose des étiquettes. La clé d'API ne quitte jamais le serveur et chaque appel est limité par utilisateur.",
-    tags: ["ai", "openrouter"],
-    published: true,
-  },
-];
-
-const MESSAGES: ReadonlyArray<{ author: number; content: string }> = [
-  { author: 0, content: "Bienvenue dans la messagerie du socle Webcup ! Les messages sont persistés en base." },
-  { author: 2, content: "Bonjour — l'indicateur temps réel est vert, le socket est bien connecté." },
-  { author: 3, content: "Testons aussi le mode dégradé : coupez le réseau et rechargez, le polling prend le relais." },
-];
+/** What `upsertUser` gives back, narrowed to the fields the seed reads. */
+type SeededUser = { id: string };
 
 function profileOf(account: (typeof ACCOUNTS)[number]) {
   return {
@@ -201,7 +94,10 @@ async function main() {
 
   const passwordHash = await hashPassword(JURY_PASSWORD);
 
-  const users = [];
+  // Annotated explicitly: `upsertUser` returns the union of `update` and
+  // `create`, and TS will not name that union for an inferred `[]` when the
+  // account type comes from an imported `as const` tuple.
+  const users: SeededUser[] = [];
   for (const account of ACCOUNTS) {
     const user = await upsertUser(account, passwordHash);
     users.push(user);
@@ -227,7 +123,7 @@ async function main() {
 
   // Posts.
   const createdPostIds: string[] = [];
-  for (const [index, post] of POSTS.entries()) {
+  for (const [index, post] of DEMO_POSTS.entries()) {
     const existing = await prisma.post.findFirst({
       where: { title: post.title, userId: users[post.author].id },
       select: { id: true },
@@ -253,48 +149,36 @@ async function main() {
   // Messages.
   const messageCount = await prisma.message.count({ where: { roomId: room.id } });
   if (messageCount === 0) {
-    for (const message of MESSAGES) {
+    for (const message of DEMO_MESSAGES) {
       await prisma.message.create({
         data: {
           roomId: room.id,
           senderId: users[message.author].id,
-          content: message.content,
+          // Encrypted, exactly as `messages.repository.ts` writes it. Seeding
+          // plaintext here meant the demo messages never exercised the
+          // encryption-at-rest path — and a key mismatch would have shown up as
+          // empty messages in the one place a juror is guaranteed to look.
+          content: encryptField(message.content),
         },
       });
     }
-    console.log(`  messages: ${MESSAGES.length}`);
+    console.log(`  messages: ${DEMO_MESSAGES.length}`);
   }
 
   // Notifications for the standard user.
   const notificationCount = await prisma.notification.count({ where: { userId: users[2].id } });
   if (notificationCount === 0) {
     await prisma.notification.createMany({
-      data: [
-        {
-          userId: users[2].id,
-          type: "SYSTEM",
-          title: "Bienvenue sur Webcup Base",
-          body: "Explorez le tableau de bord, les publications et la messagerie.",
-          link: "/dashboard",
-          read: false,
-        },
-        {
-          userId: users[2].id,
-          type: "NEW_MESSAGE",
-          title: "Nouveau message dans Général",
-          body: "Un message vous attend dans le salon général.",
-          link: "/chat",
-          read: false,
-        },
-        {
-          userId: users[2].id,
-          type: "ROLE_CHANGED",
-          title: "Rôle confirmé",
-          body: "Votre compte de démonstration est un compte standard.",
-          link: "/settings/profile",
-          read: true,
-        },
-      ],
+      // The links used to point at `/dashboard` and `/chat`, neither of which is a
+      // route in this app — every seeded notification 404'd on click.
+      data: DEMO_NOTIFICATIONS.map((notification) => ({
+        userId: users[2].id,
+        type: notification.type,
+        title: notification.title,
+        body: notification.body,
+        link: notification.link,
+        read: notification.read,
+      })),
     });
     console.log("  notifications: 3");
   }

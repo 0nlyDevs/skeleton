@@ -5,6 +5,7 @@ import { AppProviders } from "@/components/providers/app-providers";
 import { getCurrentUser } from "@/lib/auth/session";
 import { ECO_COOKIE } from "@/lib/eco";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { brand } from "@/lib/brand";
 import { publicEnv } from "@/lib/env.public";
 
 import "./globals.css";
@@ -12,12 +13,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.appUrl),
   title: {
-    default: "Skeleton",
-    template: "%s · Skeleton",
+    default: brand.name,
+    template: `%s · ${brand.name}`,
   },
-  description:
-    "Skeleton — a social network to share posts, talk in real time and gather in groups.",
-  applicationName: "Skeleton",
+  description: brand.description,
+  applicationName: brand.name,
   // The app is authenticated; there is nothing here for a crawler to index.
   robots: { index: false, follow: false },
 };

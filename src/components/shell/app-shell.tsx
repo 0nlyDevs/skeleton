@@ -23,10 +23,13 @@ const WIDE_PREFIXES = ["/messages", "/settings", "/admin", "/assistant", "/notif
 export function AppShell({
   viewer,
   rail,
+  aiEnabled,
   children,
 }: {
   readonly viewer: ShellViewer | null;
   readonly rail: ShellRail | null;
+  /** Whether the AI assistant is worth offering on this deployment. */
+  readonly aiEnabled: boolean;
   readonly children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -45,7 +48,7 @@ export function AppShell({
         )}
       >
         <aside className="sticky top-20 hidden h-[calc(100dvh-6rem)] overflow-y-auto pb-4 lg:block [scrollbar-width:thin]">
-          <LeftRail viewer={viewer} rail={rail} />
+          <LeftRail viewer={viewer} rail={rail} aiEnabled={aiEnabled} />
         </aside>
         <main id="content" className="min-w-0">
           {children}
@@ -56,7 +59,7 @@ export function AppShell({
           </aside>
         ) : null}
       </div>
-      <MobileNav viewer={viewer} rail={rail} />
+      <MobileNav viewer={viewer} rail={rail} aiEnabled={aiEnabled} />
     </div>
   );
 }

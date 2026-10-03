@@ -28,6 +28,7 @@ const PATTERNS = [
 // Operator-only messages (logs, misconfiguration) that never reach the UI.
 const INTERNAL = new Set([
   "AI provider returned an empty completion.",
+  "Refusing to encrypt the unreadable marker.",
   "Refusing to resolve an unsafe filename.",
   "Refusing to resolve a path outside the upload directory.",
   "The request could not reach the server.",

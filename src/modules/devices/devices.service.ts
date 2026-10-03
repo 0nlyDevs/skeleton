@@ -10,13 +10,14 @@
 
 import { createHash, randomBytes } from "node:crypto";
 
+import { FROZEN_IDENTIFIERS } from "@/lib/brand";
 import { prisma } from "@/lib/db/prisma";
 import { describeUserAgent } from "@/lib/http/user-agent";
 import { logger } from "@/lib/logger";
 
 import { createNotification } from "../notifications/notifications.service";
 
-export const DEVICE_COOKIE = "skeleton_device";
+export const DEVICE_COOKIE = FROZEN_IDENTIFIERS.DEVICE_COOKIE;
 /** About 400 days, the longest lifetime browsers honour. */
 export const DEVICE_COOKIE_MAX_AGE = 60 * 60 * 24 * 400;
 

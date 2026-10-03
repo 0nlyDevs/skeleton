@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/shell/app-shell";
+import { isAiReachable } from "@/lib/ai/provider";
 import { getAuthContext } from "@/lib/auth/session";
 import { getShellRail } from "@/modules/discovery/discovery.service";
 
@@ -22,6 +23,7 @@ export default async function MainLayout({ children }: { readonly children: Reac
           : null
       }
       rail={rail}
+      aiEnabled={isAiReachable()}
     >
       {children}
     </AppShell>

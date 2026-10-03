@@ -25,6 +25,7 @@
     "db:reset": "prisma migrate reset --force && npm run db:seed",
     "email:preview": "email dev --dir emails --port 3030",
     "security:encrypt-at-rest": "tsx --env-file-if-exists=.env scripts/encrypt-at-rest.ts",
+    "security:verify-encryption": "tsx --env-file-if-exists=.env scripts/verify-encryption.ts",
     "smoke": "tsx --env-file-if-exists=.env scripts/smoke.ts",
     "deploy": "bash scripts/deploy.sh"
   },

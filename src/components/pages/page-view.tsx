@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { brand } from "@/lib/brand";
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog";
 import { Brand } from "@/components/layout/brand";
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -112,7 +113,7 @@ export function PageView({ page: initial, viewerId }: { readonly page: PageDto; 
       {!page.published ? <p className="bg-warning/15 px-4 py-2 text-center text-[13px] font-medium">{t("pages.draft_banner")}</p> : null}
       <PageRenderer page={page} />
       <footer className="px-4 py-8 text-center text-[12.5px] text-muted-foreground">
-        {t("pages.made_with")} <Link href="/pages" className="font-semibold hover:underline">Skeleton</Link>
+        {t("pages.made_with")} <Link href="/pages" className="font-semibold hover:underline">{brand.name}</Link>
       </footer>
 
       <Dialog open={qr} onOpenChange={setQr}>

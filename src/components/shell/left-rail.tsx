@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import { MAIN_NAV, STAFF_NAV, isActive, type ShellNavItem } from "./nav-config";
+import { MAIN_NAV, STAFF_NAV, isActive, visibleNavItems, type ShellNavItem } from "./nav-config";
 import type { ShellRail, ShellViewer } from "./shell-types";
 import { UserAvatar } from "./user-avatar";
 
@@ -44,7 +44,15 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
   );
 }
 
-export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null; readonly rail: ShellRail | null }) {
+export function LeftRail({
+  viewer,
+  rail,
+  aiEnabled,
+}: {
+  readonly viewer: ShellViewer | null;
+  readonly rail: ShellRail | null;
+  readonly aiEnabled: boolean;
+}) {
   const t = useTranslation();
   const { unreadCount, messageUnreadTotal } = useRealtime();
   const badges = { messages: messageUnreadTotal, notifications: unreadCount } as const;
@@ -99,7 +107,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
 
       <Card className="p-2">
         <nav aria-label={t("nav.label")} className="flex flex-col gap-0.5">
-          {MAIN_NAV.map((item) => (
+          {visibleNavItems(MAIN_NAV, aiEnabled).map((item) => (
             <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
           ))}
         </nav>
