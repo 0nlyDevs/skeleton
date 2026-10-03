@@ -15,6 +15,7 @@ import { jsonCreated } from "@/lib/api/response";
 import { env } from "@/lib/env";
 import { BadRequestError, PayloadTooLargeError } from "@/lib/errors";
 import { RATE_LIMITS } from "@/lib/rate-limit";
+import { IMAGE_WIDTHS, isImageWidth } from "@/lib/storage/variants";
 import { idSchema, parseOrThrow } from "@/lib/validate";
 
 import { uploadVisibilitySchema } from "./uploads.schema";
@@ -23,6 +24,15 @@ import { getFileForViewer, uploadFileForActor } from "./uploads.service";
 import { z } from "zod";
 
 const uploadIdParamSchema = z.object({ id: idSchema });
+
+/** `?w=` picks a resized copy of an image; only the listed widths exist. */
+const fileQuerySchema = z.object({
+  w: z.coerce
+    .number()
+    .int()
+    .refine(isImageWidth, { message: `w must be one of ${IMAGE_WIDTHS.join(", ")}.` })
+    .optional(),
+});
 
 /**
  * Read the multipart body exactly once — a request stream cannot be consumed
@@ -69,8 +79,10 @@ export const uploadFileRoute = apiRoute({
 
 export const serveFileRoute = publicRoute({
   params: uploadIdParamSchema,
-  handler: async ({ params, auth }) => {
-    const file = await getFileForViewer(params.id, auth?.user ?? null);
+  query: fileQuerySchema,
+  handler: async ({ params, query, auth }) => {
+    const width = query.w !== undefined && isImageWidth(query.w) ? query.w : undefined;
+    const file = await getFileForViewer(params.id, auth?.user ?? null, width);
 
     return new NextResponse(new Uint8Array(file.bytes), {
       status: 200,

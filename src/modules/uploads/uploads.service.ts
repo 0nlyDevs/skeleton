@@ -28,6 +28,7 @@ import { isStaff } from "@/lib/auth/guards";
 import { sanitizeImage } from "@/lib/storage/image";
 import { detectMimeType, extensionForMime } from "@/lib/storage/mime";
 import { readUpload, removeUpload, saveUpload } from "@/lib/storage/disk";
+import { readImageVariant, removeImageVariants, type ImageWidth } from "@/lib/storage/variants";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
@@ -110,6 +111,7 @@ export async function uploadFileForActor(
     // The row is the only thing that can fail after the write; remove the file
     // so a failed upload does not leak bytes on the disk forever.
     await removeUpload(filename).catch(() => undefined);
+    await removeImageVariants(filename);
     throw error;
   }
 }
@@ -156,7 +158,7 @@ export interface StoredFile {
  * Load a file for delivery after re-checking authorization on this request —
  * the route is the only way in, so the visibility decision lives here too.
  */
-export async function getFileForViewer(id: string, viewer: AuthUser | null): Promise<StoredFile> {
+export async function getFileForViewer(id: string, viewer: AuthUser | null, width?: ImageWidth): Promise<StoredFile> {
   const row = await findUploadById(id);
   if (!row) throw new NotFoundError();
 
@@ -167,7 +169,8 @@ export async function getFileForViewer(id: string, viewer: AuthUser | null): Pro
 
   let bytes: Buffer;
   try {
-    bytes = await readUpload(row.filename);
+    // Only images have resized copies; anything else ignores `w`.
+    bytes = width && row.mime.startsWith("image/") ? await readImageVariant(row.filename, width) : await readUpload(row.filename);
   } catch {
     // The row outlived the file (manual cleanup, failed write): treat as gone.
     throw new NotFoundError();

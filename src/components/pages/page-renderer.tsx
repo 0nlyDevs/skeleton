@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
+import { storedSrc, storedSrcSet } from "@/lib/media";
 import type { PageImageDto } from "@/modules/pages/pages.dto";
 import type { PageBlock } from "@/modules/pages/pages.schema";
 
@@ -35,7 +36,9 @@ export function PageRenderer({ page, className }: { readonly page: RenderablePag
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- authorised file route, dimensions known */}
             <img
-              src={page.cover.url}
+              src={storedSrc(page.cover.url, 1080)}
+              srcSet={storedSrcSet(page.cover.url, [640, 1080])}
+              sizes="100vw"
               alt=""
               width={page.cover.width ?? undefined}
               height={page.cover.height ?? undefined}
@@ -62,7 +65,9 @@ function PageImage({ image, alt, className }: { image: PageImageDto | undefined;
   return (
     // eslint-disable-next-line @next/next/no-img-element -- authorised file route, dimensions known
     <img
-      src={image.url}
+      src={storedSrc(image.url, 1080)}
+      srcSet={storedSrcSet(image.url)}
+      sizes="(max-width: 800px) 100vw, 720px"
       alt={alt}
       width={image.width ?? undefined}
       height={image.height ?? undefined}
