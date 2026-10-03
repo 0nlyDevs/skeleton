@@ -26,9 +26,10 @@ Engineering rules and conventions for the Webcup Base scaffold.
   `pool_timeout` in `DATABASE_URL` are translated into driver options in
   `src/lib/db/prisma.ts`
 - Seed script (`prisma/seed.ts`) creates the test accounts with the password
-  in `SEED_PASSWORD`: `cocobrowniees@gmail.com`, `colomberakotonjanahary@gmail.com`
-  (ADMIN), `hei.colombe@gmail.com`, `hei.jonathan.3@gmail.com` (MODERATOR),
-  `hei.tafita.2@gmail.com`, `hei.harena.2@gmail.com` (USER)
+  in `SEED_PASSWORD`: `cocobrowniees@gmail.com`, `hei.jonathan.3@gmail.com`
+  (ADMIN), `hei.colombe@gmail.com`, `hei.tafita.2@gmail.com`,
+  `hei.harena.2@gmail.com` (MODERATOR), `colomberakotonjanahary@gmail.com`
+  (USER, owner of the sample citizen requests)
 - A credential `Account` row must have `accountId === user.id`; BetterAuth
   rejects anything else as "Invalid email or password"
 

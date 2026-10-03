@@ -27,10 +27,10 @@ if (SEED_PASSWORD.length < 10) {
 const ACCOUNTS = [
   { email: "cocobrowniees@gmail.com", username: "coco.admin", firstName: "Coco", lastName: "Brownies", birthDate: "1998-03-14", role: "ADMIN" as const, bio: "Administration de la plateforme Terra Nova." },
   { email: "hei.colombe@gmail.com", username: "colombe.mod", firstName: "Colombe", lastName: "Hei", birthDate: "2001-07-09", role: "MODERATOR" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
-  { email: "hei.tafita.2@gmail.com", username: "tafita", firstName: "Tafita", lastName: "Hei", birthDate: "2002-11-02", role: "USER" as const, bio: "Module B-12, secteur B." },
-  { email: "hei.harena.2@gmail.com", username: "harena", firstName: "Harena", lastName: "Hei", birthDate: "2003-05-27", role: "USER" as const, bio: "Secteur Ouest, près des serres." },
-  { email: "colomberakotonjanahary@gmail.com", username: "colombe.admin", firstName: "Colombe", lastName: "Rakotonjanahary", birthDate: "2000-02-18", role: "ADMIN" as const, bio: "Administration de la plateforme Terra Nova." },
-  { email: "hei.jonathan.3@gmail.com", username: "jonathan.mod", firstName: "Jonathan", lastName: "Hei", birthDate: "2001-09-30", role: "MODERATOR" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
+  { email: "hei.tafita.2@gmail.com", username: "tafita", firstName: "Tafita", lastName: "Hei", birthDate: "2002-11-02", role: "MODERATOR" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
+  { email: "hei.harena.2@gmail.com", username: "harena", firstName: "Harena", lastName: "Hei", birthDate: "2003-05-27", role: "MODERATOR" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
+  { email: "colomberakotonjanahary@gmail.com", username: "colombe.rakoto", firstName: "Colombe", lastName: "Rakotonjanahary", birthDate: "2000-02-18", role: "USER" as const, bio: "Module B-12, secteur B." },
+  { email: "hei.jonathan.3@gmail.com", username: "jonathan.admin", firstName: "Jonathan", lastName: "Hei", birthDate: "2001-09-30", role: "ADMIN" as const, bio: "Administration de la plateforme Terra Nova." },
 ].map((account) => ({ ...account, name: `${account.firstName} ${account.lastName}` }));
 
 const GLOBAL_ROOM = "global";
