@@ -12,7 +12,7 @@ const entry = (overrides: Partial<ActivityEntryDto>): ActivityEntryDto => ({
   action: auditActions.cityRequestChanged,
   category: "requests",
   op: "update",
-  actor: { id: "u1", name: "Marie Agent", role: "MODERATOR" },
+  actor: { id: "u1", name: "Marie Agent", role: "AGENT" },
   target: { type: "city_request", id: "r1", label: "TN-100003", href: "/agent/requests/TN-100003" },
   details: {},
   createdAt: "2026-10-03T10:00:00.000Z",
