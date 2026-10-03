@@ -20,8 +20,8 @@ export interface SceneState {
 
 const D = 12;
 const BASE_FOV = 35;
-const EARTH_URL = "/models/earth.glb";
-const NOVA_URL = "/models/nova.glb";
+const EARTH_URL = "/models/earth-v2.glb";
+const NOVA_URL = "/models/nova-v2.glb";
 
 function noiseCanvas(base: string, seed: number, size = 512): HTMLCanvasElement {
   const c = document.createElement("canvas");
