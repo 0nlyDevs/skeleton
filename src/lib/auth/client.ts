@@ -1,5 +1,6 @@
 "use client";
 
+import { passkeyClient } from "@better-auth/passkey/client";
 import { twoFactorClient, usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
@@ -18,6 +19,7 @@ import { createAuthClient } from "better-auth/react";
 export const authClient = createAuthClient({
   plugins: [
     usernameClient(),
+    passkeyClient(),
     twoFactorClient({
       onTwoFactorRedirect: () => {
         // A hard navigation, not `router.push`: the session was just replaced
@@ -45,6 +47,7 @@ export const {
   revokeSession,
   revokeOtherSessions,
   twoFactor,
+  passkey,
 } = authClient;
 
 export type AuthClientError = {

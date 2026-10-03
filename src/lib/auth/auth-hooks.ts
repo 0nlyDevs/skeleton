@@ -25,7 +25,10 @@ import { resolveClientIp } from "@/lib/http/client-ip";
 import { BREACHED_PASSWORD_MESSAGE, isBreachedPassword } from "@/lib/auth/breached-passwords";
 import { findPasswordViolation } from "@/lib/auth/password-policy";
 import { encryptField } from "@/lib/crypto/field-encryption";
+import { auditActions } from "@/modules/audit/audit.schema";
+import { recordAudit } from "@/modules/audit/audit.service";
 import { DEVICE_COOKIE, DEVICE_COOKIE_MAX_AGE, isDeviceId, newDeviceId, recordSignIn } from "@/modules/devices/devices.service";
+import { createNotification } from "@/modules/notifications/notifications.service";
 import {
   birthDateViolation,
   composeDisplayName,
@@ -59,6 +62,10 @@ export const GUARDED_AUTH_PATHS: readonly GuardedPath[] = [
   { path: "/send-verification-email", rule: RATE_LIMITS.emailVerification, byAccount: true },
   { path: "/two-factor/verify-totp", rule: RATE_LIMITS.twoFactor, byAccount: false },
   { path: "/two-factor/verify-backup-code", rule: RATE_LIMITS.twoFactor, byAccount: false },
+  // D02 — passkey sign-in: same budget as a password attempt, per source IP
+  // (the request names no account until the device has signed the challenge).
+  { path: "/passkey/generate-authenticate-options", rule: RATE_LIMITS.login, byAccount: false },
+  { path: "/passkey/verify-authentication", rule: RATE_LIMITS.login, byAccount: false },
 ];
 
 /**
@@ -257,11 +264,45 @@ export const authRateLimitHook: AuthBeforeMiddleware = async (ctx) => {
 };
 
 /**
+ * D02 — adding or removing a passkey changes how the account can be entered:
+ * it is written to the audit trail and the owner is told at once (in the app
+ * and by email), so a passkey added by someone else does not go unnoticed.
+ */
+async function afterPasskeyChange(ctx: Parameters<Parameters<typeof createAuthMiddleware>[0]>[0]): Promise<void> {
+  const added = ctx.path === "/passkey/verify-registration";
+  const removed = ctx.path === "/passkey/delete-passkey";
+  if (!added && !removed) return;
+  if (ctx.context.returned instanceof APIError) return;
+  const userId = ctx.context.session?.user?.id;
+  if (!userId) return;
+  const ip = ctx.headers ? resolveClientIp(ctx.headers, env.trustProxy) : null;
+  await recordAudit({
+    actorId: String(userId),
+    action: added ? auditActions.passkeyAdded : auditActions.passkeyRemoved,
+    targetType: "user",
+    targetId: String(userId),
+    ip,
+  });
+  await createNotification({
+    userId: String(userId),
+    type: "SECURITY",
+    title: added ? "Une nouvelle passkey a été ajoutée à votre compte" : "Une passkey a été retirée de votre compte",
+    body: added
+      ? "Vous pouvez désormais vous connecter avec le visage, l'empreinte ou le code de cet appareil. Si ce n'est pas vous, supprimez-la et changez votre mot de passe."
+      : "Cet appareil ne permet plus de se connecter sans mot de passe. Si ce n'est pas vous, changez votre mot de passe.",
+    link: "/settings/security",
+    email: true,
+  });
+}
+
+/**
  * After any endpoint that just created a session (password, username, OAuth
  * callback, 2FA completion): tag the browser with a device cookie and alert
  * the owner when the device is new.
  */
 export const authAfterHook = createAuthMiddleware(async (ctx) => {
+  await afterPasskeyChange(ctx);
+
   const created = ctx.context.newSession;
   if (!created) return;
 

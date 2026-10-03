@@ -21,6 +21,7 @@
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { passkey } from "@better-auth/passkey";
 import { twoFactor, username } from "better-auth/plugins";
 
 import { prisma } from "@/lib/db/prisma";
@@ -307,6 +308,16 @@ export const auth = betterAuth({
     // The issuer is what an authenticator app shows next to the entry, so it has
     // to match the product rather than the scaffold it was copied from.
     twoFactor({ issuer: "Terra Nova" }),
+    // D02 — sign in without a password: the device's face, fingerprint or PIN
+    // unlocks a passkey bound to this site. `userVerification: "required"`
+    // means the device must check the person (not just presence), and only the
+    // public key ever reaches the server.
+    passkey({
+      rpID: new URL(env.appUrl).hostname,
+      rpName: "Terra Nova",
+      origin: env.appUrl,
+      authenticatorSelection: { residentKey: "preferred", userVerification: "required" },
+    }),
     username({
       minUsernameLength: USERNAME_MIN_LENGTH,
       maxUsernameLength: USERNAME_MAX_LENGTH,
