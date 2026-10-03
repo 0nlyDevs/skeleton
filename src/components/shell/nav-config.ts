@@ -1,24 +1,20 @@
 import {
-  Bell,
   Bookmark,
   BusFront,
   Briefcase,
   Building2,
-  FolderOpen,
-  Landmark,
-  Megaphone,
-  Send,
   FileText,
-  Gavel,
-  Home,
+  Globe2,
+  LayoutDashboard,
   Map as MapIcon,
+  Megaphone,
   MessageCircle,
-  ScrollText,
-  Settings,
-  SlidersHorizontal,
+  Newspaper,
+  Send,
+  ShieldCheck,
+  Siren,
   Sparkles,
   UserRound,
-  Users,
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -34,45 +30,77 @@ export interface ShellNavItem {
   readonly roles?: readonly Role[];
 }
 
-/** The city portal: what every resident comes for. */
-export const CITY_NAV: readonly ShellNavItem[] = [
-  { href: "/", labelKey: "tn.nav.home", icon: Landmark },
-  { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
-  { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
-  { href: "/transports", labelKey: "tn.nav.transports", icon: BusFront },
-  { href: "/space", labelKey: "tn.nav.my_space", icon: FolderOpen },
-  { href: "/contact", labelKey: "tn.nav.contact", icon: Send },
-  { href: "/messages", labelKey: "nav.messages", icon: MessageCircle, badge: "messages" },
-  { href: "/notifications", labelKey: "nav.notifications", icon: Bell, badge: "notifications" },
+export interface ShellNavGroup {
+  /** No label for the first group: "My space" stands on its own. */
+  readonly labelKey: MessageKey | null;
+  readonly items: readonly ShellNavItem[];
+}
+
+/**
+ * Navigation by intent, not by feature: the resident's hub first, then
+ * "get something done", "know what is happening in my city" and the
+ * community. Notifications and settings live in the top bar; the rarely used
+ * pages sit under "More". The logo is the way home.
+ */
+export const NAV_GROUPS: readonly ShellNavGroup[] = [
+  { labelKey: null, items: [{ href: "/space", labelKey: "tn.nav.my_space", icon: LayoutDashboard }] },
+  {
+    labelKey: "tn.nav.group.procedures",
+    items: [
+      { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
+      { href: "/contact", labelKey: "tn.nav.request", icon: Send },
+    ],
+  },
+  {
+    labelKey: "tn.nav.group.city",
+    items: [
+      { href: "/alerts", labelKey: "tn.nav.alerts", icon: Siren },
+      { href: "/city-map", labelKey: "tn.nav.city_map", icon: Globe2 },
+      { href: "/transports", labelKey: "tn.nav.transports", icon: BusFront },
+      { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
+    ],
+  },
+  {
+    labelKey: "tn.nav.group.community",
+    items: [
+      { href: "/feed", labelKey: "nav.feed", icon: Newspaper },
+      { href: "/messages", labelKey: "nav.messages", icon: MessageCircle, badge: "messages" },
+      { href: "/groups", labelKey: "nav.groups", icon: UsersRound },
+    ],
+  },
 ];
 
-/** "Vie de la cité": the community features, secondary to the portal. */
-export const MAIN_NAV: readonly ShellNavItem[] = [
-  { href: "/feed", labelKey: "nav.feed", icon: Home },
-  { href: "/groups", labelKey: "nav.groups", icon: UsersRound },
-  { href: "/map", labelKey: "nav.map", icon: MapIcon },
+/** Under "More": useful, but not where a resident starts. */
+export const MORE_NAV: readonly ShellNavItem[] = [
+  { href: "/assistant", labelKey: "nav.assistant", icon: Sparkles },
   { href: "/pages", labelKey: "nav.pages", icon: FileText },
   { href: "/saved", labelKey: "nav.saved", icon: Bookmark },
-  { href: "/assistant", labelKey: "nav.assistant", icon: Sparkles },
-  { href: "/settings/profile", labelKey: "nav.settings", icon: Settings },
+  { href: "/map", labelKey: "nav.map", icon: MapIcon },
+];
+
+/** What a guest can open without an account. */
+export const GUEST_NAV: readonly ShellNavItem[] = [
+  { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
+  { href: "/alerts", labelKey: "tn.nav.alerts", icon: Siren },
+  { href: "/city-map", labelKey: "tn.nav.city_map", icon: Globe2 },
+  { href: "/transports", labelKey: "tn.nav.transports", icon: BusFront },
+  { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
+  { href: "/feed", labelKey: "nav.feed", icon: Newspaper },
+];
+
+/** Staff: one door each; their workspaces have their own navigation. */
+export const STAFF_NAV: readonly ShellNavItem[] = [
+  { href: "/agent", labelKey: "tn.nav.agent", icon: Briefcase, roles: ["MODERATOR", "ADMIN"] },
+  { href: "/admin", labelKey: "nav.admin", icon: ShieldCheck, roles: ["ADMIN"] },
 ];
 
 /** Every destination, for lookups by href. */
-export const ALL_NAV: readonly ShellNavItem[] = [...CITY_NAV, ...MAIN_NAV];
-
-export const STAFF_NAV: readonly ShellNavItem[] = [
-  { href: "/agent", labelKey: "tn.nav.agent", icon: Briefcase, roles: ["MODERATOR", "ADMIN"] },
-  { href: "/admin/moderation", labelKey: "nav.moderation", icon: Gavel, roles: ["MODERATOR", "ADMIN"] },
-  { href: "/admin/users", labelKey: "nav.users", icon: Users, roles: ["ADMIN"] },
-  { href: "/admin/audit", labelKey: "nav.audit", icon: ScrollText, roles: ["ADMIN"] },
-  { href: "/admin/settings", labelKey: "nav.flags", icon: SlidersHorizontal, roles: ["ADMIN"] },
-];
+export const ALL_NAV: readonly ShellNavItem[] = [...NAV_GROUPS.flatMap((group) => group.items), ...MORE_NAV, ...GUEST_NAV];
 
 export const PROFILE_ICON = UserRound;
 
 export function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
   if (href === "/feed") return pathname === "/feed" || pathname.startsWith("/feed/");
-  if (href === "/settings/profile") return pathname.startsWith("/settings");
+  if (href === "/admin") return pathname.startsWith("/admin");
   return pathname === href || pathname.startsWith(`${href}/`);
 }

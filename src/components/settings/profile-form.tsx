@@ -29,6 +29,7 @@ import {
 } from "@/lib/validation/profile";
 import type { UserProfileDto } from "@/modules/users/users.dto";
 import { initials } from "@/lib/utils";
+import { CITY_ZONES, cityZoneLabelKey, type CityZoneId } from "@/modules/alerts/city-zones";
 
 const BIO_MAX = 500;
 
@@ -58,6 +59,7 @@ export function ProfileForm({
   const [usernameState, setUsernameState] = useState<UsernameState>("idle");
   const [birthDate, setBirthDate] = useState(profile.birthDate ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
+  const [cityZone, setCityZone] = useState<CityZoneId | "">(profile.cityZone ?? "");
   const [image, setImage] = useState(profile.image);
   const [banner, setBanner] = useState<string | null>(profile.banner);
   const [serverErrors, setServerErrors] = useState<Partial<Record<string, MessageKey>>>({});
@@ -129,6 +131,7 @@ export function ProfileForm({
           username: username.trim(),
           birthDate: birthDate === "" ? null : birthDate,
           bio: bio.trim(),
+          cityZone: cityZone || null,
         },
       });
       patchProfile({ userId: saved.id, name: saved.name, username: saved.username, image: saved.image });
@@ -238,6 +241,22 @@ export function ProfileForm({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="flex flex-col gap-5" noValidate>
+            <FormField label={t("alerts.location.label")} hint={t("alerts.location.private")}>
+              {(field) => (
+                <select
+                  {...field}
+                  value={cityZone}
+                  onChange={(event) => setCityZone(event.target.value as CityZoneId | "")}
+                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                >
+                  <option value="">{t("alerts.location.choose")}</option>
+                  {CITY_ZONES.map((zone) => (
+                    <option key={zone.id} value={zone.id}>{t(cityZoneLabelKey(zone.id))}</option>
+                  ))}
+                </select>
+              )}
+            </FormField>
+
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField label={t("profile.first_name")} required {...errorFor("firstName", "profile.error.name")}>
                 {(field) => (

@@ -10,6 +10,12 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Give the alert a clear title.": "Donnez un titre clair à l'alerte.",
+  "Say in one sentence what is happening.": "Dites en une phrase ce qui se passe.",
+  "Tell residents what to do.": "Indiquez aux habitants ce qu'ils doivent faire.",
+  "This city alert does not exist.": "Cette alerte n'existe pas.",
+  "Choose your district in profile settings to get zone-specific guidance.": "Choisissez votre quartier dans votre profil pour recevoir des conseils adaptés à votre zone.",
+  "Published city alert did not include alert metadata.": "L'alerte publiée est incomplète. Réessayez.",
   "Give the announcement a title.": "Donnez un titre à l'annonce.",
   "Write a short summary.": "Rédigez un court résumé.",
   "Write the announcement.": "Rédigez l'annonce.",
@@ -215,6 +221,7 @@ const FR: Readonly<Record<string, string>> = {
   "You are not allowed to perform this action.": "Vous n'avez pas l'autorisation de faire cela.",
   "You cannot ban your own account.": "Vous ne pouvez pas exclure votre propre compte.",
   "Agents can only manage resident accounts.": "Les agents ne peuvent gérer que les comptes des habitants.",
+  "Only city agents can see the history.": "Seuls les agents de la ville peuvent consulter l'historique.",
   "You cannot change your own role.": "Vous ne pouvez pas modifier votre propre rôle.",
   "You cannot follow yourself.": "Vous ne pouvez pas vous suivre vous-même.",
   "You cannot grant a role above your own.": "Vous ne pouvez pas attribuer un rôle supérieur au vôtre.",

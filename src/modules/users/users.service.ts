@@ -390,6 +390,7 @@ export async function updateOwnProfile(
   if (input.banner !== undefined) data.banner = input.banner;
   if (input.showPresence !== undefined) data.showPresence = input.showPresence;
   if (input.autoLocation !== undefined) data.autoLocation = input.autoLocation;
+  if (input.cityZone !== undefined) data.cityZone = input.cityZone;
 
   let row;
   try {

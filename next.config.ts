@@ -113,11 +113,15 @@ const nextConfig: NextConfig = {
    * 985/8586 with no root shims like headers.js, @swc/helpers 5/438,
    * react-dom 12/43, prisma packages 2/7...), which crashes the custom
    * server at boot with MODULE_NOT_FOUND and would break SSR. Force the
-   * full runtime closure into the standalone output. Keys are route globs
-   * (`/*` = all routes); values are project-root-relative globs.
+   * full runtime closure into the standalone output. Keys are route globs;
+   * values are project-root-relative globs. One route is enough: the
+   * standalone folder receives the union of every route's files, and keying
+   * on `/*` re-globbed these thousands of files and rewrote a huge trace once
+   * per route, which ran the build out of memory as routes were added. The
+   * auth catch-all is always dynamic (static routes are skipped here).
    */
   outputFileTracingIncludes: {
-    "/*": [
+    "/api/auth/**": [
       "./node_modules/next/**",
       "./node_modules/react/**",
       "./node_modules/react-dom/**",
