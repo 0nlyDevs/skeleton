@@ -28,6 +28,7 @@ export const userProfileSelect = {
   showPresence: true,
   usernameChangedAt: true,
   autoLocation: true,
+  cityZone: true,
 } satisfies Prisma.UserSelect;
 
 export const adminUserSelect = {

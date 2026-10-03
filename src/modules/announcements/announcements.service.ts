@@ -8,12 +8,15 @@ import { randomInt } from "node:crypto";
 import { isStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import type { CityAlertScope, CityAlertSeverity, CityAlertStatus } from "@/generated/prisma/client";
+import { publishCityAlertUpdated } from "@/lib/socket/emit";
 import { slugify } from "@/lib/utils";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { notifyInBackground } from "../notifications/notifications.service";
+import { notifyResidentsOfAlert } from "../alerts/alerts.notify";
 import { assertOwnPublicImage } from "../uploads/uploads.service";
 import { broadcastAnnouncement } from "./announcements.notify";
 import type { AnnouncementInput, ListAnnouncementsQuery } from "./announcements.schema";
@@ -38,6 +41,12 @@ export interface AnnouncementDto {
   readonly author: { id: string; name: string };
   readonly publishedAt: string | null;
   readonly updatedAt: string;
+  readonly alert: {
+    readonly scope: CityAlertScope;
+    readonly severity: CityAlertSeverity;
+    readonly status: CityAlertStatus;
+    readonly resolvedAt: string | null;
+  } | null;
 }
 
 function toDto(row: Row): AnnouncementDto {
@@ -54,6 +63,14 @@ function toDto(row: Row): AnnouncementDto {
     author: row.author,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     updatedAt: row.updatedAt.toISOString(),
+    alert: row.category === "ALERT"
+      ? {
+          scope: row.alertScope ?? "ALL",
+          severity: row.alertSeverity ?? "WARNING",
+          status: row.alertStatus ?? "ACTIVE",
+          resolvedAt: row.alertResolvedAt?.toISOString() ?? null,
+        }
+      : null,
   };
 }
 
@@ -124,6 +141,9 @@ export async function createAnnouncement(input: AnnouncementInput, actor: AuthUs
       summary: input.summary,
       body: input.body,
       category: input.category,
+      alertScope: input.category === "ALERT" ? input.alertScope ?? "ALL" : null,
+      alertSeverity: input.category === "ALERT" ? input.alertSeverity ?? "WARNING" : null,
+      alertStatus: input.category === "ALERT" ? "ACTIVE" : null,
       pinned: input.pinned,
       coverImage: input.coverImage ?? null,
       serviceId: await validServiceId(input.serviceId),
@@ -133,7 +153,20 @@ export async function createAnnouncement(input: AnnouncementInput, actor: AuthUs
     include,
   });
   await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: row.id, metadata: { op: "create", published: input.published }, ip });
-  if (row.publishedAt) notifyInBackground(broadcastAnnouncement(row.slug, row.title, row.category === "ALERT"), { announcementId: row.id });
+  if (row.publishedAt && row.category === "ALERT") {
+    notifyInBackground(
+      notifyResidentsOfAlert({
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        scope: row.alertScope ?? "ALL",
+      }),
+      { announcementId: row.id, scope: row.alertScope ?? "ALL" },
+    );
+    publishCityAlertUpdated({ slug: row.slug, action: "published" });
+  } else if (row.publishedAt) {
+    notifyInBackground(broadcastAnnouncement(row.slug, row.title, false), { announcementId: row.id });
+  }
   return toDto(row);
 }
 
@@ -151,6 +184,10 @@ export async function updateAnnouncement(slug: string, input: AnnouncementInput,
       summary: input.summary,
       body: input.body,
       category: input.category,
+      alertScope: input.category === "ALERT" ? input.alertScope ?? existing.alertScope ?? "ALL" : null,
+      alertSeverity: input.category === "ALERT" ? input.alertSeverity ?? existing.alertSeverity ?? "WARNING" : null,
+      alertStatus: input.category === "ALERT" ? existing.alertStatus ?? "ACTIVE" : null,
+      alertResolvedAt: input.category === "ALERT" ? existing.alertResolvedAt : null,
       pinned: input.pinned,
       coverImage: input.coverImage ?? null,
       serviceId: await validServiceId(input.serviceId),
@@ -159,7 +196,24 @@ export async function updateAnnouncement(slug: string, input: AnnouncementInput,
     include,
   });
   await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: row.id, metadata: { op: "update" }, ip });
-  if (publishNow) notifyInBackground(broadcastAnnouncement(row.slug, row.title, row.category === "ALERT"), { announcementId: row.id });
+  if (publishNow && row.category === "ALERT") {
+    notifyInBackground(
+      notifyResidentsOfAlert({
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        scope: row.alertScope ?? "ALL",
+      }),
+      { announcementId: row.id, scope: row.alertScope ?? "ALL" },
+    );
+  } else if (publishNow) {
+    notifyInBackground(broadcastAnnouncement(row.slug, row.title, false), { announcementId: row.id });
+  }
+  if (row.category === "ALERT" && row.publishedAt) {
+    publishCityAlertUpdated({ slug: row.slug, action: row.alertStatus === "RESOLVED" ? "resolved" : publishNow ? "published" : "changed" });
+  } else if (existing.category === "ALERT") {
+    publishCityAlertUpdated({ slug: existing.slug, action: "removed" });
+  }
   return toDto(row);
 }
 
@@ -168,5 +222,32 @@ export async function deleteAnnouncement(slug: string, actor: AuthUser, ip: stri
   const existing = await prisma.announcement.findUnique({ where: { slug } });
   if (!existing || existing.deletedAt) throw new NotFoundError("This announcement does not exist.");
   await prisma.announcement.update({ where: { id: existing.id }, data: { deletedAt: new Date() } });
+  if (existing.category === "ALERT") publishCityAlertUpdated({ slug: existing.slug, action: "removed" });
   await recordAudit({ actorId: actor.id, action: auditActions.announcementChanged, targetType: "announcement", targetId: existing.id, metadata: { op: "delete" }, ip });
+}
+
+/** Resolve a published safety alert while keeping its history visible in the city feed. */
+export async function resolveAnnouncementAlert(slug: string, actor: AuthUser, ip: string | null): Promise<AnnouncementDto> {
+  assertWriter(actor);
+  const existing = await prisma.announcement.findUnique({ where: { slug }, include });
+  if (!existing || existing.deletedAt || existing.category !== "ALERT" || !existing.publishedAt) {
+    throw new NotFoundError("This city alert does not exist.");
+  }
+  if (existing.alertStatus === "RESOLVED") return toDto(existing);
+
+  const row = await prisma.announcement.update({
+    where: { id: existing.id },
+    data: { alertStatus: "RESOLVED", alertResolvedAt: new Date() },
+    include,
+  });
+  await recordAudit({
+    actorId: actor.id,
+    action: auditActions.announcementChanged,
+    targetType: "announcement",
+    targetId: row.id,
+    metadata: { op: "resolve_alert", scope: row.alertScope ?? "ALL" },
+    ip,
+  });
+  publishCityAlertUpdated({ slug: row.slug, action: "resolved" });
+  return toDto(row);
 }

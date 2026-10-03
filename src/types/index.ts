@@ -26,6 +26,7 @@ export const NOTIFICATION_TYPES = [
   "SECURITY",
   "CITY_REQUEST",
   "ANNOUNCEMENT",
+  "ALERT",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

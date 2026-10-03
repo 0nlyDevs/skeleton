@@ -15,6 +15,7 @@
 import {
   SOCKET_EVENTS,
   type CityRequestUpdatedPayload,
+  type CityAlertUpdatedPayload,
   type MessageAlertPayload,
   type MessageHiddenPayload,
   type ProfileUpdatedPayload,
@@ -206,4 +207,10 @@ export function publishProfileUpdated(payload: ProfileUpdatedPayload): void {
 export function publishCityRequestUpdated(userIds: readonly string[], payload: CityRequestUpdatedPayload): void {
   if (userIds.length === 0) return;
   broadcastTo(userIds.map(userRoom)).emit(SOCKET_EVENTS.cityRequestUpdated, payload);
+}
+
+/** Public alert scope and status are visible to every resident, including feed and map viewers. */
+export function publishCityAlertUpdated(payload: CityAlertUpdatedPayload): void {
+  getSocketServer()?.emit(SOCKET_EVENTS.cityAlertUpdated, payload);
+  getRelayHub().broadcastAll(SOCKET_EVENTS.cityAlertUpdated, payload);
 }

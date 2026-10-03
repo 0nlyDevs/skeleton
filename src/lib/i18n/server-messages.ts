@@ -10,6 +10,12 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Give the alert a clear title.": "Donnez un titre clair à l'alerte.",
+  "Say in one sentence what is happening.": "Dites en une phrase ce qui se passe.",
+  "Tell residents what to do.": "Indiquez aux habitants ce qu'ils doivent faire.",
+  "This city alert does not exist.": "Cette alerte n'existe pas.",
+  "Choose your district in profile settings to get zone-specific guidance.": "Choisissez votre quartier dans votre profil pour recevoir des conseils adaptés à votre zone.",
+  "Published city alert did not include alert metadata.": "L'alerte publiée est incomplète. Réessayez.",
   "Give the announcement a title.": "Donnez un titre à l'annonce.",
   "Write a short summary.": "Rédigez un court résumé.",
   "Write the announcement.": "Rédigez l'annonce.",
