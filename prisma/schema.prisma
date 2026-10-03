@@ -1011,26 +1011,26 @@ enum AnnouncementCategory {
 
 /// A publication of the city, written by agents or administrators.
 model Announcement {
-  id          String               @id @default(cuid())
-  slug        String               @unique @db.VarChar(100)
-  title       String               @db.VarChar(160)
-  summary     String               @db.VarChar(300)
-  body        String               @db.Text
-  category    AnnouncementCategory @default(ANNOUNCEMENT)
-  alertScope    CityAlertScope?
-  alertSeverity CityAlertSeverity?
-  alertStatus   CityAlertStatus?
+  id              String               @id @default(cuid())
+  slug            String               @unique @db.VarChar(100)
+  title           String               @db.VarChar(160)
+  summary         String               @db.VarChar(300)
+  body            String               @db.Text
+  category        AnnouncementCategory @default(ANNOUNCEMENT)
+  alertScope      CityAlertScope?
+  alertSeverity   CityAlertSeverity?
+  alertStatus     CityAlertStatus?
   alertResolvedAt DateTime?
-  pinned      Boolean              @default(false)
-  coverImage  String?              @db.VarChar(200)
-  serviceId   String?
-  service     MunicipalService?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  authorId    String
-  author      User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  publishedAt DateTime?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  deletedAt   DateTime?
+  pinned          Boolean              @default(false)
+  coverImage      String?              @db.VarChar(200)
+  serviceId       String?
+  service         MunicipalService?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  authorId        String
+  author          User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt     DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
 
   @@index([publishedAt, deletedAt])
   @@index([category])
