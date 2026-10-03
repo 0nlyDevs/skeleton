@@ -23,14 +23,14 @@ export function isEmailLocale(value: unknown): value is EmailLocale {
 }
 
 const fr = {
-  "mail.brand": "Terra Nova",
+  "mail.brand": "Bubble",
   "mail.tagline": "Le portail des habitants",
   "mail.footer_reason": "Ceci est un message automatique de",
   "mail.footer_ignore":
     "Si vous n'attendiez pas ce message, vous pouvez l'ignorer sans conséquence.",
 
-  "mail.welcome.preview": "Votre compte Terra Nova est prêt",
-  "mail.welcome.heading": "Bienvenue sur Terra Nova, {name}",
+  "mail.welcome.preview": "Votre compte Bubble est prêt",
+  "mail.welcome.heading": "Bienvenue sur Bubble, {name}",
   "mail.welcome.lead": "Votre compte est créé. Voici ce que la ville met à votre disposition.",
   "mail.welcome.step1": "Parcourez les services municipaux : horaires, contacts et marche à suivre, service par service.",
   "mail.welcome.step2": "Suivez les annonces de la ville et vos démarches en cours depuis votre espace.",
@@ -47,7 +47,7 @@ const fr = {
 
   "mail.reset.preview": "Réinitialisez votre mot de passe",
   "mail.reset.heading": "Réinitialisez votre mot de passe, {name}",
-  "mail.reset.lead": "Une réinitialisation a été demandée pour votre compte Terra Nova.",
+  "mail.reset.lead": "Une réinitialisation a été demandée pour votre compte Bubble.",
   "mail.reset.constraint":
     "Ce lien expire dans {minutes} minutes, ne fonctionne qu'une seule fois et déconnecte vos autres appareils.",
   "mail.reset.cta": "Choisir un nouveau mot de passe",
@@ -55,7 +55,7 @@ const fr = {
     "Ce n'est pas vous ? Votre mot de passe reste inchangé et ce lien expirera de lui-même.",
 
   "mail.notification.greeting": "Bonjour {name},",
-  "mail.notification.cta": "Ouvrir dans Terra Nova",
+  "mail.notification.cta": "Ouvrir dans Bubble",
   "mail.notification.reason":
     "Vous recevez cet e-mail car les notifications par e-mail sont activées dans les réglages de votre compte.",
   "mail.notification.manage": "Gérer mes notifications",
@@ -67,17 +67,20 @@ const fr = {
   // thing that tells a recipient the translation was an afterthought.
   "mail.subject.verify": "Confirmez votre adresse e-mail",
   "mail.subject.reset": "Réinitialisez votre mot de passe",
-  "mail.subject.welcome": "Votre compte Terra Nova est prêt",
+  // The subject is prefixed with "[Bubble]" in transactional.tsx, so the brand
+  // name is not repeated here — "[Bubble] Votre compte Bubble est prêt" would
+  // read twice.
+  "mail.subject.welcome": "Votre compte est prêt",
 } as const;
 
 const en: Record<keyof typeof fr, string> = {
-  "mail.brand": "Terra Nova",
+  "mail.brand": "Bubble",
   "mail.tagline": "The residents' portal",
   "mail.footer_reason": "This is an automated message from",
   "mail.footer_ignore": "If you were not expecting this message, you can safely ignore it.",
 
-  "mail.welcome.preview": "Your Terra Nova account is ready",
-  "mail.welcome.heading": "Welcome to Terra Nova, {name}",
+  "mail.welcome.preview": "Your Bubble account is ready",
+  "mail.welcome.heading": "Welcome to Bubble, {name}",
   "mail.welcome.lead": "Your account is created. Here is what the city has put at your disposal.",
   "mail.welcome.step1":
     "Browse the city services: opening hours, contacts and the steps to follow, service by service.",
@@ -96,7 +99,7 @@ const en: Record<keyof typeof fr, string> = {
 
   "mail.reset.preview": "Reset your password",
   "mail.reset.heading": "Reset your password, {name}",
-  "mail.reset.lead": "A password reset was requested for your Terra Nova account.",
+  "mail.reset.lead": "A password reset was requested for your Bubble account.",
   "mail.reset.constraint":
     "This link expires in {minutes} minutes, can only be used once, and signs out your other devices.",
   "mail.reset.cta": "Choose a new password",
@@ -104,7 +107,7 @@ const en: Record<keyof typeof fr, string> = {
     "This wasn't you? Your password stays unchanged and this link will expire on its own.",
 
   "mail.notification.greeting": "Hello {name},",
-  "mail.notification.cta": "Open in Terra Nova",
+  "mail.notification.cta": "Open in Bubble",
   "mail.notification.reason":
     "You are receiving this email because email notifications are enabled in your account settings.",
   "mail.notification.manage": "Manage my notifications",
@@ -114,7 +117,7 @@ const en: Record<keyof typeof fr, string> = {
 
   "mail.subject.verify": "Confirm your email address",
   "mail.subject.reset": "Reset your password",
-  "mail.subject.welcome": "Your Terra Nova account is ready",
+  "mail.subject.welcome": "Your account is ready",
 };
 
 export type MailKey = keyof typeof fr;
