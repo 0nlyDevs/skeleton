@@ -416,6 +416,16 @@ html[data-contrast="high"].dark {
  * <main>. A resting background fill is the only reason to skip an underline;
  * "current page" covers that in the left rail, and a button role is not a link
  * anyway. */
+/*
+ * F43 — a link inside running text is recognisable without colour: it is
+ * underlined, whatever the theme. Links that look like buttons, cards or
+ * navigation items carry their own shape and are left alone.
+ */
+main :is(p, li, dd, td) > a:not([class*="rounded"]):not([class*="bg-"]):not([role]) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 html[data-contrast="high"] a:not([role]):not([aria-current="page"]) {
   text-decoration: underline;
   text-underline-offset: 2px;

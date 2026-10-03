@@ -155,7 +155,7 @@ export function MessageBubble({
           <Popover open={picker} onOpenChange={setPicker}>
             <PopoverTrigger
               aria-label={t("messages.react")}
-              className="grid size-7 shrink-0 place-items-center self-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-surface-muted focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-60"
+              className="grid size-7 shrink-0 place-items-center self-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-surface-muted focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-60"
             >
               <SmilePlus className="size-4" />
             </PopoverTrigger>
@@ -180,7 +180,7 @@ export function MessageBubble({
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t("common.more")}
-              className="grid size-7 shrink-0 place-items-center self-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-surface-muted focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="grid size-7 shrink-0 place-items-center self-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-surface-muted focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 data-[state=open]:opacity-100"
             >
               <MoreHorizontal className="size-4" />
             </DropdownMenuTrigger>

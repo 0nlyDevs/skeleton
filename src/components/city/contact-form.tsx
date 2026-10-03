@@ -30,10 +30,13 @@ export function ContactForm({
   services,
   initialServiceId,
   initialKind = "question",
+  initialSubject = "",
 }: {
   readonly services: readonly { id: string; name: string }[];
   readonly initialServiceId: string;
   readonly initialKind?: "question" | "issue";
+  /** Prefilled subject, e.g. when coming from the accessibility page. */
+  readonly initialSubject?: string;
 }) {
   const t = useTranslation();
   const router = useRouter();
@@ -43,7 +46,7 @@ export function ContactForm({
   const [point, setPoint] = useState<PickedPlace | null>(null);
   const [picking, setPicking] = useState(false);
   const [serviceId, setServiceId] = useState(initialServiceId);
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState(initialSubject);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -75,7 +78,12 @@ export function ContactForm({
       });
       router.push(`/space/requests/${response.data.reference}?sent=1`);
     } catch (error) {
-      if (error instanceof ApiRequestError && error.fields) setFields(error.fields);
+      if (error instanceof ApiRequestError && error.fields) {
+        setFields(error.fields);
+        // F42 — move to the first field to fix, so keyboard and screen reader users land on it.
+        const first = ["location", "subject", "message"].find((key) => error.fields?.[key]);
+        if (first) requestAnimationFrame(() => document.getElementById(`contact-${first}`)?.focus());
+      }
       toast.error(describeApiError(error, t));
       setBusy(false);
     }

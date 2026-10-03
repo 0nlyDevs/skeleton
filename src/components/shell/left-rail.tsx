@@ -45,7 +45,7 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
 }
 
 /** What a guest can open without an account. */
-const PUBLIC_CITY_PATHS = new Set(["/", "/services", "/announcements", "/glossary"]);
+const PUBLIC_CITY_PATHS = new Set(["/", "/services", "/announcements", "/glossary", "/accessibility"]);
 
 export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null; readonly rail: ShellRail | null }) {
   const t = useTranslation();

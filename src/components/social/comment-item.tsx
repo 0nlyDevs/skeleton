@@ -132,7 +132,7 @@ export function CommentItem({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   aria-label={t("common.more")}
-                  className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-surface-muted focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+                  className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-surface-muted focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-60"
                 >
                   <MoreHorizontal className="size-4" />
                 </DropdownMenuTrigger>

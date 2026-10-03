@@ -1,4 +1,5 @@
 import {
+  Accessibility,
   Bell,
   BookOpen,
   Bookmark,
@@ -44,6 +45,7 @@ export const CITY_NAV: readonly ShellNavItem[] = [
   { href: "/space", labelKey: "tn.nav.my_space", icon: FolderOpen },
   { href: "/contact", labelKey: "tn.nav.contact", icon: Send },
   { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
+  { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
   { href: "/messages", labelKey: "nav.messages", icon: MessageCircle, badge: "messages" },
   { href: "/notifications", labelKey: "nav.notifications", icon: Bell, badge: "notifications" },
 ];

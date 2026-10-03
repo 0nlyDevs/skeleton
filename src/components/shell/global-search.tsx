@@ -83,9 +83,16 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
           placeholder={t("nav.search_placeholder")}
           aria-label={t("nav.search_placeholder")}
           aria-controls={listId}
-          aria-expanded={open && term.length >= 2}
+          data-global-search
+          aria-keyshortcuts="/"
           className="h-10 w-full rounded-full border border-transparent bg-surface-muted pl-10 pr-10 text-[0.875rem] outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:bg-surface"
         />
+        {/* F42 — the result count is announced as it changes; the results are plain buttons reached with Tab. */}
+        <span className="sr-only" aria-live="polite">
+          {open && term.length >= 2 && results && !loading
+            ? t("tn.search.results_count", { count: results.people.length + results.groups.length + results.posts.length })
+            : ""}
+        </span>
         {loading ? (
           <Loader2 className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
         ) : null}
