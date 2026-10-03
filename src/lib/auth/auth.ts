@@ -25,7 +25,6 @@ import { twoFactor, username } from "better-auth/plugins";
 
 import { prisma } from "@/lib/db/prisma";
 import { env } from "@/lib/env";
-import { normalizeIp, UNKNOWN_IP } from "@/lib/http/client-ip";
 import { logger } from "@/lib/logger";
 import {
   sendPasswordResetEmail,
@@ -33,7 +32,8 @@ import {
   sendWelcomeEmail,
 } from "@/lib/mail/transactional";
 import { localeFromCookieHeader } from "@/lib/i18n/config";
-import { clearLimits, rateLimitKey } from "@/lib/rate-limit";
+import { clearLimits } from "@/lib/rate-limit";
+import { accountCounterKey } from "@/modules/login-protection/login-protection.service";
 
 import { authAfterHook, authBeforeHook } from "./auth-hooks";
 import { resolveBanState } from "./ban";
@@ -240,16 +240,10 @@ export const auth = betterAuth({
         },
         after: async (session) => {
           // A session exists, so the credentials were correct: release the
-          // brute-force counters for both the account and the source IP.
-          //
-          // The IP is normalised exactly as the guard normalises it (see
-          // `normalizeIp`) — otherwise this clears a different key than the one
-          // that was incremented and every client stays throttled forever.
-          const ip = normalizeIp(session.ipAddress ?? UNKNOWN_IP);
-          const keys = [
-            rateLimitKey("auth:/sign-in/email:ip", ip),
-            rateLimitKey("auth:/sign-in/username:ip", ip),
-          ];
+          // account's brute-force counters. The per-IP failure budget is
+          // deliberately kept, so logging into one's own account between
+          // guesses on other people's never resets it.
+          const keys: string[] = [];
 
           const user = await prisma.user.findUnique({
             where: { id: String(session.userId) },
@@ -257,10 +251,8 @@ export const auth = betterAuth({
           });
 
           if (user) {
-            keys.push(rateLimitKey("auth:/sign-in/email:account", user.email.toLowerCase()));
-            if (user.username) {
-              keys.push(rateLimitKey("auth:/sign-in/username:account", user.username));
-            }
+            keys.push(accountCounterKey("/sign-in/email", user.email));
+            if (user.username) keys.push(accountCounterKey("/sign-in/username", user.username));
           }
 
           await clearLimits(keys);

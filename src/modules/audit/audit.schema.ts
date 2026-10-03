@@ -22,6 +22,8 @@ export type ListAuditLogsQuery = z.infer<typeof listAuditLogsQuerySchema>;
 export const auditActions = {
   userRegistered: "user.registered",
   userSignedIn: "user.signed_in",
+  signInFailed: "auth.sign_in_failed",
+  signInLocked: "auth.sign_in_locked",
   userRoleChanged: "user.role_changed",
   userBanned: "user.banned",
   userUnbanned: "user.unbanned",

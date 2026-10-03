@@ -17,7 +17,7 @@
  * sign-ins never consume the budget and only failures accumulate.
  */
 
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import type { BetterAuthOptions } from "better-auth";
 
 import { env } from "@/lib/env";
@@ -34,7 +34,16 @@ import {
   personNameViolation,
   usernameViolation,
 } from "@/lib/validation/profile";
-import { RATE_LIMITS, enforceThenRecord, rateLimitKey, type RateLimitRule } from "@/lib/rate-limit";
+import { RateLimitedError } from "@/lib/errors";
+import { RATE_LIMITS, enforceThenRecord, type RateLimitRule } from "@/lib/rate-limit";
+import {
+  ATTEMPTS_REMAINING_HEADER,
+  accountCounterKey,
+  ipCounterKey,
+  inspectIpFailures,
+  isSignInPath,
+  recordFailedSignIn,
+} from "@/modules/login-protection/login-protection.service";
 
 type AuthBeforeMiddleware = NonNullable<NonNullable<BetterAuthOptions["hooks"]>["before"]>;
 
@@ -44,6 +53,12 @@ interface GuardedPath {
   readonly rule: RateLimitRule;
   /** Add a second counter keyed on the submitted email address. */
   readonly byAccount: boolean;
+  /**
+   * Count every attempt per IP. Off for sign-in: there the IP budget counts
+   * failures only, across accounts (`loginFailuresPerIp`), so one resident's
+   * typos never lock out everyone behind the same home or office network.
+   */
+  readonly byIp: boolean;
 }
 
 /**
@@ -52,13 +67,13 @@ interface GuardedPath {
  * account for targeted brute force.
  */
 export const GUARDED_AUTH_PATHS: readonly GuardedPath[] = [
-  { path: "/sign-in/email", rule: RATE_LIMITS.login, byAccount: true },
-  { path: "/sign-in/username", rule: RATE_LIMITS.login, byAccount: true },
-  { path: "/sign-up/email", rule: RATE_LIMITS.register, byAccount: true },
-  { path: "/request-password-reset", rule: RATE_LIMITS.passwordReset, byAccount: true },
-  { path: "/send-verification-email", rule: RATE_LIMITS.emailVerification, byAccount: true },
-  { path: "/two-factor/verify-totp", rule: RATE_LIMITS.twoFactor, byAccount: false },
-  { path: "/two-factor/verify-backup-code", rule: RATE_LIMITS.twoFactor, byAccount: false },
+  { path: "/sign-in/email", rule: RATE_LIMITS.login, byAccount: true, byIp: false },
+  { path: "/sign-in/username", rule: RATE_LIMITS.login, byAccount: true, byIp: false },
+  { path: "/sign-up/email", rule: RATE_LIMITS.register, byAccount: true, byIp: true },
+  { path: "/request-password-reset", rule: RATE_LIMITS.passwordReset, byAccount: true, byIp: true },
+  { path: "/send-verification-email", rule: RATE_LIMITS.emailVerification, byAccount: true, byIp: true },
+  { path: "/two-factor/verify-totp", rule: RATE_LIMITS.twoFactor, byAccount: false, byIp: true },
+  { path: "/two-factor/verify-backup-code", rule: RATE_LIMITS.twoFactor, byAccount: false, byIp: true },
 ];
 
 /**
@@ -227,17 +242,18 @@ export const authRateLimitHook: AuthBeforeMiddleware = async (ctx) => {
   const headers = readHeaders(ctx);
   const ip = headers ? resolveClientIp(headers, env.trustProxy) : "unknown";
 
-  const checks = [{ key: rateLimitKey(`auth:${path}:ip`, ip), rule: guard.rule }];
+  const checks = guard.byIp ? [{ key: ipCounterKey(path, ip), rule: guard.rule }] : [];
 
   const email = guard.byAccount ? readSubmittedAccount(ctx) : undefined;
-  if (email) {
-    checks.push({
-      key: rateLimitKey(`auth:${path}:account`, email.trim().toLowerCase()),
-      rule: guard.rule,
-    });
-  }
+  if (email) checks.push({ key: accountCounterKey(path, email), rule: guard.rule });
 
   try {
+    // An IP that keeps failing across many accounts is paused even when each
+    // single account stays under its own limit (credential stuffing).
+    if (isSignInPath(path)) {
+      const failures = await inspectIpFailures(ip);
+      if (!failures.allowed) throw new RateLimitedError(failures.retryAfterSeconds);
+    }
     await enforceThenRecord(checks);
   } catch (error) {
     const retryAfterSeconds =
@@ -256,12 +272,39 @@ export const authRateLimitHook: AuthBeforeMiddleware = async (ctx) => {
   }
 };
 
+type AfterHookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];
+
+/**
+ * A rejected password (401 from a sign-in endpoint): count it and tell the
+ * form how many attempts remain, so the pause never comes as a surprise.
+ */
+async function reportFailedSignIn(ctx: AfterHookContext): Promise<void> {
+  const path = readPath(ctx);
+  if (!path || !isSignInPath(path)) return;
+
+  const returned = ctx.context.returned;
+  if (!isAPIError(returned) || returned.statusCode !== 401) return;
+
+  const headers = readHeaders(ctx);
+  const outcome = await recordFailedSignIn({
+    path,
+    account: readSubmittedAccount(ctx),
+    ip: headers ? resolveClientIp(headers, env.trustProxy) : "unknown",
+  });
+  if (!outcome) return;
+
+  ctx.setHeader(ATTEMPTS_REMAINING_HEADER, String(outcome.remaining));
+  if (outcome.locked) ctx.setHeader("Retry-After", String(Math.max(1, outcome.retryAfterSeconds)));
+}
+
 /**
  * After any endpoint that just created a session (password, username, OAuth
  * callback, 2FA completion): tag the browser with a device cookie and alert
  * the owner when the device is new.
  */
 export const authAfterHook = createAuthMiddleware(async (ctx) => {
+  await reportFailedSignIn(ctx);
+
   const created = ctx.context.newSession;
   if (!created) return;
 
