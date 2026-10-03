@@ -37,13 +37,13 @@ import {
   notifyModeration,
   notifyPostShare,
 } from "../notifications/notifications.service";
-import { broadcastEngagement } from "./posts.engagement";
+import { broadcastEngagement, getEngagement } from "./posts.engagement";
 import { findViewerBookmarks } from "../bookmarks/bookmarks.repository";
 import { findFollow as isFollowing, findFollowerIdsAmong } from "../follows/follows.repository";
 import { findViewerPollVotes } from "../polls/polls.repository";
 import { countReactionsByType, findViewerReactions } from "../reactions/reactions.repository";
 import { findAttachableImages } from "../uploads/uploads.repository";
-import { toFeedItemDto, toPostDto, toPostDtos, type FeedItemDto, type PostDto } from "./posts.dto";
+import { toFeedItemDto, toPostDto, toPostDtos, type FeedItemDto, type PostDto, type PostEngagementDto } from "./posts.dto";
 import {
   countPosts,
   countPostsByUser,
@@ -793,3 +793,20 @@ export async function getPostStatsForUser(userId: string): Promise<{
 }> {
   return countPostsByUser(userId);
 }
+
+/**
+ * Count a post sent into conversations as shares (reposts are counted when
+ * they are created). Once per person and post per day, so the counter cannot
+ * be inflated by resending.
+ */
+export async function recordMessageShare(postId: string, actor: AuthUser): Promise<PostEngagementDto | null> {
+  const post = await loadReactablePost(postId, actor);
+  try {
+    await enforceThenRecord([{ key: rateLimitKey("post:share-sent", `${actor.id}:${post.id}`), rule: { limit: 1, windowMs: 24 * 60 * 60_000 } }]);
+  } catch {
+    return getEngagement(post.id);
+  }
+  await prisma.post.update({ where: { id: post.id }, data: { shareCount: { increment: 1 } }, select: { id: true } });
+  return broadcastEngagement(post.id, postAudience(post));
+}
+

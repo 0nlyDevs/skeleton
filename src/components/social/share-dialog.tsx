@@ -166,6 +166,7 @@ export function ShareDialog({
       }
     }
     setBusy(false);
+    if (sent > 0) void apiFetch(`/api/posts/${encodeURIComponent(postId)}/shares`, { method: "POST" }).catch(() => undefined);
     if (sent > 0) {
       toast.success(t("share.sent", { count: sent }));
       onOpenChange(false);
