@@ -44,8 +44,10 @@ const nextConfig: NextConfig = {
    * The production build uses webpack (`next build --webpack`): on the
    * contest host the account is capped at 2 GB of RAM, and a cold Turbopack
    * build peaks around 2.4 GB and is killed mid-compile, and the running app
-   * shares that budget. Webpack with these options, and a 768 MB heap set by
-   * the build script, completes within 1 GB.
+   * shares that budget. Webpack with these options and a heap capped by the
+   * build script completes within the budget. The cap is 1 GB: at 768 MB the
+   * build ran out of memory while collecting build traces once the 3D landing
+   * (three, gsap, lenis) was added.
    * `next dev` keeps Turbopack.
    */
   experimental: {
