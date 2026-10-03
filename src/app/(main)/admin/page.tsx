@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AdminOverview } from "@/components/admin/admin-overview";
 import { requireStaff } from "@/lib/auth/guards";
 import { getAdminOverview } from "@/modules/stats/stats.service";
+import { getLoginProtectionOverview } from "@/modules/login-protection/login-protection.stats";
 
 export const metadata: Metadata = { title: "Administration" };
 
@@ -18,7 +19,11 @@ export default async function AdminPage() {
   const context = await requireStaff().catch(() => null);
   if (!context) redirect("/space");
 
-  const data = await getAdminOverview();
+  const isAdmin = context.user.role === "ADMIN";
+  const [data, protection] = await Promise.all([getAdminOverview(), isAdmin ? getLoginProtectionOverview() : null]);
+  const security = protection
+    ? { status: protection.status, failures: protection.last24h.failures, locks: protection.last24h.locks }
+    : undefined;
 
-  return <AdminOverview data={data} />;
+  return <AdminOverview data={data} security={security} />;
 }
