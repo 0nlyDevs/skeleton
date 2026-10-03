@@ -77,7 +77,7 @@ export function UsernameField({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground">@</span>
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[0.875rem] text-muted-foreground">@</span>
         <Input
           {...inputProps}
           name="username"
@@ -103,7 +103,7 @@ export function UsernameField({
         <p
           role="status"
           className={cn(
-            "text-[12px] font-medium",
+            "text-[0.75rem] font-medium",
             state === "available" && "text-success",
             (state === "taken" || state === "invalid") && "text-error",
             (state === "checking" || state === "error") && "text-muted-foreground",

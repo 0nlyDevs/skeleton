@@ -68,7 +68,7 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
         <span className="flex size-11 items-center justify-center rounded-full bg-success/12 text-success">
           <CheckCircle2 className="size-5" />
         </span>
-        <p className="text-[14px] leading-relaxed text-muted-foreground">
+        <p className="text-[0.875rem] leading-relaxed text-muted-foreground">
           {t("auth.reset.success")}
         </p>
         <Button asChild size="lg">

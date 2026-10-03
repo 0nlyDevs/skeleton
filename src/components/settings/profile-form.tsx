@@ -156,10 +156,10 @@ export function ProfileForm({
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">
           {t("settings.profile.title")}
         </h1>
-        <p className="text-[14px] text-muted-foreground">{t("settings.profile.subtitle")}</p>
+        <p className="text-[0.875rem] text-muted-foreground">{t("settings.profile.subtitle")}</p>
       </header>
 
       {welcome ? (
@@ -191,8 +191,8 @@ export function ProfileForm({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <p className="text-[13.5px] font-medium">{t("settings.profile.avatar")}</p>
-            <p className="text-[12.5px] text-muted-foreground">{t("settings.profile.avatar_hint")}</p>
+            <p className="text-[0.8438rem] font-medium">{t("settings.profile.avatar")}</p>
+            <p className="text-[0.7812rem] text-muted-foreground">{t("settings.profile.avatar_hint")}</p>
             <Button
               variant="secondary"
               size="sm"

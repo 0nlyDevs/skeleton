@@ -44,7 +44,7 @@ export function EditGroupDialog({ room, open, onOpenChange }: { readonly room: R
           <DialogTitle>{t("messages.edit_group")}</DialogTitle>
           <DialogDescription className="sr-only">{t("messages.edit_group")}</DialogDescription>
         </DialogHeader>
-        <label className="flex flex-col gap-1 text-[13px]">
+        <label className="flex flex-col gap-1 text-[0.8125rem]">
           <span className="font-medium">{t("messages.group_name")}</span>
           <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={100} />
         </label>

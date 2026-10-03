@@ -88,13 +88,13 @@ export function CommentThread({
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <p className="text-[13px] text-muted-foreground">{describeApiError(error, t)}</p>
+            <p className="text-[0.8125rem] text-muted-foreground">{describeApiError(error, t)}</p>
             <Button size="sm" variant="secondary" onClick={() => void load()}>
               {t("common.retry")}
             </Button>
           </div>
         ) : comments.length === 0 ? (
-          <p className="py-6 text-center text-[13.5px] text-muted-foreground">{t("comments.empty")}</p>
+          <p className="py-6 text-center text-[0.8438rem] text-muted-foreground">{t("comments.empty")}</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {comments.map((thread) => (
@@ -132,7 +132,7 @@ export function CommentThread({
             type="button"
             onClick={() => void load(nextCursor)}
             disabled={loading}
-            className="mt-3 text-[13px] font-semibold text-muted-foreground hover:underline"
+            className="mt-3 text-[0.8125rem] font-semibold text-muted-foreground hover:underline"
           >
             {t("comments.load_more")}
           </button>
@@ -142,17 +142,17 @@ export function CommentThread({
 
       <div className="border-t border-border/60 bg-card px-4 py-3">
         {!viewer ? (
-          <p className="text-center text-[13px] text-muted-foreground">
+          <p className="text-center text-[0.8125rem] text-muted-foreground">
             <Link href="/login" className="font-semibold text-primary hover:underline">
               {t("comments.sign_in")}
             </Link>
           </p>
         ) : !canComment ? (
-          <p className="text-center text-[13px] text-muted-foreground">{t("comments.join_group")}</p>
+          <p className="text-center text-[0.8125rem] text-muted-foreground">{t("comments.join_group")}</p>
         ) : (
           <>
             {replyTo ? (
-              <div className="mb-2 flex items-center justify-between rounded-lg bg-accent px-3 py-1.5 text-[12.5px] text-accent-foreground">
+              <div className="mb-2 flex items-center justify-between rounded-lg bg-accent px-3 py-1.5 text-[0.7812rem] text-accent-foreground">
                 <span>{t("comments.replying_to", { name: replyTo.author?.name ?? "…" })}</span>
                 <button type="button" onClick={() => setReplyTo(null)} aria-label={t("comments.cancel_reply")}>
                   <X className="size-3.5" />
@@ -189,7 +189,7 @@ export function CommentThread({
                 </button>
               </div>
             </div>
-            {sendError ? <p role="alert" className="mt-1.5 text-[12.5px] text-error">{sendError}</p> : null}
+            {sendError ? <p role="alert" className="mt-1.5 text-[0.7812rem] text-error">{sendError}</p> : null}
           </>
         )}
       </div>

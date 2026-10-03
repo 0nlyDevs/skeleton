@@ -38,7 +38,7 @@ export function PostPermalink({ post: initial, viewer }: { readonly post: FeedIt
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/feed" className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+      <Link href="/feed" className="inline-flex w-fit items-center gap-1.5 text-[0.8125rem] font-medium text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" />
         {t("feed.back")}
       </Link>
@@ -51,7 +51,7 @@ export function PostPermalink({ post: initial, viewer }: { readonly post: FeedIt
         onOpenComments={() => document.getElementById("comments")?.scrollIntoView({ behavior: "smooth" })}
       />
       <Card id="comments" className="overflow-hidden">
-        <h2 className="border-b border-border/60 px-4 py-3 text-[15px] font-semibold">{t("comments.title")}</h2>
+        <h2 className="border-b border-border/60 px-4 py-3 text-[0.9375rem] font-semibold">{t("comments.title")}</h2>
         <CommentThread
           postId={post.id}
           viewer={viewer}

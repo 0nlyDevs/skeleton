@@ -60,7 +60,7 @@ export function WebcupRequestCard({
       aria-labelledby={`webcup-${request.code}`}
     >
       <header className="flex flex-wrap items-center gap-1.5">
-        <span id={`webcup-${request.code}`} className="rounded-md bg-primary px-2 py-0.5 font-mono text-[13px] font-semibold text-primary-foreground">
+        <span id={`webcup-${request.code}`} className="rounded-md bg-primary px-2 py-0.5 font-mono text-[0.8125rem] font-semibold text-primary-foreground">
           {request.code}
         </span>
         <Badge variant="primary">{request.xpAvailable} XP</Badge>
@@ -83,15 +83,15 @@ export function WebcupRequestCard({
       </header>
 
       {request.requesterName || request.requesterType ? (
-        <p className="text-[12.5px] text-muted-foreground">
+        <p className="text-[0.7812rem] text-muted-foreground">
           {t("tn.agent.feed.from", { name: request.requesterName ?? "—", type: request.requesterType ?? "—" })}
         </p>
       ) : null}
-      <p className="whitespace-pre-line text-[14.5px] leading-relaxed">{request.message}</p>
+      <p className="whitespace-pre-line text-[0.9062rem] leading-relaxed">{request.message}</p>
 
       {editing ? (
         <div className="flex flex-col gap-2">
-          <label htmlFor={`note-${request.code}`} className="text-[13px] font-medium">{t("tn.agent.feed.note")}</label>
+          <label htmlFor={`note-${request.code}`} className="text-[0.8125rem] font-medium">{t("tn.agent.feed.note")}</label>
           <Textarea id={`note-${request.code}`} value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("tn.agent.feed.note_placeholder")} rows={3} maxLength={2000} />
           <div className="flex justify-end gap-1.5">
             <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>{t("common.cancel")}</Button>
@@ -102,20 +102,20 @@ export function WebcupRequestCard({
           </div>
         </div>
       ) : request.note ? (
-        <button type="button" onClick={() => setEditing(true)} className="rounded-xl bg-surface-muted px-3 py-2 text-left text-[13px]">
+        <button type="button" onClick={() => setEditing(true)} className="rounded-xl bg-surface-muted px-3 py-2 text-left text-[0.8125rem]">
           <span className="font-medium">{t("tn.agent.feed.note")} : </span>
           {request.note}
         </button>
       ) : null}
 
       <footer className="flex flex-wrap items-center gap-2">
-        <label htmlFor={`triage-${request.code}`} className="text-[13px] text-muted-foreground">{t("tn.agent.feed.triage")}</label>
+        <label htmlFor={`triage-${request.code}`} className="text-[0.8125rem] text-muted-foreground">{t("tn.agent.feed.triage")}</label>
         <select
           id={`triage-${request.code}`}
           value={request.triage}
           disabled={busy}
           onChange={(event) => void save({ triage: event.target.value })}
-          className="h-8 rounded-[var(--radius-control)] border border-input bg-surface px-2 text-[13px]"
+          className="h-8 rounded-[var(--radius-control)] border border-input bg-surface px-2 text-[0.8125rem]"
         >
           {TRIAGES.map((triage) => (
             <option key={triage} value={triage}>{t(`tn.triage.${triage}` as MessageKey)}</option>

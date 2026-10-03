@@ -36,7 +36,7 @@ export function AudiencePicker({
       <DropdownMenuTrigger
         className={cn(
           "inline-flex items-center gap-1.5 rounded-full bg-surface-muted font-semibold text-foreground hover:bg-surface-muted/70",
-          size === "sm" ? "px-2.5 py-1 text-[12px]" : "px-3 py-1.5 text-[13px]",
+          size === "sm" ? "px-2.5 py-1 text-[0.75rem]" : "px-3 py-1.5 text-[0.8125rem]",
         )}
         aria-label={t("audience.label")}
       >
@@ -51,7 +51,7 @@ export function AudiencePicker({
               <ItemIcon className="mt-0.5" />
               <span className="flex-1">
                 <span className="block font-medium">{t(`audience.${audience}` as MessageKey)}</span>
-                <span className="block text-[12px] text-muted-foreground">{t(`audience.${audience}_hint` as MessageKey)}</span>
+                <span className="block text-[0.75rem] text-muted-foreground">{t(`audience.${audience}_hint` as MessageKey)}</span>
               </span>
               {audience === value ? <Check className="mt-0.5" /> : null}
             </DropdownMenuItem>

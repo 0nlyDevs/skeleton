@@ -55,12 +55,12 @@ export async function AnnouncementCard({
             </Badge>
           ) : null}
           {!announcement.publishedAt ? <Badge variant="warning">{t("tn.draft")}</Badge> : null}
-          {announcement.service ? <span className="text-[12px] text-muted-foreground">{announcement.service.name}</span> : null}
+          {announcement.service ? <span className="text-[0.75rem] text-muted-foreground">{announcement.service.name}</span> : null}
         </span>
         <span className="font-semibold leading-snug">{announcement.title}</span>
-        <span className={cn("text-[13.5px] text-muted-foreground", compact ? "line-clamp-1" : "line-clamp-2")}>{announcement.summary}</span>
+        <span className={cn("text-[0.8438rem] text-muted-foreground", compact ? "line-clamp-1" : "line-clamp-2")}>{announcement.summary}</span>
         {announcement.publishedAt ? (
-          <time dateTime={announcement.publishedAt} className="text-[12px] text-muted-foreground">
+          <time dateTime={announcement.publishedAt} className="text-[0.75rem] text-muted-foreground">
             {formatDate(announcement.publishedAt, { locale })}
           </time>
         ) : null}

@@ -63,13 +63,13 @@ export function FormField({
       })}
 
       {hint && !error ? (
-        <p id={hintId} className="text-[12px] leading-relaxed text-muted-foreground">
+        <p id={hintId} className="text-[0.75rem] leading-relaxed text-muted-foreground">
           {hint}
         </p>
       ) : null}
 
       {error ? (
-        <p id={errorId} className="text-[12px] font-medium leading-relaxed text-error">
+        <p id={errorId} role="alert" className="text-[0.75rem] font-medium leading-relaxed text-error">
           {error}
         </p>
       ) : null}
@@ -87,7 +87,7 @@ export function FieldError({
 }) {
   if (!message) return null;
   return (
-    <p role="alert" className={cn("text-[12px] font-medium leading-relaxed text-error", className)}>
+    <p role="alert" className={cn("text-[0.75rem] font-medium leading-relaxed text-error", className)}>
       {message}
     </p>
   );
@@ -97,7 +97,7 @@ export function FieldError({
 export function FieldMeta({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
-      className={cn("flex items-center justify-between gap-2 text-[12px] text-muted-foreground", className)}
+      className={cn("flex items-center justify-between gap-2 text-[0.75rem] text-muted-foreground", className)}
       {...props}
     />
   );

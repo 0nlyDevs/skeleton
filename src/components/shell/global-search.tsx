@@ -84,7 +84,7 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
           aria-label={t("nav.search_placeholder")}
           aria-controls={listId}
           aria-expanded={open && term.length >= 2}
-          className="h-10 w-full rounded-full border border-transparent bg-surface-muted pl-10 pr-10 text-[14px] outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:bg-surface"
+          className="h-10 w-full rounded-full border border-transparent bg-surface-muted pl-10 pr-10 text-[0.875rem] outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:bg-surface"
         />
         {loading ? (
           <Loader2 className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -92,7 +92,7 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
       </form>
 
       {open && q.trim().length > 0 && q.trim().length < 2 ? (
-        <div className="absolute left-0 right-0 top-12 z-50 rounded-2xl border border-border/70 bg-popover px-4 py-3 text-[13px] text-muted-foreground shadow-float">
+        <div className="absolute left-0 right-0 top-12 z-50 rounded-2xl border border-border/70 bg-popover px-4 py-3 text-[0.8125rem] text-muted-foreground shadow-float">
           {t("search.hint")}
         </div>
       ) : null}
@@ -102,7 +102,7 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
           className="absolute left-0 right-0 top-12 z-50 max-h-[70dvh] overflow-y-auto rounded-2xl border border-border/70 bg-popover p-2 shadow-float"
         >
           {empty ? (
-            <p className="px-3 py-4 text-center text-[13px] text-muted-foreground">{t("search.empty", { q: term })}</p>
+            <p className="px-3 py-4 text-center text-[0.8125rem] text-muted-foreground">{t("search.empty", { q: term })}</p>
           ) : null}
           {results.people.length > 0 ? (
             <Section label={t("search.people")}>
@@ -115,8 +115,8 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
                 >
                   <UserAvatar name={person.name} image={person.image} size="sm" />
                   <span className="min-w-0">
-                    <span className="block truncate text-[13.5px] font-semibold">{person.name}</span>
-                    <span className="block truncate text-[12px] text-muted-foreground">@{person.username}</span>
+                    <span className="block truncate text-[0.8438rem] font-semibold">{person.name}</span>
+                    <span className="block truncate text-[0.75rem] text-muted-foreground">@{person.username}</span>
                   </span>
                 </button>
               ))}
@@ -131,10 +131,10 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
                   onClick={() => go(`/groups/${group.slug}`)}
                   className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-surface-muted"
                 >
-                  <span className="grid size-9 place-items-center rounded-xl bg-accent text-[13px] font-bold text-accent-foreground">
+                  <span className="grid size-9 place-items-center rounded-xl bg-accent text-[0.8125rem] font-bold text-accent-foreground">
                     {group.name.slice(0, 1).toUpperCase()}
                   </span>
-                  <span className="min-w-0 truncate text-[13.5px] font-semibold">{group.name}</span>
+                  <span className="min-w-0 truncate text-[0.8438rem] font-semibold">{group.name}</span>
                 </button>
               ))}
             </Section>
@@ -148,8 +148,8 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
                   onClick={() => go(`/feed/${post.id}`)}
                   className="block w-full rounded-xl px-2.5 py-2 text-left hover:bg-surface-muted"
                 >
-                  <span className="block truncate text-[13px] font-medium">{post.body || post.title}</span>
-                  <span className="block text-[11.5px] text-muted-foreground">{post.author.name}</span>
+                  <span className="block truncate text-[0.8125rem] font-medium">{post.body || post.title}</span>
+                  <span className="block text-[0.7188rem] text-muted-foreground">{post.author.name}</span>
                 </button>
               ))}
             </Section>
@@ -158,7 +158,7 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
             <Link
               href={`/search?q=${encodeURIComponent(term)}`}
               onClick={() => setOpen(false)}
-              className="mt-1 block rounded-xl px-3 py-2 text-center text-[13px] font-medium text-primary hover:bg-accent"
+              className="mt-1 block rounded-xl px-3 py-2 text-center text-[0.8125rem] font-medium text-primary hover:bg-accent"
             >
               {t("search.all_results")}
             </Link>
@@ -172,7 +172,7 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
 function Section({ label, children }: { readonly label: string; readonly children: React.ReactNode }) {
   return (
     <div className="py-1">
-      <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="px-2.5 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       {children}
     </div>
   );

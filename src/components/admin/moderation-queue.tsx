@@ -84,8 +84,8 @@ export function ModerationQueue() {
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">{t("admin.moderation.title")}</h1>
-        <p className="text-[14px] text-muted-foreground">{t("admin.moderation.subtitle")}</p>
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">{t("admin.moderation.title")}</h1>
+        <p className="text-[0.875rem] text-muted-foreground">{t("admin.moderation.subtitle")}</p>
       </header>
 
       <Card className="overflow-hidden">
@@ -109,11 +109,11 @@ export function ModerationQueue() {
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="warning">{report.targetType}</Badge>
-                    <span className="truncate text-[13.5px] font-medium">{report.targetLabel ?? report.targetId}</span>
+                    <span className="truncate text-[0.8438rem] font-medium">{report.targetLabel ?? report.targetId}</span>
                   </div>
-                  {report.targetSummary ? <p className="line-clamp-2 text-[12px] text-foreground/80">{report.targetSummary}</p> : null}
-                  <p className="text-[12px] text-muted-foreground">{t("admin.moderation.reason")}: {report.reason}</p>
-                  <span className="text-[12px] text-muted-foreground">
+                  {report.targetSummary ? <p className="line-clamp-2 text-[0.75rem] text-foreground/80">{report.targetSummary}</p> : null}
+                  <p className="text-[0.75rem] text-muted-foreground">{t("admin.moderation.reason")}: {report.reason}</p>
+                  <span className="text-[0.75rem] text-muted-foreground">
                     {t("admin.moderation.reporter")}: {report.reporter?.name ?? "—"} ·{" "}
                     {fmt.relative(report.createdAt)}
                   </span>
@@ -151,7 +151,7 @@ export function ModerationQueue() {
       </Card>
 
       {meta && meta.totalPages > 1 ? (
-        <p className="text-center text-[13px] text-muted-foreground">
+        <p className="text-center text-[0.8125rem] text-muted-foreground">
           {meta.total} {t("common.results")}
         </p>
       ) : null}

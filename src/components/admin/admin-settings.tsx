@@ -62,8 +62,8 @@ export function AdminSettingsView({ flags }: { readonly flags: FeatureFlagDto[] 
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">{t("admin.settings.title")}</h1>
-        <p className="text-[14px] text-muted-foreground">{t("admin.settings.subtitle")}</p>
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">{t("admin.settings.title")}</h1>
+        <p className="text-[0.875rem] text-muted-foreground">{t("admin.settings.subtitle")}</p>
       </header>
 
       <Card>
@@ -73,19 +73,19 @@ export function AdminSettingsView({ flags }: { readonly flags: FeatureFlagDto[] 
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <p className="py-4 text-[13.5px] text-muted-foreground">—</p>
+            <p className="py-4 text-[0.8438rem] text-muted-foreground">—</p>
           ) : (
             <ul className="divide-y divide-border/60">
               {rows.map((flag) => (
                 <li key={flag.key} className="flex items-center justify-between gap-4 py-3.5">
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <Label htmlFor={`flag-${flag.key}`} className="cursor-pointer font-mono text-[13px]">
+                    <Label htmlFor={`flag-${flag.key}`} className="cursor-pointer font-mono text-[0.8125rem]">
                       {flag.key}
                     </Label>
                     {flag.description ? (
-                      <span className="text-[12.5px] text-muted-foreground">{flag.description}</span>
+                      <span className="text-[0.7812rem] text-muted-foreground">{flag.description}</span>
                     ) : null}
-                    <span className="text-[11.5px] text-muted-foreground/70">
+                    <span className="text-[0.7188rem] text-muted-foreground/70">
                       {fmt.relative(flag.updatedAt)}
                     </span>
                   </div>
@@ -120,7 +120,7 @@ export function AdminSettingsView({ flags }: { readonly flags: FeatureFlagDto[] 
           </Button>
         </CardHeader>
         <CardContent>
-          <p className="text-[13px] leading-relaxed text-muted-foreground">
+          <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">
             {t("admin.settings.health.database")} · {t("admin.settings.health.email")} ·{" "}
             {t("admin.settings.health.ai")} · {t("admin.settings.health.realtime")}
           </p>

@@ -54,7 +54,7 @@ export default async function ServicePage({ params }: { readonly params: Promise
             {!service.active ? <Badge variant="warning">{t("tn.services.inactive")}</Badge> : null}
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">{service.name}</h1>
-          <p className="text-[15px] text-muted-foreground">{service.summary}</p>
+          <p className="text-[0.9375rem] text-muted-foreground">{service.summary}</p>
         </div>
         <Button asChild className="shrink-0">
           <Link href={`/contact?service=${encodeURIComponent(service.slug)}`}>
@@ -67,12 +67,12 @@ export default async function ServicePage({ params }: { readonly params: Promise
       <div className="grid gap-5 md:grid-cols-[1fr_280px]">
         <div className="flex flex-col gap-5">
           <section className="rounded-2xl border border-border/70 bg-card p-5">
-            <p className="prose-body text-[15px]">{service.description}</p>
+            <p className="prose-body text-[0.9375rem]">{service.description}</p>
           </section>
           {service.howTo ? (
             <section className="rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="how-to">
               <h2 id="how-to" className="mb-2 font-semibold">{t("tn.services.how_to")}</h2>
-              <p className="prose-body text-[15px]">{service.howTo}</p>
+              <p className="prose-body text-[0.9375rem]">{service.howTo}</p>
             </section>
           ) : null}
           {news.data.length > 0 ? (
@@ -93,7 +93,7 @@ export default async function ServicePage({ params }: { readonly params: Promise
                 <div key={item.label} className="flex gap-2.5">
                   <item.icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
                   <div className="min-w-0">
-                    <dt className="text-[12px] text-muted-foreground">{item.label}</dt>
+                    <dt className="text-[0.75rem] text-muted-foreground">{item.label}</dt>
                     <dd className="break-words">
                       {item.href ? <a href={item.href} className="text-primary hover:underline">{item.value}</a> : item.value}
                     </dd>

@@ -34,7 +34,7 @@ export function PostLinkPreview({ postId }: { readonly postId: string }) {
   }, [postId]);
 
   if (post === null) return <div className="h-16 w-64 animate-pulse rounded-xl bg-surface-muted" />;
-  if (post === "gone") return <p className="rounded-xl border border-dashed border-border px-3 py-2 text-[12.5px] text-muted-foreground">{t("share.unavailable")}</p>;
+  if (post === "gone") return <p className="rounded-xl border border-dashed border-border px-3 py-2 text-[0.7812rem] text-muted-foreground">{t("share.unavailable")}</p>;
 
   const image = post.media[0];
   return (
@@ -44,11 +44,11 @@ export function PostLinkPreview({ postId }: { readonly postId: string }) {
         <img src={image.url} alt="" className="size-16 shrink-0 object-cover" loading="lazy" />
       ) : null}
       <span className="flex min-w-0 flex-col gap-0.5 px-2.5 py-2">
-        <span className="flex items-center gap-1.5 text-[12px] font-semibold">
+        <span className="flex items-center gap-1.5 text-[0.75rem] font-semibold">
           <UserAvatar userId={post.author.id} name={post.author.name} image={post.author.image} size="2xs" />
           <span className="truncate">{post.author.name}</span>
         </span>
-        <span className="line-clamp-2 text-[12.5px] text-muted-foreground">{post.body || post.title}</span>
+        <span className="line-clamp-2 text-[0.7812rem] text-muted-foreground">{post.body || post.title}</span>
       </span>
     </Link>
   );

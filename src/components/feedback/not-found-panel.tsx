@@ -22,8 +22,8 @@ export async function NotFoundPanel({ backHref = "/posts" }: { readonly backHref
         <FileQuestion className="size-5" />
       </span>
       <div className="flex flex-col gap-1">
-        <p className="text-[15px] font-medium">{t["feedback.not_found.title"]}</p>
-        <p className="text-[13.5px] text-muted-foreground">{t["feedback.not_found.body"]}</p>
+        <p className="text-[0.9375rem] font-medium">{t["feedback.not_found.title"]}</p>
+        <p className="text-[0.8438rem] text-muted-foreground">{t["feedback.not_found.body"]}</p>
       </div>
       <Button asChild size="sm" variant="secondary">
         <Link href={backHref}>{t["common.back"]}</Link>

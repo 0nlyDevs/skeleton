@@ -62,14 +62,14 @@ export function DataRightsCard({ hasPassword }: { readonly hasPassword: boolean 
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-md text-[13px] text-muted-foreground">{t("account.export_hint")}</p>
+          <p className="max-w-md text-[0.8125rem] text-muted-foreground">{t("account.export_hint")}</p>
           <Button variant="secondary" onClick={() => void exportData()} disabled={exporting}>
             {exporting ? <Loader2 className="animate-spin" /> : <Download />}
             {t("account.export")}
           </Button>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
-          <p className="max-w-md text-[13px] text-muted-foreground">{t("account.delete_hint")}</p>
+          <p className="max-w-md text-[0.8125rem] text-muted-foreground">{t("account.delete_hint")}</p>
           <Button variant="secondary" className="text-error" onClick={() => setOpen(true)}>
             <Trash2 />
             {t("account.delete")}
@@ -83,17 +83,17 @@ export function DataRightsCard({ hasPassword }: { readonly hasPassword: boolean 
             <DialogDescription>{t("account.delete_body")}</DialogDescription>
           </DialogHeader>
           {hasPassword ? (
-            <label className="flex flex-col gap-1 text-[13px]">
+            <label className="flex flex-col gap-1 text-[0.8125rem]">
               <span className="font-medium">{t("account.confirm_password")}</span>
               <PasswordInput value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />
             </label>
           ) : (
-            <label className="flex flex-col gap-1 text-[13px]">
+            <label className="flex flex-col gap-1 text-[0.8125rem]">
               <span className="font-medium">{t("account.confirm_username")}</span>
               <Input value={username} onChange={(event) => setUsername(event.target.value)} />
             </label>
           )}
-          {error ? <p role="alert" className="text-[13px] text-error">{error}</p> : null}
+          {error ? <p role="alert" className="text-[0.8125rem] text-error">{error}</p> : null}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>
               {t("common.cancel")}

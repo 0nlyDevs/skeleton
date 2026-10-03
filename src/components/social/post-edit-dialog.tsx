@@ -87,7 +87,7 @@ export function PostEditDialog({
             ))}
           </ul>
         ) : null}
-        {hint || uploads.rejection ? <p role="status" className="text-[12.5px] font-medium text-error">{hint ?? uploads.rejection}</p> : null}
+        {hint || uploads.rejection ? <p role="status" className="text-[0.7812rem] font-medium text-error">{hint ?? uploads.rejection}</p> : null}
         <DialogFooter className="items-center sm:justify-between">
           <Button type="button" variant="ghost" size="sm" onClick={() => fileInput.current?.click()}>
             <ImagePlus className="text-success" />

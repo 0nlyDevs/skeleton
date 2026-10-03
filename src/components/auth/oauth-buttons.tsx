@@ -130,7 +130,7 @@ export function OrDivider() {
   return (
     <div className="flex items-center gap-3">
       <span className="h-px flex-1 bg-border" aria-hidden />
-      <span className="text-[11.5px] uppercase tracking-wide text-muted-foreground">
+      <span className="text-[0.7188rem] uppercase tracking-wide text-muted-foreground">
         {t("auth.login.or")}
       </span>
       <span className="h-px flex-1 bg-border" aria-hidden />

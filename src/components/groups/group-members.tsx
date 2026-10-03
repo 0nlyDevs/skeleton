@@ -78,7 +78,7 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
               role="tab"
               aria-selected={status === value}
               onClick={() => setStatus(value)}
-              className={cn("rounded-full px-3 py-1.5 text-[13px] font-semibold", status === value ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-surface-muted")}
+              className={cn("rounded-full px-3 py-1.5 text-[0.8125rem] font-semibold", status === value ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-surface-muted")}
             >
               {t(key)}
             </button>
@@ -89,7 +89,7 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
       {members === null ? (
         <div className="flex flex-col gap-2">{[0, 1, 2].map((index) => <Skeleton key={index} className="h-12 rounded-xl" />)}</div>
       ) : members.length === 0 ? (
-        <p className="py-6 text-center text-[13px] text-muted-foreground">{status === "PENDING" ? t("groups.no_requests") : "—"}</p>
+        <p className="py-6 text-center text-[0.8125rem] text-muted-foreground">{status === "PENDING" ? t("groups.no_requests") : "—"}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border/60">
           {members.map((member, index) => {
@@ -99,15 +99,15 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
             return (
               <li key={member.user.id} className="flex flex-col">
                 {section ? (
-                  <h3 className="flex items-center gap-1.5 pb-1 pt-3 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground first:pt-0">
+                  <h3 className="flex items-center gap-1.5 pb-1 pt-3 text-[0.75rem] font-semibold uppercase tracking-wide text-muted-foreground first:pt-0">
                     {t(`groups.section.${section}` as MessageKey)}
                   </h3>
                 ) : null}
                 <div className="flex items-center gap-3 py-2.5">
                 <UserAvatar userId={member.user.id} name={member.user.name} image={member.user.image} size="sm" />
                 <Link href={member.user.username ? `/profile/${member.user.username}` : "#"} className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium">{member.user.name}</span>
-                  {member.user.username ? <span className="block truncate text-[12px] text-muted-foreground">@{member.user.username}</span> : null}
+                  <span className="block truncate text-[0.875rem] font-medium">{member.user.name}</span>
+                  {member.user.username ? <span className="block truncate text-[0.75rem] text-muted-foreground">@{member.user.username}</span> : null}
                 </Link>
                 {status === "ACTIVE" ? <GroupRoleBadge role={member.role} /> : null}
                 {status === "PENDING" && actable ? (
@@ -147,7 +147,7 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
         </ul>
       )}
 
-      <details className="mt-4 rounded-xl bg-surface-muted/60 px-3 py-2 text-[13px]">
+      <details className="mt-4 rounded-xl bg-surface-muted/60 px-3 py-2 text-[0.8125rem]">
         <summary className="flex cursor-pointer items-center gap-1.5 font-semibold text-muted-foreground">
           <Info className="size-4" aria-hidden />
           {t("groups.roles_guide")}
@@ -157,9 +157,9 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
             <div key={role} className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:gap-3">
               <dt className="w-32 shrink-0">
                 {role === "MEMBER" ? (
-                  <span className="text-[12px] font-semibold">{t("groups.role.MEMBER")}</span>
+                  <span className="text-[0.75rem] font-semibold">{t("groups.role.MEMBER")}</span>
                 ) : (
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${ROLE_STYLE[role].className}`}>
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.7188rem] font-semibold ${ROLE_STYLE[role].className}`}>
                     {t(`groups.role.${role}` as MessageKey)}
                   </span>
                 )}

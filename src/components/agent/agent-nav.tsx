@@ -30,10 +30,10 @@ export function AgentNav({ isAdmin, roleLabel }: { readonly isAdmin: boolean; re
           </span>
           <div>
             <p className="font-semibold leading-tight">{t("tn.agent.title")}</p>
-            <p className="text-[12.5px] text-muted-foreground">{roleLabel}</p>
+            <p className="text-[0.7812rem] text-muted-foreground">{roleLabel}</p>
           </div>
         </div>
-        <Link href="/space" className="text-[13px] text-primary hover:underline">
+        <Link href="/space" className="text-[0.8125rem] text-primary hover:underline">
           {t("tn.agent.back_citizen")}
         </Link>
       </div>
@@ -46,7 +46,7 @@ export function AgentNav({ isAdmin, roleLabel }: { readonly isAdmin: boolean; re
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
+                "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium transition-colors",
                 active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-surface-muted",
               )}
             >

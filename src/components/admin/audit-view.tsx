@@ -111,8 +111,8 @@ export function AuditView() {
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">{t("admin.audit.title")}</h1>
-        <p className="text-[14px] text-muted-foreground">{t("admin.audit.subtitle")}</p>
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">{t("admin.audit.title")}</h1>
+        <p className="text-[0.875rem] text-muted-foreground">{t("admin.audit.subtitle")}</p>
       </header>
 
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
@@ -154,9 +154,9 @@ export function AuditView() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[44rem] text-left text-[13.5px]">
+            <table className="w-full min-w-[44rem] text-left text-[0.8438rem]">
               <thead>
-                <tr className="border-b border-border/70 text-[12px] uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border/70 text-[0.75rem] uppercase tracking-wide text-muted-foreground">
                   <th scope="col" className="px-4 py-3 font-medium">{t("admin.audit.action")}</th>
                   <th scope="col" className="px-4 py-3 font-medium">{t("admin.audit.actor")}</th>
                   <th scope="col" className="px-4 py-3 font-medium">{t("admin.audit.target")}</th>
@@ -167,15 +167,15 @@ export function AuditView() {
                 {rows.map((row) => (
                   <tr key={row.id} className="transition-colors hover:bg-surface-muted/50">
                     <td className="px-4 py-3">
-                      <Badge variant={ACTION_TONES[row.action] ?? "neutral"} className="font-mono text-[11.5px]">
+                      <Badge variant={ACTION_TONES[row.action] ?? "neutral"} className="font-mono text-[0.7188rem]">
                         {row.action}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 font-medium">{row.actor?.name ?? "—"}</td>
-                    <td className="px-4 py-3 text-[12.5px] text-muted-foreground">
+                    <td className="px-4 py-3 text-[0.7812rem] text-muted-foreground">
                       {row.targetType ? `${row.targetType} · ${row.targetId?.slice(0, 8)}` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right text-[12.5px] tabular-nums text-muted-foreground">
+                    <td className="px-4 py-3 text-right text-[0.7812rem] tabular-nums text-muted-foreground">
                       {fmt.dateTime(row.createdAt)}
                     </td>
                   </tr>
@@ -190,7 +190,7 @@ export function AuditView() {
         <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
           {t("common.previous")}
         </Button>
-        <span className="text-[13px] tabular-nums text-muted-foreground">
+        <span className="text-[0.8125rem] tabular-nums text-muted-foreground">
           {t("common.page")} {page} {t("common.of")} {totalPages}
         </span>
         <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>

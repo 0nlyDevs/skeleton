@@ -64,7 +64,7 @@ export function ReportDialog({
         <DialogHeader>
           <DialogTitle>{t("report.title")}</DialogTitle>
         </DialogHeader>
-        <p className="text-[13.5px] font-medium">{t("report.why")}</p>
+        <p className="text-[0.8438rem] font-medium">{t("report.why")}</p>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("report.why")}>
           {REASONS.map((value) => (
             <button
@@ -77,7 +77,7 @@ export function ReportDialog({
                 setHint(null);
               }}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-[13px] transition-colors",
+                "rounded-full border px-3 py-1.5 text-[0.8125rem] transition-colors",
                 reason === value ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-surface-muted",
               )}
             >
@@ -93,7 +93,7 @@ export function ReportDialog({
           maxLength={800}
           rows={3}
         />
-        {hint ? <p role="status" className="text-[12.5px] font-medium text-error">{hint}</p> : null}
+        {hint ? <p role="status" className="text-[0.7812rem] font-medium text-error">{hint}</p> : null}
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("common.cancel")}

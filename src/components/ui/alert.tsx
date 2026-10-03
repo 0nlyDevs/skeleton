@@ -52,7 +52,7 @@ export function AlertDescription({ className, ...props }: ComponentProps<"div">)
   return (
     <div
       data-slot="alert-description"
-      className={cn("flex-1 text-[13px] leading-relaxed text-muted-foreground", className)}
+      className={cn("flex-1 text-[0.8125rem] leading-relaxed text-muted-foreground", className)}
       {...props}
     />
   );

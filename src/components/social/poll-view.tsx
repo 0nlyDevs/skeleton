@@ -87,7 +87,7 @@ export function PollView({
                 aria-pressed={poll.multiple ? selected || mine : mine}
                 onClick={() => pick(option.id)}
                 className={cn(
-                  "relative flex min-h-11 w-full items-center gap-2 overflow-hidden rounded-xl border px-3 py-2 text-left text-[14px] transition-colors",
+                  "relative flex min-h-11 w-full items-center gap-2 overflow-hidden rounded-xl border px-3 py-2 text-left text-[0.875rem] transition-colors",
                   "disabled:cursor-default",
                   results ? "border-border/70" : "border-border hover:border-primary hover:bg-primary/5",
                   (selected || mine) && "border-primary",
@@ -107,14 +107,14 @@ export function PollView({
                 ) : null}
                 <span className={cn("relative min-w-0 flex-1 break-words", winning && "font-semibold")}>{option.label}</span>
                 {mine ? <Check className="relative size-4 shrink-0 text-primary" aria-label={t("poll.your_vote")} /> : null}
-                {results ? <span className="relative shrink-0 tabular-nums text-[13px] font-medium text-muted-foreground">{share}%</span> : null}
+                {results ? <span className="relative shrink-0 tabular-nums text-[0.8125rem] font-medium text-muted-foreground">{share}%</span> : null}
               </button>
             </li>
           );
         })}
       </ul>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.7812rem] text-muted-foreground">
         <span>{t(poll.totalVoters === 1 ? "poll.voters_one" : "poll.voters", { count: poll.totalVoters })}</span>
         <span aria-hidden>·</span>
         <span>

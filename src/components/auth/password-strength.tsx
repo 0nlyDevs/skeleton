@@ -73,7 +73,7 @@ export function PasswordStrength({
           />
         ))}
       </div>
-      <span className="w-[4.5rem] shrink-0 text-right text-[11.5px] font-medium text-muted-foreground">
+      <span className="w-[4.5rem] shrink-0 text-right text-[0.7188rem] font-medium text-muted-foreground">
         {t(level.key)}
       </span>
     </div>
@@ -106,13 +106,13 @@ export function PasswordRequirements({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <p className="text-[12px] font-medium text-muted-foreground">{t("auth.password.rules_title")}</p>
+      <p className="text-[0.75rem] font-medium text-muted-foreground">{t("auth.password.rules_title")}</p>
       <ul className="grid grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-2" aria-live="polite">
         {results.map((rule) => (
           <li
             key={rule.id}
             className={cn(
-              "flex items-center gap-1.5 text-[12px] transition-colors",
+              "flex items-center gap-1.5 text-[0.75rem] transition-colors",
               rule.ok ? "text-success" : "text-muted-foreground",
             )}
           >

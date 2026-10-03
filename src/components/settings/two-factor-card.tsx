@@ -146,18 +146,18 @@ export function TwoFactorCard({ enabled: initial, hasPassword }: { readonly enab
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {!hasPassword ? (
-          <p className="text-[13px] text-muted-foreground">{t("twofa.need_password")}</p>
+          <p className="text-[0.8125rem] text-muted-foreground">{t("twofa.need_password")}</p>
         ) : setup ? (
           <form onSubmit={(event) => void verify(event)} className="flex max-w-md flex-col gap-4" noValidate>
-            <p className="text-[13.5px] leading-relaxed">{t("twofa.scan")}</p>
+            <p className="text-[0.8438rem] leading-relaxed">{t("twofa.scan")}</p>
             <div className="flex flex-wrap items-start gap-4 rounded-xl bg-surface-muted p-4">
               {setup.qr ? (
                 // eslint-disable-next-line @next/next/no-img-element -- data URL produced locally by `qrcode`
                 <img src={setup.qr} alt="QR code" className="size-44 rounded-lg bg-white p-2" />
               ) : null}
               <div className="min-w-0 flex-1">
-                <p className="text-[12.5px] text-muted-foreground">{t("twofa.manual")}</p>
-                <code className="mt-1 block break-all rounded-md bg-surface px-2 py-1.5 font-mono text-[13px]">{secretOf(setup.uri) ?? setup.uri}</code>
+                <p className="text-[0.7812rem] text-muted-foreground">{t("twofa.manual")}</p>
+                <code className="mt-1 block break-all rounded-md bg-surface px-2 py-1.5 font-mono text-[0.8125rem]">{secretOf(setup.uri) ?? setup.uri}</code>
               </div>
             </div>
             <FormField label={t("twofa.code")} required {...(codeError ? { error: codeError } : {})}>
@@ -230,7 +230,7 @@ export function TwoFactorCard({ enabled: initial, hasPassword }: { readonly enab
             <DialogTitle>{t("twofa.codes_title")}</DialogTitle>
             <DialogDescription>{t("twofa.codes_hint")}</DialogDescription>
           </DialogHeader>
-          <ul className="grid grid-cols-2 gap-2 rounded-xl bg-surface-muted p-4 font-mono text-[14px]">
+          <ul className="grid grid-cols-2 gap-2 rounded-xl bg-surface-muted p-4 font-mono text-[0.875rem]">
             {codes.map((entry) => (
               <li key={entry}>{entry}</li>
             ))}

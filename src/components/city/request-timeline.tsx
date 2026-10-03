@@ -23,10 +23,10 @@ export function RequestTimeline({ events }: { readonly events: readonly CityRequ
   return (
     <ol className="relative flex flex-col gap-3 border-l border-border pl-4">
       {events.map((event, index) => (
-        <li key={`${event.createdAt}-${index}`} className="relative text-[13px]">
+        <li key={`${event.createdAt}-${index}`} className="relative text-[0.8125rem]">
           <span className="absolute -left-[21px] top-1.5 size-2.5 rounded-full border-2 border-card bg-primary" aria-hidden />
           <p className="font-medium">{describe(event)}</p>
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-[0.75rem] text-muted-foreground">
             <time dateTime={event.createdAt}>{fmt.dateTime(event.createdAt)}</time>
             {event.actor ? ` · ${t("tn.request.by", { name: event.actor })}` : null}
           </p>

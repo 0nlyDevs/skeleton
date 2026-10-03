@@ -148,7 +148,7 @@ export function PostComposer({
                 </span>
               ) : null}
               {image.status === "error" ? (
-                <span className="absolute inset-x-0 bottom-0 bg-error/90 px-1 py-0.5 text-center text-[10px] text-white" title={image.error}>
+                <span className="absolute inset-x-0 bottom-0 bg-error/90 px-1 py-0.5 text-center text-[0.625rem] text-white" title={image.error}>
                   {image.error}
                 </span>
               ) : null}
@@ -168,7 +168,7 @@ export function PostComposer({
       {poll ? <PollEditor draft={poll} onChange={setPoll} /> : null}
 
       {hint || uploads.rejection ? (
-        <p role="status" className="mt-2 text-[12.5px] font-medium text-error">
+        <p role="status" className="mt-2 text-[0.7812rem] font-medium text-error">
           {hint ?? uploads.rejection}
         </p>
       ) : null}
@@ -206,7 +206,7 @@ export function PostComposer({
         </Button>
         {effectivePlace ? (
           <span
-            className="inline-flex max-w-[16rem] items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground"
+            className="inline-flex max-w-[16rem] items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[0.75rem] font-medium text-accent-foreground"
             title={place ? undefined : t("place.auto_hint")}
           >
             <MapPin className="size-3 shrink-0" aria-hidden />
@@ -219,7 +219,7 @@ export function PostComposer({
         ) : null}
         {!group ? <AudiencePicker value={audience} onChange={setAudience} /> : null}
         {group ? (
-          <span className="ml-1 rounded-full bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-foreground">
+          <span className="ml-1 rounded-full bg-accent px-2.5 py-1 text-[0.75rem] font-medium text-accent-foreground">
             {t("composer.in_group", { name: group.name })}
           </span>
         ) : null}
@@ -260,7 +260,7 @@ function PollEditor({ draft, onChange }: { readonly draft: PollDraft; readonly o
 
   return (
     <fieldset className="mt-3 flex flex-col gap-2 rounded-2xl border border-border/70 p-3">
-      <legend className="px-1 text-[12.5px] font-semibold text-muted-foreground">{t("poll.label")}</legend>
+      <legend className="px-1 text-[0.7812rem] font-semibold text-muted-foreground">{t("poll.label")}</legend>
       {draft.options.map((option, index) => (
         <div key={index} className="flex items-center gap-2">
           <input
@@ -269,7 +269,7 @@ function PollEditor({ draft, onChange }: { readonly draft: PollDraft; readonly o
             onChange={(event) => setOption(index, event.target.value)}
             placeholder={t("poll.option", { n: index + 1 })}
             aria-label={t("poll.option", { n: index + 1 })}
-            className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 text-[0.875rem] outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
           />
           {draft.options.length > 2 ? (
             <button
@@ -283,7 +283,7 @@ function PollEditor({ draft, onChange }: { readonly draft: PollDraft; readonly o
           ) : null}
         </div>
       ))}
-      <div className="flex flex-wrap items-center gap-3 pt-1 text-[13px]">
+      <div className="flex flex-wrap items-center gap-3 pt-1 text-[0.8125rem]">
         {draft.options.length < MAX_POLL_OPTIONS ? (
           <button
             type="button"
@@ -308,7 +308,7 @@ function PollEditor({ draft, onChange }: { readonly draft: PollDraft; readonly o
           <select
             value={draft.durationHours ?? "none"}
             onChange={(event) => onChange({ ...draft, durationHours: event.target.value === "none" ? null : Number(event.target.value) })}
-            className="h-8 rounded-lg border border-border bg-surface px-2 text-[13px]"
+            className="h-8 rounded-lg border border-border bg-surface px-2 text-[0.8125rem]"
           >
             {DURATIONS.map((hours) => (
               <option key={hours ?? "none"} value={hours ?? "none"}>

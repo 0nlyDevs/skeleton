@@ -61,7 +61,7 @@ export function ContactForm({
             </option>
           ))}
         </select>
-        <p className="text-[12.5px] text-muted-foreground">{t("tn.contact.service_hint")}</p>
+        <p className="text-[0.7812rem] text-muted-foreground">{t("tn.contact.service_hint")}</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -76,7 +76,7 @@ export function ContactForm({
           aria-invalid={Boolean(fields.subject)}
           aria-describedby={fields.subject ? "contact-subject-error" : undefined}
         />
-        {fields.subject ? <p id="contact-subject-error" className="text-[12.5px] text-error">{fields.subject}</p> : null}
+        {fields.subject ? <p id="contact-subject-error" role="alert" className="text-[0.7812rem] text-error">{fields.subject}</p> : null}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -92,13 +92,13 @@ export function ContactForm({
           aria-invalid={Boolean(fields.message)}
           aria-describedby={fields.message ? "contact-message-error" : undefined}
         />
-        <div className="flex justify-between gap-2 text-[12.5px]">
-          <span className="text-error" id="contact-message-error">{fields.message ?? ""}</span>
+        <div className="flex justify-between gap-2 text-[0.7812rem]">
+          <span className="text-error" id="contact-message-error" role="alert">{fields.message ?? ""}</span>
           <span className="text-muted-foreground">{message.length}/5000</span>
         </div>
       </div>
 
-      <p className="flex items-start gap-2 text-[12.5px] text-muted-foreground">
+      <p className="flex items-start gap-2 text-[0.7812rem] text-muted-foreground">
         <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         {t("tn.contact.privacy")}
       </p>

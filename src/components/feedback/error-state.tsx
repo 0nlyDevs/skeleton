@@ -42,7 +42,7 @@ export function ErrorState({
       </span>
 
       <div className="flex flex-col gap-1">
-        <p className="text-[15px] font-medium tracking-tight">{t("feedback.error.title")}</p>
+        <p className="text-[0.9375rem] font-medium tracking-tight">{t("feedback.error.title")}</p>
         <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{message}</p>
       </div>
 

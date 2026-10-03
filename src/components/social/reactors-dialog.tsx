@@ -72,7 +72,7 @@ export function ReactorsDialog({
                 aria-selected={tab === key}
                 onClick={() => setTab(key)}
                 className={cn(
-                  "flex shrink-0 items-center gap-1 border-b-2 px-2.5 py-2 text-[13.5px] font-semibold",
+                  "flex shrink-0 items-center gap-1 border-b-2 px-2.5 py-2 text-[0.8438rem] font-semibold",
                   tab === key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -84,7 +84,7 @@ export function ReactorsDialog({
         ) : null}
         <div className="max-h-[60dvh] overflow-y-auto px-3 pb-4">
           {error ? (
-            <p className="px-2 py-6 text-center text-[13px] text-error">{error}</p>
+            <p className="px-2 py-6 text-center text-[0.8125rem] text-error">{error}</p>
           ) : reactors === null ? (
             <div className="flex flex-col gap-2 p-2">
               {[0, 1, 2].map((index) => (
@@ -92,7 +92,7 @@ export function ReactorsDialog({
               ))}
             </div>
           ) : shown.length === 0 ? (
-            <p className="px-2 py-6 text-center text-[13px] text-muted-foreground">{t("reactors.empty")}</p>
+            <p className="px-2 py-6 text-center text-[0.8125rem] text-muted-foreground">{t("reactors.empty")}</p>
           ) : (
             <ul className="flex flex-col">
               {shown.map((reactor) => (
@@ -103,13 +103,13 @@ export function ReactorsDialog({
                   >
                     <span className="relative">
                       <UserAvatar userId={reactor.user.id} name={reactor.user.name} image={reactor.user.image} size="sm" />
-                      <span aria-hidden className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full bg-card text-[12px] ring-2 ring-card">
+                      <span aria-hidden className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full bg-card text-[0.75rem] ring-2 ring-card">
                         {reactor.emoji}
                       </span>
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-[14px] font-medium">{reactor.user.name}</span>
-                      {reactor.user.username ? <span className="block truncate text-[12px] text-muted-foreground">@{reactor.user.username}</span> : null}
+                      <span className="block truncate text-[0.875rem] font-medium">{reactor.user.name}</span>
+                      {reactor.user.username ? <span className="block truncate text-[0.75rem] text-muted-foreground">@{reactor.user.username}</span> : null}
                     </span>
                   </Link>
                 </li>

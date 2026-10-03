@@ -7,7 +7,7 @@ export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
     <textarea
       data-slot="textarea"
       className={cn(
-        "flex min-h-[96px] w-full rounded-lg border border-input bg-surface px-3 py-2 text-[15px] leading-relaxed text-foreground",
+        "flex min-h-[96px] w-full rounded-lg border border-input bg-surface px-3 py-2 text-[0.9375rem] leading-relaxed text-foreground",
         "transition-[border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-out-soft)]",
         "placeholder:text-muted-foreground/70",
         "hover:border-primary/40",

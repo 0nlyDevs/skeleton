@@ -78,7 +78,7 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
             ) : signedIn ? (
               <>
                 {blocked ? (
-                  <span className="rounded-lg bg-error/10 px-3 py-2 text-[13px] font-medium text-error">{t("block.you_blocked")}</span>
+                  <span className="rounded-lg bg-error/10 px-3 py-2 text-[0.8125rem] font-medium text-error">{t("block.you_blocked")}</span>
                 ) : (
                 <>
                 <FollowButton
@@ -118,11 +118,11 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
           </div>
         </div>
 
-        <h1 className="mt-3 flex flex-wrap items-center gap-2 text-[24px] font-bold tracking-tight">
+        <h1 className="mt-3 flex flex-wrap items-center gap-2 text-[1.5rem] font-bold tracking-tight">
           {profile.name}
           {!profile.isSelf ? <RelationBadge isFriend={profile.isFriend} followsYou={profile.followsYou} /> : null}
         </h1>
-        <p className="text-[14px] text-muted-foreground">
+        <p className="text-[0.875rem] text-muted-foreground">
           @{profile.username}
           {signedIn && presence ? (
             <span className={presence.online ? "ml-2 text-success" : "ml-2"}>
@@ -130,15 +130,15 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
             </span>
           ) : null}
         </p>
-        <p className="mt-3 whitespace-pre-line text-[14.5px] leading-relaxed">{profile.bio || <span className="text-muted-foreground">{t("profile.public.no_bio")}</span>}</p>
-        <p className="mt-3 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+        <p className="mt-3 whitespace-pre-line text-[0.9062rem] leading-relaxed">{profile.bio || <span className="text-muted-foreground">{t("profile.public.no_bio")}</span>}</p>
+        <p className="mt-3 flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
           <CalendarDays className="size-4" />
           {t("profile.public.joined", { date: formatLongDate(profile.createdAt) })}
         </p>
         <dl className="mt-4 flex gap-6">
           <div className="flex items-baseline gap-1.5">
-            <dd className="text-[16px] font-bold tabular-nums">{profile.postCount}</dd>
-            <dt className="text-[13px] text-muted-foreground">{t("profile.public.posts")}</dt>
+            <dd className="text-[1rem] font-bold tabular-nums">{profile.postCount}</dd>
+            <dt className="text-[0.8125rem] text-muted-foreground">{t("profile.public.posts")}</dt>
           </div>
           {(
             [
@@ -153,8 +153,8 @@ export function ProfileHeader({ profile, signedIn }: { readonly profile: PublicP
               className="flex items-baseline gap-1.5 rounded-md hover:underline"
               aria-haspopup="dialog"
             >
-              <dd className="text-[16px] font-bold tabular-nums">{value}</dd>
-              <dt className="text-[13px] text-muted-foreground">{t(key)}</dt>
+              <dd className="text-[1rem] font-bold tabular-nums">{value}</dd>
+              <dt className="text-[0.8125rem] text-muted-foreground">{t(key)}</dt>
             </button>
           ))}
         </dl>

@@ -74,10 +74,10 @@ export function UserMenu({
 
       <DropdownMenuContent align="end" className="min-w-60">
         <DropdownMenuLabel className="normal-case">
-          <span className="block truncate text-[13px] font-semibold text-foreground">
+          <span className="block truncate text-[0.8125rem] font-semibold text-foreground">
             {name}
           </span>
-          <span className="block truncate text-[12px] font-normal normal-case tracking-normal text-muted-foreground">
+          <span className="block truncate text-[0.75rem] font-normal normal-case tracking-normal text-muted-foreground">
             {email}
           </span>
         </DropdownMenuLabel>

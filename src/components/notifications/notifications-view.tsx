@@ -45,14 +45,14 @@ export function NotificationsView() {
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-[24px] font-semibold tracking-[-0.015em]">
+          <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">
             {t("notifications.title")}
           </h1>
-          <p className="text-[14px] text-muted-foreground">{t("notifications.subtitle")}</p>
+          <p className="text-[0.875rem] text-muted-foreground">{t("notifications.subtitle")}</p>
         </div>
 
         <div className="flex items-center gap-4">
-          <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-medium">
+          <label className="flex cursor-pointer items-center gap-2.5 text-[0.8125rem] font-medium">
             <Switch checked={unreadOnly} onCheckedChange={setUnreadOnly} />
             {t("notifications.unread_only")}
           </label>
@@ -99,18 +99,18 @@ export function NotificationsView() {
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span
                       className={cn(
-                        "truncate text-[14px]",
+                        "truncate text-[0.875rem]",
                         item.read ? "text-muted-foreground" : "font-medium",
                       )}
                     >
                       {item.title}
                     </span>
                     {item.body ? (
-                      <span className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
+                      <span className="line-clamp-2 text-[0.8125rem] leading-relaxed text-muted-foreground">
                         {item.body}
                       </span>
                     ) : null}
-                    <span className="mt-0.5 flex items-center gap-2 text-[11.5px] uppercase tracking-wide text-muted-foreground/70">
+                    <span className="mt-0.5 flex items-center gap-2 text-[0.7188rem] uppercase tracking-wide text-muted-foreground/70">
                       {t(typeKey)}
                       <span aria-hidden>·</span>
                       <time dateTime={item.createdAt} className="normal-case">
@@ -164,7 +164,7 @@ export function NotificationsView() {
           >
             {t("common.previous")}
           </Button>
-          <span className="text-[13px] tabular-nums text-muted-foreground">
+          <span className="text-[0.8125rem] tabular-nums text-muted-foreground">
             {t("common.page")} {meta?.page ?? 1} {t("common.of")} {totalPages}
           </span>
           <Button

@@ -21,9 +21,9 @@ export function ForbiddenPanel({
         <ShieldAlert className="size-6" aria-hidden />
       </span>
       <div className="flex flex-col gap-1.5">
-        <p className="text-[12px] font-semibold uppercase tracking-wide text-error">403</p>
+        <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-error">403</p>
         <h1 className="text-lg font-semibold">{title}</h1>
-        <p className="text-[14px] text-muted-foreground">{body}</p>
+        <p className="text-[0.875rem] text-muted-foreground">{body}</p>
       </div>
       <Button asChild size="sm" variant="secondary">
         <Link href={backHref}>{backLabel}</Link>

@@ -46,7 +46,7 @@ export function NotificationBell({ className }: { readonly className?: string })
         {unreadCount > 0 ? (
           <span
             aria-hidden
-            className="absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-primary-foreground"
+            className="absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[0.625rem] font-bold leading-4 text-primary-foreground"
           >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
@@ -58,13 +58,13 @@ export function NotificationBell({ className }: { readonly className?: string })
 
       <DropdownMenuContent align="end" className="w-[min(22rem,calc(100vw-2rem))] p-0">
         <header className="flex items-center justify-between gap-2 border-b border-border/70 px-3.5 py-3">
-          <span className="text-[13px] font-semibold">{t("notifications.title")}</span>
+          <span className="text-[0.8125rem] font-semibold">{t("notifications.title")}</span>
           {unreadCount > 0 ? (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="h-7 gap-1.5 px-2 text-[12px]"
+              className="h-7 gap-1.5 px-2 text-[0.75rem]"
               onClick={() => void markAllRead()}
             >
               <CheckCheck className="size-3.5" />
@@ -101,7 +101,7 @@ export function NotificationBell({ className }: { readonly className?: string })
                       ) : null}
                       <span
                         className={cn(
-                          "truncate text-[13px]",
+                          "truncate text-[0.8125rem]",
                           item.read ? "text-muted-foreground" : "font-medium text-foreground",
                         )}
                       >
@@ -109,11 +109,11 @@ export function NotificationBell({ className }: { readonly className?: string })
                       </span>
                     </div>
                     {item.body ? (
-                      <p className="mt-0.5 line-clamp-2 pl-3.5 text-[12px] leading-relaxed text-muted-foreground">
+                      <p className="mt-0.5 line-clamp-2 pl-3.5 text-[0.75rem] leading-relaxed text-muted-foreground">
                         {item.body}
                       </p>
                     ) : null}
-                    <span className="mt-1 block pl-3.5 text-[11px] uppercase tracking-wide text-muted-foreground/70">
+                    <span className="mt-1 block pl-3.5 text-[0.6875rem] uppercase tracking-wide text-muted-foreground/70">
                       {t(typeKey)}
                     </span>
                   </>
@@ -160,7 +160,7 @@ export function NotificationBell({ className }: { readonly className?: string })
             type="button"
             variant="ghost"
             size="sm"
-            className="w-full justify-center text-[12px]"
+            className="w-full justify-center text-[0.75rem]"
             onClick={() => router.push("/notifications")}
           >
             {t("notifications.view_all")}

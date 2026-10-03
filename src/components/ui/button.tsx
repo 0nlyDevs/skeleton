@@ -39,9 +39,9 @@ const buttonVariants = cva(
         link: "h-auto bg-transparent p-0 text-primary underline-offset-4 hover:underline active:scale-100",
       },
       size: {
-        sm: "h-8 px-3 text-[13px]",
+        sm: "h-8 px-3 text-[0.8125rem]",
         md: "h-10 px-4",
-        lg: "h-11 px-5 text-[15px]",
+        lg: "h-11 px-5 text-[0.9375rem]",
         icon: "size-9 shrink-0",
       },
     },

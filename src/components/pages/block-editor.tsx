@@ -55,7 +55,7 @@ export function ImagePicker({ image, onPick, onClear, label }: { image: PageImag
         {image ? <img src={image.url} alt="" className="absolute inset-0 size-full object-cover" /> : <ImagePlus className="size-5" />}
         {busy ? <Loader2 className="absolute size-5 animate-spin text-white drop-shadow" /> : null}
       </button>
-      <div className="flex flex-col gap-1 text-[13px]">
+      <div className="flex flex-col gap-1 text-[0.8125rem]">
         <button type="button" className="text-left font-semibold text-primary hover:underline" onClick={() => input.current?.click()}>
           {image ? t("pages.editor.replace_image") : label}
         </button>
@@ -82,7 +82,7 @@ export function ImagePicker({ image, onPick, onClear, label }: { image: PageImag
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-[13px]">
+    <label className="flex flex-col gap-1 text-[0.8125rem]">
       <span className="font-medium text-muted-foreground">{label}</span>
       {children}
     </label>
@@ -121,7 +121,7 @@ export function BlockEditor({
             <select
               value={block.level}
               onChange={(event) => onChange({ ...block, level: Number(event.target.value) === 3 ? 3 : 2 })}
-              className="h-10 rounded-lg border border-border bg-surface px-2 text-[13px]"
+              className="h-10 rounded-lg border border-border bg-surface px-2 text-[0.8125rem]"
               aria-label={t("pages.editor.heading_size")}
             >
               <option value={2}>{t("pages.editor.heading_large")}</option>
@@ -205,11 +205,11 @@ export function BlockEditor({
                 if (parsed) onChange({ ...block, ...parsed });
               }}
             />
-            {videoUrl && !parseVideoUrl(videoUrl) ? <span className="text-[12px] text-error">{t("pages.editor.video_invalid")}</span> : null}
+            {videoUrl && !parseVideoUrl(videoUrl) ? <span className="text-[0.75rem] text-error">{t("pages.editor.video_invalid")}</span> : null}
           </Field>
         );
       case "divider":
-        return <p className="text-[13px] text-muted-foreground">{t("pages.editor.divider_hint")}</p>;
+        return <p className="text-[0.8125rem] text-muted-foreground">{t("pages.editor.divider_hint")}</p>;
       case "countdown":
         return (
           <div className="grid gap-2 sm:grid-cols-2">
@@ -262,7 +262,7 @@ export function BlockEditor({
   return (
     <li className="rounded-2xl border border-border/70 bg-card p-3">
       <div className="mb-2 flex items-center gap-1">
-        <span className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">{t(`pages.block.${block.type}` as MessageKey)}</span>
+        <span className="text-[0.75rem] font-semibold uppercase tracking-wide text-muted-foreground">{t(`pages.block.${block.type}` as MessageKey)}</span>
         <span className="ml-auto flex items-center">
           <IconButton label={t("pages.editor.move_up")} disabled={first} onClick={() => onMove(-1)}>
             <ArrowUp className="size-4" />
@@ -310,7 +310,7 @@ function ListEditor<T>({ items, max, empty, onChange, render }: { items: T[]; ma
         </div>
       ))}
       {items.length < max ? (
-        <button type="button" onClick={() => onChange([...items, empty])} className="inline-flex items-center gap-1 self-start text-[13px] font-semibold text-primary hover:underline">
+        <button type="button" onClick={() => onChange([...items, empty])} className="inline-flex items-center gap-1 self-start text-[0.8125rem] font-semibold text-primary hover:underline">
           <Plus className="size-4" />
           {t("pages.editor.add_item")}
         </button>

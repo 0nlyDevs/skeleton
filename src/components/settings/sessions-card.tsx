@@ -60,8 +60,8 @@ export function SessionsCard({ sessions: initial, currentSessionId }: { readonly
             <li key={session.id} className="flex items-center gap-3 py-3">
               <Monitor className="size-4 shrink-0 text-muted-foreground" />
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-[13.5px] font-medium">{session.userAgent ?? "—"}</span>
-                <span className="text-[12px] text-muted-foreground">
+                <span className="truncate text-[0.8438rem] font-medium">{session.userAgent ?? "—"}</span>
+                <span className="text-[0.75rem] text-muted-foreground">
                   {session.ipAddress ?? "—"} · {fmt.dateTime(session.createdAt)}
                 </span>
               </div>

@@ -9,7 +9,7 @@ export function RelationBadge({ isFriend, followsYou }: { readonly isFriend: boo
   const t = useTranslation();
   if (isFriend) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-[11px] font-semibold text-success">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-[0.6875rem] font-semibold text-success">
         <UsersRound className="size-3" aria-hidden />
         {t("connections.friends")}
       </span>
@@ -17,7 +17,7 @@ export function RelationBadge({ isFriend, followsYou }: { readonly isFriend: boo
   }
   if (followsYou) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[0.6875rem] font-medium text-muted-foreground">
         <UserCheck className="size-3" aria-hidden />
         {t("connections.follows_you")}
       </span>
