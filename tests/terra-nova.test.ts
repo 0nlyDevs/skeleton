@@ -5,6 +5,7 @@ import { cityRequestRefParamSchema, createCityRequestSchema, listCityRequestsQue
 import { toSummaryDto } from "@/modules/city-requests/city-requests.dto";
 import { serviceInputSchema } from "@/modules/city-services/city-services.schema";
 import { minutesUntil, nextWaveAt } from "@/modules/webcup/webcup.schedule";
+import { webcupFeedQuerySchema } from "@/modules/webcup/webcup.routes";
 
 const row = {
   id: "r1",
@@ -100,5 +101,24 @@ describe("Nova Terra wave countdown", () => {
     expect(nextWaveAt(null, "2026-10-03T10:00:00.000Z")).toBeNull();
     expect(nextWaveAt(10, null)).toBeNull();
     expect(minutesUntil(null)).toBeNull();
+  });
+});
+
+describe("Nova Terra live feed status filtering", () => {
+  it("accepts valid status filters", () => {
+    expect(webcupFeedQuerySchema.safeParse({}).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "ALL" }).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "all" }).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "TODO" }).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "IN_PROGRESS" }).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "DONE" }).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "SKIPPED" }).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "todo" }).success).toBe(true);
+    expect(webcupFeedQuerySchema.safeParse({ status: "pending" }).success).toBe(true);
+  });
+
+  it("rejects unknown or invalid status filters", () => {
+    expect(webcupFeedQuerySchema.safeParse({ status: "INVALID" }).success).toBe(false);
+    expect(webcupFeedQuerySchema.safeParse({ status: "drop table" }).success).toBe(false);
   });
 });

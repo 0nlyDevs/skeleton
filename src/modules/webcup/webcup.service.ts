@@ -162,11 +162,28 @@ export interface WebcupFeedDto {
   readonly totals: { readonly xpVisible: number; readonly xpDone: number; readonly count: number; readonly done: number };
 }
 
-export async function getWebcupFeed(viewer: AuthUser): Promise<WebcupFeedDto> {
+export async function getWebcupFeed(viewer: AuthUser, status?: string): Promise<WebcupFeedDto> {
   if (!isStaff(viewer)) throw new ForbiddenError("Only city agents can read the Terra Nova feed.");
-  const [state, rows] = await Promise.all([
+  const where: { triage?: "TODO" | "IN_PROGRESS" | "DONE" | "SKIPPED" | { in: ("TODO" | "IN_PROGRESS")[] } } = {};
+  if (status && status !== "all" && status !== "ALL") {
+    if (status === "todo" || status === "pending") {
+      where.triage = { in: ["TODO", "IN_PROGRESS"] };
+    } else if (status === "TODO" || status === "IN_PROGRESS" || status === "DONE" || status === "SKIPPED") {
+      where.triage = status;
+    }
+  }
+
+  const [state, rows, allVisible] = await Promise.all([
     prisma.webcupFeedState.findUnique({ where: { key: STATE_KEY } }),
-    prisma.webcupRequest.findMany({ orderBy: [{ visible: "desc" }, { wave: "asc" }, { sortOrder: "asc" }, { code: "asc" }], take: 500 }),
+    prisma.webcupRequest.findMany({
+      where: Object.keys(where).length > 0 ? where : undefined,
+      orderBy: [{ visible: "desc" }, { wave: "asc" }, { sortOrder: "asc" }, { code: "asc" }],
+      take: 500,
+    }),
+    prisma.webcupRequest.findMany({
+      where: { visible: true },
+      select: { triage: true, xpAvailable: true },
+    }),
   ]);
   const requests = rows.map((row) => ({
     code: row.code,
@@ -189,7 +206,6 @@ export async function getWebcupFeed(viewer: AuthUser): Promise<WebcupFeedDto> {
     note: row.note,
     firstSeenAt: row.firstSeenAt.toISOString(),
   }));
-  const visible = requests.filter((request) => request.visible);
   return {
     session: (state?.session as WebcupSession | null) ?? null,
     lastFetchAt: state?.lastFetchAt?.toISOString() ?? null,
@@ -198,10 +214,10 @@ export async function getWebcupFeed(viewer: AuthUser): Promise<WebcupFeedDto> {
     configured: Boolean(env.WEBCUP_API_KEY),
     requests,
     totals: {
-      count: visible.length,
-      done: visible.filter((request) => request.triage === "DONE").length,
-      xpVisible: visible.reduce((sum, request) => sum + request.xpAvailable, 0),
-      xpDone: visible.filter((request) => request.triage === "DONE").reduce((sum, request) => sum + request.xpAvailable, 0),
+      count: allVisible.length,
+      done: allVisible.filter((r) => r.triage === "DONE").length,
+      xpVisible: allVisible.reduce((sum, r) => sum + r.xpAvailable, 0),
+      xpDone: allVisible.filter((r) => r.triage === "DONE").reduce((sum, r) => sum + r.xpAvailable, 0),
     },
   };
 }
