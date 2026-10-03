@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 
 import { withAgentAccess } from "@/components/agent/agent-guard";
+import { ServiceAvailabilityBadge } from "@/components/city/service-availability-notice";
 import { ServiceIcon } from "@/components/city/service-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ export default async function AgentServicesPage() {
                     <span className="flex flex-wrap items-center gap-1.5 font-semibold">
                       {service.name}
                       {!service.active ? <Badge variant="warning">{t("tn.services.inactive")}</Badge> : null}
+                      <ServiceAvailabilityBadge availability={service.availability} />
                     </span>
                     <span className="text-[0.7812rem] text-muted-foreground">{service.category}</span>
                   </span>
