@@ -989,4 +989,6 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.eco.auto_body": "To load faster, eco mode is on: no animations or 3D. All information and procedures remain available.",
   "tn.eco.auto_full": "Show the full version",
   "tn.eco.auto_dismiss": "Close this message",
+  "tn.eco.map_3d": "Show the map in 3D (heavier)",
+  "tn.eco.map_hint_flat": "Click a district or a service for details.",
 };

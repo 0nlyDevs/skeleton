@@ -17,7 +17,7 @@ import {
 } from "@/lib/validation/profile";
 import { loginErrorMessageKey } from "../auth-errors";
 import { AttemptsLeft, LoginLockout, ProtectedSignInNote, SlowDown, useLoginProtection } from "../login-protection-notice";
-import { FuturisticAuthScene, type SceneState } from "./auth-scene";
+import type { FuturisticAuthScene, SceneState } from "./auth-scene";
 import "./auth-styles.css";
 
 export type AuthInitialView = "login" | "s1" | "forgot" | "2fa" | "reset" | "verify";
@@ -364,68 +364,79 @@ export function FuturisticAuth({
     }
   };
 
-  // Mount 3D Scene & Initial Animation
+  // Mount 3D Scene & Initial Animation. In light mode (slow connection or the
+  // resident's choice) neither three.js nor the intro is loaded: the form is
+  // there at once and the page costs a fraction of the bytes.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     checkMobile();
-    const scene = new FuturisticAuthScene(canvas, () => isMobileRef.current);
-    sceneRef.current = scene;
-    scene.start();
+    const light = document.documentElement.hasAttribute("data-eco");
+    let scene: FuturisticAuthScene | null = null;
+    let disposed = false;
 
     const initialSignup = isSignup(mode);
     const targetBlob = getTargetBlob(initialSignup);
-    currentBlobRef.current = targetBlob.map(([x, y]) => [
-      1.1 - (1.1 - x) * 0.12,
-      0.5 + (y - 0.5) * 0.15,
-    ]);
+    currentBlobRef.current = light
+      ? targetBlob.map((p) => [...p])
+      : targetBlob.map(([x, y]) => [1.1 - (1.1 - x) * 0.12, 0.5 + (y - 0.5) * 0.15]);
     drawBlob(currentBlobRef.current);
 
     const xs = getSlots(initialSignup);
     if (stageRef.current) gsap.set(stageRef.current, { x: xs.s });
     if (panelRef.current) gsap.set(panelRef.current, { x: xs.p });
-    if (scene.state) {
-      scene.state.mirror = initialSignup ? 1 : 0;
-      scene.state.rocketSign = initialSignup ? -1 : 1;
-      scene.state.warp = 0.9;
-      scene.state.rocketOut = -1;
-    }
 
-    const brandEl = panelRef.current?.querySelector(".fa-brand");
-    const controlsEl = panelRef.current?.querySelector(".fa-controls");
-    const activeView = rootRef.current?.querySelector(`#fa-view-${mode}`);
-    const animItems = activeView?.querySelectorAll(".fa-anim") ?? [];
+    let introTl: gsap.core.Timeline | null = null;
+    if (!light) {
+      const brandEl = panelRef.current?.querySelector(".fa-brand");
+      const controlsEl = panelRef.current?.querySelector(".fa-controls");
+      const activeView = rootRef.current?.querySelector(`#fa-view-${mode}`);
+      const animItems = activeView?.querySelectorAll(".fa-anim") ?? [];
 
-    if (brandEl && controlsEl) gsap.set([brandEl, controlsEl], { opacity: 0, y: -12 });
-    if (animItems.length > 0) gsap.set(animItems, { opacity: 0, y: 26, filter: "blur(8px)" });
+      if (brandEl && controlsEl) gsap.set([brandEl, controlsEl], { opacity: 0, y: -12 });
+      if (animItems.length > 0) gsap.set(animItems, { opacity: 0, y: 26, filter: "blur(8px)" });
 
-    const introTl = gsap.timeline();
-    introTl
-      .add(morphBlob(targetBlob, 1.4, "power3.out"), 0)
-      .to(scene.state, { warp: 0, duration: 1.4, ease: "power2.out" }, 0.1)
-      .to(scene.state, { rocketOut: 0, duration: 1.3, ease: "power3.out" }, 0.2)
-      .fromTo(scene.state, { pulse: 0 }, { pulse: 1, duration: 1, ease: "power2.out" }, 0.3);
-
-    if (brandEl && controlsEl) {
-      introTl.to([brandEl, controlsEl], { opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: "power3.out" }, 0.2);
-    }
-    if (animItems.length > 0) {
-      introTl.to(
-        animItems,
-        {
-          opacity: 1,
-          y: 0,
-          filter: "blur(0px)",
-          duration: 0.8,
-          stagger: 0.07,
-          ease: "power3.out",
-          onComplete: () => {
-            gsap.set(animItems, { clearProps: "filter" });
+      introTl = gsap.timeline();
+      introTl.add(morphBlob(targetBlob, 1.4, "power3.out"), 0);
+      if (brandEl && controlsEl) {
+        introTl.to([brandEl, controlsEl], { opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: "power3.out" }, 0.2);
+      }
+      if (animItems.length > 0) {
+        introTl.to(
+          animItems,
+          {
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            duration: 0.8,
+            stagger: 0.07,
+            ease: "power3.out",
+            onComplete: () => {
+              gsap.set(animItems, { clearProps: "filter" });
+            },
           },
-        },
-        0.35,
-      );
+          0.35,
+        );
+      }
+
+      void import("./auth-scene").then(({ FuturisticAuthScene: Scene }) => {
+        if (disposed) return;
+        scene = new Scene(canvas, () => isMobileRef.current);
+        sceneRef.current = scene;
+        scene.start();
+        if (scene.state) {
+          scene.state.mirror = initialSignup ? 1 : 0;
+          scene.state.rocketSign = initialSignup ? -1 : 1;
+          scene.state.warp = 0.9;
+          scene.state.rocketOut = -1;
+          gsap
+            .timeline()
+            .to(scene.state, { warp: 0, duration: 1.4, ease: "power2.out" }, 0)
+            .to(scene.state, { rocketOut: 0, duration: 1.3, ease: "power3.out" }, 0.1)
+            .fromTo(scene.state, { pulse: 0 }, { pulse: 1, duration: 1, ease: "power2.out" }, 0.2);
+        }
+      });
     }
 
     inkTo(initialSignup, false);
@@ -439,15 +450,17 @@ export function FuturisticAuth({
       currentBlobRef.current = getTargetBlob(currentSignup).map((p) => [...p]);
       drawBlob(currentBlobRef.current);
       inkTo(currentSignup, false);
-      scene.resize();
+      scene?.resize();
     };
 
     window.addEventListener("resize", handleResize);
 
     return () => {
+      disposed = true;
       window.removeEventListener("resize", handleResize);
-      scene.dispose();
-      introTl.kill();
+      scene?.dispose();
+      sceneRef.current = null;
+      introTl?.kill();
     };
   }, []);
 

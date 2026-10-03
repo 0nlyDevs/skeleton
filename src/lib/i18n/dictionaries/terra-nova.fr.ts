@@ -994,4 +994,6 @@ export const frTerraNova = {
   "tn.eco.auto_body": "Pour charger plus vite, le mode éco est activé : pas d'animations ni de 3D. Toutes les informations et démarches restent disponibles.",
   "tn.eco.auto_full": "Afficher la version complète",
   "tn.eco.auto_dismiss": "Fermer ce message",
+  "tn.eco.map_3d": "Afficher la carte en 3D (plus lourd)",
+  "tn.eco.map_hint_flat": "Cliquez sur un quartier ou un service pour le détail.",
 } as const;

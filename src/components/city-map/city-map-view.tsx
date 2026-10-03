@@ -137,6 +137,10 @@ export function CityMapView({
   const [kinds, setKinds] = useState<ReadonlySet<PlaceKind> | null>(null);
   const [home, setHome] = useState<CityZoneId | null>(viewerZone);
   const [mode, setMode] = useState<"loading" | "3d" | "flat">("loading");
+  // Light mode (slow connection or the resident's choice) starts on the flat
+  // map: no three.js download until the resident asks for the 3D view.
+  const [want3d, setWant3d] = useState(false);
+  const [canShow3d, setCanShow3d] = useState(false);
   const [flat, setFlat] = useState(false);
   const [listOpen, setListOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -177,6 +181,12 @@ export function CityMapView({
       setMode("flat");
       return;
     }
+    if (document.documentElement.hasAttribute("data-eco") && !want3d) {
+      setCanShow3d(true);
+      setMode("flat");
+      return;
+    }
+    setMode("loading");
     let disposed = false;
     void import("./city-map-scene").then(({ CityMapScene }) => {
       if (disposed) return;
@@ -203,7 +213,9 @@ export function CityMapView({
       sceneRef.current?.dispose();
       sceneRef.current = null;
     };
-  }, []);
+    // `services` is read once: markers are placed when the scene starts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [want3d]);
 
   useEffect(() => sceneRef.current?.setStatuses(new Map(statuses.map((entry) => [entry.zone, entry.status]))), [statuses, mode]);
   useEffect(() => sceneRef.current?.setHome(home), [home, mode]);
@@ -291,7 +303,26 @@ export function CityMapView({
           <Loader2 className="size-6 animate-spin" aria-hidden />
         </div>
       ) : null}
-      {mode === "flat" ? <FlatMap statuses={byZone} selected={selectedZone ?? null} home={home} onSelect={(zone) => setSelection({ type: "zone", zone })} zoneName={zoneName} /> : null}
+      {mode === "flat" ? (
+        <FlatMap
+          statuses={byZone}
+          selected={selectedZone ?? null}
+          home={home}
+          onSelect={(zone) => setSelection({ type: "zone", zone })}
+          zoneName={zoneName}
+          services={serviceLayer === "none" ? [] : services.filter((service) => serviceLayer === "all" || service.emergency)}
+          onSelectService={(slug) => setSelection({ type: "service", slug })}
+        />
+      ) : null}
+      {mode === "flat" && canShow3d ? (
+        <button
+          type="button"
+          onClick={() => setWant3d(true)}
+          className="absolute right-3 top-28 z-10 rounded-full bg-white px-4 py-2 text-[0.8125rem] font-medium text-[#1a73e8] shadow-md hover:bg-[#f1f3f4]"
+        >
+          {t("tn.eco.map_3d")}
+        </button>
+      ) : null}
 
       {labelTargets
         ? CITY_ZONES.map((zone) => {
@@ -501,30 +532,35 @@ export function CityMapView({
             <LocateFixed className="size-5 text-[#1a73e8]" aria-hidden />
           </button>
         ) : null}
-        <button
-          type="button"
-          className={cn(control, "rounded-full text-[0.75rem] font-bold shadow-[0_1px_4px_rgb(0_0_0/0.3)]")}
-          onClick={() => {
-            setFlat((value) => !value);
-            sceneRef.current?.setTilt(!flat);
-          }}
-          aria-pressed={flat}
-          aria-label={flat ? "3D" : "2D"}
-        >
-          {flat ? "3D" : "2D"}
-        </button>
-        <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => sceneRef.current?.resetNorth()} aria-label={t("alerts.map.north")} title={t("alerts.map.north")}>
-          <Compass className="size-5" aria-hidden />
-        </button>
-        <div className="flex flex-col overflow-hidden rounded-xl shadow-[0_1px_4px_rgb(0_0_0/0.3)]">
-          <button type="button" className={control} onClick={() => sceneRef.current?.zoom(0.7)} aria-label={t("alerts.map.zoom_in")}>
-            <Plus className="size-5" aria-hidden />
-          </button>
-          <span className="h-px bg-[#e8eaed]" />
-          <button type="button" className={control} onClick={() => sceneRef.current?.zoom(1.4)} aria-label={t("alerts.map.zoom_out")}>
-            <Minus className="size-5" aria-hidden />
-          </button>
-        </div>
+        {/* Camera controls only exist for the 3D view. */}
+        {mode === "3d" ? (
+          <>
+            <button
+              type="button"
+              className={cn(control, "rounded-full text-[0.75rem] font-bold shadow-[0_1px_4px_rgb(0_0_0/0.3)]")}
+              onClick={() => {
+                setFlat((value) => !value);
+                sceneRef.current?.setTilt(!flat);
+              }}
+              aria-pressed={flat}
+              aria-label={flat ? "3D" : "2D"}
+            >
+              {flat ? "3D" : "2D"}
+            </button>
+            <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => sceneRef.current?.resetNorth()} aria-label={t("alerts.map.north")} title={t("alerts.map.north")}>
+              <Compass className="size-5" aria-hidden />
+            </button>
+            <div className="flex flex-col overflow-hidden rounded-xl shadow-[0_1px_4px_rgb(0_0_0/0.3)]">
+              <button type="button" className={control} onClick={() => sceneRef.current?.zoom(0.7)} aria-label={t("alerts.map.zoom_in")}>
+                <Plus className="size-5" aria-hidden />
+              </button>
+              <span className="h-px bg-[#e8eaed]" />
+              <button type="button" className={control} onClick={() => sceneRef.current?.zoom(1.4)} aria-label={t("alerts.map.zoom_out")}>
+                <Minus className="size-5" aria-hidden />
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
 
       {serviceLayer === "emergency" && !selection ? (
@@ -575,7 +611,7 @@ export function CityMapView({
         </div>
       ) : serviceLayer === "emergency" ? null : (
         <p className="pointer-events-none absolute bottom-3 left-3 hidden max-w-[300px] rounded-xl bg-white/90 px-3 py-2 text-[0.75rem] text-[#3c4043] shadow-[0_1px_4px_rgb(0_0_0/0.2)] sm:block">
-          {t("alerts.map.hint")}
+          {t(mode === "3d" ? "alerts.map.hint" : "tn.eco.map_hint_flat")}
         </p>
       )}
     </div>
@@ -719,12 +755,16 @@ function FlatMap({
   home,
   onSelect,
   zoneName,
+  services,
+  onSelectService,
 }: {
   readonly statuses: ReadonlyMap<CityZoneId, ZoneStatusDto>;
   readonly selected: CityZoneId | null;
   readonly home: CityZoneId | null;
   readonly onSelect: (zone: CityZoneId) => void;
   readonly zoneName: (zone: CityZoneId) => string;
+  readonly services: readonly MapService[];
+  readonly onSelectService: (slug: string) => void;
 }) {
   return (
     <svg viewBox="40 60 900 520" className="absolute inset-0 size-full bg-[#a9d3e0]" role="presentation">
@@ -749,6 +789,12 @@ function FlatMap({
           </g>
         );
       })}
+      {services.map((service) => (
+        <g key={service.slug} onClick={() => onSelectService(service.slug)} className="cursor-pointer">
+          <title>{service.name}</title>
+          <circle cx={service.x} cy={service.y} r={7} fill={service.emergency ? "#d93025" : "#1a73e8"} stroke="#fff" strokeWidth={2} />
+        </g>
+      ))}
     </svg>
   );
 }
