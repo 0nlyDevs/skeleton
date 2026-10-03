@@ -121,6 +121,13 @@ enum CityAlertStatus {
   RESOLVED
 }
 
+/// F38 — a municipal service can be stopped for planned work or by an incident.
+enum ServiceAvailability {
+  AVAILABLE
+  MAINTENANCE
+  INCIDENT
+}
+
 /// Who can see a group's posts and member list.
 enum GroupPrivacy {
   PUBLIC
@@ -1008,11 +1015,25 @@ model MunicipalService {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  /// F38 — whether residents can use the service right now, and if not, why,
+  /// until when and where to go instead.
+  availability         ServiceAvailability @default(AVAILABLE)
+  availabilityNote     String?             @db.VarChar(500)
+  /// Start of the interruption; a future date announces planned maintenance.
+  unavailableFrom      DateTime?
+  /// Expected return; null while nobody knows.
+  availableAgainAt     DateTime?
+  alternativeServiceId String?
+  alternativeService   MunicipalService?   @relation("ServiceAlternative", fields: [alternativeServiceId], references: [id], onDelete: SetNull)
+  alternativeFor       MunicipalService[]  @relation("ServiceAlternative")
+
   requests      CityRequest[]
   announcements Announcement[]
 
   @@index([active, sortOrder])
   @@index([emergency])
+  @@index([availability])
+  @@index([alternativeServiceId])
   @@map("municipalService")
 }
 
