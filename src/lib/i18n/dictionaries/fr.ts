@@ -133,7 +133,7 @@ export const fr = {
     "Confirmez d'abord votre adresse e-mail : nous venons de vous renvoyer le lien.",
   "auth.login.banned": "Ce compte est suspendu. Contactez un administrateur.",
   "auth.register.neutral":
-    "Si cette adresse est nouvelle, un message de confirmation vient de partir. Pensez aux indésirables.",
+    "Si cette adresse est nouvelle, un message de confirmation vient de partir. Pensez à regarder dans vos spams.",
   "auth.login.too_many": "Trop de tentatives. Patientez une minute puis réessayez.",
   "auth.register.title": "Créer un compte",
   "auth.register.subtitle": "Cela prend moins d'une minute",
