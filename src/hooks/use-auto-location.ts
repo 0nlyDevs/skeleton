@@ -2,20 +2,26 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch } from "@/lib/api/client";
+import { cityZoneDefinition, cityZoneLabelKey, zoneCentroid, type CityZoneId } from "@/modules/alerts/city-zones";
 
+/** A place on the Terra Nova map, in the shape the map picker and composer use. */
 export interface AutoPlace {
   readonly name: string;
-  readonly latitude: number;
-  readonly longitude: number;
+  readonly mapX: number;
+  readonly mapY: number;
+}
+
+interface AutoLocationProfile {
+  readonly autoLocation?: boolean;
+  readonly cityZone?: CityZoneId | null;
 }
 
 /** The viewer's "Ma position automatique" setting, fetched once per page load. */
-let settingPromise: Promise<boolean> | null = null;
-export function loadAutoLocationSetting(): Promise<boolean> {
-  settingPromise ??= apiFetch<{ autoLocation?: boolean }>("/api/users/me")
-    .then((profile) => profile.autoLocation === true)
-    .catch(() => false);
+let settingPromise: Promise<AutoLocationProfile> | null = null;
+export function loadAutoLocationSetting(): Promise<AutoLocationProfile> {
+  settingPromise ??= apiFetch<AutoLocationProfile>("/api/users/me").catch(() => ({ autoLocation: false, cityZone: null }));
   return settingPromise;
 }
 /** After the user flips the switch in settings. */
@@ -23,29 +29,14 @@ export function resetAutoLocationSetting(): void {
   settingPromise = null;
 }
 
-async function permissionState(): Promise<PermissionState | "unsupported"> {
-  if (typeof navigator === "undefined" || !("geolocation" in navigator)) return "unsupported";
-  try {
-    return (await navigator.permissions.query({ name: "geolocation" })).state;
-  } catch {
-    return "prompt";
-  }
-}
-
-export function currentPosition(): Promise<GeolocationPosition> {
-  return new Promise((resolve, reject) =>
-    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 10_000, maximumAge: 10 * 60_000 }),
-  );
-}
-
 /**
- * Automatic town for new posts. Runs at once when the browser already allows
- * location; otherwise waits for `request()` (called on the first focus of the
- * composer) so a page load never pops a permission prompt. Only the town is
- * resolved, from a point snapped to ~1 km by the server.
+ * "Ma position automatique": when the resident turned the setting on and saved
+ * a district, a new post is placed at the centre of that district. Terra Nova
+ * is a fictional city, so this never asks the browser for a real position and
+ * never calls an external service.
  */
 export function useAutoLocation() {
-  const [enabled, setEnabled] = useState(false);
+  const t = useTranslation();
   const [place, setPlace] = useState<AutoPlace | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const started = useRef(false);
@@ -53,47 +44,23 @@ export function useAutoLocation() {
   const resolve = useCallback(async () => {
     if (started.current) return;
     started.current = true;
-    try {
-      const position = await currentPosition();
-      const response = await apiFetch<{ data: AutoPlace }>(
-        `/api/places/reverse?lat=${position.coords.latitude}&lng=${position.coords.longitude}&precision=town`,
-      );
-      setPlace(response.data);
-    } catch {
-      // Refused or unavailable: simply no automatic place.
-    }
-  }, []);
+    const profile = await loadAutoLocationSetting();
+    if (!profile.autoLocation || !profile.cityZone) return;
+    const zone = cityZoneDefinition(profile.cityZone);
+    if (!zone) return;
+    const [x, y] = zoneCentroid(zone);
+    setPlace({ name: t(cityZoneLabelKey(profile.cityZone)), mapX: Math.round(x), mapY: Math.round(y) });
+  }, [t]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const on = await loadAutoLocationSetting();
-      if (cancelled || !on) return;
-      setEnabled(true);
-      if ((await permissionState()) === "granted") void resolve();
-    })();
-    return () => {
-      cancelled = true;
-    };
+    void resolve();
   }, [resolve]);
 
   const request = useCallback(() => {
-    if (enabled) void resolve();
-  }, [enabled, resolve]);
+    void resolve();
+  }, [resolve]);
 
   const reset = useCallback(() => setDismissed(false), []);
 
-  return { enabled, place: dismissed ? null : place, request, dismiss: () => setDismissed(true), reset };
-}
-
-/** Where the map should open for this viewer, when the setting and browser allow it. */
-export async function autoMapCenter(): Promise<{ latitude: number; longitude: number } | null> {
-  if (!(await loadAutoLocationSetting())) return null;
-  if ((await permissionState()) !== "granted") return null;
-  try {
-    const position = await currentPosition();
-    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
-  } catch {
-    return null;
-  }
+  return { place: dismissed ? null : place, request, dismiss: () => setDismissed(true), reset };
 }

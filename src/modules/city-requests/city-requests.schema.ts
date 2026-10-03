@@ -27,16 +27,17 @@ export const createCityRequestSchema = z
     message: z.string().trim().min(10, "Describe your request in a few words.").max(5000),
     issueType: z.enum(ISSUE_TYPES).nullable().optional(),
     location: z.string().trim().max(200).nullable().optional(),
-    latitude: z.number().min(-90).max(90).nullable().optional(),
-    longitude: z.number().min(-180).max(180).nullable().optional(),
+    /** Position on the Terra Nova map (1000 × 640); the district is derived server-side. */
+    mapX: z.number().int().min(0).max(1000).nullable().optional(),
+    mapY: z.number().int().min(0).max(640).nullable().optional(),
   })
   .strict()
   .superRefine((value, context) => {
-    if (value.issueType && !value.location && (value.latitude == null || value.longitude == null)) {
+    if (value.issueType && !value.location && (value.mapX == null || value.mapY == null)) {
       context.addIssue({ code: "custom", path: ["location"], message: "Say where the problem is." });
     }
-    if ((value.latitude == null) !== (value.longitude == null)) {
-      context.addIssue({ code: "custom", path: ["location"], message: "Pick a point on the map again." });
+    if ((value.mapX == null) !== (value.mapY == null)) {
+      context.addIssue({ code: "custom", path: ["mapX"], message: "Give both map coordinates, or neither." });
     }
   });
 export type CreateCityRequestInput = z.infer<typeof createCityRequestSchema>;

@@ -170,10 +170,13 @@ Technical notes:
 
 ## Maps and location
 
-- OpenStreetMap map of geotagged posts, place search and reverse geocoding
-  through a throttled, cached proxy; coordinates rounded to ~100 m
-- Optional automatic town on new posts (never an exact address), with a
-  privacy switch
+- Terra Nova district map (`/map`) and a district/landmark picker, both drawn
+  from the city reference data; a point is a plane coordinate (1000 × 640) and
+  its district is always derived server-side. No real-world map, tile server or
+  geocoding call is ever made (no OpenStreetMap, no Nominatim)
+- Request and post places are points on that map; the optional automatic place
+  on a new post uses the resident's saved district (never a real address), with
+  a privacy switch
 
 ## Trust, privacy and eco-design
 

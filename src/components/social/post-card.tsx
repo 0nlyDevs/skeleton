@@ -191,7 +191,7 @@ export function PostCard({
             {post.editedAt ? <span title={fmt.dateTime(post.editedAt)}>· {t("post.edited")}</span> : null}
             {post.location ? (
               <Link
-                href={`/map?lat=${post.location.latitude}&lng=${post.location.longitude}`}
+                href={post.location.zone ? `/map?zone=${post.location.zone}` : "/map"}
                 className="inline-flex min-w-0 items-center gap-0.5 hover:underline"
               >
                 · <MapPin className="size-3 shrink-0" aria-hidden />

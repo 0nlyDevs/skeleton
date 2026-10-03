@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, ExternalLink, Lock, MapPin, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Lock, MapPin, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { RequestControls } from "@/components/agent/request-controls";
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import type { CityRequestDto } from "@/modules/city-requests/city-requests.dto";
 
 import { FeedbackForm } from "./feedback-form";
+import { TerraNovaMap } from "./terra-nova-map";
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
 import { RequestComposer } from "./request-composer";
 import { RequestProgress } from "./request-progress";
@@ -156,8 +157,8 @@ export function RequestView({
                 <TriangleAlert className="size-4" aria-hidden />
                 {t("tn.request.report")} · {t(`tn.issue.${request.issueType}` as MessageKey)}
               </h2>
-              {request.location || request.latitude !== null ? (
-                <div className="flex flex-col gap-1 text-sm">
+              {request.location || request.mapX !== null ? (
+                <div className="flex flex-col gap-2 text-sm">
                   <span className="text-[0.75rem] text-muted-foreground">{t("tn.request.location")}</span>
                   {request.location ? (
                     <p className="flex items-start gap-1.5">
@@ -165,16 +166,15 @@ export function RequestView({
                       {request.location}
                     </p>
                   ) : null}
-                  {request.latitude !== null && request.longitude !== null ? (
-                    <a
-                      href={`https://www.openstreetmap.org/?mlat=${request.latitude}&mlon=${request.longitude}#map=18/${request.latitude}/${request.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex w-fit items-center gap-1 text-primary hover:underline"
-                    >
-                      {t("tn.request.open_map")} ({request.latitude.toFixed(5)}, {request.longitude.toFixed(5)})
-                      <ExternalLink className="size-3.5" aria-hidden />
-                    </a>
+                  {request.mapX !== null && request.mapY !== null ? (
+                    <div className="flex flex-col gap-1">
+                      <TerraNovaMap
+                        point={{ mapX: request.mapX, mapY: request.mapY }}
+                        className="h-32 w-full max-w-sm rounded-xl bg-[#a9d3e0] dark:bg-[#16303a]"
+                        ariaLabel={t("tn.request.location")}
+                      />
+                      <span className="text-[0.75rem] text-muted-foreground">{t("tn.request.map_point", { x: request.mapX, y: request.mapY })}</span>
+                    </div>
                   ) : null}
                 </div>
               ) : null}

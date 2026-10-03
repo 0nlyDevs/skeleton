@@ -408,6 +408,10 @@ model Post {
   placeName String? @db.VarChar(160)
   latitude  Float?
   longitude Float?
+  /// Terra Nova position on the city map plane (1000 × 640).
+  mapX      Int?
+  mapY      Int?
+  zone      String? @db.VarChar(40)
 
   /// A share of another post (always the original, never a share of a share).
   /// SetNull keeps the sharer's caption if the original is hard-deleted.
@@ -1155,10 +1159,14 @@ model CityRequest {
   priority   CityRequestPriority @default(NORMAL)
   /// F25 — set when the request reports a problem in the city (`lighting`, `roads`…).
   issueType  String?             @db.VarChar(40)
-  /// Where the problem is: a free-text place (encrypted at rest) and, optionally, a map point.
+  /// Where the problem is: a free-text place (encrypted at rest) and, optionally, a point on the city map.
   location   String?             @db.Text
   latitude   Float?
   longitude  Float?
+  /// Terra Nova position of the reported problem (city map plane, 1000 × 640).
+  mapX       Int?
+  mapY       Int?
+  zone       String?             @db.VarChar(40)
   assigneeId String?
   assignee   User?               @relation("CityRequestAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   createdAt  DateTime            @default(now())
