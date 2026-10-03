@@ -28,7 +28,13 @@ export function createScrollScene(root: HTMLElement, stage: PlanetStage | null, 
       ease: "none",
       scrollTrigger: { trigger: '[data-scene="hero"]', start: "top top", end: "bottom top", scrub: true },
     });
-    gsap.to('[data-hero="hero-ui"], [data-hero="scrim"]', {
+    // The scrim fades with the whole hero, not with the buttons, so the planet never flashes brighter.
+    gsap.to('[data-hero="scrim"]', {
+      opacity: 0,
+      ease: "none",
+      scrollTrigger: { trigger: '[data-scene="hero"]', start: "top top", end: "bottom top", scrub: true },
+    });
+    gsap.to('[data-hero="hero-ui"]', {
       y: -80,
       opacity: 0,
       ease: "none",

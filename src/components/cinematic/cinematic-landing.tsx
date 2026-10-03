@@ -204,8 +204,9 @@ export function CinematicLanding({ data }: { readonly data: LandingData }) {
             </p>
             <HeroTitle />
           </div>
-          {/* Scrim over the planet so the text and buttons on it stay readable. */}
-          <div data-hero-ui data-hero="scrim" aria-hidden className="tn-hero-scrim pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-[64svh] opacity-0" />
+          {/* Part of the scene from the first frame: the bottom of the hero darkens
+              smoothly into the planet, so the text on it stays readable without a visible box. */}
+          <div data-hero="scrim" aria-hidden className="tn-hero-scrim pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-[62svh]" />
           <div data-hero="hero-ui" className="absolute inset-x-0 bottom-[12svh] z-[3] flex flex-col items-center gap-5 px-4 text-center">
             <p data-hero-ui className="max-w-[44ch] text-[0.9062rem] font-medium leading-relaxed text-white opacity-0 [text-shadow:0_1px_14px_rgb(0_0_0/0.9)] sm:text-[1rem]">
               {data.viewer ? t("tn.home.hello", { name: data.viewer.firstName }) + " — " : ""}
