@@ -44,7 +44,7 @@ async function call(path: string, params: Record<string, string>, language: stri
   url.searchParams.set("accept-language", language);
   return throttled(async () => {
     const response = await fetch(url, {
-      headers: { "User-Agent": `Skeleton/1.0 (${env.appUrl})` },
+      headers: { "User-Agent": `TerraNova/1.0 (${env.appUrl})` },
       signal: AbortSignal.timeout(6_000),
       cache: "no-store",
     });

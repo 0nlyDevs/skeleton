@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Confidentialité" };
 
-/** What Skeleton stores, why, how it is protected, and your rights (RGPD). */
+/** What Terra Nova stores, why, how it is protected, and your rights (RGPD). */
 export default function PrivacyPage() {
   return (
     <>
       <h1>Politique de confidentialité</h1>
-      <p>Cette page explique quelles données Skeleton conserve, pourquoi, et comment vous gardez la main dessus.</p>
+      <p>Cette page explique quelles données Terra Nova conserve, pourquoi, et comment vous gardez la main dessus.</p>
 
       <h2>Données collectées</h2>
       <ul>

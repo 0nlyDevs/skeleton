@@ -59,7 +59,7 @@ export const AI_TOOLS: readonly ToolDefinition[] = [
     function: {
       name: "list_recent_posts",
       description:
-        "Newest posts the user can see on Skeleton. Use for 'latest post', 'what did people post today', 'what is new'. " +
+        "Newest posts the user can see on Terra Nova. Use for 'latest post', 'what did people post today', 'what is new'. " +
         "scope=home is everyone + the user's groups; scope=following is only people the user follows.",
       parameters: {
         type: "object",

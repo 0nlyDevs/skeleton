@@ -20,13 +20,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* --- primitives: brand hue (indigo) --- */
-  --brand-50: oklch(0.97 0.014 275);
-  --brand-200: oklch(0.87 0.06 275);
-  --brand-400: oklch(0.68 0.16 275);
-  --brand-500: oklch(0.58 0.19 275);
-  --brand-600: oklch(0.51 0.2 275);
-  --brand-700: oklch(0.44 0.18 275);
+  /* --- primitives: brand hue (Terra Nova — Martian orange) --- */
+  --brand-50: oklch(0.97 0.02 50);
+  --brand-200: oklch(0.87 0.08 48);
+  --brand-400: oklch(0.72 0.16 45);
+  --brand-500: oklch(0.62 0.18 42);
+  --brand-600: oklch(0.54 0.18 40);
+  --brand-700: oklch(0.46 0.16 38);
 
   /* --- primitives: neutral --- */
   --neutral-50: oklch(0.985 0.002 250);
@@ -50,8 +50,8 @@
   --emerald-600: oklch(0.58 0.14 160);
 
   /* --- semantic (light) --- */
-  /* A cool grey canvas so white cards read as surfaces, like a social feed. */
-  --background: oklch(0.962 0.006 265);
+  /* A warm sand canvas so white cards read as surfaces. */
+  --background: oklch(0.965 0.008 60);
   --foreground: var(--neutral-900);
 
   --surface: oklch(1 0 0);
@@ -68,7 +68,7 @@
   --popover-foreground: var(--neutral-900);
 
   --primary: var(--brand-600);
-  --primary-foreground: oklch(0.99 0.005 275);
+  --primary-foreground: oklch(0.99 0.005 60);
   --primary-hover: var(--brand-700);
 
   --secondary: var(--neutral-100);
