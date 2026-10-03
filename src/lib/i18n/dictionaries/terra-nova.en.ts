@@ -1005,7 +1005,7 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.eco.choice.light.title": "Automatic eco mode on slow connections",
   "tn.eco.choice.light.body": "The server sends the light page straight away when the browser reports a slow connection or data saving. A message explains it, with a button to switch back to the full version.",
   "tn.eco.choice.models.title": "3D models 60% lighter",
-  "tn.eco.choice.models.body": "The home page planets went from 6.3 MB to 2.5 MB (simplified geometry, recompressed textures). They are never loaded in eco mode, and the browser keeps them cached for 30 days.",
+  "tn.eco.choice.models.body": "The planets of the home and sign-in pages went from 6.3 MB to 2.5 MB (simplified geometry, recompressed textures). They are never loaded in eco mode, and the browser keeps them cached for 30 days.",
   "tn.eco.choice.images.title": "Images at the right size",
   "tn.eco.choice.images.body": "Every uploaded image exists in four sizes. The browser downloads the one that fits the screen: a feed photo weighs about five times less on a phone. Off-screen images load only when you scroll to them.",
   "tn.eco.choice.fonts.title": "Half the fonts",

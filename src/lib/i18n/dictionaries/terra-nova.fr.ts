@@ -1010,7 +1010,7 @@ export const frTerraNova = {
   "tn.eco.choice.light.title": "Mode éco automatique sur connexion lente",
   "tn.eco.choice.light.body": "Le serveur envoie directement la page allégée quand le navigateur signale une connexion lente ou l'économie de données. Un message l'explique, avec un bouton pour revenir à la version complète.",
   "tn.eco.choice.models.title": "Modèles 3D 60 % plus légers",
-  "tn.eco.choice.models.body": "Les planètes de l'accueil passent de 6,3 Mo à 2,5 Mo (géométrie simplifiée, textures recompressées). Elles ne sont jamais chargées en mode éco, et le navigateur les garde en cache 30 jours.",
+  "tn.eco.choice.models.body": "Les planètes de l'accueil et de la connexion passent de 6,3 Mo à 2,5 Mo (géométrie simplifiée, textures recompressées). Elles ne sont jamais chargées en mode éco, et le navigateur les garde en cache 30 jours.",
   "tn.eco.choice.images.title": "Des images à la bonne taille",
   "tn.eco.choice.images.body": "Chaque image envoyée existe en quatre tailles. Le navigateur télécharge celle qui correspond à l'écran : une photo du fil pèse environ cinq fois moins sur un téléphone. Les images hors écran ne sont chargées qu'au défilement.",
   "tn.eco.choice.fonts.title": "Deux fois moins de polices",
