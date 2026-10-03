@@ -968,6 +968,7 @@ export const fr = {
   "notifications.type.SYSTEM": "Système",
   "notifications.type.ROLE_CHANGED": "Rôle modifié",
   "notifications.type.ALERT": "Alerte de sécurité municipale",
+  "notifications.type.APPOINTMENT": "Rendez-vous avec un agent",
   "notifications.alert_view": "Voir l'alerte",
 
   // --- Assistant ---

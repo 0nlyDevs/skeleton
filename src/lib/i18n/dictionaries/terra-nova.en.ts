@@ -1070,4 +1070,10 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.history.field.unavailableFrom": "interruption start",
   "tn.history.field.availableAgainAt": "expected return",
   "tn.history.field.alternativeServiceId": "suggested service",
+  "tn.history.category.appointments": "Appointments",
+  "tn.history.appointment_changed.book": "{actor} booked the appointment {target}",
+  "tn.history.appointment_changed.cancel": "{actor} cancelled the appointment {target}",
+  "tn.history.appointment_changed.done": "{actor} closed the appointment {target} (done)",
+  "tn.history.appointment_changed.missed": "{actor} closed the appointment {target} (resident missed it)",
+  "tn.history.appointment_changed.update": "{actor} updated the appointment {target}",
 };

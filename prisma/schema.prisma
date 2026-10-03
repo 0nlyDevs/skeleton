@@ -69,6 +69,7 @@ enum NotificationType {
   CITY_REQUEST
   ANNOUNCEMENT
   ALERT
+  APPOINTMENT
 }
 
 /// A resident-selected district. This is intentionally coarser than a street
@@ -217,6 +218,9 @@ model User {
   posts               Post[]
   cityRequests        CityRequest[]           @relation("CityRequestCitizen")
   assignedRequests    CityRequest[]           @relation("CityRequestAssignee")
+  agentSlots          AgentSlot[]
+  appointments        Appointment[]           @relation("AppointmentCitizen")
+  agentAppointments   Appointment[]           @relation("AppointmentAgent")
   cityRequestMessages CityRequestMessage[]
   cityRequestEvents   CityRequestEvent[]
   announcements       Announcement[]
@@ -1029,6 +1033,8 @@ model MunicipalService {
 
   requests      CityRequest[]
   announcements Announcement[]
+  agentSlots    AgentSlot[]
+  appointments  Appointment[]
 
   @@index([active, sortOrder])
   @@index([emergency])
@@ -1231,4 +1237,82 @@ model WebcupFeedState {
   updatedAt     DateTime  @updatedAt
 
   @@map("webcupFeedState")
+}
+
+/// F39 — how an appointment takes place.
+enum AppointmentMode {
+  IN_PERSON
+  PHONE
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CANCELLED
+  DONE
+  MISSED
+}
+
+/// F39 — a bookable slot an agent opens in their calendar. One slot holds at
+/// most one appointment (`Appointment.slotId` is unique), and an agent cannot
+/// open two slots starting at the same time: double booking is impossible at
+/// the database level, not only in the interface.
+model AgentSlot {
+  id          String            @id @default(cuid())
+  agentId     String
+  agent       User              @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  serviceId   String?
+  service     MunicipalService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  startsAt    DateTime
+  endsAt      DateTime
+  mode        AppointmentMode   @default(IN_PERSON)
+  /// Where to go (desk, building); for a phone slot, who calls whom.
+  location    String?           @db.VarChar(200)
+  appointment Appointment?
+  createdAt   DateTime          @default(now())
+
+  @@unique([agentId, startsAt])
+  @@index([startsAt])
+  @@index([serviceId, startsAt])
+  @@map("agentSlot")
+}
+
+/// F39/F40 — an appointment between a resident and an agent.
+model Appointment {
+  id                 String            @id @default(cuid())
+  /// Human reference shown to both sides, e.g. RDV-482913.
+  reference          String            @unique @db.VarChar(20)
+  /// Null once cancelled, which frees the slot for someone else.
+  slotId             String?           @unique
+  slot               AgentSlot?        @relation(fields: [slotId], references: [id], onDelete: SetNull)
+  citizenId          String
+  citizen            User              @relation("AppointmentCitizen", fields: [citizenId], references: [id], onDelete: Cascade)
+  agentId            String
+  agent              User              @relation("AppointmentAgent", fields: [agentId], references: [id], onDelete: Cascade)
+  serviceId          String?
+  service            MunicipalService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  /// Copied from the slot so the record survives a cancellation.
+  startsAt           DateTime
+  endsAt             DateTime
+  mode               AppointmentMode
+  location           String?           @db.VarChar(200)
+  /// What the resident wants to discuss; encrypted at rest.
+  reasonEncrypted    String            @db.Text
+  status             AppointmentStatus @default(BOOKED)
+  /// F40 — the reminders the resident asked for, and when each was sent.
+  remindDayBefore    Boolean           @default(true)
+  remindHourBefore   Boolean           @default(true)
+  dayReminderSentAt  DateTime?
+  hourReminderSentAt DateTime?
+  /// The conversation between the two, opened at booking.
+  roomId             String?
+  cancelledAt        DateTime?
+  cancelledById      String?
+  cancelReason       String?           @db.VarChar(300)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([citizenId, startsAt])
+  @@index([agentId, startsAt])
+  @@index([status, startsAt])
+  @@map("appointment")
 }

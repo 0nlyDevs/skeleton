@@ -1075,4 +1075,10 @@ export const frTerraNova = {
   "tn.history.field.unavailableFrom": "début de l'interruption",
   "tn.history.field.availableAgainAt": "retour prévu",
   "tn.history.field.alternativeServiceId": "service proposé à la place",
+  "tn.history.category.appointments": "Rendez-vous",
+  "tn.history.appointment_changed.book": "{actor} a pris le rendez-vous {target}",
+  "tn.history.appointment_changed.cancel": "{actor} a annulé le rendez-vous {target}",
+  "tn.history.appointment_changed.done": "{actor} a clos le rendez-vous {target} (effectué)",
+  "tn.history.appointment_changed.missed": "{actor} a clos le rendez-vous {target} (habitant absent)",
+  "tn.history.appointment_changed.update": "{actor} a modifié le rendez-vous {target}",
 } as const;
