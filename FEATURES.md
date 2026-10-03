@@ -12,16 +12,16 @@ it. Test accounts: see `prisma/seed.ts` (password set by `SEED_PASSWORD`).
 
 | Code | Request | Status | Where |
 |---|---|---|---|
-| D01 | Account creation | done | `/register`, then lands in `/espace` |
-| D03 | Login to a personal space with my info and procedures | done | `/login` → `/espace`: details, request counters, every request and its status |
+| D01 | Account creation | done | `/register`, then lands in `/space` |
+| D03 | Login to a personal space with my info and procedures | done | `/login` → `/space`: details, request counters, every request and its status |
 | D04 | Contact the city services, with confirmation | done | `/contact`: service, subject, message; confirmation with the `TN-xxxxxx` reference, notification and email |
 | D05 | Present the city services | done | `/services` (search, categories), `/services/<slug>` (how to, hours, contacts, "Faire une demande") |
-| D06 | City announcements | done | `/annonces` (category filter, pinned first), `/annonces/<slug>`; agents publish from `/agent/annonces` |
+| D06 | City announcements | done | `/announcements` (category filter, pinned first), `/announcements/<slug>`; agents publish from `/agent/announcements` |
 | D07 | Homepage with clear hierarchy | done | `/`: who you are and what to do, four main paths, services, latest announcements |
 | D08 | Citizen, agent and administrator profiles | done | Roles USER / MODERATOR / ADMIN shown as Citoyen / Agent municipal / Administrateur; each gets its own tools |
 | D09 | Access control | done | Agent pages show a 403 to citizens; every endpoint re-checks the role; another citizen's request reads as 404; services are admin only |
-| D19 | Agent workspace showing the Nova Terra API | done | `/agent` (separate layout and navigation), `/agent/flux`: session, wave, countdown, requests with difficulty and XP, team tracking |
-| F22 | Agents see citizen requests, their state and what needs action | done | `/agent/demandes`: status tabs with counts, "Action requise" when new or when the citizen answered, take / release, internal notes, history |
+| D19 | Agent workspace showing the Nova Terra API | done | `/agent` (separate layout and navigation), `/agent/feed`: session, wave, countdown, requests with difficulty and XP, team tracking |
+| F22 | Agents see citizen requests, their state and what needs action | done | `/agent/requests`: status tabs with counts, "Action requise" when new or when the citizen answered, take / release, internal notes, history |
 
 Technical notes:
 
