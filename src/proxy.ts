@@ -126,8 +126,9 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string)
     // Inline styles are required: Next inlines critical CSS and Tailwind's
     // runtime injects style tags.
     "style-src 'self' 'unsafe-inline'",
-    // OpenStreetMap tiles for maps; provider avatars for OAuth accounts.
-    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://tile.openstreetmap.org",
+    // Provider avatars for OAuth accounts. Maps are drawn from city data, so
+    // no tile server is ever contacted.
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
     "font-src 'self' data:",
     // `ws:`/`wss:` for Socket.IO; the app is otherwise same-origin.
     // Sockets to this host only (any-host `ws:` would let injected code

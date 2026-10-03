@@ -31,10 +31,11 @@ const mediaField = z
   .max(MAX_POST_IMAGES, `Attach at most ${MAX_POST_IMAGES} images.`)
   .refine((ids) => new Set(ids).size === ids.length, "An image is attached twice.");
 
+/** A place on the Terra Nova map (1000 × 640); the district is derived server-side. */
 const locationField = z.object({
   name: z.string().trim().min(1).max(160),
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
+  mapX: z.number().int().min(0).max(1000),
+  mapY: z.number().int().min(0).max(640),
 });
 
 export const MAX_POLL_OPTIONS = 6;

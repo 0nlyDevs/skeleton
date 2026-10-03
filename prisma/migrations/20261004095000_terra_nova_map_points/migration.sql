@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE `cityRequest` ADD COLUMN `mapX` INTEGER NULL,
+    ADD COLUMN `mapY` INTEGER NULL,
+    ADD COLUMN `zone` VARCHAR(40) NULL;
+
+-- AlterTable
+ALTER TABLE `post` ADD COLUMN `mapX` INTEGER NULL,
+    ADD COLUMN `mapY` INTEGER NULL,
+    ADD COLUMN `zone` VARCHAR(40) NULL;

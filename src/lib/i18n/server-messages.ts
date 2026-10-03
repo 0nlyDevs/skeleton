@@ -25,6 +25,8 @@ const FR: Readonly<Record<string, string>> = {
   "This official message does not exist.": "Ce message officiel n'existe pas.",
   "Give both map coordinates, or neither.": "Indiquez les deux coordonnées sur la carte, ou aucune.",
   "Place the service inside the city, on land.": "Placez le service dans la ville, sur la terre ferme.",
+  "Place the problem inside the city, on land.": "Placez le problème dans la ville, sur la terre ferme.",
+  "Place the post inside the city, on land.": "Placez la publication dans la ville, sur la terre ferme.",
   "Type a name or choose a role.": "Tapez un nom ou choisissez un rôle.",
   "An appointment can only be closed once it has started.": "Un rendez-vous ne peut être clos qu'une fois commencé.",
   "Choose a day.": "Choisissez un jour.",

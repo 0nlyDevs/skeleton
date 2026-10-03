@@ -13,10 +13,10 @@ import { randomInt } from "node:crypto";
 import { isStaff } from "@/lib/auth/guards";
 import { decryptField, encryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
-import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import { publishCityRequestUpdated } from "@/lib/socket/emit";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
-import { roundCoordinate } from "@/modules/places/places.service";
+import { zoneAt, type CityZoneId } from "@/modules/alerts/city-zones";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
@@ -68,16 +68,20 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
     const service = await prisma.municipalService.findFirst({ where: { slug: ISSUE_SERVICE[input.issueType] ?? "", active: true }, select: { id: true } });
     serviceId = service?.id ?? null;
   }
+  // A reported problem may carry a point on the Terra Nova map; the district
+  // is always derived here from that point, never trusted from the client.
   const report = input.issueType
-    ? {
-        issueType: input.issueType,
-        location: input.location ? encryptField(input.location) : null,
-        // Round citizen-supplied coordinates the same way posts.service.ts does:
-        // ~100 m is precise enough for a lamp post, too coarse for a front door,
-        // and below the precision at which a GPS reading is personally identifying.
-        latitude: input.latitude ? roundCoordinate(input.latitude) : null,
-        longitude: input.longitude ? roundCoordinate(input.longitude) : null,
-      }
+    ? (() => {
+        const zone = input.mapX != null && input.mapY != null ? zoneAt(input.mapX, input.mapY) : null;
+        if ((input.mapX != null || input.mapY != null) && !zone) throw new BadRequestError("Place the problem inside the city, on land.");
+        return {
+          issueType: input.issueType,
+          location: input.location ? encryptField(input.location) : null,
+          mapX: input.mapX ?? null,
+          mapY: input.mapY ?? null,
+          zone,
+        };
+      })()
     : {};
   const row = await prisma.cityRequest.create({
     data: {
@@ -195,8 +199,9 @@ export async function getCityRequest(reference: string, actor: AuthUser): Promis
     ...toSummaryDto({ ...row, lastFromCitizen: last?.authorId === row.citizenId }, agent),
     message: decryptBody(row.message),
     location: row.location ? decryptField(row.location) : null,
-    latitude: row.latitude,
-    longitude: row.longitude,
+    mapX: row.mapX,
+    mapY: row.mapY,
+    zone: row.zone as CityZoneId | null,
     closedAt: row.closedAt?.toISOString() ?? null,
     feedback,
     messages: visible.map((message) => ({
