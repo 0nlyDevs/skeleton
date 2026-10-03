@@ -607,6 +607,13 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
     visibility: visible;
   }
   body:has(.print-document) .print-document {
+    position: absolute;
+    inset: 0;
+    color: #000;
+  }
+}
+
+/*
  * F71 — printing the access sheets prints only the sheets, one per page,
  * whatever page the dialog was opened on.
  */
@@ -624,4 +631,3 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
     color: #000;
   }
 }
-
