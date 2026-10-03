@@ -4,6 +4,35 @@ Every item below is implemented and reachable in the running app. Anything that
 was only planned has been removed rather than listed — a feature list that
 overstates is worse than a short one.
 
+## Terra Nova — requests from the Nova Terra API
+
+The portal of Terra Nova, the first human city on another planet. Each line
+maps a `request_code` from the official API to what was built and where to test
+it. Test accounts: see `prisma/seed.ts` (password set by `SEED_PASSWORD`).
+
+| Code | Request | Status | Where |
+|---|---|---|---|
+| D01 | Account creation | done | `/register`, then lands in `/espace` |
+| D03 | Login to a personal space with my info and procedures | done | `/login` → `/espace`: details, request counters, every request and its status |
+| D04 | Contact the city services, with confirmation | done | `/contact`: service, subject, message; confirmation with the `TN-xxxxxx` reference, notification and email |
+| D05 | Present the city services | done | `/services` (search, categories), `/services/<slug>` (how to, hours, contacts, "Faire une demande") |
+| D06 | City announcements | done | `/annonces` (category filter, pinned first), `/annonces/<slug>`; agents publish from `/agent/annonces` |
+| D07 | Homepage with clear hierarchy | done | `/`: who you are and what to do, four main paths, services, latest announcements |
+| D08 | Citizen, agent and administrator profiles | done | Roles USER / MODERATOR / ADMIN shown as Citoyen / Agent municipal / Administrateur; each gets its own tools |
+| D09 | Access control | done | Agent pages show a 403 to citizens; every endpoint re-checks the role; another citizen's request reads as 404; services are admin only |
+| D19 | Agent workspace showing the Nova Terra API | done | `/agent` (separate layout and navigation), `/agent/flux`: session, wave, countdown, requests with difficulty and XP, team tracking |
+| F22 | Agents see citizen requests, their state and what needs action | done | `/agent/demandes`: status tabs with counts, "Action requise" when new or when the citizen answered, take / release, internal notes, history |
+
+Technical notes:
+
+- The API key stays on the server (`WEBCUP_API_KEY`). A poller syncs the feed
+  every `WEBCUP_POLL_SECONDS`, keyed by `request_code` (no duplicates), keeps
+  requests that leave the feed as "retirée" instead of deleting them, stores
+  the last error, and pushes `webcup:feed` to agents when new codes arrive.
+- Citizen messages are encrypted at rest; citizens never see internal notes or
+  which agent answered ("Services de Terra Nova").
+- Every change to a request is written to its history and to the audit log.
+
 ## Authentication & Authorization
 
 - Email/password sign-up, with the account created before the email is sent
