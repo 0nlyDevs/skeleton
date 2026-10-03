@@ -348,3 +348,153 @@ html[data-eco] .eco-hide {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Terra Nova cinematic landing (src/components/cinematic).
+ * ------------------------------------------------------------------------- */
+html.tn-landing-active,
+html.tn-landing-active body {
+  background: #02040b;
+}
+html.tn-intro-lock,
+html.tn-intro-lock body {
+  overflow: hidden;
+}
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* A barely-there falloff, as on a long exposure: no coloured nebula. */
+.tn-nebula {
+  background: radial-gradient(120vw 80vh at 50% 120%, rgb(20 28 48 / 0.35), transparent 70%);
+}
+
+.tn-intro-panel {
+  background: #03050c;
+  will-change: transform;
+}
+.tn-slash {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.85) 40%, rgb(255 255 255 / 0.35));
+  will-change: transform;
+}
+
+.tn-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.04em 0.01em 0.02em;
+  margin: -0.04em -0.01em -0.02em;
+}
+/* The E/A window: exactly one letter tall (line box plus the mask's padding). */
+.tn-slot {
+  height: 0.88em;
+  vertical-align: top;
+}
+.tn-slot .tn-letter {
+  line-height: 0.82;
+}
+.tn-letter {
+  background: linear-gradient(180deg, #ffffff 0%, #eaf2ff 45%, #8ea3bd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 10px 40px rgb(0 0 0 / 0.45));
+}
+/* Long, many-stop falloff: darkens the planet under the hero text with no visible edge. */
+.tn-hero-scrim {
+  background: radial-gradient(
+    ellipse 90% 95% at 50% 88%,
+    rgb(2 4 11 / 0.72) 0%,
+    rgb(2 4 11 / 0.6) 18%,
+    rgb(2 4 11 / 0.44) 34%,
+    rgb(2 4 11 / 0.28) 50%,
+    rgb(2 4 11 / 0.14) 66%,
+    rgb(2 4 11 / 0.05) 80%,
+    rgb(2 4 11 / 0) 92%
+  );
+}
+.tn-glass {
+  border-radius: 24px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(5 9 20 / 0.62);
+  backdrop-filter: blur(14px);
+}
+.tn-card {
+  border-radius: 20px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(8 16 36 / 0.55);
+  backdrop-filter: blur(12px);
+  transition:
+    border-color var(--duration-normal) var(--ease-out-soft),
+    background var(--duration-normal) var(--ease-out-soft),
+    transform var(--duration-normal) var(--ease-out-soft),
+    box-shadow var(--duration-normal) var(--ease-out-soft);
+}
+.tn-card:hover {
+  border-color: rgb(255 255 255 / 0.22);
+  background: rgb(12 22 46 / 0.7);
+  transform: translateY(-3px);
+}
+.tn-cta-primary {
+  background: #f4f6fa;
+  color: #050914;
+  transition: background var(--duration-fast) var(--ease-out-soft), transform var(--duration-fast) var(--ease-out-soft);
+}
+.tn-cta-primary:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+.tn-cta-ghost {
+  border: 1px solid rgb(255 255 255 / 0.28);
+  background: rgb(3 6 14 / 0.55);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  transition: border-color var(--duration-fast) var(--ease-out-soft), background var(--duration-fast) var(--ease-out-soft);
+}
+.tn-cta-ghost:hover {
+  border-color: rgb(255 255 255 / 0.5);
+  background: rgb(10 16 32 / 0.7);
+}
+.tn-nav-link {
+  position: relative;
+}
+.tn-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: 4px;
+  height: 1px;
+  background: #67e8f9;
+  transition: left var(--duration-normal) var(--ease-out-soft), right var(--duration-normal) var(--ease-out-soft);
+}
+.tn-nav-link:hover::after {
+  left: 14px;
+  right: 14px;
+}
+
+.tn-bounce {
+  animation: tn-bounce 1.8s var(--ease-out-soft) infinite;
+}
+@keyframes tn-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* Static mode (reduced motion, eco, no WebGL): a painted planet instead of 3D. */
+.tn-static-planet {
+  display: none;
+}
+.tn-landing[data-mode="static"] .tn-static-planet {
+  display: block;
+  height: 46svh;
+  background: radial-gradient(130vw 62svh at 50% 100%, #c8643a 0%, #7a2f1f 38%, #2a0f12 60%, transparent 61%);
+  box-shadow: 0 -2px 60px rgb(255 154 92 / 0.25);
+  mask-image: radial-gradient(130vw 62svh at 50% 100%, #000 60%, transparent 61.5%);
+}

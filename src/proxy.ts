@@ -49,7 +49,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 /** Readable without an account (content-level rules still apply server-side). */
-const PUBLIC_PREFIXES = ["/services", "/announcements", "/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
+const PUBLIC_PREFIXES = ["/models/", "/services", "/announcements", "/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -114,6 +114,8 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string)
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
+    // WebAssembly compilation only (the 3D model decoder); never JS eval.
+    "'wasm-unsafe-eval'",
     // Turbopack's dev runtime evaluates generated code; production does not.
     ...(isDev ? ["'unsafe-eval'"] : []),
   ].join(" ");
@@ -130,7 +132,8 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean, host: string)
     // `ws:`/`wss:` for Socket.IO; the app is otherwise same-origin.
     // Sockets to this host only (any-host `ws:` would let injected code
     // exfiltrate to an attacker's socket server).
-    `connect-src 'self' wss://${host}${isDev ? ` ws://${host}` : ""}`,
+    // `blob:` lets the 3D loader read textures embedded in its own models.
+    `connect-src 'self' blob: wss://${host}${isDev ? ` ws://${host}` : ""}`,
     "media-src 'self'",
     // Video blocks on user pages: privacy-enhanced players only, loaded on click.
     "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
