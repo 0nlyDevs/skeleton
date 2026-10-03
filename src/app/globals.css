@@ -543,6 +543,24 @@ html.lenis body {
 .tn-nav-link {
   position: relative;
 }
+
+/*
+ * F23 — high contrast on the landing, whose colours are fixed (always dark):
+ * every dimmed white text becomes plain white, and cards and glass panels
+ * get an opaque background and a visible border.
+ */
+html[data-contrast="high"] .tn-landing [class*="text-white/"] {
+  color: #fff !important;
+}
+html[data-contrast="high"] .tn-landing .tn-glass,
+html[data-contrast="high"] .tn-landing .tn-card {
+  border-color: rgb(255 255 255 / 0.6);
+  background: rgb(2 4 11 / 0.92);
+}
+html[data-contrast="high"] .tn-landing .tn-cta-ghost {
+  border-color: #fff;
+  background: rgb(2 4 11 / 0.92);
+}
 .tn-nav-link::after {
   content: "";
   position: absolute;

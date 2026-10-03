@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowUpRight, Building2, FolderOpen, Megaphone, Radio, Send, ShieldCheck, Workflow } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Building2, FolderOpen, Megaphone, Radio, Send, ShieldCheck, TriangleAlert, Workflow } from "lucide-react";
 
 import { ServiceIcon } from "@/components/city/service-icon";
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -27,6 +27,8 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
   const paths = [
     { href: "/services", icon: Building2, title: t("tn.home.quick.services"), body: t("tn.home.quick.services_body") },
     { href: "/contact", icon: Send, title: t("tn.home.quick.contact"), body: t("tn.home.quick.contact_body") },
+    // F25 — report a problem straight from the front door.
+    { href: "/contact?type=issue", icon: TriangleAlert, title: t("tn.home.quick.report"), body: t("tn.home.quick.report_body") },
     { href: "/announcements", icon: Megaphone, title: t("tn.home.quick.news"), body: t("tn.home.quick.news_body") },
     { href: "/space", icon: FolderOpen, title: t("tn.home.quick.space"), body: t("tn.home.quick.space_body") },
   ];
@@ -102,7 +104,15 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
             {data.services.map((service) => (
               <li key={service.slug}>
                 <Link href={`/services/${service.slug}`} className="tn-card group flex h-full flex-col gap-3 p-5">
-                  <ServiceIcon name={service.icon} className="size-11 rounded-full bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-300/30" />
+                  <span className="flex items-start justify-between gap-2">
+                    <ServiceIcon name={service.icon} className="size-11 rounded-full bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-300/30" />
+                    {/* F28 — the most common procedures stand out. */}
+                    {service.featured ? (
+                      <span className="rounded-full bg-cyan-300/15 px-2.5 py-1 text-[0.6875rem] font-semibold text-cyan-200 ring-1 ring-cyan-300/40">
+                        {t("tn.services.featured_badge")}
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="text-[0.6875rem] uppercase tracking-[0.22em] text-white/40">{service.category}</span>
                   <span className="text-[1rem] font-semibold leading-snug">{service.name}</span>
                   <span className="line-clamp-2 text-[0.8125rem] text-white/55">{service.summary}</span>

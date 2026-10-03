@@ -13,8 +13,9 @@ import { LandingNav } from "./landing-nav";
 import { LandingSections } from "./landing-sections";
 
 export interface LandingData {
-  readonly viewer: { readonly firstName: string; readonly staff: boolean } | null;
-  readonly services: readonly { slug: string; name: string; summary: string; icon: string; category: string }[];
+  /** `openRequests`: the resident's requests still in progress (D11). */
+  readonly viewer: { readonly firstName: string; readonly staff: boolean; readonly openRequests: number } | null;
+  readonly services: readonly { slug: string; name: string; summary: string; icon: string; category: string; featured: boolean }[];
   readonly news: readonly { slug: string; title: string; summary: string; category: string; publishedAt: string | null }[];
   readonly stats: { readonly services: number; readonly news: number; readonly requests: number };
 }
@@ -210,6 +211,11 @@ export function CinematicLanding({ data }: { readonly data: LandingData }) {
               {data.viewer ? t("tn.home.hello", { name: data.viewer.firstName }) + " — " : ""}
               {t("tn.home.subtitle")}
             </p>
+            {data.viewer && data.viewer.openRequests > 0 ? (
+              <Link data-hero-ui href="/space" className="text-[0.875rem] font-medium text-cyan-200 underline-offset-4 opacity-0 [text-shadow:0_1px_14px_rgb(0_0_0/0.9)] hover:underline">
+                {t("tn.home.open_requests", { count: data.viewer.openRequests })}
+              </Link>
+            ) : null}
             <div data-hero-ui className="flex flex-wrap justify-center gap-3 opacity-0">
               {data.viewer ? (
                 <>

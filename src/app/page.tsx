@@ -5,7 +5,7 @@ import { isStaff } from "@/lib/auth/guards";
 import { getAuthContext } from "@/lib/auth/session";
 import { getLocale } from "@/lib/i18n/server";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
-import { countHandledCityRequests } from "@/modules/city-requests/city-requests.service";
+import { cityRequestStats, countHandledCityRequests } from "@/modules/city-requests/city-requests.service";
 import { listServices } from "@/modules/city-services/city-services.service";
 
 export const metadata: Metadata = { title: { absolute: "Terra Nova — portail des habitants" } };
@@ -20,16 +20,23 @@ export default async function LandingPage() {
   const context = await getAuthContext();
   const user = context?.user ?? null;
   const locale = await getLocale();
-  const [services, news, handled] = await Promise.all([
+  const [services, news, handled, mine] = await Promise.all([
     // F27 — services in the reader's language.
     listServices({}, user, locale),
     listAnnouncements({ page: 1, limit: 3 }, user),
     countHandledCityRequests(),
+    user ? cityRequestStats(user, "mine") : Promise.resolve(null),
   ]);
 
   const data: LandingData = {
-    viewer: user ? { firstName: user.name.split(" ")[0] ?? user.name, staff: isStaff(user) } : null,
-    services: services.slice(0, 6).map(({ slug, name, summary, icon, category }) => ({ slug, name, summary, icon, category })),
+    viewer: user
+      ? {
+          firstName: user.name.split(" ")[0] ?? user.name,
+          staff: isStaff(user),
+          openRequests: mine ? (mine.NEW ?? 0) + (mine.IN_PROGRESS ?? 0) + (mine.WAITING_CITIZEN ?? 0) : 0,
+        }
+      : null,
+    services: services.slice(0, 6).map(({ slug, name, summary, icon, category, featured }) => ({ slug, name, summary, icon, category, featured })),
     news: news.data.map(({ slug, title, summary, category, publishedAt }) => ({ slug, title, summary, category, publishedAt })),
     stats: { services: services.length, news: news.total, requests: handled },
   };
