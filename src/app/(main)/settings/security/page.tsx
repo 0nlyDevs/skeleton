@@ -7,6 +7,7 @@ import { getAuthContext } from "@/lib/auth/session";
 import { env } from "@/lib/env";
 import { headers } from "next/headers";
 import { hasPasswordCredential } from "@/modules/users/users.service";
+import { listMyFailedSignIns } from "@/modules/login-protection/login-protection.stats";
 
 export const metadata: Metadata = { title: "Sécurité" };
 
@@ -27,9 +28,10 @@ export default async function SecuritySettingsPage({
   if (!context) redirect("/login");
 
   const requestHeaders = await headers();
-  const [sessions, hasPassword] = await Promise.all([
+  const [sessions, hasPassword, failedSignIns] = await Promise.all([
     auth.api.listSessions({ headers: requestHeaders }),
     hasPasswordCredential(context.user.id),
+    listMyFailedSignIns(context.user.id),
   ]);
 
   return (
@@ -37,6 +39,8 @@ export default async function SecuritySettingsPage({
       twoFactorEnabled={context.user.twoFactorEnabled}
       hasPassword={hasPassword}
       alert={params.alert === "new-device"}
+      lockAlert={params.alert === "locked"}
+      failedSignIns={failedSignIns}
       oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }}
       currentSessionId={context.session.id}
       // Ids only: a session token is a bearer credential and stays server-side.
