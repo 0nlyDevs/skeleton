@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -24,9 +25,13 @@ function typing(target: EventTarget | null): boolean {
   return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
 
+/** Second key of the "g" sequence. */
+const GO: Readonly<Record<string, string>> = { a: "/space", d: "/services", v: "/city-map", c: "/feed", m: "/messages", n: "/notifications" };
+
 const ROWS: readonly { keys: readonly string[]; label: MessageKey }[] = [
   { keys: ["/"], label: "tn.keys.search" },
   { keys: ["?"], label: "tn.keys.help" },
+  { keys: ["g", "a d v c m n"], label: "tn.keys.go" },
   { keys: ["Tab"], label: "tn.keys.skip" },
   { keys: ["Tab", "Maj + Tab"], label: "tn.keys.move" },
   { keys: ["Entrée", "Espace"], label: "tn.keys.activate" },
@@ -41,11 +46,30 @@ const ROWS: readonly { keys: readonly string[]; label: MessageKey }[] = [
  */
 export function KeyboardShortcuts() {
   const t = useTranslation();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  // "g" then a letter, within a second and a half: a place, never a stray key.
+  const goArmed = useRef(0);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || typing(event.target)) return;
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.repeat || typing(event.target)) return;
+      // A dialog or a menu owns the keyboard while it is open.
+      if (document.querySelector('[role="dialog"][data-state="open"], [role="menu"][data-state="open"]')) return;
+      const key = event.key.toLowerCase();
+      if (goArmed.current && Date.now() - goArmed.current < 1500) {
+        goArmed.current = 0;
+        const target = GO[key];
+        if (target) {
+          event.preventDefault();
+          router.push(target);
+        }
+        return;
+      }
+      if (key === "g") {
+        goArmed.current = Date.now();
+        return;
+      }
       if (event.key === "?") {
         event.preventDefault();
         setOpen(true);
@@ -64,7 +88,7 @@ export function KeyboardShortcuts() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener(OPEN_EVENT, openFromPage);
     };
-  }, []);
+  }, [router]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -4,31 +4,31 @@ import { cookies, headers } from "next/headers";
 import { OfficialMessageBand } from "@/components/city/official-message-band";
 import { AppProviders } from "@/components/providers/app-providers";
 import { getCurrentUser } from "@/lib/auth/session";
-import { CONTRAST_COOKIE, TEXT_SIZE_COOKIE, parseTextSize } from "@/lib/display";
+import { CONTRAST_COOKIE, TEXT_SIZE_COOKIE, VISION_COOKIE, parseTextSize } from "@/lib/display";
 import { ECO_AUTO_COOKIE, ECO_AUTO_SCRIPT, ECO_COOKIE, resolveEcoMode } from "@/lib/eco";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { publicEnv } from "@/lib/env.public";
 
-import { boska, generalSans } from "./fonts";
+import { cabinetGrotesk, generalSans } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.appUrl),
   title: {
-    default: "Terra Nova",
-    template: "%s · Terra Nova",
+    default: "Bubble",
+    template: "%s · Bubble",
   },
   description:
-    "Terra Nova — le portail des habitants : services municipaux, annonces de la ville, démarches et échanges avec l'administration.",
-  applicationName: "Terra Nova",
+    "Bubble — la plateforme des habitants de Terra Nova : services de la ville, annonces, démarches et échanges avec l'administration.",
+  applicationName: "Bubble",
   // The app is authenticated; there is nothing here for a crawler to index.
   robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
-    { media: "(prefers-color-scheme: dark)", color: "#131519" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f1ed" },
+    { media: "(prefers-color-scheme: dark)", color: "#272b35" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -61,6 +61,7 @@ export default async function RootLayout({
   });
   const textSize = parseTextSize(cookieStore.get(TEXT_SIZE_COOKIE)?.value);
   const highContrast = cookieStore.get(CONTRAST_COOKIE)?.value === "1";
+  const colourBlind = cookieStore.get(VISION_COOKIE)?.value === "cb";
   // Per-request CSP nonce minted by `src/proxy.ts`; inline scripts injected by
   // providers (the theme bootstrap) must carry it or the browser blocks them.
   const nonce = requestHeaders.get("x-nonce") ?? undefined;
@@ -70,11 +71,12 @@ export default async function RootLayout({
       lang={locale}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${generalSans.variable} ${boska.variable}`}
+      className={`${generalSans.variable} ${cabinetGrotesk.variable}`}
       {...(eco.on ? { "data-eco": "" } : {})}
       {...(eco.auto ? { "data-eco-auto": "" } : {})}
       {...(textSize !== "normal" ? { "data-text-size": textSize } : {})}
       {...(highContrast ? { "data-contrast": "high" } : {})}
+      {...(colourBlind ? { "data-vision": "cb" } : {})}
     >
       <head>
         {/* Before the first paint: a slow connection gets the light page at once. */}
