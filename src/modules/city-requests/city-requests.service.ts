@@ -334,3 +334,8 @@ export async function cityRequestStats(actor: AuthUser, scope: "mine" | "all"): 
   const grouped = await prisma.cityRequest.groupBy({ by: ["status"], where, _count: { _all: true } });
   return Object.fromEntries(grouped.map((entry) => [entry.status, entry._count._all]));
 }
+
+/** One public figure for the landing page: how many requests the city has handled. Totals only. */
+export async function countHandledCityRequests(): Promise<number> {
+  return prisma.cityRequest.count({ where: { status: { in: ["RESOLVED", "CLOSED"] } } });
+}
