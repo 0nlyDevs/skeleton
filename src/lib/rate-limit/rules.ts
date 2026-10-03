@@ -13,6 +13,16 @@ export const RATE_LIMITS = {
   /** Failed sign-in attempts, counted per IP **and** per account. */
   login: { limit: 5, windowMs: 15 * 60_000 },
 
+  /**
+   * Failed sign-ins from one IP across *every* account. Unlike `login`, a
+   * successful sign-in never clears it, so an attacker cannot reset it by
+   * logging into their own account between guesses on other people's.
+   */
+  loginFailuresPerIp: { limit: 20, windowMs: 60 * 60_000 },
+
+  /** At most one "your account was locked" alert per account per hour. */
+  lockoutNotice: { limit: 1, windowMs: 60 * 60_000 },
+
   /** Account creations per IP. Generous enough for a shared office network. */
   register: { limit: 5, windowMs: 60 * 60_000 },
 

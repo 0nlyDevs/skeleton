@@ -61,6 +61,14 @@ Technical notes:
 - Pluggable store: in-memory by default, `RATE_LIMIT_STORE=database` for
   multiple workers
 - Brute-force attempts are answered with `429` and `Retry-After`
+- Sign-in: 5 wrong passwords per account in 15 minutes pause that account; 20
+  failures per IP in an hour, across all accounts, pause that IP (credential
+  stuffing). A successful sign-in clears the account counter only, so logging
+  into one's own account never resets the IP budget
+- One resident's typos never lock out a shared network: sign-in has no
+  every-attempt IP counter
+- Each failure is audited (`auth.sign_in_failed`, `auth.sign_in_locked`); the
+  owner of a locked account is alerted at most once an hour
 
 ## Performance
 
