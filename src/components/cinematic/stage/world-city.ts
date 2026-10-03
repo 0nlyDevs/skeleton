@@ -10,6 +10,7 @@ import {
   DynamicDrawUsage,
   Euler,
   Group,
+  IcosahedronGeometry,
   InstancedBufferAttribute,
   InstancedMesh,
   LatheGeometry,
@@ -24,6 +25,8 @@ import {
   Vector3,
   type Material,
 } from "three";
+
+import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import { waterwayAt } from "@/components/city-map/city-map-terrain";
 
@@ -53,8 +56,9 @@ const BASALT = tone("#1b1b1f");
 const IRON = tone("#2f2a29");
 const TOWERS = [WHITE, WHITE, WHITE, SAND, SAND, CLAY, STONE, SLATE];
 const AWNINGS = [tone("#e8a23a"), tone("#e2574c"), tone("#2e9c9a"), tone("#c7458f"), tone("#f0d9a8"), tone("#5d7fd6")];
-const GREENS = [tone("#2f5a27"), tone("#3d6b2c"), tone("#4d7a31"), tone("#2a4d2c"), tone("#5b8436")];
-const EXOTIC = [tone("#7a2c3c"), tone("#8a4560"), tone("#5a3468")];
+const GREENS = [tone("#263d22"), tone("#2f4a27"), tone("#3a5628"), tone("#44602b"), tone("#52682d"), tone("#3d4f24")];
+const PINES = [tone("#1f3324"), tone("#27402b"), tone("#2e4a30")];
+const EXOTIC = [tone("#5e3a26"), tone("#6b4a2a"), tone("#4e2f33")];
 const CRYSTALS = [tone("#b9a6ff"), tone("#8fe3ff"), tone("#ffb3e6"), tone("#d9f2ff")];
 const LAMP_WARM = new Color(1, 0.62, 0.3);
 const LAMP_COOL = new Color(0.55, 0.8, 1);
@@ -265,6 +269,27 @@ const LAMP_FRAGMENT = /* glsl */ `
   }
 `;
 
+/** A tree's crown: a ball pushed in and out along its surface, flat underneath. */
+function crownGeometry(): BufferGeometry {
+  // Corners shared between faces: six times fewer points to move for every tree, and a smooth surface.
+  const faces = new IcosahedronGeometry(0.5, 1);
+  faces.deleteAttribute("normal");
+  faces.deleteAttribute("uv");
+  const geometry = mergeVertices(faces);
+  faces.dispose();
+  const position = geometry.getAttribute("position") as BufferAttribute;
+  const at = new Vector3();
+  for (let i = 0; i < position.count; i += 1) {
+    at.fromBufferAttribute(position, i).normalize();
+    const lump = Math.sin(at.x * 5.3 + at.y * 2.1) * Math.cos(at.z * 4.7 - at.x * 1.9) * 0.2 + Math.sin(at.y * 7.1 + at.z * 3.3) * 0.08;
+    at.multiplyScalar(0.5 * (1 + lump));
+    if (at.y < -0.12) at.y = -0.12 + (at.y + 0.12) * 0.25;
+    position.setXYZ(i, at.x, at.y + 0.4, at.z);
+  }
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 function unit<T extends BufferGeometry>(geometry: T, round: boolean): T {
   if (round) {
     const count = geometry.getAttribute("position").count;
@@ -293,6 +318,7 @@ interface Kit {
   /** Glows day and night. */
   readonly ember: Batch;
   readonly tree: Batch;
+  readonly pine: Batch;
   readonly shard: Batch;
   readonly lamps: Lamps;
   /** Ground position of a map point. */
@@ -314,10 +340,17 @@ function scatter(kit: Kit, zone: number, count: number, test: (mapX: number, map
   }
 }
 
+/** A broadleaf crown: lumpy, never the same width twice, leaning a little. */
 function tree(kit: Kit, ground: Vector3, size: number, tints: readonly Color[]): void {
-  const squash = 0.8 + kit.random() * 0.5;
   const s = size * 0.42;
-  kit.tree.add(ground.x, ground.y - s * 0.1, ground.z, s, s * squash, s, kit.pick(tints), kit.random() * 6.28);
+  const lean = () => (kit.random() - 0.5) * 0.3;
+  kit.tree.add(ground.x, ground.y - s * 0.12, ground.z, s * (0.8 + kit.random() * 0.45), s * (0.75 + kit.random() * 0.6), s * (0.8 + kit.random() * 0.45), kit.pick(tints), kit.random() * 6.28, lean(), lean());
+}
+
+/** A conifer, for the cold heights. */
+function pine(kit: Kit, ground: Vector3, size: number): void {
+  const s = size * 0.42;
+  kit.pine.add(ground.x, ground.y - s * 0.05, ground.z, s * 0.7, s * (1.5 + kit.random() * 0.9), s * 0.7, kit.pick(PINES), kit.random() * 6.28, (kit.random() - 0.5) * 0.12, (kit.random() - 0.5) * 0.12);
 }
 
 /** A few white pods: the homes, cafés and lodges of the outer districts. */
@@ -577,7 +610,7 @@ function crystalReach(kit: Kit): void {
   kit.lamps.add({ x: g.x, y: g.y + 0.14, z: g.z }, LAMP_COOL, 0.03, { always: true, blink: 0.2 });
   pods(kit, 160, 270, 5, 10);
   pods(kit, 260, 260, 5, 10);
-  scatter(kit, Z.CRYSTAL, 520, (_x, _y, ground) => ground.y < 0.9, (ground) => tree(kit, ground, 0.035 + kit.random() * 0.03, kit.random() < 0.3 ? EXOTIC : GREENS));
+  scatter(kit, Z.CRYSTAL, 520, (_x, _y, ground) => ground.y < 0.9, (ground) => (kit.random() < 0.45 ? pine(kit, ground, 0.04 + kit.random() * 0.03) : tree(kit, ground, 0.035 + kit.random() * 0.03, kit.random() < 0.2 ? EXOTIC : GREENS)));
 }
 
 function verdantBasin(kit: Kit): void {
@@ -689,7 +722,7 @@ function frostpeak(kit: Kit): void {
       kit.lamps.add({ x: g.x, y: g.y + 0.014, z: g.z + 0.016 }, LAMP_WARM, 0.014);
     }
   }
-  scatter(kit, Z.FROST, 800, (_x, _y, g) => g.y < 0.85, (g) => tree(kit, g, 0.03 + kit.random() * 0.025, [GREENS[3] ?? WHITE]));
+  scatter(kit, Z.FROST, 900, (_x, _y, g) => g.y < 0.85, (g) => pine(kit, g, 0.04 + kit.random() * 0.035));
 }
 
 function obsidianCoast(kit: Kit): void {
@@ -786,10 +819,21 @@ export function buildCity(terrain: WorldTerrain, atmosphere: Atmosphere, noise: 
     reflect: 1.3,
     glass: true,
   });
-  const foliage = new MeshStandardMaterial({ color: "#ffffff", roughness: 0.92, metalness: 0 });
+  // Leaves: clumps of light and dark, a dim underside, a rough surface, and a glow when the sun is behind.
+  const foliage = new MeshStandardMaterial({ color: "#ffffff", roughness: 0.9, metalness: 0 });
   patchStandard(foliage, atmosphere, {
     key: "foliage",
-    color: "diffuseColor.rgb *= 0.62 + 0.75 * texture2D(uNoise, vTnWorld.xz * 2.3).r;",
+    vertexPars: "varying float vTnCrown;",
+    vertex: "vTnCrown = position.y;",
+    fragmentPars: "varying float vTnCrown;\nvec2 tnLeaf;",
+    color: `
+      float tnClump = texture2D(uNoise, vTnWorld.xz * 2.3).a;
+      vec4 tnFine = texture2D(uNoise, vTnWorld.xz * 13.0 + vTnWorld.y * 9.0);
+      tnLeaf = tnFine.gb - 0.5;
+      diffuseColor.rgb *= (0.5 + 0.62 * tnFine.r + 0.5 * (tnClump - 0.5)) * mix(0.42, 1.12, smoothstep(-0.05, 0.85, vTnCrown));
+      float tnBack = max(0.0, dot(normalize(vTnWorld - cameraPosition), uLightDir));
+      totalEmissiveRadiance += diffuseColor.rgb * uLightColor * tnBack * tnBack * 0.07;`,
+    normal: "normal = normalize(normal + vec3(tnLeaf.x, tnLeaf.y * 0.5, tnLeaf.y) * 1.3);",
     reflect: 0,
   });
   const crystal = new MeshStandardMaterial({ color: "#ffffff", roughness: 0.14, metalness: 0, flatShading: true });
@@ -829,7 +873,8 @@ export function buildCity(terrain: WorldTerrain, atmosphere: Atmosphere, noise: 
     ),
     vault: unit(new CylinderGeometry(0.5, 0.5, 1, 20, 1, false, 0, Math.PI).rotateZ(Math.PI / 2), true),
     ring: new TorusGeometry(0.5, 0.012, 6, 56).rotateX(Math.PI / 2),
-    tree: new SphereGeometry(0.5, 7, 5).translate(0, 0.4, 0),
+    tree: crownGeometry(),
+    pine: mergeGeometries([new ConeGeometry(0.5, 0.62, 7).translate(0, 0.36, 0), new ConeGeometry(0.36, 0.5, 7).translate(0, 0.72, 0)]),
     shard: new ConeGeometry(0.5, 1, 5).translate(0, 0.5, 0),
   };
 
@@ -851,6 +896,7 @@ export function buildCity(terrain: WorldTerrain, atmosphere: Atmosphere, noise: 
     pool: new Batch(geometries.tube, nightGlow, false),
     ember: new Batch(geometries.box, alwaysGlow, false),
     tree: new Batch(geometries.tree, foliage, false),
+    pine: new Batch(geometries.pine, foliage, false),
     shard: new Batch(geometries.shard, crystal),
     lamps: new Lamps(),
     ground(mapX, mapY) {
@@ -876,7 +922,7 @@ export function buildCity(terrain: WorldTerrain, atmosphere: Atmosphere, noise: 
     maglev(kit, [[520, 296], [426, 182], [600, 168], [712, 202], [770, 264], [824, 340], [792, 368], [630, 308]]),
   ];
 
-  for (const batch of [kit.box, kit.tube, kit.hex, kit.cone, kit.dome, kit.ball, kit.spire, kit.vault, kit.tree, kit.shard, kit.ring, kit.pool, kit.ember, kit.glassDome, kit.glassVault]) {
+  for (const batch of [kit.box, kit.tube, kit.hex, kit.cone, kit.dome, kit.ball, kit.spire, kit.vault, kit.tree, kit.pine, kit.shard, kit.ring, kit.pool, kit.ember, kit.glassDome, kit.glassVault]) {
     const mesh = batch.build();
     if (mesh) group.add(mesh);
   }
