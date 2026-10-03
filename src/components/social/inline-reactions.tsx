@@ -86,7 +86,7 @@ export function InlineReactions<T extends { reactions: readonly InlineReaction[]
                 aria-label={t(REACTION_LABEL[type])}
                 aria-pressed={mine === type}
                 onClick={() => void react(mine === type ? null : type)}
-                className={cn("grid size-8 place-items-center rounded-full text-[18px] transition-transform hover:scale-125", mine === type && "bg-primary/15")}
+                className={cn("grid size-8 place-items-center rounded-full text-[1.125rem] transition-transform hover:scale-125", mine === type && "bg-primary/15")}
               >
                 {REACTION_EMOJI[type]}
               </button>

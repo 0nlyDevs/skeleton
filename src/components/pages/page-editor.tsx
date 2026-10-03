@@ -208,7 +208,7 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
                 <span className={cn("h-20 bg-gradient-to-br", PAGE_THEME_STYLES[entry.theme as keyof typeof PAGE_THEME_STYLES].swatch)} />
                 <span className="flex flex-col gap-0.5 p-3">
                   <span className="font-semibold">{t(`pages.template.${entry.key}` as MessageKey)}</span>
-                  <span className="text-[13px] text-muted-foreground">{t(`pages.template.${entry.key}_hint` as MessageKey)}</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">{t(`pages.template.${entry.key}_hint` as MessageKey)}</span>
                 </span>
               </button>
             </li>
@@ -230,7 +230,7 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
               role="tab"
               aria-selected={view === value}
               onClick={() => setView(value)}
-              className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-semibold", view === value ? "bg-card shadow-sm" : "text-muted-foreground")}
+              className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[0.8125rem] font-semibold", view === value ? "bg-card shadow-sm" : "text-muted-foreground")}
             >
               {value === "edit" ? <PenLine className="size-3.5" /> : <Eye className="size-3.5" />}
               {t(value === "edit" ? "pages.editor.tab_edit" : "pages.editor.tab_preview")}
@@ -254,24 +254,24 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
         </Button>
       </div>
       {error ? (
-        <p role="alert" className="rounded-xl bg-error/10 px-3 py-2 text-[13px] font-medium text-error">
+        <p role="alert" className="rounded-xl bg-error/10 px-3 py-2 text-[0.8125rem] font-medium text-error">
           {error}
         </p>
       ) : null}
-      {dirty ? <p className="text-[12px] text-muted-foreground">{t("pages.editor.unsaved")}</p> : null}
+      {dirty ? <p className="text-[0.75rem] text-muted-foreground">{t("pages.editor.unsaved")}</p> : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
         <div className={cn("flex flex-col gap-4", view === "preview" && "hidden lg:flex")}>
           <Card className="flex flex-col gap-3 p-4">
-            <label className="flex flex-col gap-1 text-[13px]">
+            <label className="flex flex-col gap-1 text-[0.8125rem]">
               <span className="font-medium text-muted-foreground">{t("pages.editor.title")}</span>
               <Input value={draft.title} maxLength={120} onChange={(event) => update({ title: event.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-[13px]">
+            <label className="flex flex-col gap-1 text-[0.8125rem]">
               <span className="font-medium text-muted-foreground">{t("pages.editor.tagline")}</span>
               <Input value={draft.tagline} maxLength={200} onChange={(event) => update({ tagline: event.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-[13px]">
+            <label className="flex flex-col gap-1 text-[0.8125rem]">
               <span className="font-medium text-muted-foreground">{t("pages.editor.address")}</span>
               <span className="flex items-center gap-1">
                 <span className="text-muted-foreground">/p/</span>
@@ -283,7 +283,7 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
                 />
               </span>
             </label>
-            <div className="flex flex-col gap-1 text-[13px]">
+            <div className="flex flex-col gap-1 text-[0.8125rem]">
               <span className="font-medium text-muted-foreground">{t("pages.editor.cover")}</span>
               <ImagePicker
                 image={draft.coverId ? (images[draft.coverId] ?? null) : null}
@@ -295,7 +295,7 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
                 onClear={() => update({ coverId: null })}
               />
             </div>
-            <fieldset className="flex flex-col gap-1.5 text-[13px]">
+            <fieldset className="flex flex-col gap-1.5 text-[0.8125rem]">
               <legend className="mb-1 font-medium text-muted-foreground">{t("pages.editor.theme")}</legend>
               <div className="flex flex-wrap gap-2">
                 {PAGE_THEMES.map((name) => (
@@ -311,7 +311,7 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
                 ))}
               </div>
             </fieldset>
-            <div className="grid grid-cols-2 gap-3 text-[13px]">
+            <div className="grid grid-cols-2 gap-3 text-[0.8125rem]">
               <label className="flex flex-col gap-1">
                 <span className="font-medium text-muted-foreground">{t("pages.editor.font")}</span>
                 <select value={draft.font} onChange={(event) => update({ font: event.target.value })} className="h-10 rounded-lg border border-border bg-surface px-2">
@@ -334,7 +334,7 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
                 </select>
               </label>
             </div>
-            <label className="flex items-center justify-between gap-3 rounded-xl bg-surface-muted px-3 py-2 text-[13px]">
+            <label className="flex items-center justify-between gap-3 rounded-xl bg-surface-muted px-3 py-2 text-[0.8125rem]">
               <span>
                 <span className="block font-semibold">{t("pages.editor.published_label")}</span>
                 <span className="text-muted-foreground">{draft.published ? t("pages.editor.published_on") : t("pages.editor.published_off")}</span>
@@ -388,7 +388,7 @@ export function PageEditor({ initial }: { readonly initial: PageDto | null }) {
         </div>
 
         <div className={cn("lg:sticky lg:top-20 lg:self-start", view === "edit" && "hidden lg:block")}>
-          <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">{t("pages.editor.tab_preview")}</p>
+          <p className="mb-2 text-[0.75rem] font-semibold uppercase tracking-wide text-muted-foreground">{t("pages.editor.tab_preview")}</p>
           <div className="max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-2xl border border-border/70 shadow-sm">
             <PageRenderer page={preview} />
           </div>

@@ -83,7 +83,7 @@ function Block({ block, images, themeName }: { block: PageBlock; images: Readonl
         <h3 className="text-balance text-xl font-semibold">{block.text}</h3>
       );
     case "text":
-      return <p className="whitespace-pre-line text-pretty text-[17px] leading-relaxed [overflow-wrap:anywhere]">{block.text}</p>;
+      return <p className="whitespace-pre-line text-pretty text-[1.0625rem] leading-relaxed [overflow-wrap:anywhere]">{block.text}</p>;
     case "image":
       return (
         <figure className="flex flex-col gap-2">
@@ -112,7 +112,7 @@ function Block({ block, images, themeName }: { block: PageBlock; images: Readonl
           href={block.url}
           target="_blank"
           rel="noopener noreferrer nofollow ugc"
-          className={cn("inline-flex min-h-12 items-center justify-center gap-2 self-center rounded-full px-6 text-[15px] font-semibold transition-colors", theme.button)}
+          className={cn("inline-flex min-h-12 items-center justify-center gap-2 self-center rounded-full px-6 text-[0.9375rem] font-semibold transition-colors", theme.button)}
         >
           {block.label}
           <ExternalLink className="size-4" aria-hidden />

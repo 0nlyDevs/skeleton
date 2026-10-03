@@ -39,7 +39,7 @@ export function GroupRoleBadge({
           tabIndex={0}
           className={cn(
             "inline-flex shrink-0 cursor-default items-center gap-1 rounded-full font-semibold leading-none",
-            size === "xs" ? "px-1.5 py-0.5 text-[10.5px]" : "px-2 py-1 text-[11.5px]",
+            size === "xs" ? "px-1.5 py-0.5 text-[0.6562rem]" : "px-2 py-1 text-[0.7188rem]",
             tone,
             className,
           )}

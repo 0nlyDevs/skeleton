@@ -19,12 +19,12 @@ export async function SiteFooter() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 lg:px-8">
         <div className="flex flex-col gap-2">
           <Brand />
-          <p className="max-w-md text-[13px] leading-relaxed text-muted-foreground">
+          <p className="max-w-md text-[0.8125rem] leading-relaxed text-muted-foreground">
             {t["app.tagline"]}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.8125rem] text-muted-foreground">
           <Link className="transition-colors hover:text-foreground" href="/privacy">
             {t["footer.privacy"]}
           </Link>
@@ -36,7 +36,7 @@ export async function SiteFooter() {
           </a>
         </div>
 
-        <p className="text-[12px] text-muted-foreground/70">
+        <p className="text-[0.75rem] text-muted-foreground/70">
           © {new Date().getFullYear()} — {t["footer.rights"]}
         </p>
       </div>

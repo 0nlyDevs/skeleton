@@ -45,14 +45,14 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium",
+                    "relative flex h-14 flex-col items-center justify-center gap-0.5 text-[0.6562rem] font-medium",
                     active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
                   <Icon className="size-5" aria-hidden />
                   {t(item.labelKey)}
                   {badge > 0 ? (
-                    <span className="absolute left-1/2 top-1.5 ml-2 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[10px] font-bold leading-4 text-white">
+                    <span className="absolute left-1/2 top-1.5 ml-2 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[0.625rem] font-bold leading-4 text-white">
                       {badge > 9 ? "9+" : badge}
                     </span>
                   ) : null}
@@ -64,7 +64,7 @@ export function MobileNav({ viewer, rail }: { readonly viewer: ShellViewer | nul
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex h-14 w-full flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium text-muted-foreground"
+              className="flex h-14 w-full flex-col items-center justify-center gap-0.5 text-[0.6562rem] font-medium text-muted-foreground"
             >
               <Menu className="size-5" aria-hidden />
               {t("nav.menu")}

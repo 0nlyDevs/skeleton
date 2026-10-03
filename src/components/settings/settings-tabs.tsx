@@ -30,7 +30,7 @@ export function SettingsTabs({ profileHref }: { readonly profileHref: string | n
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-[13.5px] font-semibold transition-colors",
+                "flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-[0.8438rem] font-semibold transition-colors",
                 active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-muted",
               )}
             >
@@ -41,7 +41,7 @@ export function SettingsTabs({ profileHref }: { readonly profileHref: string | n
         })}
       </nav>
       {profileHref ? (
-        <Link href={profileHref} className="text-[13px] font-medium text-primary hover:underline">
+        <Link href={profileHref} className="text-[0.8125rem] font-medium text-primary hover:underline">
           {t("settings.view_profile")}
         </Link>
       ) : null}

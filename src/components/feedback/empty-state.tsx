@@ -37,7 +37,7 @@ export function EmptyState({
       ) : null}
 
       <div className="flex flex-col gap-1">
-        <p className="text-[15px] font-medium tracking-tight">{title}</p>
+        <p className="text-[0.9375rem] font-medium tracking-tight">{title}</p>
         {description ? (
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{description}</p>
         ) : null}

@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
       >
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">Cette section n&apos;a pas pu s&apos;afficher.</p>
-          <p className="text-[13px] text-muted-foreground">
+          <p className="text-[0.8125rem] text-muted-foreground">
             Le reste de la page fonctionne. Rechargez la section pour réessayer.
           </p>
         </div>

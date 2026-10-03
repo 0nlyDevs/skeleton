@@ -226,8 +226,8 @@ export function ConversationThread({
           <Link href={peer.username ? `/profile/${peer.username}` : "#"} className="flex min-w-0 items-center gap-3">
             <UserAvatar userId={peer.id} name={peer.name} image={peer.image} size="md" online={presence?.online ?? false} />
             <span className="min-w-0">
-              <span className="block truncate text-[15px] font-semibold">{room.name}</span>
-              {status ? <span className={presence?.online ? "block text-[12px] text-success" : "block text-[12px] text-muted-foreground"}>{status}</span> : null}
+              <span className="block truncate text-[0.9375rem] font-semibold">{room.name}</span>
+              {status ? <span className={presence?.online ? "block text-[0.75rem] text-success" : "block text-[0.75rem] text-muted-foreground"}>{status}</span> : null}
             </span>
           </Link>
         ) : (
@@ -241,8 +241,8 @@ export function ConversationThread({
             </span>
             )}
             <span className="min-w-0">
-              <span className="block truncate text-[15px] font-semibold">{room.name}</span>
-              <span className="block truncate text-[12px] text-muted-foreground">{thread.members.map((member) => member.name.split(" ")[0]).join(", ") || status}</span>
+              <span className="block truncate text-[0.9375rem] font-semibold">{room.name}</span>
+              <span className="block truncate text-[0.75rem] text-muted-foreground">{thread.members.map((member) => member.name.split(" ")[0]).join(", ") || status}</span>
             </span>
           </span>
         )}
@@ -337,7 +337,7 @@ export function ConversationThread({
             ))}
           </div>
         ) : thread.error ? (
-          <p className="py-8 text-center text-[13px] text-muted-foreground">{describeApiError(thread.error, t)}</p>
+          <p className="py-8 text-center text-[0.8125rem] text-muted-foreground">{describeApiError(thread.error, t)}</p>
         ) : (
           <div className="flex flex-col gap-1.5">
             {thread.messages.map((message, index) => {
@@ -388,7 +388,7 @@ export function ConversationThread({
               );
             })}
             {typingNames.length > 0 ? (
-              <p className="ml-11 flex items-center gap-2 text-[12.5px] italic text-muted-foreground">
+              <p className="ml-11 flex items-center gap-2 text-[0.7812rem] italic text-muted-foreground">
                 <span className="flex gap-0.5" aria-hidden>
                   <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.2s]" />
                   <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.1s]" />
@@ -403,7 +403,7 @@ export function ConversationThread({
 
       <div className="border-t border-border/60 p-3">
         {editing ? (
-          <div className="mb-2 flex items-center justify-between rounded-lg bg-accent px-3 py-1.5 text-[12.5px] text-accent-foreground">
+          <div className="mb-2 flex items-center justify-between rounded-lg bg-accent px-3 py-1.5 text-[0.7812rem] text-accent-foreground">
             <span className="flex items-center gap-1.5">
               <Pencil className="size-3.5" /> {t("messages.editing")}
             </span>
@@ -413,7 +413,7 @@ export function ConversationThread({
           </div>
         ) : null}
         {replyingTo && !editing ? (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border-l-2 border-primary bg-accent px-3 py-1.5 text-[12.5px] text-accent-foreground">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border-l-2 border-primary bg-accent px-3 py-1.5 text-[0.7812rem] text-accent-foreground">
             <span className="min-w-0">
               <span className="block font-semibold">{t("messages.replying_to", { name: replyingTo.senderName })}</span>
               <span className="block truncate opacity-80">{replyingTo.preview || (replyingTo.hasImage ? `📷 ${t("messages.photo")}` : "")}</span>
@@ -442,7 +442,7 @@ export function ConversationThread({
                 <X className="size-3" />
               </button>
             </div>
-            <span className="text-[12px] text-muted-foreground">{attachment.failed ? t("messages.image_failed") : t("messages.image_ready")}</span>
+            <span className="text-[0.75rem] text-muted-foreground">{attachment.failed ? t("messages.image_failed") : t("messages.image_ready")}</span>
           </div>
         ) : null}
         <div className="flex items-end gap-2">
@@ -482,7 +482,7 @@ export function ConversationThread({
             }}
             placeholder={t("messages.placeholder")}
             aria-label={t("messages.placeholder")}
-            className="min-h-10 flex-1 resize-none rounded-2xl bg-surface-muted px-4 py-2.5 text-[14.5px] leading-5 outline-none focus:ring-2 focus:ring-ring/25"
+            className="min-h-10 flex-1 resize-none rounded-2xl bg-surface-muted px-4 py-2.5 text-[0.9062rem] leading-5 outline-none focus:ring-2 focus:ring-ring/25"
           />
           <Button size="icon" className="rounded-full" onClick={() => void submit()} aria-label={t("messages.send")}>
             <SendHorizontal />

@@ -190,7 +190,7 @@ export function ShareDialog({
               disabled={value === "repost" && !original}
               onClick={() => setTab(value)}
               className={cn(
-                "inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[13px] font-semibold disabled:opacity-40",
+                "inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[0.8125rem] font-semibold disabled:opacity-40",
                 tab === value ? "bg-card shadow-sm" : "text-muted-foreground",
               )}
             >
@@ -199,7 +199,7 @@ export function ShareDialog({
             </button>
           ))}
         </div>
-        {!original && tab === "send" ? <p className="text-[12.5px] text-muted-foreground">{t("share.not_repostable")}</p> : null}
+        {!original && tab === "send" ? <p className="text-[0.7812rem] text-muted-foreground">{t("share.not_repostable")}</p> : null}
 
         <div className="rounded-2xl bg-surface-muted focus-within:ring-2 focus-within:ring-ring/25">
           <MentionInput
@@ -216,7 +216,7 @@ export function ShareDialog({
           <>
             <div className="flex items-center justify-between">
               <AudiencePicker value={audience} onChange={setAudience} />
-              <span className="text-[12px] text-muted-foreground">{t("share.caption_optional")}</span>
+              <span className="text-[0.75rem] text-muted-foreground">{t("share.caption_optional")}</span>
             </div>
             <div className="max-h-[35dvh] overflow-y-auto">
               <RepostEmbed original={original} />
@@ -234,7 +234,7 @@ export function ShareDialog({
                   <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </li>
               ) : visible.length === 0 ? (
-                <li className="py-6 text-center text-[13px] text-muted-foreground">{t("share.nobody")}</li>
+                <li className="py-6 text-center text-[0.8125rem] text-muted-foreground">{t("share.nobody")}</li>
               ) : (
                 visible.map((target) => {
                   const on = selected.has(target.key);
@@ -253,7 +253,7 @@ export function ShareDialog({
                         ) : (
                           <UserAvatar userId={target.userId ?? undefined} name={target.label} image={target.image} size="sm" />
                         )}
-                        <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{target.label}</span>
+                        <span className="min-w-0 flex-1 truncate text-[0.875rem] font-medium">{target.label}</span>
                         <span className={cn("grid size-5 place-items-center rounded-full border", on ? "border-primary bg-primary text-primary-foreground" : "border-border")}>
                           {on ? <Check className="size-3" /> : null}
                         </span>

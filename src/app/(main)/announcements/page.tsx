@@ -50,7 +50,7 @@ export default async function AnnouncementsPage({ searchParams }: { readonly sea
               href={pageHref(filter.value, 1)}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors",
+                "shrink-0 rounded-full border px-3 py-1.5 text-[0.8125rem] font-medium transition-colors",
                 active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-surface-muted",
               )}
             >

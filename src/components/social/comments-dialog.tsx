@@ -31,13 +31,13 @@ export function CommentsDialog({
         {post ? (
           <>
             <DialogHeader className="shrink-0 border-b border-border/60 px-4 py-3 text-left">
-              <DialogTitle className="text-[15px]">{t("comments.title")} · {post.author.name}</DialogTitle>
+              <DialogTitle className="text-[0.9375rem]">{t("comments.title")} · {post.author.name}</DialogTitle>
               <DialogDescription className="sr-only">{t("comments.title")}</DialogDescription>
             </DialogHeader>
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="max-h-[35%] shrink-0 overflow-y-auto border-b border-border/60 px-4 py-3">
                 {post.body ? (
-                  <RichText text={post.body} mentions={post.mentions} className="whitespace-pre-line break-words text-[14px] leading-relaxed text-foreground/90" />
+                  <RichText text={post.body} mentions={post.mentions} className="whitespace-pre-line break-words text-[0.875rem] leading-relaxed text-foreground/90" />
                 ) : null}
                 {post.media.length > 0 ? (
                   <div className="mt-2 max-w-sm">

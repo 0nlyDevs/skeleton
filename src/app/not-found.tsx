@@ -28,7 +28,7 @@ export default async function NotFound() {
           </span>
 
           <div className="flex flex-col gap-2">
-            <p className="font-mono text-[13px] font-medium text-muted-foreground">404</p>
+            <p className="font-mono text-[0.8125rem] font-medium text-muted-foreground">404</p>
             <h1 className="text-2xl font-semibold tracking-tight">
               {t["feedback.not_found.title"]}
             </h1>

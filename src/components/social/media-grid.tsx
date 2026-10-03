@@ -64,7 +64,7 @@ export function MediaGrid({ media }: { readonly media: readonly PostMediaDto[] }
                 className={cn("h-full w-full object-cover", shown.length === 2 ? "aspect-square" : "aspect-[4/3]")}
               />
               {index === shown.length - 1 && extra > 0 ? (
-                <span className="absolute inset-0 grid place-items-center bg-black/50 text-[22px] font-semibold text-white">
+                <span className="absolute inset-0 grid place-items-center bg-black/50 text-[1.375rem] font-semibold text-white">
                   +{extra}
                 </span>
               ) : null}
@@ -141,7 +141,7 @@ function Lightbox({
                 >
                   <ChevronRight className="size-5" />
                 </button>
-                <span className="absolute bottom-3 rounded-full bg-black/60 px-3 py-1 text-[12px] text-white">
+                <span className="absolute bottom-3 rounded-full bg-black/60 px-3 py-1 text-[0.75rem] text-white">
                   {(index ?? 0) + 1} / {media.length}
                 </span>
               </>

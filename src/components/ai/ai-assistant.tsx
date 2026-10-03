@@ -97,8 +97,8 @@ export function AiAssistant({ available }: { readonly available: boolean }) {
     return (
       <div className="flex flex-col gap-5">
         <header className="flex flex-col gap-1">
-          <h1 className="text-[24px] font-semibold tracking-[-0.015em]">{t("ai.title")}</h1>
-          <p className="text-[14px] text-muted-foreground">{t("ai.subtitle")}</p>
+          <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">{t("ai.title")}</h1>
+          <p className="text-[0.875rem] text-muted-foreground">{t("ai.subtitle")}</p>
         </header>
         <EmptyState
           icon={Sparkles}
@@ -112,8 +112,8 @@ export function AiAssistant({ available }: { readonly available: boolean }) {
   return (
     <div className="flex h-[calc(100dvh-10rem)] min-h-[28rem] flex-col gap-4 lg:h-[calc(100dvh-9rem)]">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">{t("ai.title")}</h1>
-        <p className="text-[14px] text-muted-foreground">{t("ai.subtitle")}</p>
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">{t("ai.title")}</h1>
+        <p className="text-[0.875rem] text-muted-foreground">{t("ai.subtitle")}</p>
       </header>
 
       <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -152,7 +152,7 @@ export function AiAssistant({ available }: { readonly available: boolean }) {
                 >
                   <div
                     className={cn(
-                      "max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed",
+                      "max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[0.875rem] leading-relaxed",
                       turn.role === "user"
                         ? "rounded-br-md bg-primary text-primary-foreground"
                         : "rounded-bl-md bg-surface-muted text-foreground",
@@ -161,7 +161,7 @@ export function AiAssistant({ available }: { readonly available: boolean }) {
                     {turn.content}
                   </div>
                   {turn.cached ? (
-                    <span className="px-1 text-[10.5px] uppercase tracking-wide text-muted-foreground/60">
+                    <span className="px-1 text-[0.6562rem] uppercase tracking-wide text-muted-foreground/60">
                       {t("ai.cached")}
                     </span>
                   ) : null}
@@ -169,7 +169,7 @@ export function AiAssistant({ available }: { readonly available: boolean }) {
               ))}
 
               {pending ? (
-                <div className="flex items-center gap-2 px-1 text-[13px] italic text-muted-foreground">
+                <div className="flex items-center gap-2 px-1 text-[0.8125rem] italic text-muted-foreground">
                   <Spinner className="size-3.5" />
                   {t("ai.thinking")}
                 </div>
@@ -200,7 +200,7 @@ export function AiAssistant({ available }: { readonly available: boolean }) {
       </Card>
 
       {error ? (
-        <p role="alert" className="text-center text-[13px] font-medium text-error">
+        <p role="alert" className="text-center text-[0.8125rem] font-medium text-error">
           {t(error as never)}
         </p>
       ) : null}

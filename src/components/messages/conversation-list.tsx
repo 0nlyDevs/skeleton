@@ -42,7 +42,7 @@ export function ConversationList({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between gap-2 px-4 pt-4">
-        <h1 className="text-[20px] font-bold tracking-tight">{t("messages.title")}</h1>
+        <h1 className="text-[1.25rem] font-bold tracking-tight">{t("messages.title")}</h1>
         <div className="flex gap-1">
           <Button variant="ghost" size="icon" onClick={onNewGroup} aria-label={t("messages.new_group")} title={t("messages.new_group")}>
             <UsersRound />
@@ -59,7 +59,7 @@ export function ConversationList({
           value={q}
           onChange={(event) => setQ(event.target.value)}
           placeholder={t("messages.search")}
-          className="h-10 w-full rounded-full bg-surface-muted pl-9 pr-3 text-[13.5px] outline-none focus:ring-2 focus:ring-ring/25"
+          className="h-10 w-full rounded-full bg-surface-muted pl-9 pr-3 text-[0.8438rem] outline-none focus:ring-2 focus:ring-ring/25"
         />
       </label>
 
@@ -68,8 +68,8 @@ export function ConversationList({
           [0, 1, 2, 3, 4].map((index) => <Skeleton key={index} className="mx-2 my-2 h-14 rounded-xl" />)
         ) : visible.length === 0 ? (
           <li className="px-4 py-8 text-center">
-            <p className="text-[14px] font-semibold">{t("messages.empty_title")}</p>
-            <p className="mt-1 text-[13px] text-muted-foreground">{t("messages.empty_body")}</p>
+            <p className="text-[0.875rem] font-semibold">{t("messages.empty_title")}</p>
+            <p className="mt-1 text-[0.8125rem] text-muted-foreground">{t("messages.empty_body")}</p>
             <Button className="mt-3" size="sm" onClick={onNew}>
               {t("messages.new")}
             </Button>
@@ -108,12 +108,12 @@ export function ConversationList({
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className={cn("truncate text-[14px]", unread > 0 ? "font-bold" : "font-medium")}>{room.name}</span>
-                      {last ? <span className="shrink-0 text-[11px] text-muted-foreground">{fmt.relative(last.createdAt)}</span> : null}
+                      <span className={cn("truncate text-[0.875rem]", unread > 0 ? "font-bold" : "font-medium")}>{room.name}</span>
+                      {last ? <span className="shrink-0 text-[0.6875rem] text-muted-foreground">{fmt.relative(last.createdAt)}</span> : null}
                     </span>
                     <span className="flex items-center gap-2">
                       {typingRooms?.has(room.id) ? (
-                        <span className="flex items-center gap-1 truncate text-[12.5px] font-medium text-primary">
+                        <span className="flex items-center gap-1 truncate text-[0.7812rem] font-medium text-primary">
                           <span className="flex gap-0.5" aria-hidden>
                             <span className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.2s]" />
                             <span className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.1s]" />
@@ -123,10 +123,10 @@ export function ConversationList({
                           {t("messages.list_typing")}
                         </span>
                       ) : (
-                        <span className={cn("truncate text-[12.5px]", unread > 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>{text}</span>
+                        <span className={cn("truncate text-[0.7812rem]", unread > 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>{text}</span>
                       )}
                       {unread > 0 ? (
-                        <span className="ml-auto grid min-w-5 shrink-0 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-5 text-primary-foreground">
+                        <span className="ml-auto grid min-w-5 shrink-0 place-items-center rounded-full bg-primary px-1.5 text-[0.6875rem] font-bold leading-5 text-primary-foreground">
                           {unread > 99 ? "99+" : unread}
                         </span>
                       ) : null}

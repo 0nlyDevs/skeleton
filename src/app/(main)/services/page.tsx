@@ -49,7 +49,7 @@ export default async function ServicesPage({ searchParams }: { readonly searchPa
       ) : (
         [...groups.entries()].map(([category, items]) => (
           <section key={category} className="flex flex-col gap-2.5" aria-labelledby={`cat-${category}`}>
-            <h2 id={`cat-${category}`} className="px-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 id={`cat-${category}`} className="px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-muted-foreground">
               {category}
             </h2>
             <ul className="grid gap-3 sm:grid-cols-2">
@@ -62,8 +62,8 @@ export default async function ServicesPage({ searchParams }: { readonly searchPa
                     <ServiceIcon name={service.icon} />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="font-semibold leading-snug">{service.name}</span>
-                      <span className="line-clamp-2 text-[13.5px] text-muted-foreground">{service.summary}</span>
-                      {service.hours ? <span className="mt-1 text-[12.5px] text-muted-foreground">{service.hours}</span> : null}
+                      <span className="line-clamp-2 text-[0.8438rem] text-muted-foreground">{service.summary}</span>
+                      {service.hours ? <span className="mt-1 text-[0.7812rem] text-muted-foreground">{service.hours}</span> : null}
                     </span>
                   </Link>
                 </li>

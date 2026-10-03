@@ -59,7 +59,8 @@
   --surface-raised: oklch(1 0 0);
 
   --muted: var(--neutral-100);
-  --muted-foreground: var(--neutral-500);
+  /* F23: secondary text reaches 4.5:1 on the sand canvas and on muted surfaces. */
+  --muted-foreground: oklch(0.5 0.007 250);
 
   --card: oklch(1 0 0);
   --card-foreground: var(--neutral-900);
@@ -77,7 +78,8 @@
   --accent: var(--brand-50);
   --accent-foreground: var(--brand-700);
 
-  --success: var(--emerald-500);
+  /* Dark enough to be read as text on white, and to carry white text. */
+  --success: oklch(0.5 0.13 160);
   --success-foreground: oklch(0.99 0 0);
   --warning: var(--amber-500);
   --warning-foreground: var(--neutral-900);
@@ -88,7 +90,8 @@
   --destructive-foreground: oklch(0.99 0 0);
 
   --border: var(--neutral-200);
-  --input: var(--neutral-200);
+  /* Form fields need a 3:1 outline to be found (WCAG 1.4.11). */
+  --input: oklch(0.62 0.006 250);
   --ring: var(--brand-500);
 
   /* --- component knobs --- */
@@ -135,10 +138,11 @@
   --accent-foreground: var(--brand-200);
 
   --success: var(--emerald-500);
+  --success-foreground: var(--neutral-950);
   --warning: var(--amber-500);
-  --error: var(--red-500);
+  --error: oklch(0.68 0.19 27);
 
-  --destructive: var(--red-500);
+  --destructive: oklch(0.68 0.19 27);
   --destructive-foreground: var(--neutral-950);
 
   --border: oklch(1 0 0 / 12%);
@@ -336,6 +340,81 @@ html[data-eco] *::after {
 }
 html[data-eco] .eco-hide {
   display: none !important;
+}
+
+/*
+ * Amber reads well as a fill under dark text, not as text on white: warning
+ * text gets a darker shade in the light theme only.
+ */
+html:not(.dark) .text-warning {
+  color: oklch(0.52 0.12 65);
+}
+
+/*
+ * Text size (F24, cookie `skeleton_text_size`): the root font size scales
+ * every rem-based size and spacing together, so text grows without
+ * overlapping. Font sizes are in rem everywhere for that reason, which also
+ * honours the browser's own font size setting.
+ */
+html[data-text-size="large"] {
+  font-size: 112.5%;
+}
+html[data-text-size="larger"] {
+  font-size: 125%;
+}
+html[data-text-size="largest"] {
+  font-size: 150%;
+}
+
+/*
+ * High contrast (F23, cookie `skeleton_contrast=1`): darker secondary text,
+ * visible borders, underlined links and a thicker focus ring, in both themes.
+ */
+html[data-contrast="high"] {
+  --background: oklch(1 0 0);
+  --foreground: var(--neutral-950);
+  --surface-muted: var(--neutral-200);
+  --muted: var(--neutral-200);
+  --muted-foreground: var(--neutral-800);
+  --card-foreground: var(--neutral-950);
+  --popover-foreground: var(--neutral-950);
+  --secondary-foreground: var(--neutral-950);
+  --primary: var(--brand-700);
+  --primary-hover: oklch(0.38 0.14 36);
+  --accent-foreground: oklch(0.38 0.14 36);
+  --error: oklch(0.45 0.2 27);
+  --destructive: oklch(0.45 0.2 27);
+  --border: var(--neutral-600);
+  --input: var(--neutral-700);
+  --ring: var(--neutral-950);
+}
+html[data-contrast="high"].dark {
+  --background: oklch(0 0 0);
+  --foreground: oklch(1 0 0);
+  --surface: var(--neutral-950);
+  --surface-muted: var(--neutral-900);
+  --card: var(--neutral-950);
+  --popover: var(--neutral-950);
+  --muted: var(--neutral-900);
+  --muted-foreground: var(--neutral-200);
+  --card-foreground: oklch(1 0 0);
+  --popover-foreground: oklch(1 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --primary: var(--brand-200);
+  --primary-hover: var(--brand-50);
+  --accent-foreground: var(--brand-50);
+  --error: oklch(0.72 0.17 27);
+  --destructive: oklch(0.72 0.17 27);
+  --border: oklch(1 0 0 / 55%);
+  --input: oklch(1 0 0 / 70%);
+  --ring: oklch(1 0 0);
+}
+html[data-contrast="high"] main a:not([class*="bg-"]):not([role]) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+html[data-contrast="high"] :focus-visible {
+  outline-width: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {

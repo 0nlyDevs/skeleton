@@ -64,8 +64,8 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">{t("admin.title")}</h1>
-        <p className="text-[14px] text-muted-foreground">{t("admin.subtitle")}</p>
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">{t("admin.title")}</h1>
+        <p className="text-[0.875rem] text-muted-foreground">{t("admin.subtitle")}</p>
       </header>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -90,12 +90,12 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
                   <Icon className="size-[18px]" />
                 </span>
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[13px] font-medium text-muted-foreground">{card.label}</span>
-                  <span className="text-[26px] font-semibold leading-none tracking-tight tabular-nums">
+                  <span className="text-[0.8125rem] font-medium text-muted-foreground">{card.label}</span>
+                  <span className="text-[1.625rem] font-semibold leading-none tracking-tight tabular-nums">
                     {card.value}
                   </span>
                   {"hint" in card && card.hint ? (
-                    <span className="mt-1 truncate text-[12px] text-muted-foreground/80">{card.hint}</span>
+                    <span className="mt-1 truncate text-[0.75rem] text-muted-foreground/80">{card.hint}</span>
                   ) : null}
                 </div>
               </CardContent>
@@ -117,13 +117,13 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>{t("admin.moderation.title")}</CardTitle>
-            <Link href="/admin/moderation" className="text-[13px] font-medium text-primary hover:underline">
+            <Link href="/admin/moderation" className="text-[0.8125rem] font-medium text-primary hover:underline">
               {t("notifications.view_all")}
             </Link>
           </CardHeader>
           <CardContent className="pt-0">
             {data.reports.recent.length === 0 ? (
-              <p className="flex items-center gap-2 py-6 text-[13.5px] text-muted-foreground">
+              <p className="flex items-center gap-2 py-6 text-[0.8438rem] text-muted-foreground">
                 <CheckCircle2 className="size-4 text-success" />
                 {t("admin.moderation.empty.body")}
               </p>
@@ -133,8 +133,8 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
                   <li key={report.id} className="flex items-center gap-3 py-2.5">
                     <AlertTriangle className="size-4 shrink-0 text-warning" />
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[13.5px] font-medium">{report.reason}</span>
-                      <span className="text-[12px] text-muted-foreground">
+                      <span className="truncate text-[0.8438rem] font-medium">{report.reason}</span>
+                      <span className="text-[0.75rem] text-muted-foreground">
                         {report.targetType} · {report.reporterName ?? "—"} ·{" "}
                         {fmt.relative(report.createdAt)}
                       </span>
@@ -154,7 +154,7 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
             </CardHeader>
             <CardContent className="pt-0">
               {data.signups.length === 0 ? (
-                <p className="py-2 text-[13.5px] text-muted-foreground">—</p>
+                <p className="py-2 text-[0.8438rem] text-muted-foreground">—</p>
               ) : (
                 <div className="flex h-16 items-end gap-1" aria-hidden>
                   {data.signups.slice(-28).map((point) => {
@@ -181,7 +181,7 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <dl className="flex flex-col gap-2 text-[13.5px]">
+              <dl className="flex flex-col gap-2 text-[0.8438rem]">
                 <div className="flex items-center justify-between gap-3">
                   <dt className="flex items-center gap-2 text-muted-foreground">
                     <Users className="size-3.5" />

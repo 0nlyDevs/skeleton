@@ -109,7 +109,7 @@ export function AgentInbox({ initialStatus }: { readonly initialStatus: string }
                 setPage(1);
               }}
               className={cn(
-                "rounded-full px-3 py-1 text-[13px] font-medium",
+                "rounded-full px-3 py-1 text-[0.8125rem] font-medium",
                 scope === value ? "bg-primary text-primary-foreground" : "hover:bg-surface-muted",
               )}
             >
@@ -127,7 +127,7 @@ export function AgentInbox({ initialStatus }: { readonly initialStatus: string }
             aria-pressed={status === tab}
             onClick={() => pickStatus(tab)}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-medium",
+              "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8125rem] font-medium",
               status === tab ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-surface-muted",
             )}
           >

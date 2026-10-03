@@ -43,15 +43,15 @@ export function BlockedList() {
       </CardHeader>
       <CardContent>
         {people === null ? null : people.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">{t("block.list_empty")}</p>
+          <p className="text-[0.8125rem] text-muted-foreground">{t("block.list_empty")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-border/60">
             {people.map((person) => (
               <li key={person.id} className="flex items-center gap-3 py-2.5">
                 <UserAvatar userId={person.id} name={person.name} image={person.image} size="sm" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium">{person.name}</span>
-                  {person.username ? <span className="block truncate text-[12px] text-muted-foreground">@{person.username}</span> : null}
+                  <span className="block truncate text-[0.875rem] font-medium">{person.name}</span>
+                  {person.username ? <span className="block truncate text-[0.75rem] text-muted-foreground">@{person.username}</span> : null}
                 </span>
                 <Button size="sm" variant="secondary" onClick={() => void unblock(person)}>
                   {t("block.unblock")}

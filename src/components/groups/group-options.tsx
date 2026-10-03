@@ -25,8 +25,8 @@ export function ApprovalSwitch({
   return (
     <label className="flex items-start justify-between gap-4 rounded-xl border border-border/70 px-3 py-2.5">
       <span>
-        <span className="block text-[14px] font-medium">{t("groups.approval")}</span>
-        <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
+        <span className="block text-[0.875rem] font-medium">{t("groups.approval")}</span>
+        <span className="mt-0.5 block text-[0.7812rem] text-muted-foreground">
           {forced ? t("groups.approval_forced") : value ? t("groups.approval_on") : t("groups.approval_off")}
         </span>
       </span>
@@ -55,11 +55,11 @@ export function CoverPicker({ value, onChange }: { readonly value: string | null
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-medium">{t("groups.cover")}</span>
+      <span className="text-[0.8125rem] font-medium">{t("groups.cover")}</span>
       <button
         type="button"
         onClick={() => input.current?.click()}
-        className="relative grid h-28 place-items-center overflow-hidden rounded-xl border border-dashed border-border bg-surface-muted text-[13px] text-muted-foreground hover:border-primary"
+        className="relative grid h-28 place-items-center overflow-hidden rounded-xl border border-dashed border-border bg-surface-muted text-[0.8125rem] text-muted-foreground hover:border-primary"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- own public upload */}
         {value ? <img src={value} alt="" className="absolute inset-0 size-full object-cover" /> : null}
@@ -69,7 +69,7 @@ export function CoverPicker({ value, onChange }: { readonly value: string | null
         </span>
       </button>
       {value ? (
-        <button type="button" onClick={() => onChange(null)} className="inline-flex items-center gap-1 self-start text-[12.5px] text-muted-foreground hover:underline">
+        <button type="button" onClick={() => onChange(null)} className="inline-flex items-center gap-1 self-start text-[0.7812rem] text-muted-foreground hover:underline">
           <X className="size-3.5" />
           {t("groups.cover_remove")}
         </button>

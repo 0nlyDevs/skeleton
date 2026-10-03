@@ -28,7 +28,7 @@ export function LocaleToggle({ className }: { readonly className?: string }) {
       <DropdownMenuTrigger
         aria-label={`Langue : ${LOCALE_LABELS[locale]}`}
         className={cn(
-          "inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground",
+          "inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[0.8125rem] font-medium text-muted-foreground",
           "transition-colors duration-[var(--duration-fast)] hover:bg-surface-muted hover:text-foreground",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
           className,
@@ -47,7 +47,7 @@ export function LocaleToggle({ className }: { readonly className?: string }) {
             }}
             className={cn(option === locale && "bg-accent text-accent-foreground")}
           >
-            <span className="w-6 text-[11px] font-semibold tabular-nums opacity-70">
+            <span className="w-6 text-[0.6875rem] font-semibold tabular-nums opacity-70">
               {LOCALE_SHORT[option]}
             </span>
             {LOCALE_LABELS[option]}

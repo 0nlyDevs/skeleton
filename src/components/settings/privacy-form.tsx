@@ -51,8 +51,8 @@ export function PrivacyForm(initial: { readonly showPresence: boolean; readonly 
         {(Object.keys(LABELS) as Setting[]).map((setting) => (
           <label key={setting} className="flex items-start justify-between gap-4">
             <span>
-              <span className="block text-[14px] font-medium">{t(LABELS[setting].label)}</span>
-              <span className="mt-0.5 block text-[12.5px] leading-relaxed text-muted-foreground">{t(LABELS[setting].hint)}</span>
+              <span className="block text-[0.875rem] font-medium">{t(LABELS[setting].label)}</span>
+              <span className="mt-0.5 block text-[0.7812rem] leading-relaxed text-muted-foreground">{t(LABELS[setting].hint)}</span>
             </span>
             <Switch checked={values[setting]} disabled={busy === setting} onCheckedChange={(value) => void toggle(setting, value)} aria-label={t(LABELS[setting].label)} />
           </label>

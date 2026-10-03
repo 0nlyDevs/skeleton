@@ -41,9 +41,9 @@ export function ReactionSummary({ state, postId }: { readonly state: ReactionSta
         setOpen(true);
       }}
       aria-label={t("reactors.open", { count: state.reactionCount })}
-      className="flex items-center gap-1.5 rounded-full text-[13px] text-muted-foreground hover:underline"
+      className="flex items-center gap-1.5 rounded-full text-[0.8125rem] text-muted-foreground hover:underline"
     >
-      <span aria-hidden className="flex -space-x-1 text-[15px]">
+      <span aria-hidden className="flex -space-x-1 text-[0.9375rem]">
         {topReactions(state.reactions).map((type) => (
           <span key={type} className="grid size-5 place-items-center rounded-full bg-surface ring-2 ring-card">
             {REACTION_EMOJI[type]}
@@ -105,7 +105,7 @@ export function ReactionButton({
 
   const label = mine ? t(REACTION_LABEL[mine]) : t("reactions.LIKE");
   const classes = cn(
-    "flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold transition-colors hover:bg-surface-muted",
+    "flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[0.8438rem] font-semibold transition-colors hover:bg-surface-muted",
     mine ? "text-primary" : "text-muted-foreground",
   );
 
@@ -147,7 +147,7 @@ export function ReactionButton({
             }
           }}
         >
-          {mine ? <span aria-hidden className="text-[18px] leading-none">{REACTION_EMOJI[mine]}</span> : <ThumbsUp className="size-[18px]" aria-hidden />}
+          {mine ? <span aria-hidden className="text-[1.125rem] leading-none">{REACTION_EMOJI[mine]}</span> : <ThumbsUp className="size-[18px]" aria-hidden />}
           {label}
         </button>
       </PopoverTrigger>
@@ -162,7 +162,7 @@ export function ReactionButton({
               aria-label={t(REACTION_LABEL[type])}
               aria-pressed={type === mine}
               className={cn(
-                "grid size-10 place-items-center rounded-full text-[22px] transition-transform duration-150 hover:-translate-y-1 hover:scale-125 focus-visible:scale-125 focus-visible:outline-none motion-reduce:transition-none",
+                "grid size-10 place-items-center rounded-full text-[1.375rem] transition-transform duration-150 hover:-translate-y-1 hover:scale-125 focus-visible:scale-125 focus-visible:outline-none motion-reduce:transition-none",
                 type === mine && "bg-primary/15",
               )}
             >

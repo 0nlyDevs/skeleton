@@ -29,17 +29,17 @@ function PageCard({ page, owner }: { page: Item; owner: boolean }) {
           {/* eslint-disable-next-line @next/next/no-img-element -- authorised file route */}
           {page.cover ? <img src={page.cover.url} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" /> : null}
           {!page.published ? (
-            <span className="relative rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">{t("pages.draft")}</span>
+            <span className="relative rounded-full bg-black/60 px-2 py-0.5 text-[0.6875rem] font-semibold text-white">{t("pages.draft")}</span>
           ) : page.visibility === "UNLISTED" ? (
-            <span className="relative inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">
+            <span className="relative inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[0.6875rem] font-semibold text-white">
               <Lock className="size-3" /> {t("pages.visibility.UNLISTED")}
             </span>
           ) : null}
         </div>
         <div className="flex flex-1 flex-col gap-1 p-3">
           <p className="line-clamp-2 font-semibold group-hover:underline">{page.title}</p>
-          {page.tagline ? <p className="line-clamp-2 text-[13px] text-muted-foreground">{page.tagline}</p> : null}
-          <p className="mt-auto flex items-center gap-3 pt-2 text-[12px] text-muted-foreground">
+          {page.tagline ? <p className="line-clamp-2 text-[0.8125rem] text-muted-foreground">{page.tagline}</p> : null}
+          <p className="mt-auto flex items-center gap-3 pt-2 text-[0.75rem] text-muted-foreground">
             {!owner ? <span className="truncate">{page.author.name}</span> : <span>{fmt.relative(page.updatedAt)}</span>}
             <span className="ml-auto inline-flex items-center gap-1"><Eye className="size-3.5" aria-hidden />{page.viewCount}</span>
             <span className="inline-flex items-center gap-1"><Heart className="size-3.5" aria-hidden />{page.likeCount}</span>
@@ -95,7 +95,7 @@ export function PagesDirectory({ initialDiscover, mine, signedIn }: { initialDis
 
       {mine && mine.data.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-[15px] font-semibold">{t("pages.mine")}</h2>
+          <h2 className="text-[0.9375rem] font-semibold">{t("pages.mine")}</h2>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {mine.data.map((page) => (
               <li key={page.id} className="flex">
@@ -108,7 +108,7 @@ export function PagesDirectory({ initialDiscover, mine, signedIn }: { initialDis
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="mr-auto text-[15px] font-semibold">{t("pages.discover")}</h2>
+          <h2 className="mr-auto text-[0.9375rem] font-semibold">{t("pages.discover")}</h2>
           <label className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input value={q} onChange={(event) => setQ(event.target.value)} maxLength={80} placeholder={t("pages.search")} aria-label={t("pages.search")} className="h-9 w-56 pl-8" />
@@ -121,7 +121,7 @@ export function PagesDirectory({ initialDiscover, mine, signedIn }: { initialDis
                 role="tab"
                 aria-selected={sort === value}
                 onClick={() => setSort(value)}
-                className={cn("rounded-full px-3 py-1 text-[13px] font-semibold", sort === value ? "bg-card shadow-sm" : "text-muted-foreground")}
+                className={cn("rounded-full px-3 py-1 text-[0.8125rem] font-semibold", sort === value ? "bg-card shadow-sm" : "text-muted-foreground")}
               >
                 {t(value === "recent" ? "pages.sort.recent" : "pages.sort.popular")}
               </button>

@@ -59,22 +59,22 @@ export default async function AnnouncementPage({ params }: { readonly params: Pr
           <AnnouncementCategoryBadge category={announcement.category} label={t(`tn.category.${announcement.category}` as MessageKey)} />
           {!announcement.publishedAt ? <Badge variant="warning">{t("tn.draft")}</Badge> : null}
           {announcement.service ? (
-            <Link href={`/services/${announcement.service.slug}`} className="text-[13px] text-primary hover:underline">
+            <Link href={`/services/${announcement.service.slug}`} className="text-[0.8125rem] text-primary hover:underline">
               {announcement.service.name}
             </Link>
           ) : null}
         </div>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{announcement.title}</h1>
-        <p className="text-[15px] text-muted-foreground">{announcement.summary}</p>
+        <p className="text-[0.9375rem] text-muted-foreground">{announcement.summary}</p>
         {announcement.publishedAt ? (
-          <p className="text-[13px] text-muted-foreground">
+          <p className="text-[0.8125rem] text-muted-foreground">
             {t("tn.news.published", { date: formatLongDate(announcement.publishedAt, locale) })} · {t("tn.city_team")}
           </p>
         ) : null}
       </header>
 
       <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-panel">
-        <p className="prose-body text-[15px]">{announcement.body}</p>
+        <p className="prose-body text-[0.9375rem]">{announcement.body}</p>
       </div>
     </article>
   );

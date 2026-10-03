@@ -15,13 +15,13 @@ export function Input({ className, type, ...props }: ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        "flex h-10 w-full min-w-0 rounded-lg border border-input bg-surface px-3 py-2 text-[15px] text-foreground",
+        "flex h-10 w-full min-w-0 rounded-lg border border-input bg-surface px-3 py-2 text-[0.9375rem] text-foreground",
         "transition-[border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-out-soft)]",
         "placeholder:text-muted-foreground/70",
         "hover:border-primary/40",
         "focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "file:mr-3 file:h-7 file:rounded-md file:border-0 file:bg-secondary file:px-2 file:text-[13px] file:font-medium file:text-secondary-foreground",
+        "file:mr-3 file:h-7 file:rounded-md file:border-0 file:bg-secondary file:px-2 file:text-[0.8125rem] file:font-medium file:text-secondary-foreground",
         "aria-[invalid=true]:border-error aria-[invalid=true]:focus-visible:ring-error/25",
         className,
       )}

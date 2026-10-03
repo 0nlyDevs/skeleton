@@ -101,7 +101,7 @@ export function MessageBubble({
 
   return (
     <div data-message-id={message.id} className={cn("group flex scroll-mt-24 flex-col rounded-xl transition-colors", mine ? "items-end" : "items-start")}>
-      {showAuthor && !mine ? <span className="mb-0.5 ml-11 text-[11.5px] font-medium text-muted-foreground">{message.sender.name}</span> : null}
+      {showAuthor && !mine ? <span className="mb-0.5 ml-11 text-[0.7188rem] font-medium text-muted-foreground">{message.sender.name}</span> : null}
       <div className={cn("flex max-w-[85%] items-end gap-2 sm:max-w-[70%]", mine && "flex-row-reverse")}>
         {!mine ? (
           <span className="w-9 shrink-0">{showAvatar ? <UserAvatar userId={message.sender.id} name={message.sender.name} image={message.sender.image} size="sm" /> : null}</span>
@@ -109,7 +109,7 @@ export function MessageBubble({
 
         <div className={cn("flex min-w-0 flex-col gap-1", mine ? "items-end" : "items-start")}>
           {message.deleted ? (
-            <p className="rounded-2xl border border-dashed border-border px-3.5 py-2 text-[13.5px] italic text-muted-foreground">
+            <p className="rounded-2xl border border-dashed border-border px-3.5 py-2 text-[0.8438rem] italic text-muted-foreground">
               {t("messages.deleted")}
             </p>
           ) : (
@@ -125,7 +125,7 @@ export function MessageBubble({
                   type="button"
                   onClick={() => message.replyTo && onJumpTo(message.replyTo.id)}
                   className={cn(
-                    "max-w-full rounded-xl border-l-2 border-primary/60 bg-surface-muted/70 px-2.5 py-1.5 text-left text-[12.5px]",
+                    "max-w-full rounded-xl border-l-2 border-primary/60 bg-surface-muted/70 px-2.5 py-1.5 text-left text-[0.7812rem]",
                     mine ? "self-end" : "self-start",
                   )}
                 >
@@ -140,7 +140,7 @@ export function MessageBubble({
                 <p
                   title={fmt.dateTime(message.createdAt)}
                   className={cn(
-                    "whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-[14.5px] leading-snug [overflow-wrap:anywhere]",
+                    "whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-[0.9062rem] leading-snug [overflow-wrap:anywhere]",
                     mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-surface-muted text-foreground",
                   )}
                 >
@@ -167,7 +167,7 @@ export function MessageBubble({
                   aria-label={t(REACTION_LABEL[type])}
                   aria-pressed={mineReaction === type}
                   onClick={() => void react(mineReaction === type ? null : type)}
-                  className={cn("grid size-9 place-items-center rounded-full text-[20px] transition-transform hover:scale-125", mineReaction === type && "bg-primary/15")}
+                  className={cn("grid size-9 place-items-center rounded-full text-[1.25rem] transition-transform hover:scale-125", mineReaction === type && "bg-primary/15")}
                 >
                   {REACTION_EMOJI[type]}
                 </button>
@@ -228,7 +228,7 @@ export function MessageBubble({
               onClick={() => setReactorsOpen(true)}
               title={t(REACTION_LABEL[entry.type])}
               className={cn(
-                "inline-flex items-center gap-0.5 rounded-full border bg-card px-1.5 py-0.5 text-[12px] shadow-sm hover:bg-surface-muted",
+                "inline-flex items-center gap-0.5 rounded-full border bg-card px-1.5 py-0.5 text-[0.75rem] shadow-sm hover:bg-surface-muted",
                 entry.userIds.includes(viewerId) ? "border-primary/60" : "border-border",
               )}
             >
@@ -240,7 +240,7 @@ export function MessageBubble({
         </div>
       ) : null}
 
-      <div className={cn("mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground", mine ? "mr-1" : "ml-11")}>
+      <div className={cn("mt-0.5 flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground", mine ? "mr-1" : "ml-11")}>
         {message.failed ? (
           <button type="button" onClick={onDiscard} className="inline-flex items-center gap-1 text-error hover:underline">
             <AlertCircle className="size-3" />

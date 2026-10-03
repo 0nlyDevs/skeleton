@@ -55,7 +55,7 @@ export default async function CitizenSpacePage() {
             <>
               <counter.icon className="size-4 text-muted-foreground" aria-hidden />
               <span className="text-2xl font-semibold tabular-nums">{counter.value}</span>
-              <span className="text-[12.5px] text-muted-foreground">{counter.label}</span>
+              <span className="text-[0.7812rem] text-muted-foreground">{counter.label}</span>
             </>
           );
           const className = `flex h-full flex-col gap-1 rounded-2xl border bg-card p-4 shadow-panel ${counter.highlight ? "border-warning/60" : "border-border/70"}`;
@@ -91,19 +91,19 @@ export default async function CitizenSpacePage() {
             <h2 id="my-details" className="mb-3 font-semibold">{t("tn.space.profile")}</h2>
             <dl className="flex flex-col gap-2.5 text-sm">
               <div>
-                <dt className="text-[12px] text-muted-foreground">{t("tn.space.name")}</dt>
+                <dt className="text-[0.75rem] text-muted-foreground">{t("tn.space.name")}</dt>
                 <dd className="font-medium">{user.name}</dd>
               </div>
               <div>
-                <dt className="text-[12px] text-muted-foreground">{t("tn.space.email")}</dt>
+                <dt className="text-[0.75rem] text-muted-foreground">{t("tn.space.email")}</dt>
                 <dd className="break-all">{user.email}</dd>
               </div>
               <div>
-                <dt className="text-[12px] text-muted-foreground">{t("tn.space.role")}</dt>
+                <dt className="text-[0.75rem] text-muted-foreground">{t("tn.space.role")}</dt>
                 <dd>{t(`role.${user.role.toLowerCase()}` as MessageKey)}</dd>
               </div>
               <div>
-                <dt className="text-[12px] text-muted-foreground">{t("tn.space.since")}</dt>
+                <dt className="text-[0.75rem] text-muted-foreground">{t("tn.space.since")}</dt>
                 <dd>{formatLongDate(user.createdAt, locale)}</dd>
               </div>
             </dl>
@@ -119,7 +119,7 @@ export default async function CitizenSpacePage() {
             <section className="flex flex-col gap-2.5" aria-labelledby="to-read">
               <div className="flex items-center justify-between px-1">
                 <h2 id="to-read" className="font-semibold">{t("tn.space.news")}</h2>
-                <Link href="/announcements" className="text-[13px] text-primary hover:underline">{t("tn.see_all")}</Link>
+                <Link href="/announcements" className="text-[0.8125rem] text-primary hover:underline">{t("tn.see_all")}</Link>
               </div>
               {news.data.map((announcement) => (
                 <AnnouncementCard key={announcement.id} announcement={announcement} compact />

@@ -71,7 +71,7 @@ export function ServerErrorPage({
           <ServerCrash className="size-6" aria-hidden />
         </span>
         <div className="flex flex-col gap-2">
-          <p className="font-mono text-[13px] font-medium text-muted-foreground">500</p>
+          <p className="font-mono text-[0.8125rem] font-medium text-muted-foreground">500</p>
           <h1 className="text-2xl font-semibold tracking-tight">{t("feedback.server_error.title")}</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">{t("feedback.server_error.body")}</p>
         </div>
@@ -87,7 +87,7 @@ export function ServerErrorPage({
             </Link>
           </Button>
         </div>
-        {error.digest ? <p className="font-mono text-[11px] text-muted-foreground/70">ref : {error.digest}</p> : null}
+        {error.digest ? <p className="font-mono text-[0.6875rem] text-muted-foreground/70">ref : {error.digest}</p> : null}
       </div>
     </main>
   );

@@ -61,7 +61,7 @@ export function RequestComposer({
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         {allowInternal ? (
-          <label className="flex items-center gap-2 text-[13px]">
+          <label className="flex items-center gap-2 text-[0.8125rem]">
             <Switch checked={internal} onCheckedChange={setInternal} />
             {t("tn.request.internal")}
           </label>

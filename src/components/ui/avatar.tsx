@@ -40,7 +40,7 @@ export function AvatarFallback({
   return (
     <AvatarPrimitive.Fallback
       className={cn(
-        "flex size-full items-center justify-center bg-accent text-[13px] font-semibold text-accent-foreground",
+        "flex size-full items-center justify-center bg-accent text-[0.8125rem] font-semibold text-accent-foreground",
         className,
       )}
       {...props}

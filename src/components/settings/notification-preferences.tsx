@@ -65,10 +65,10 @@ export function NotificationPreferences({
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">
           {t("settings.notifications.title")}
         </h1>
-        <p className="text-[14px] text-muted-foreground">{t("settings.notifications.subtitle")}</p>
+        <p className="text-[0.875rem] text-muted-foreground">{t("settings.notifications.subtitle")}</p>
       </header>
 
       <Card>
@@ -80,7 +80,7 @@ export function NotificationPreferences({
           <ul className="flex flex-col divide-y divide-border/60">
             {rows.map((row) => (
               <li key={row.key} className="flex items-center justify-between gap-4 py-3.5">
-                <Label htmlFor={row.key} className="cursor-pointer text-[13.5px] font-normal">
+                <Label htmlFor={row.key} className="cursor-pointer text-[0.8438rem] font-normal">
                   {row.label}
                 </Label>
                 <Switch

@@ -32,7 +32,7 @@ export function Brand({
           <circle cx="17.8" cy="17.5" r="2.4" fill="currentColor" stroke="none" />
         </svg>
       </span>
-      {!compact ? <span className="text-[17px] font-bold tracking-tight">Terra Nova</span> : null}
+      {!compact ? <span className="text-[1.0625rem] font-bold tracking-tight">Terra Nova</span> : null}
     </>
   );
 

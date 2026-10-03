@@ -42,7 +42,7 @@ export default async function AgentDashboardPage() {
               >
                 <counter.icon className={`size-4 ${counter.tone}`} aria-hidden />
                 <span className="text-2xl font-semibold tabular-nums">{counter.value}</span>
-                <span className="text-[12.5px] text-muted-foreground">{counter.label}</span>
+                <span className="text-[0.7812rem] text-muted-foreground">{counter.label}</span>
               </Link>
             </li>
           ))}
@@ -52,7 +52,7 @@ export default async function AgentDashboardPage() {
           <section className="flex flex-col gap-3" aria-labelledby="to-handle">
             <div className="flex items-center justify-between gap-2 px-1">
               <h2 id="to-handle" className="font-semibold">{t("tn.agent.dash.needs_action")}</h2>
-              <Link href="/agent/requests?status=OPEN" className="inline-flex items-center gap-1 text-[13px] text-primary hover:underline">
+              <Link href="/agent/requests?status=OPEN" className="inline-flex items-center gap-1 text-[0.8125rem] text-primary hover:underline">
                 {t("tn.agent.dash.open_inbox")}
                 <ArrowRight className="size-3.5" aria-hidden />
               </Link>
@@ -71,11 +71,11 @@ export default async function AgentDashboardPage() {
             </h2>
             <p className="text-sm">{t("tn.agent.dash.feed_body", { count: feed.totals.count, xp: feed.totals.xpVisible })}</p>
             {session && typeof session.current_wave === "number" ? (
-              <p className="text-[13px] text-muted-foreground">
+              <p className="text-[0.8125rem] text-muted-foreground">
                 {t("tn.agent.dash.feed_wave", { wave: session.current_wave, minutes: minutesLeft ?? "—" })}
               </p>
             ) : null}
-            {!feed.configured ? <p className="text-[13px] text-warning">{t("tn.agent.feed.not_configured")}</p> : null}
+            {!feed.configured ? <p className="text-[0.8125rem] text-warning">{t("tn.agent.feed.not_configured")}</p> : null}
             <Button asChild size="sm" variant="secondary">
               <Link href="/agent/feed">{t("tn.agent.dash.open_feed")}</Link>
             </Button>

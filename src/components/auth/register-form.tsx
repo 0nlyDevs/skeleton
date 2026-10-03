@@ -127,13 +127,13 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         </span>
 
         <div className="flex flex-col gap-1.5">
-          <h2 className="text-[17px] font-semibold tracking-tight">
+          <h2 className="text-[1.0625rem] font-semibold tracking-tight">
             {t("auth.register.success_title")}
           </h2>
-          <p className="text-[14px] leading-relaxed text-muted-foreground">
+          <p className="text-[0.875rem] leading-relaxed text-muted-foreground">
             {t("auth.register.success_body", { email: email.trim() })}
           </p>
-          <p className="text-[13px] leading-relaxed text-muted-foreground">
+          <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">
             {t("auth.register.neutral")}
           </p>
         </div>
@@ -268,7 +268,7 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         )}
       </FormField>
 
-      <label className="flex cursor-pointer items-start gap-2.5 text-[13px] leading-relaxed text-muted-foreground">
+      <label className="flex cursor-pointer items-start gap-2.5 text-[0.8125rem] leading-relaxed text-muted-foreground">
         <Checkbox
           className="mt-0.5"
           checked={accepted}

@@ -40,8 +40,8 @@ export function GroupsDirectory({ signedIn, initialMine }: { readonly signedIn: 
     <div className="flex flex-col gap-4">
       <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight">{t("groups.title")}</h1>
-          <p className="text-[13.5px] text-muted-foreground">{t("groups.subtitle")}</p>
+          <h1 className="text-[1.375rem] font-bold tracking-tight">{t("groups.title")}</h1>
+          <p className="text-[0.8438rem] text-muted-foreground">{t("groups.subtitle")}</p>
         </div>
         {signedIn ? (
           <Button onClick={() => setCreating(true)}>
@@ -62,7 +62,7 @@ export function GroupsDirectory({ signedIn, initialMine }: { readonly signedIn: 
                 aria-selected={tab === value}
                 onClick={() => setTab(value)}
                 className={cn(
-                  "rounded-xl px-4 py-2 text-[13.5px] font-semibold",
+                  "rounded-xl px-4 py-2 text-[0.8438rem] font-semibold",
                   tab === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-muted",
                 )}
               >
@@ -79,7 +79,7 @@ export function GroupsDirectory({ signedIn, initialMine }: { readonly signedIn: 
               value={q}
               onChange={(event) => setQ(event.target.value)}
               placeholder={t("search.groups")}
-              className="h-10 w-full rounded-full border border-border bg-card pl-9 pr-3 text-[13.5px] outline-none focus:ring-2 focus:ring-ring/25"
+              className="h-10 w-full rounded-full border border-border bg-card pl-9 pr-3 text-[0.8438rem] outline-none focus:ring-2 focus:ring-ring/25"
             />
           </label>
         ) : null}
@@ -106,11 +106,11 @@ export function GroupsDirectory({ signedIn, initialMine }: { readonly signedIn: 
                 <Card className="flex items-center gap-4 p-4 transition-shadow hover:shadow-float">
                   <GroupAvatar name={group.name} />
                   <span className="min-w-0">
-                    <span className="flex items-center gap-1.5 truncate text-[15px] font-semibold">
+                    <span className="flex items-center gap-1.5 truncate text-[0.9375rem] font-semibold">
                       {group.name}
                       {group.privacy === "PRIVATE" ? <Lock className="size-3.5 text-muted-foreground" aria-label={t("groups.private")} /> : null}
                     </span>
-                    <span className="block text-[12.5px] text-muted-foreground">
+                    <span className="block text-[0.7812rem] text-muted-foreground">
                       {group.privacy === "PRIVATE" ? t("groups.private") : t("groups.public")} · {t("groups.members", { count: group.memberCount })}
                     </span>
                   </span>

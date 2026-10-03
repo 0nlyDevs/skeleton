@@ -16,7 +16,7 @@ export function RepostEmbed({ original }: { readonly original: RepostedPostDto }
   const fmt = useFormatters();
   if (!original.available || !original.author) {
     return (
-      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-[13px] text-muted-foreground">
+      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-[0.8125rem] text-muted-foreground">
         {t("share.unavailable")}
       </p>
     );
@@ -28,12 +28,12 @@ export function RepostEmbed({ original }: { readonly original: RepostedPostDto }
         <Link href={`/feed/${original.id}`} className="flex items-center gap-2.5">
           <UserAvatar userId={original.author.id} name={original.author.name} image={original.author.image} size="xs" />
           <span className="min-w-0">
-            <span className="block truncate text-[13.5px] font-semibold">{original.author.name}</span>
-            {original.createdAt ? <span className="block text-[11.5px] text-muted-foreground">{fmt.relative(original.createdAt)}</span> : null}
+            <span className="block truncate text-[0.8438rem] font-semibold">{original.author.name}</span>
+            {original.createdAt ? <span className="block text-[0.7188rem] text-muted-foreground">{fmt.relative(original.createdAt)}</span> : null}
           </span>
         </Link>
         {original.body ? (
-          <RichText text={original.body} mentions={original.mentions} className="line-clamp-6 whitespace-pre-line break-words text-[14px] leading-relaxed" />
+          <RichText text={original.body} mentions={original.mentions} className="line-clamp-6 whitespace-pre-line break-words text-[0.875rem] leading-relaxed" />
         ) : null}
       </div>
     </div>

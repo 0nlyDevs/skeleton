@@ -33,7 +33,7 @@ export function UserAvatar({
     <span className={cn("relative inline-flex shrink-0", className)}>
       <Avatar className={cn(SIZES[size], size === "xl" && "ring-4 ring-card")}>
         {image ? <AvatarImage src={image} alt="" className="object-cover" /> : null}
-        <AvatarFallback className={cn(size === "xl" ? "text-3xl" : size === "2xs" ? "text-[7px]" : "text-[12px]", "font-semibold")}>
+        <AvatarFallback className={cn(size === "xl" ? "text-3xl" : size === "2xs" ? "text-[0.4375rem]" : "text-[0.75rem]", "font-semibold")}>
           {initials(name)}
         </AvatarFallback>
       </Avatar>
