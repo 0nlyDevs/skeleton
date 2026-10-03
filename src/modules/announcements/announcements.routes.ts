@@ -15,20 +15,20 @@ export const getAnnouncementRoute = publicRoute({
 });
 
 export const createAnnouncementRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   body: announcementInputSchema,
   handler: async ({ body, auth, ip }) => jsonOk({ data: await createAnnouncement(body, auth.user, ip) }, 201),
 });
 
 export const updateAnnouncementRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   params: announcementSlugParamSchema,
   body: announcementInputSchema,
   handler: async ({ params, body, auth, ip }) => jsonOk({ data: await updateAnnouncement(params.slug, body, auth.user, ip) }),
 });
 
 export const deleteAnnouncementRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   params: announcementSlugParamSchema,
   handler: async ({ params, auth, ip }) => {
     await deleteAnnouncement(params.slug, auth.user, ip);

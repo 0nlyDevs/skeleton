@@ -30,7 +30,7 @@ export const getCityAlertRoute = publicRoute({
 });
 
 export const createCityAlertRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   body: createAlertSchema,
   rateLimit: RATE_LIMITS.cityAlert,
   rateLimitScope: "city-alert:create",
@@ -39,7 +39,7 @@ export const createCityAlertRoute = apiRoute({
 });
 
 export const resolveCityAlertRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   params: alertSlugParamSchema,
   rateLimit: RATE_LIMITS.cityAlert,
   rateLimitScope: "city-alert:resolve",
@@ -62,7 +62,7 @@ export const zoneStatusesRoute = publicRoute({
 
 /** Staff: how many residents an alert with this scope would reach, shown before publishing. */
 export const alertReachRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   query: alertReachQuerySchema,
   handler: async ({ query }) => jsonOk({ data: { scope: query.scope, residents: await countAlertReach(query.scope) } }),
 });

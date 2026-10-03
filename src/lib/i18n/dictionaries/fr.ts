@@ -106,7 +106,7 @@ export const fr = {
   "landing.demo.body":
     "Un compte par rôle, avec des données réalistes déjà en place. Les identifiants sont dans le README.",
   "role.user": "Citoyen",
-  "role.moderator": "Agent municipal",
+  "role.agent": "Agent municipal",
   "role.admin": "Administrateur",
   "landing.stats.title": "L'instance en direct",
   "landing.stats.members": "Membres",

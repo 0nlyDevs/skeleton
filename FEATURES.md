@@ -18,7 +18,7 @@ it. Test accounts: see `prisma/seed.ts` (password set by `SEED_PASSWORD`).
 | D05 | Present the city services | done | `/services` (search, categories), `/services/<slug>` (how to, hours, contacts, "Faire une demande") |
 | D06 | City announcements | done | `/announcements` (category filter, pinned first), `/announcements/<slug>`; agents publish from `/agent/announcements` |
 | D07 | Homepage with clear hierarchy | done | `/`: who you are and what to do, four main paths, services, latest announcements |
-| D08 | Citizen, agent and administrator profiles | done | Roles USER / MODERATOR / ADMIN shown as Citoyen / Agent municipal / Administrateur; each gets its own tools |
+| D08 | Citizen, agent and administrator profiles | done | Roles USER / AGENT / ADMIN shown as Citoyen / Agent municipal / Administrateur; each gets its own tools |
 | D09 | Access control | done | Agent pages show a 403 to citizens; every endpoint re-checks the role; another citizen's request reads as 404; services are admin only |
 | D19 | Agent workspace showing the Nova Terra API | done | `/agent` (separate layout and navigation), `/agent/feed`: session, wave, countdown, requests with difficulty and XP, team tracking |
 | F22 | Agents see citizen requests, their state and what needs action | done | `/agent/requests`: status tabs with counts, "Action requise" when new or when the citizen answered, take / release, internal notes, history |
@@ -41,7 +41,7 @@ Technical notes:
   losing it
 - Password reset by email, with a rotating single-use token (1-hour expiry)
 - Two-factor authentication (TOTP) with backup codes
-- RBAC with a total order: `ADMIN` > `MODERATOR` > `USER`
+- RBAC with a total order: `ADMIN` > `AGENT` > `USER` (AGENT = city agent, who also moderates)
 - Deny-by-default API wrapper: every route is authenticated unless it says
   `publicRoute`, and role checks run server-side
 - Not-yours reads as `404`, never `403` — no enumeration oracle

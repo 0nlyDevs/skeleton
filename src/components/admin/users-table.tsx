@@ -259,7 +259,7 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={user.role === "ADMIN" ? "primary" : user.role === "MODERATOR" ? "warning" : "neutral"}>
+                      <Badge variant={user.role === "ADMIN" ? "primary" : user.role === "AGENT" ? "warning" : "neutral"}>
                         {user.role}
                       </Badge>
                     </td>

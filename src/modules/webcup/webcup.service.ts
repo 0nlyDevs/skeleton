@@ -49,7 +49,7 @@ function toRow(request: WebcupApiRequest) {
 }
 
 async function staffIds(): Promise<string[]> {
-  const rows = await prisma.user.findMany({ where: { role: { in: ["MODERATOR", "ADMIN"] }, banned: false }, select: { id: true }, take: 200 });
+  const rows = await prisma.user.findMany({ where: { role: { in: ["AGENT", "ADMIN"] }, banned: false }, select: { id: true }, take: 200 });
   return rows.map((row) => row.id);
 }
 

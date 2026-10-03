@@ -288,7 +288,7 @@ export async function removeUserProfileAsStaff(
 
   const target = await findAdminUserById(id);
   if (!target) throw new NotFoundError("That profile does not exist.");
-  if (actor.user.role === "MODERATOR" && target.role === "ADMIN") {
+  if (actor.user.role === "AGENT" && target.role === "ADMIN") {
     throw new ForbiddenError("Moderators cannot suspend an admin account.");
   }
   if (target.banned) return;

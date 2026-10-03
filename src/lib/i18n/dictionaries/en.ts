@@ -104,7 +104,7 @@ export const en: Dictionary = {
   "landing.demo.body":
     "One account per role, with realistic data already in place. Credentials are in the README.",
   "role.user": "Citizen",
-  "role.moderator": "City agent",
+  "role.agent": "City agent",
   "role.admin": "Administrator",
   "landing.stats.title": "This instance, live",
   "landing.stats.members": "Members",

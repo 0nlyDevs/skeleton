@@ -32,7 +32,7 @@ describe("group access", () => {
   });
 
   it("lets platform staff read and moderate without posting", () => {
-    const staff = resolveGroupAccess(closed, { role: "MODERATOR" }, null);
+    const staff = resolveGroupAccess(closed, { role: "AGENT" }, null);
     expect([staff.canRead, staff.canModerate, staff.canPost, staff.canDelete]).toEqual([true, true, false, false]);
   });
 
