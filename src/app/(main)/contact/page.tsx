@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ContextTip } from "@/components/feedback/context-tip";
 import { ContactForm } from "@/components/city/contact-form";
 import { requirePageAuth } from "@/lib/auth/page-guards";
 import { getServerDictionary } from "@/lib/i18n/server";
@@ -22,6 +23,7 @@ export default async function ContactPage({ searchParams }: { readonly searchPar
         <h1 className="text-2xl font-semibold tracking-tight">{t("tn.contact.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("tn.contact.subtitle")}</p>
       </header>
+      <ContextTip id="contact">{t("tn.tip.contact")}</ContextTip>
       <ContactForm services={services.filter((item) => item.active).map(({ id, name }) => ({ id, name }))} initialServiceId={initial} initialKind={type === "issue" ? "issue" : "question"} />
     </div>
   );

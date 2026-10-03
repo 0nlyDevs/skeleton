@@ -53,6 +53,14 @@ export const adminListUsersQuerySchema = paginationQuerySchema.extend({
 
 export type AdminListUsersQuery = z.infer<typeof adminListUsersQuerySchema>;
 
+/** F34 — the agents' view only ever lists resident accounts. */
+export const agentListCitizensQuerySchema = paginationQuerySchema.extend({
+  q: z.string().trim().max(120).optional(),
+  status: z.enum(["all", "active", "suspended", "unverified"]).default("all"),
+});
+
+export type AgentListCitizensQuery = z.infer<typeof agentListCitizensQuerySchema>;
+
 export const userIdParamSchema = z.object({ id: idSchema });
 
 export const sessionIdParamSchema = z.object({ id: idSchema });
