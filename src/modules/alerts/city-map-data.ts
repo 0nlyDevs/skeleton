@@ -58,12 +58,12 @@ export interface ZoneTerrain {
 }
 
 export const ZONE_TERRAIN: Readonly<Record<CityZoneId, ZoneTerrain>> = {
-  CRYSTAL_REACH: { base: 14, relief: 34, rough: 1.4, ridge: 0.7, low: "#5d6f7a", high: "#c9d6dd" },
-  VERDANT_BASIN: { base: 6, relief: 10, rough: 0.9, ridge: 0.1, low: "#3c5a2c", high: "#6f8a46" },
-  EMBER_WASTES: { base: 9, relief: 22, rough: 1.2, ridge: 0.45, low: "#5a3426", high: "#9a6440" },
-  FROSTPEAK: { base: 22, relief: 58, rough: 1.6, ridge: 0.9, low: "#7f8a92", high: "#f2f5f7" },
-  SUNKEN_DELTA: { base: 1.2, relief: 2.5, rough: 0.6, ridge: 0, low: "#3e5547", high: "#5d7458" },
-  NOVA_PRIME: { base: 5, relief: 3, rough: 0.5, ridge: 0, low: "#56585c", high: "#7c7f84" },
-  OBSIDIAN_COAST: { base: 4, relief: 9, rough: 1.1, ridge: 0.3, low: "#1f2226", high: "#43474d" },
-  SKYPORT_ISLES: { base: 7, relief: 8, rough: 0.8, ridge: 0.15, low: "#8a7a58", high: "#b9a77d" },
+  CRYSTAL_REACH: { base: 14, relief: 44, rough: 1.4, ridge: 0.7, low: "#5f6e55", high: "#aeb5b9" },
+  VERDANT_BASIN: { base: 6, relief: 10, rough: 0.9, ridge: 0.1, low: "#476f2e", high: "#6f8f45" },
+  EMBER_WASTES: { base: 9, relief: 22, rough: 1.2, ridge: 0.45, low: "#7e4e2f", high: "#a97a4f" },
+  FROSTPEAK: { base: 24, relief: 72, rough: 1.6, ridge: 0.9, low: "#8d9a8a", high: "#f4f6f8" },
+  SUNKEN_DELTA: { base: 1.2, relief: 2.5, rough: 0.6, ridge: 0, low: "#577349", high: "#728d5c" },
+  NOVA_PRIME: { base: 5, relief: 3, rough: 0.5, ridge: 0, low: "#807f78", high: "#9c9a92" },
+  OBSIDIAN_COAST: { base: 4, relief: 9, rough: 1.1, ridge: 0.3, low: "#47494d", high: "#6e7177" },
+  SKYPORT_ISLES: { base: 7, relief: 8, rough: 0.8, ridge: 0.15, low: "#9d8c63", high: "#bfae84" },
 };
