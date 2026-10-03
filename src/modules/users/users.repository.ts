@@ -236,6 +236,11 @@ export async function deleteOtherSessions(userId: string, keepSessionId: string)
 }
 
 /** Revoke every session for a user, e.g. immediately after a ban. */
+export async function findMustSetSecret(userId: string): Promise<boolean> {
+  const row = await prisma.user.findUnique({ where: { id: userId }, select: { mustSetSecret: true } });
+  return row?.mustSetSecret === true;
+}
+
 export async function findOnboardingCompletedAt(userId: string): Promise<Date | null> {
   const row = await prisma.user.findUnique({ where: { id: userId }, select: { onboardingCompletedAt: true } });
   return row?.onboardingCompletedAt ?? null;

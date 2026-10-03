@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 import { KeyboardShortcuts } from "./keyboard-shortcuts";
+import { SecretSetupGuard } from "./secret-setup-guard";
 import { LeftRail } from "./left-rail";
 import { MobileNav } from "./mobile-nav";
 import { RightRail } from "./right-rail";
@@ -63,6 +64,7 @@ export function AppShell({
       </div>
       <MobileNav viewer={viewer} zone={zone} />
       <KeyboardShortcuts />
+      {viewer?.mustSetSecret ? <SecretSetupGuard /> : null}
     </div>
   );
 }

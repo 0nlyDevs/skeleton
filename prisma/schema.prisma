@@ -251,6 +251,14 @@ model User {
   /// D12 — when this resident finished or skipped the welcome guide; it opens
   /// automatically only while this is empty (once per account, any device).
   onboardingCompletedAt DateTime?
+  /// F71 — account created by an agent for a resident who has no email address:
+  /// it signs in by username, its placeholder address never receives mail.
+  noEmail               Boolean           @default(false)
+  /// F71 — the resident still signs in with the temporary code an agent printed;
+  /// the app asks them to choose their own password or passkey first.
+  mustSetSecret         Boolean           @default(false)
+  /// F71 — interface language chosen for the resident, applied at sign-in.
+  preferredLocale       String?           @db.VarChar(5)
   pollVotes             PollVote[]
   pages                 Page[]
   pageLikes             PageLike[]
