@@ -13,16 +13,17 @@ import type { CityZoneId, ZoneStatusId } from "@/modules/alerts/city-zones";
 import type { LandingData } from "./cinematic-landing";
 
 const STATUS_DOT: Readonly<Record<ZoneStatusId, string>> = {
-  SAFE: "bg-emerald-400",
-  WATCH: "bg-sky-300",
-  WARNING: "bg-amber-400",
-  DANGER: "bg-red-500",
+  SAFE: "bg-emerald-400 shadow-[0_0_10px_var(--color-emerald-400)]",
+  WATCH: "bg-sky-300 shadow-[0_0_10px_var(--color-sky-300)]",
+  WARNING: "bg-amber-400 shadow-[0_0_10px_var(--color-amber-400)]",
+  DANGER: "bg-red-500 shadow-[0_0_10px_var(--color-red-500)]",
 };
 
 /**
  * One stop of the flight: a tall section whose middle is where the camera
  * settles (`data-chapter` matches a stop of the camera rail, in order), with
- * its panel on one side so the district stays visible on the other.
+ * its pane of glass on one side so the district stays visible on the other.
+ * `place` is the landmark the pane points at in the scene.
  */
 function Chapter({
   id,
@@ -34,14 +35,13 @@ function Chapter({
   readonly id: string;
   readonly side: "left" | "right";
   readonly wide?: boolean;
-  /** The landmark the panel's line points at in the scene. */
   readonly place: string;
   readonly children: ReactNode;
 }) {
   return (
-    <section data-chapter={id} className="relative flex min-h-[150svh] items-center px-4 py-[16svh] sm:px-6 lg:pr-24">
-      <div className={`mx-auto flex w-full max-w-[1320px] ${side === "right" ? "justify-end" : "justify-start"}`}>
-        <div data-panel data-place={place} className={`tn-panel w-full p-6 sm:p-8 ${wide ? "max-w-[660px]" : "max-w-[540px]"}`}>
+    <section data-chapter={id} className="relative flex min-h-[150svh] items-center px-4 py-[16svh] sm:px-6 lg:pl-[270px] lg:pr-12">
+      <div className={`mx-auto flex w-full max-w-[1280px] ${side === "right" ? "justify-end" : "justify-start"}`}>
+        <div data-panel data-place={place} className={`lg w-full p-6 sm:p-8 ${wide ? "max-w-[640px]" : "max-w-[520px]"}`}>
           {children}
         </div>
       </div>
@@ -52,12 +52,12 @@ function Chapter({
 function Kicker({ zone, children }: { readonly zone: CityZoneId; readonly children: string }) {
   const t = useTranslation();
   return (
-    <p data-reveal="fade" className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.6875rem] font-medium uppercase tracking-[0.28em] text-white/60">
-      <span className="flex items-center gap-1.5 text-[var(--brand-400)]">
+    <p data-reveal="fade" className="tn-label mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-white/65">
+      <span className="flex items-center gap-1.5 text-[var(--tn-accent)]">
         <MapPin className="size-3.5" aria-hidden />
         {t(`alerts.zone.${zone}`)}
       </span>
-      <span aria-hidden className="h-px w-6 bg-white/30" />
+      <span aria-hidden className="h-px w-6 bg-white/35" />
       {children}
     </p>
   );
@@ -65,7 +65,7 @@ function Kicker({ zone, children }: { readonly zone: CityZoneId; readonly childr
 
 function Title({ children }: { readonly children: string }) {
   return (
-    <h2 data-reveal="lines" className="text-[clamp(1.75rem,3.4vw,2.7rem)] font-semibold leading-[1.08] tracking-tight">
+    <h2 data-reveal="lines" className="tn-display text-[clamp(1.4rem,2.5vw,2.05rem)] font-medium leading-[1.14]">
       <span className="tn-line">
         <span>{children}</span>
       </span>
@@ -73,8 +73,16 @@ function Title({ children }: { readonly children: string }) {
   );
 }
 
+function Body({ children }: { readonly children: string }) {
+  return (
+    <p data-reveal="slide-up" className="mt-4 text-[0.9375rem] leading-relaxed text-white/80">
+      {children}
+    </p>
+  );
+}
+
 /** Everything below the first view, one district per section, in the order of the flight. */
-export function LandingSections({ data }: { readonly data: LandingData }) {
+export function LandingSections({ data, onRegister }: { readonly data: LandingData; readonly onRegister: () => void }) {
   const t = useTranslation();
   const fmt = useFormatters();
 
@@ -91,6 +99,32 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
     { value: data.stats.news, label: t("tn.landing.stats.news") },
     { value: data.stats.requests, label: t("tn.landing.stats.requests") },
   ];
+  const footer: readonly { title: string; links: readonly { href: string; label: string }[] }[] = [
+    {
+      title: t("tn.tour.footer.portal"),
+      links: [
+        { href: "/services", label: t("tn.nav.services") },
+        { href: "/announcements", label: t("tn.nav.announcements") },
+        { href: "/alerts", label: t("tn.nav.alerts") },
+        { href: "/city-map", label: t("tn.nav.city_map") },
+      ],
+    },
+    {
+      title: t("tn.tour.footer.account"),
+      links: [
+        { href: "/space", label: t("tn.nav.my_space") },
+        { href: "/contact", label: t("tn.nav.contact") },
+        { href: "/feed", label: t("tn.nav.city_life") },
+      ],
+    },
+    {
+      title: t("tn.tour.footer.legal"),
+      links: [
+        { href: "/privacy", label: t("footer.privacy") },
+        { href: "/terms", label: t("footer.terms") },
+      ],
+    },
+  ];
 
   return (
     <div className="relative z-[3] text-white">
@@ -98,21 +132,19 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
       <Chapter id="skyport" side="left" place={t("tn.tour.portal.place")}>
         <Kicker zone="SKYPORT_ISLES">{t("tn.landing.portal.kicker")}</Kicker>
         <Title>{t("tn.landing.portal.title")}</Title>
-        <p data-reveal="slide-up" className="mt-5 text-[0.9375rem] leading-relaxed text-white/70">
-          {t("tn.landing.portal.body")}
-        </p>
-        <ul data-reveal="stagger" className="mt-6 flex flex-col gap-1.5">
+        <Body>{t("tn.landing.portal.body")}</Body>
+        <ul data-reveal="stagger" className="mt-6 flex flex-col gap-2">
           {paths.map((path) => (
             <li key={path.href}>
-              <Link href={path.href} className="tn-card group flex items-center gap-3.5 px-3.5 py-2.5">
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--brand-400)]/12 text-[var(--brand-400)] ring-1 ring-[var(--brand-400)]/35">
+              <Link href={path.href} className="lg-chip group flex items-center gap-3.5 px-3.5 py-2.5">
+                <span className="lg-orb size-10">
                   <path.icon className="size-4" aria-hidden />
                 </span>
                 <span className="flex min-w-0 flex-col">
-                  <span className="text-[0.9375rem] font-semibold">{path.title}</span>
-                  <span className="text-[0.7812rem] leading-snug text-white/60">{path.body}</span>
+                  <span className="text-[0.9062rem] font-medium">{path.title}</span>
+                  <span className="text-[0.7812rem] leading-snug text-white/65">{path.body}</span>
                 </span>
-                <ArrowUpRight className="ml-auto size-4 shrink-0 text-white/35 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--brand-400)]" aria-hidden />
+                <ArrowUpRight className="ml-auto size-4 shrink-0 text-white/40 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--tn-accent)]" aria-hidden />
               </Link>
             </li>
           ))}
@@ -123,31 +155,25 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
       <Chapter id="nova" side="right" wide place={t("tn.tour.services.place")}>
         <Kicker zone="NOVA_PRIME">{t("tn.landing.services.kicker")}</Kicker>
         <Title>{t("tn.tour.services.title")}</Title>
-        <p data-reveal="slide-up" className="mt-5 text-[0.9375rem] leading-relaxed text-white/70">
-          {t("tn.tour.services.body")}
-        </p>
-        <ul data-reveal="stagger" className="mt-7 grid gap-2 sm:grid-cols-2">
+        <Body>{t("tn.tour.services.body")}</Body>
+        <ul data-reveal="stagger" className="mt-6 grid gap-2 sm:grid-cols-2">
           {data.services.map((service) => (
             <li key={service.slug}>
-              <Link href={`/services/${service.slug}`} className="tn-card group flex h-full items-start gap-3 p-3.5">
-                <ServiceIcon name={service.icon} className="size-10 shrink-0 rounded-full bg-[var(--brand-400)]/12 text-[var(--brand-400)] ring-1 ring-[var(--brand-400)]/35" />
+              <Link href={`/services/${service.slug}`} className="lg-chip group flex h-full items-start gap-3 p-3.5">
+                <ServiceIcon name={service.icon} className="lg-orb size-10" />
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="flex flex-wrap items-center gap-2 text-[0.9062rem] font-semibold leading-snug">
+                  <span className="flex flex-wrap items-center gap-2 text-[0.875rem] font-medium leading-snug">
                     {service.name}
                     {/* F28 — the most common procedures stand out. */}
-                    {service.featured ? (
-                      <span className="rounded-full bg-[var(--brand-400)]/15 px-2 py-0.5 text-[0.625rem] font-semibold text-[var(--brand-400)] ring-1 ring-[var(--brand-400)]/40">
-                        {t("tn.services.featured_badge")}
-                      </span>
-                    ) : null}
+                    {service.featured ? <span className="tn-label rounded-full bg-[var(--tn-accent)]/15 px-2 py-0.5 text-[var(--tn-accent)] ring-1 ring-[var(--tn-accent)]/40">{t("tn.services.featured_badge")}</span> : null}
                   </span>
-                  <span className="line-clamp-2 text-[0.7812rem] leading-snug text-white/60">{service.summary}</span>
+                  <span className="line-clamp-2 text-[0.7812rem] leading-snug text-white/65">{service.summary}</span>
                 </span>
               </Link>
             </li>
           ))}
         </ul>
-        <Link href="/services" data-reveal="fade" className="tn-cta-ghost mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.8438rem]">
+        <Link href="/services" data-reveal="fade" className="lg-btn mt-6">
           {t("tn.landing.services.all")}
           <ArrowRight className="size-4" aria-hidden />
         </Link>
@@ -157,25 +183,21 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
       <Chapter id="delta" side="left" place={t("tn.tour.contact.place")}>
         <Kicker zone="SUNKEN_DELTA">{t("tn.tour.contact.kicker")}</Kicker>
         <Title>{t("tn.tour.contact.title")}</Title>
-        <p data-reveal="slide-up" className="mt-5 text-[0.9375rem] leading-relaxed text-white/70">
-          {t("tn.tour.contact.body")}
-        </p>
-        <ol data-reveal="stagger" className="mt-7 flex flex-col gap-3">
+        <Body>{t("tn.tour.contact.body")}</Body>
+        <ol data-reveal="stagger" className="mt-6 flex flex-col gap-2">
           {(["tn.tour.contact.step1", "tn.tour.contact.step2", "tn.tour.contact.step3"] as const).map((key, index) => (
-            <li key={key} className="flex items-center gap-3.5 text-[0.9062rem]">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full font-mono text-[0.75rem] text-[var(--brand-400)] ring-1 ring-[var(--brand-400)]/45">
-                {index + 1}
-              </span>
+            <li key={key} className="lg-chip flex items-center gap-3.5 px-3.5 py-3 text-[0.9062rem]">
+              <span className="lg-orb tn-figure size-9 text-[0.75rem]">{index + 1}</span>
               {t(key)}
             </li>
           ))}
         </ol>
-        <div data-reveal="fade" className="mt-8 flex flex-wrap gap-3">
-          <Link href="/contact" className="tn-cta-brand inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.875rem] font-semibold">
+        <div data-reveal="fade" className="mt-7 flex flex-wrap gap-3">
+          <Link href="/contact" className="lg-btn lg-btn--amber">
             {t("tn.home.quick.contact")}
             <ArrowRight className="size-4" aria-hidden />
           </Link>
-          <Link href="/contact?type=issue" className="tn-cta-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.875rem]">
+          <Link href="/contact?type=issue" className="lg-btn">
             {t("tn.home.quick.report")}
           </Link>
         </div>
@@ -186,32 +208,30 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
         <Kicker zone="CRYSTAL_REACH">{t("tn.landing.news.kicker")}</Kicker>
         <Title>{t("tn.tour.news.title")}</Title>
         {data.news.length === 0 ? (
-          <p data-reveal="slide-up" className="mt-6 text-[0.9375rem] text-white/65">
-            {t("tn.landing.news.empty")}
-          </p>
+          <Body>{t("tn.landing.news.empty")}</Body>
         ) : (
-          <ul data-reveal="stagger" className="mt-7 flex flex-col gap-2">
+          <ul data-reveal="stagger" className="mt-6 flex flex-col gap-2">
             {data.news.map((item) => (
               <li key={item.slug}>
-                <Link href={`/announcements/${item.slug}`} className="tn-card group flex flex-col gap-1.5 p-4">
+                <Link href={`/announcements/${item.slug}`} className="lg-chip group flex flex-col gap-1.5 p-4">
                   <span className="flex items-center justify-between gap-3">
-                    <span className={`w-fit rounded-full px-2.5 py-0.5 text-[0.625rem] uppercase tracking-[0.18em] ${item.category === "ALERT" ? "bg-red-400/15 text-red-300" : "bg-[var(--brand-400)]/12 text-[var(--brand-400)]"}`}>
+                    <span className={`tn-label w-fit rounded-full px-2.5 py-1 ${item.category === "ALERT" ? "bg-red-400/20 text-red-200 ring-1 ring-red-300/40" : "bg-[var(--tn-accent)]/15 text-[var(--tn-accent)] ring-1 ring-[var(--tn-accent)]/35"}`}>
                       {t(`tn.category.${item.category}` as MessageKey)}
                     </span>
                     {item.publishedAt ? (
-                      <time dateTime={item.publishedAt} className="text-[0.7188rem] text-white/45">
+                      <time dateTime={item.publishedAt} className="tn-figure text-[0.625rem] text-white/50">
                         {fmt.date(item.publishedAt)}
                       </time>
                     ) : null}
                   </span>
-                  <span className="text-[1rem] font-semibold leading-snug">{item.title}</span>
-                  <span className="line-clamp-2 text-[0.8125rem] text-white/60">{item.summary}</span>
+                  <span className="text-[0.9688rem] font-medium leading-snug">{item.title}</span>
+                  <span className="line-clamp-2 text-[0.8125rem] text-white/65">{item.summary}</span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
-        <Link href="/announcements" data-reveal="fade" className="tn-cta-ghost mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.8438rem]">
+        <Link href="/announcements" data-reveal="fade" className="lg-btn mt-6">
           {t("tn.landing.news.all")}
           <ArrowRight className="size-4" aria-hidden />
         </Link>
@@ -221,16 +241,14 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
       <Chapter id="verdant" side="left" place={t("tn.tour.stats.place")}>
         <Kicker zone="VERDANT_BASIN">{t("tn.tour.stats.kicker")}</Kicker>
         <Title>{t("tn.tour.stats.title")}</Title>
-        <p data-reveal="slide-up" className="mt-5 text-[0.9375rem] leading-relaxed text-white/70">
-          {t("tn.tour.stats.body")}
-        </p>
-        <dl data-reveal="stagger" className="mt-7 grid grid-cols-3 gap-2">
+        <Body>{t("tn.tour.stats.body")}</Body>
+        <dl data-reveal="stagger" className="mt-6 grid grid-cols-3 gap-2">
           {stats.map((stat) => (
-            <div key={stat.label} className="flex flex-col gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <dd className="font-display text-[clamp(2rem,4vw,3rem)] font-bold leading-none" data-count={stat.value}>
+            <div key={stat.label} className="lg-chip flex flex-col gap-2 p-4">
+              <dd className="tn-display text-[clamp(1.7rem,3.4vw,2.6rem)] font-semibold leading-none" data-count={stat.value}>
                 {stat.value}
               </dd>
-              <dt className="text-[0.6875rem] uppercase leading-snug tracking-[0.14em] text-white/55">{stat.label}</dt>
+              <dt className="tn-label leading-snug text-white/60">{stat.label}</dt>
             </div>
           ))}
         </dl>
@@ -240,17 +258,15 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
       <Chapter id="frost" side="left" place={t("tn.tour.agents.place")}>
         <Kicker zone="FROSTPEAK">{t("tn.landing.agents.kicker")}</Kicker>
         <Title>{t("tn.landing.agents.title")}</Title>
-        <p data-reveal="slide-up" className="mt-5 text-[0.9375rem] leading-relaxed text-white/70">
-          {t("tn.landing.agents.body")}
-        </p>
-        <ul data-reveal="stagger" className="mt-7 flex flex-col gap-3">
+        <Body>{t("tn.landing.agents.body")}</Body>
+        <ul data-reveal="stagger" className="mt-6 flex flex-col gap-2">
           {[
             { icon: Workflow, key: "tn.landing.agents.point1" as MessageKey },
             { icon: Radio, key: "tn.landing.agents.point2" as MessageKey },
             { icon: ShieldCheck, key: "tn.landing.agents.point3" as MessageKey },
           ].map((point) => (
-            <li key={point.key} className="flex items-center gap-3 text-[0.9062rem]">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--brand-400)]/12 text-[var(--brand-400)] ring-1 ring-[var(--brand-400)]/35">
+            <li key={point.key} className="lg-chip flex items-center gap-3.5 px-3.5 py-3 text-[0.9062rem]">
+              <span className="lg-orb size-9">
                 <point.icon className="size-4" aria-hidden />
               </span>
               {t(point.key)}
@@ -258,7 +274,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
           ))}
         </ul>
         {data.viewer?.staff ? (
-          <Link href="/agent" data-reveal="fade" className="tn-cta-brand mt-8 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.875rem] font-semibold">
+          <Link href="/agent" data-reveal="fade" className="lg-btn lg-btn--amber mt-7">
             {t("tn.nav.agent")}
             <ArrowRight className="size-4" aria-hidden />
           </Link>
@@ -269,69 +285,78 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
       <Chapter id="ember" side="left" wide place={t("tn.tour.districts.place")}>
         <Kicker zone="EMBER_WASTES">{t("tn.tour.districts.kicker")}</Kicker>
         <Title>{t("tn.tour.districts.title")}</Title>
-        <p data-reveal="slide-up" className="mt-5 text-[0.9375rem] leading-relaxed text-white/70">
-          {t("tn.tour.districts.body")}
-        </p>
-        <ul data-reveal="stagger" className="mt-7 grid gap-2 sm:grid-cols-2">
+        <Body>{t("tn.tour.districts.body")}</Body>
+        <ul data-reveal="stagger" className="mt-6 grid gap-2 sm:grid-cols-2">
           {data.zones.map((zone) => (
-            <li key={zone.zone} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+            <li key={zone.zone} className="lg-chip flex items-center gap-3 px-4 py-3">
               <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${STATUS_DOT[zone.status]}`} />
               <span className="flex min-w-0 flex-col">
-                <span className="text-[0.9062rem] font-semibold">{t(`alerts.zone.${zone.zone}`)}</span>
-                <span className="text-[0.75rem] text-white/55">{t("tn.tour.districts.residents", { count: zone.residents })}</span>
+                <span className="text-[0.875rem] font-medium">{t(`alerts.zone.${zone.zone}`)}</span>
+                <span className="tn-figure text-[0.625rem] text-white/55">{t("tn.tour.districts.residents", { count: zone.residents })}</span>
               </span>
-              <span className="ml-auto text-[0.75rem] font-medium text-white/80">{t(`alerts.zone_status.${zone.status}`)}</span>
+              <span className="tn-label ml-auto text-white/85">{t(`alerts.zone_status.${zone.status}`)}</span>
             </li>
           ))}
         </ul>
         <div data-reveal="fade" className="mt-7 flex flex-wrap gap-3">
-          <Link href="/alerts" className="tn-cta-brand inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.875rem] font-semibold">
+          <Link href="/alerts" className="lg-btn lg-btn--amber">
             {t("tn.tour.districts.alerts")}
             <ArrowRight className="size-4" aria-hidden />
           </Link>
-          <Link href="/city-map" className="tn-cta-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.875rem]">
+          <Link href="/city-map" className="lg-btn">
             {t("tn.tour.districts.map")}
           </Link>
         </div>
       </Chapter>
 
-      {/* Obsidian Coast — night over the whole island: the final call. */}
-      <section data-chapter="coast" className="relative flex min-h-[125svh] flex-col justify-end px-4 pb-10 pt-[30svh] text-center sm:px-6">
-        <div aria-hidden className="tn-hero-shade pointer-events-none absolute inset-x-0 bottom-0 h-[80svh]" />
+      {/* Obsidian Coast — night over the whole island: the final call, then the footer. */}
+      <section data-chapter="coast" className="relative flex min-h-[135svh] flex-col justify-end px-4 pb-32 pt-[30svh] text-center sm:px-6">
+        <div aria-hidden className="tn-veil tn-veil--end" />
         <div className="relative">
-          <h2 data-reveal="lines" className="tn-hero-title font-display mx-auto max-w-[14ch] text-[clamp(2.6rem,7.4vw,6.4rem)] font-bold leading-[0.96]">
+          <h2 data-reveal="lines" className="tn-wordmark mx-auto max-w-[16ch] text-[clamp(2rem,5.6vw,4.9rem)] font-medium leading-[1]">
             <span className="tn-line">
               <span>{t("tn.landing.final.title")}</span>
             </span>
           </h2>
-          <p data-reveal="slide-up" className="mx-auto mt-6 max-w-[52ch] text-[1rem] text-white/75 [text-shadow:0_1px_14px_rgb(0_0_0/0.9)]">
+          <p data-reveal="slide-up" className="mx-auto mt-6 max-w-[52ch] text-[1rem] font-normal text-white/80 [text-shadow:0_1px_14px_rgb(0_0_0/0.9)]">
             {t("tn.landing.final.body")}
           </p>
           <div data-reveal="slide-up" className="mt-9 flex flex-wrap justify-center gap-3">
             {data.viewer ? (
-              <Link href="/contact" className="tn-cta-brand rounded-full px-7 py-3.5 text-[0.9375rem] font-semibold">
+              <Link href="/contact" className="lg-btn lg-btn--amber px-8 py-4">
                 {t("tn.home.cta_request")}
               </Link>
             ) : (
-              <Link href="/register" className="tn-cta-brand rounded-full px-7 py-3.5 text-[0.9375rem] font-semibold">
-                {t("tn.home.cta_join")}
-              </Link>
+              <button type="button" onClick={onRegister} className="lg-btn lg-btn--amber px-8 py-4">
+                {t("tn.registry.tab_register")}
+              </button>
             )}
-            <Link href="/services" className="tn-cta-ghost rounded-full px-7 py-3.5 text-[0.9375rem]">
+            <Link href="/services" className="lg-btn px-8 py-4">
               {t("tn.home.cta_services")}
             </Link>
           </div>
-          <footer className="mx-auto mt-[12svh] flex max-w-[1240px] flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-6 text-[0.7812rem] text-white/55">
-            <span className="font-display text-[0.9375rem] text-white/80">TERRA NOVA</span>
-            <span>{t("tn.landing.footer")}</span>
-            <span className="flex gap-4">
-              <Link href="/privacy" className="hover:text-white">
-                {t("footer.privacy")}
-              </Link>
-              <Link href="/terms" className="hover:text-white">
-                {t("footer.terms")}
-              </Link>
-            </span>
+
+          <footer className="mx-auto mt-[14svh] w-full max-w-[1280px]">
+            <p aria-hidden className="tn-outline select-none">
+              TERRA NOVA
+            </p>
+            <div className="lg -mt-[3.2vw] grid gap-8 p-7 text-left sm:grid-cols-[1.5fr_1fr_1fr_1fr] sm:p-9">
+              <div className="flex flex-col gap-3">
+                <p className="tn-display text-[0.875rem] font-semibold tracking-[0.2em]">TERRA NOVA</p>
+                <p className="max-w-[34ch] text-[0.8438rem] leading-relaxed text-white/70">{t("tn.landing.footer")}</p>
+                <p className="tn-label mt-auto text-white/50">Sol 214 · Nova Prime</p>
+              </div>
+              {footer.map((column) => (
+                <nav key={column.title} aria-label={column.title} className="flex flex-col gap-2.5">
+                  <p className="tn-label text-[var(--tn-accent)]">{column.title}</p>
+                  {column.links.map((link) => (
+                    <Link key={link.href} href={link.href} className="w-fit text-[0.875rem] text-white/75 underline-offset-4 hover:text-white hover:underline">
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+              ))}
+            </div>
           </footer>
         </div>
       </section>

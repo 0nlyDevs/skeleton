@@ -18,10 +18,14 @@ import { WorldScene } from "./world-scene";
 export interface StageState {
   /** Which scene is drawn. */
   phase: "orbit" | "world";
-  /** 0 → 1: the slow drift towards the planet while the visitor signs in. */
-  approach: number;
-  /** 0 → 1: the plunge from orbit to the surface. */
+  /** 0 → 1: the view leaves the star and the planet settles on its orbit. */
+  arrive: number;
+  /** 0 → 1: the flight from orbit to the surface. */
   dive: number;
+  /** 0 → 1: speed, shown as streaks of dust and a picture smeared towards its centre. */
+  warp: number;
+  /** 0 → 1: the air burning around the ship as it enters the atmosphere. */
+  heat: number;
   /** 0 → 1: the screen burnt white by the atmosphere. */
   flash: number;
   /** 1 → 0: falling out of the clouds onto the first view of the island. */
@@ -29,9 +33,11 @@ export interface StageState {
   shake: number;
   /** Where the page's scroll wants the camera on the tour. */
   tour: number;
+  /** 0 → 1: the camera leaves the flight for the city hall, where residents sign in. */
+  registry: number;
 }
 
-/* The last pass before tone mapping: lens fringes, darker corners, film grain, the white of entry. */
+/* The last pass before tone mapping: speed, lens fringes, darker corners, film grain, the fire and the white of entry. */
 const GradeShader = {
   uniforms: {
     tDiffuse: { value: null },
@@ -39,6 +45,8 @@ const GradeShader = {
     uFringe: { value: 0.0035 },
     uVignette: { value: 0.42 },
     uGrain: { value: 0.055 },
+    uZoom: { value: 0 },
+    uHeat: { value: 0 },
     uTime: { value: 0 },
   },
   vertexShader: /* glsl */ `
@@ -54,18 +62,35 @@ const GradeShader = {
     uniform float uFringe;
     uniform float uVignette;
     uniform float uGrain;
+    uniform float uZoom;
+    uniform float uHeat;
     uniform float uTime;
     varying vec2 vUv;
+    vec3 lens(vec2 at, vec2 shift) {
+      return vec3(texture2D(tDiffuse, at - shift).r, texture2D(tDiffuse, at).g, texture2D(tDiffuse, at + shift).b);
+    }
     void main() {
       vec2 c = vUv - 0.5;
       float r2 = dot(c, c);
       vec2 shift = c * r2 * uFringe;
-      vec3 col = vec3(texture2D(tDiffuse, vUv - shift).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv + shift).b);
+      vec3 col;
+      if (uZoom > 0.002) {
+        // Speed: the picture smeared towards its centre.
+        col = vec3(0.0);
+        for (int i = 0; i < 8; i++) col += lens(0.5 + c * (1.0 - uZoom * float(i) / 8.0), shift);
+        col /= 8.0;
+      } else {
+        col = lens(vUv, shift);
+      }
       col *= 1.0 - uVignette * smoothstep(0.1, 0.9, r2 * 1.9);
       float luma = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = max(vec3(0.0), mix(vec3(luma), col, 1.08));
       float grain = fract(sin(dot(vUv * 913.0 + fract(uTime) * 17.0, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
       col += (col + 0.02) * grain * uGrain;
+      // The air burning on the hull: tongues of fire from the edges of the view.
+      float edge = smoothstep(0.06, 0.5, r2);
+      float lick = 0.6 + 0.4 * sin(atan(c.y, c.x) * 9.0 + uTime * 14.0) * sin(uTime * 23.0 + r2 * 40.0);
+      col += (vec3(1.0, 0.42, 0.1) * lick * 3.0 + vec3(1.0, 0.8, 0.6) * uHeat * 1.5) * uHeat * edge;
       col = mix(col, vec3(1.0, 0.94, 0.86) * 5.0, uFlash);
       gl_FragColor = vec4(col, 1.0);
     }
@@ -95,7 +120,7 @@ function pickTier(renderer: WebGLRenderer): Tier {
 const MAX_PIXELS = 3840 * 2160;
 
 export class LandingStage {
-  readonly state: StageState = { phase: "orbit", approach: 0, dive: 0, flash: 0, entry: 0, shake: 0, tour: 0 };
+  readonly state: StageState = { phase: "orbit", arrive: 0, dive: 0, warp: 0, heat: 0, flash: 0, entry: 0, shake: 0, tour: 0, registry: 0 };
   /** Called every frame in orbit with the beacon's place on screen. */
   onBeacon: ((x: number, y: number, visible: boolean) => void) | null = null;
 
@@ -190,7 +215,7 @@ export class LandingStage {
     await planetReady;
     // Compile every shader now, so neither scene stutters on its first frame.
     this.renderer.compile(this.orbit.scene, this.orbit.camera);
-    this.world.update({ tour: 0, entry: 0, shake: 0, pointerX: 0, pointerY: 0 }, 0, 0.016);
+    this.world.update({ tour: 0, entry: 0, registry: 0, shake: 0, pointerX: 0, pointerY: 0 }, 0, 0.016);
     await this.renderer.compileAsync(this.world.scene, this.world.camera);
     island = 1;
     report();
@@ -218,7 +243,9 @@ export class LandingStage {
     const uniforms = this.grade.uniforms;
     (uniforms.uTime as { value: number }).value = this.time;
     (uniforms.uFlash as { value: number }).value = state.flash;
-    (uniforms.uFringe as { value: number }).value = 0.0035 + state.shake * 0.03 + state.dive * 0.05 + state.entry * 0.03;
+    (uniforms.uFringe as { value: number }).value = 0.0035 + state.shake * 0.03 + state.warp * 0.04 + state.entry * 0.03;
+    (uniforms.uZoom as { value: number }).value = state.warp * 0.16 + state.entry * 0.05;
+    (uniforms.uHeat as { value: number }).value = state.heat;
 
     if (state.phase !== this.phase) {
       // The first frames of a scene are slow for their own reasons; they say nothing about the device.
@@ -228,17 +255,17 @@ export class LandingStage {
     if (state.phase === "world" && this.world) {
       // The camera follows the scroll with a little inertia.
       this.tour += (state.tour - this.tour) * (1 - Math.exp(-dt * 3.6));
-      this.world.update({ tour: this.tour, entry: state.entry, shake: state.shake, pointerX: pointer.cx, pointerY: pointer.cy }, this.time, dt);
+      this.world.update({ tour: this.tour, entry: state.entry, registry: state.registry, shake: state.shake, pointerX: pointer.cx, pointerY: pointer.cy }, this.time, dt);
       this.renderPass.scene = this.world.scene;
       this.renderPass.camera = this.world.camera;
       this.renderer.toneMappingExposure = this.world.atmosphere.exposure;
       this.bloom.strength = 0.3 + this.world.atmosphere.lights * 0.3;
     } else {
-      this.orbit.update({ approach: state.approach, dive: state.dive, shake: state.shake, pointerX: pointer.cx, pointerY: pointer.cy }, this.time, dt);
+      this.orbit.update({ arrive: state.arrive, dive: state.dive, warp: state.warp, shake: state.shake, pointerX: pointer.cx, pointerY: pointer.cy }, this.time, dt);
       this.renderPass.scene = this.orbit.scene;
       this.renderPass.camera = this.orbit.camera;
       this.renderer.toneMappingExposure = 1;
-      this.bloom.strength = 0.55;
+      this.bloom.strength = 0.6 + state.warp * 0.5;
       this.onBeacon?.(this.orbit.beacon.x, this.orbit.beacon.y, this.orbit.beacon.visible);
     }
     this.composer.render(dt);

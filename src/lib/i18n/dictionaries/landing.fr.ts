@@ -1,39 +1,32 @@
 /**
- * French copy for the landing: the arrival from orbit (with its sign-in) and
- * the flight over the districts. Spread into the main French dictionary, so
- * its keys are part of `MessageKey` and the English file must match them.
+ * French copy for the landing: the arrival from orbit, the flight over the
+ * districts and the citizens' registry (sign-in at the city hall). Spread into
+ * the main French dictionary, so its keys are part of `MessageKey` and the
+ * English file must match them.
  */
 export const frLanding = {
   // --- Arrival from orbit ---
   "tn.arrival.loading": "Approche de Terra Nova",
-  "tn.arrival.station": "Contrôle d'arrivée · Skyport Isles",
-  "tn.arrival.title": "Identifiez-vous avant la descente",
-  "tn.arrival.body": "Votre navette est en orbite au-dessus de l'île. Connectez-vous pour retrouver votre espace, ou entrez en visiteur.",
-  "tn.arrival.submit": "Demander l'accès",
-  "tn.arrival.checking": "Vérification…",
-  "tn.arrival.visitor": "Entrer en visiteur",
-  "tn.arrival.other": "Autres moyens de connexion",
-  "tn.arrival.show_password": "Afficher le mot de passe",
-  "tn.arrival.hide_password": "Masquer le mot de passe",
-  "tn.arrival.welcome_back": "Bon retour, {name}",
-  "tn.arrival.welcome_body": "Identité confirmée. Descente vers le Skyport.",
-  "tn.arrival.granted": "Accès autorisé",
-  "tn.arrival.granted_visitor": "Accès visiteur",
-  "tn.arrival.descending": "Descente vers Terra Nova",
-  "tn.arrival.land_now": "Atterrir maintenant",
-  "tn.arrival.beacon": "Île de Terra Nova",
-  "tn.arrival.status": "Trajectoire verrouillée · en attente d'identification",
+  "tn.arrival.skip": "Passer l'arrivée",
+  "tn.arrival.system": "Système de Terra Nova · Sol 214",
+  "tn.arrival.locked": "Trajectoire verrouillée",
+  "tn.arrival.target": "Cap sur Skyport Isles",
   "tn.arrival.entry": "Entrée atmosphérique",
-  "tn.arrival.hud.altitude": "Altitude",
-  "tn.arrival.hud.speed": "Vitesse",
-  "tn.arrival.hud.pad": "Piste",
-  "tn.arrival.hud.sol": "Sol",
+  "tn.arrival.beacon": "Île de Terra Nova",
+  "tn.arrival.altitude": "Altitude",
+  "tn.arrival.speed": "Vitesse",
+
+  // --- Sound ---
+  "tn.sound.mute": "Couper le son",
+  "tn.sound.unmute": "Activer le son",
+  "tn.sound.hint": "Cliquez pour le son",
 
   // --- Flight over the island ---
   "tn.tour.scroll": "Défilez pour survoler l'île",
   "tn.tour.progress": "Étapes du survol",
   "tn.tour.clock": "Heure locale",
   "tn.tour.stop.arrival": "Arrivée",
+  "tn.tour.dock": "Aller à",
   "tn.tour.portal.place": "Terra Nova Spaceport",
   "tn.tour.services.place": "Senate Spire",
   "tn.tour.services.title": "Tous les services de la capitale, au même guichet",
@@ -59,4 +52,44 @@ export const frLanding = {
   "tn.tour.districts.alerts": "Voir les alertes",
   "tn.tour.districts.map": "Ouvrir la carte de la cité",
   "tn.tour.districts.residents": "{count} habitant(s)",
+  "tn.tour.footer.portal": "Le portail",
+  "tn.tour.footer.account": "Votre compte",
+  "tn.tour.footer.legal": "Cadre",
+
+  // --- The citizens' registry (sign-in at the city hall) ---
+  "tn.registry.open": "Registre des citoyens",
+  "tn.registry.place": "Hôtel de ville · Senate Spire · Nova Prime",
+  "tn.registry.title": "Registre des citoyens",
+  "tn.registry.intro": "Chaque habitant de Terra Nova a sa carte. Présentez la vôtre au guichet, ou demandez-la : elle ouvre votre espace, vos démarches et la vie de la cité.",
+  "tn.registry.tab_signin": "Déjà citoyen",
+  "tn.registry.tab_register": "Devenir citoyen",
+  "tn.registry.signin_submit": "Présenter ma carte",
+  "tn.registry.checking": "Vérification…",
+  "tn.registry.next": "Continuer",
+  "tn.registry.back": "Retour",
+  "tn.registry.step": "Étape {step} sur 2",
+  "tn.registry.birth_date": "Date de naissance",
+  "tn.registry.confirm": "Confirmer le mot de passe",
+  "tn.registry.register_submit": "Recevoir ma carte de citoyen",
+  "tn.registry.show_password": "Afficher le mot de passe",
+  "tn.registry.hide_password": "Masquer le mot de passe",
+  "tn.registry.error.first_name": "Entrez un prénom valide.",
+  "tn.registry.error.last_name": "Entrez un nom valide.",
+  "tn.registry.error.username": "3 à 20 caractères : lettres, chiffres ou tirets.",
+  "tn.registry.error.birth_date": "Date invalide (13 ans au moins).",
+  "tn.registry.error.email": "Adresse e-mail invalide.",
+  "tn.registry.error.password": "Le mot de passe ne respecte pas encore toutes les règles.",
+  "tn.registry.error.confirm": "Les deux mots de passe sont différents.",
+  "tn.registry.error.terms": "Acceptez les conditions pour continuer.",
+  "tn.registry.error.refused": "Le guichet n'a pas pu créer la carte. Vérifiez les informations ou réessayez.",
+  "tn.registry.granted": "Citoyen reconnu",
+  "tn.registry.granted_body": "Bienvenue, {name}. Ouverture de votre espace…",
+  "tn.registry.close": "Revenir au survol",
+  "tn.registry.card.title": "Carte de citoyen",
+  "tn.registry.card.holder": "Titulaire",
+  "tn.registry.card.holder_empty": "Votre nom",
+  "tn.registry.card.number": "N° de citoyen",
+  "tn.registry.card.district": "Guichet",
+  "tn.registry.card.issued": "Sol",
+  "tn.registry.card.seal": "Citoyen de Terra Nova",
 } as const;
