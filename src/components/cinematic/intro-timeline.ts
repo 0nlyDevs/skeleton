@@ -39,7 +39,12 @@ export function buildIntro(root: HTMLElement, overlay: HTMLElement, stage: Plane
   // TERRE first: the shared slot is as wide as the E until the elevator swaps it.
   gsap.set(slot, { width: widthOf(letterE) });
   // The seam runs from the bottom-left corner to the top-right one.
-  gsap.set(slash, { width: Math.hypot(vw, vh), rotate: (-Math.atan2(vh, vw) * 180) / Math.PI, scaleX: 0, transformOrigin: "0% 50%" });
+  // The star travels (dx, dy) along the seam; the slash starts at the same point,
+  // has the same length and direction, and grows with the same timing and ease,
+  // so its leading end always sits on the star.
+  const dx = vw * 1.02;
+  const dy = -vh * 1.02;
+  gsap.set(slash, { width: Math.hypot(dx, dy), rotate: (Math.atan2(dy, dx) * 180) / Math.PI, scaleX: 0, transformOrigin: "0% 50%" });
   const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
   // 1. The slash.
@@ -47,7 +52,7 @@ export function buildIntro(root: HTMLElement, overlay: HTMLElement, stage: Plane
     .to(star?.state ?? {}, { boost: 1, duration: 0.5, ease: "power2.in" }, "<")
     .to(starEl, { scale: 1.15, duration: 0.5, ease: "back.in(2)" }, "<")
     .addLabel("slash")
-    .to(starEl, { x: vw * 1.02, y: -vh * 1.02, scale: 0.5, rotate: 220, duration: 0.95, ease: "expo.in" }, "slash")
+    .to(starEl, { x: dx, y: dy, scale: 0.5, rotate: 220, duration: 0.95, ease: "expo.in" }, "slash")
     .to(slash, { scaleX: 1, duration: 0.95, ease: "expo.in" }, "slash")
     .set(overlay, { backgroundColor: "transparent" }, "slash+=0.7")
     .to(panelA, { xPercent: -42, yPercent: -42, duration: 1.5, ease: "power4.inOut" }, "slash+=0.72")

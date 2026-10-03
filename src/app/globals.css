@@ -472,7 +472,8 @@ html.lenis body {
   will-change: transform;
 }
 .tn-slash {
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.85) 40%, rgb(255 255 255 / 0.35));
+  /* Fades out towards the tail, brightest at the head where the star is. */
+  background: linear-gradient(90deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.18) 45%, rgb(255 255 255 / 0.95) 100%);
   will-change: transform;
 }
 
@@ -499,6 +500,8 @@ html.lenis body {
 }
 /* Long, many-stop falloff: darkens the planet under the hero text with no visible edge. */
 .tn-hero-scrim {
+  /* The top edge dissolves so the darkening never shows where it starts. */
+  mask-image: linear-gradient(to top, #000 0%, #000 45%, transparent 100%);
   background: radial-gradient(
     ellipse 90% 95% at 50% 88%,
     rgb(2 4 11 / 0.72) 0%,
