@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, FileText, Globe2, Hourglass, MapPin, Pencil, Send, Siren } from "lucide-react";
+import { Ambulance, ArrowRight, Building2, FileText, Globe2, Hourglass, MapPin, Pencil, Send, Siren } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
@@ -109,6 +109,15 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
           </li>
         ))}
       </ul>
+
+      <Link href="/city-map?layer=emergency" className="flex items-center gap-3 rounded-2xl border border-error/30 bg-error/5 px-4 py-3 text-[0.875rem] hover:bg-error/10">
+        <Ambulance className="size-5 shrink-0 text-error" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="font-semibold text-error">{t("alerts.map.emergency_title")}</span>
+          <span className="text-muted-foreground"> · {t("tn.space.emergency_hint")}</span>
+        </span>
+        <ArrowRight className="size-4 text-error" aria-hidden />
+      </Link>
 
       {district ? (
         <Link href="/city-map" className={`flex flex-wrap items-center gap-3 rounded-2xl border p-4 ${statusTone[district.status]}`}>

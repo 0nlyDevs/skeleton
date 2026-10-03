@@ -67,3 +67,21 @@ export function distanceToRoads(roads: readonly RoadSegment[], x: number, y: num
   }
   return best;
 }
+
+/** Downtown street grid: short segments every 24 units, kept where both ends are in Nova Prime. */
+export function buildDowntownGrid(inside: (x: number, y: number) => boolean): RoadSegment[] {
+  const segments: RoadSegment[] = [];
+  const step = 24;
+  const piece = 8;
+  for (let y = 228; y <= 410; y += step) {
+    for (let x = 320; x < 780; x += piece) {
+      if (inside(x, y) && inside(x + piece, y)) segments.push({ a: [x, y], b: [x + piece, y], major: false });
+    }
+  }
+  for (let x = 324; x <= 780; x += step) {
+    for (let y = 220; y < 420; y += piece) {
+      if (inside(x, y) && inside(x, y + piece)) segments.push({ a: [x, y], b: [x, y + piece], major: false });
+    }
+  }
+  return segments;
+}

@@ -7,7 +7,7 @@ import { randomInt } from "node:crypto";
 
 import { isAdmin, isStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import type { Locale } from "@/lib/i18n/config";
 import { matchesSearch } from "@/lib/search";
 import { slugify } from "@/lib/utils";
@@ -16,6 +16,7 @@ import type { AuthUser } from "@/types";
 import { auditActions } from "../audit/audit.schema";
 import { changedFields } from "../audit/audit.diff";
 import { recordAudit } from "../audit/audit.service";
+import { zoneAt, type CityZoneId } from "../alerts/city-zones";
 import { TRANSLATABLE_SERVICE_FIELDS, type ServiceInput, type ServiceTranslations } from "./city-services.schema";
 
 export interface ServiceDto {
@@ -32,6 +33,9 @@ export interface ServiceDto {
   readonly address: string | null;
   readonly latitude: number | null;
   readonly longitude: number | null;
+  /** Map position and district; null for services only reachable remotely. */
+  readonly location: { readonly x: number; readonly y: number; readonly zone: CityZoneId } | null;
+  readonly emergency: boolean;
   readonly icon: string;
   readonly sortOrder: number;
   readonly active: boolean;
@@ -79,6 +83,8 @@ function toDto(row: ServiceRow, locale: Locale = "fr"): ServiceDto {
     address: row.address,
     latitude: row.latitude,
     longitude: row.longitude,
+    location: row.mapX !== null && row.mapY !== null && row.zone ? { x: row.mapX, y: row.mapY, zone: row.zone as CityZoneId } : null,
+    emergency: row.emergency,
     icon: row.icon,
     sortOrder: row.sortOrder,
     active: row.active,
@@ -141,9 +147,13 @@ async function uniqueSlug(name: string, ignoreId?: string): Promise<string> {
   return `service-${randomInt(10 ** 6, 10 ** 7)}`;
 }
 
-function fieldsOf(input: ServiceInput): Omit<ServiceInput, "translations"> {
+/** Writable columns; the district always comes from the map position, never from the client. */
+function fieldsOf(input: ServiceInput) {
   const { translations: _translations, ...fields } = input;
-  return fields;
+  if (input.mapX == null || input.mapY == null) return { ...fields, mapX: null, mapY: null, zone: null };
+  const zone = zoneAt(input.mapX, input.mapY);
+  if (!zone) throw new BadRequestError("Place the service inside the city, on land.");
+  return { ...fields, zone };
 }
 
 function assertAdmin(actor: AuthUser): void {

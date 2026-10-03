@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Star } from "lucide-react";
+import { MapPin, Search, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -8,6 +8,8 @@ import { ServiceIcon } from "@/components/city/service-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "@/components/ui/link";
+import { useTranslation } from "@/components/providers/i18n-provider";
+import { cityZoneLabelKey } from "@/modules/alerts/city-zones";
 import { matchesSearch } from "@/lib/search";
 import type { ServiceDto } from "@/modules/city-services/city-services.service";
 
@@ -31,6 +33,7 @@ export function ServicesDirectory({
   readonly featuredTitle: string;
   readonly allTitle: string;
 }) {
+  const t = useTranslation();
   const [query, setQuery] = useState(initialQuery);
 
   const filtered = useMemo(
@@ -134,6 +137,12 @@ export function ServicesDirectory({
                         <span className="font-semibold leading-snug">{service.name}</span>
                         <span className="line-clamp-2 text-[0.8438rem] text-muted-foreground">{service.summary}</span>
                         {service.hours ? <span className="mt-1 text-[0.7812rem] text-muted-foreground">{service.hours}</span> : null}
+                        {service.location ? (
+                          <span className="mt-0.5 flex items-center gap-1 text-[0.7812rem] text-muted-foreground">
+                            <MapPin className="size-3" aria-hidden />
+                            {t(cityZoneLabelKey(service.location.zone))}
+                          </span>
+                        ) : null}
                       </span>
                     </Link>
                   </li>

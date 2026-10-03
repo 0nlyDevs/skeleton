@@ -10,6 +10,8 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Give both map coordinates, or neither.": "Indiquez les deux coordonnées sur la carte, ou aucune.",
+  "Place the service inside the city, on land.": "Placez le service dans la ville, sur la terre ferme.",
   "Give the alert a clear title.": "Donnez un titre clair à l'alerte.",
   "Say in one sentence what is happening.": "Dites en une phrase ce qui se passe.",
   "Tell residents what to do.": "Indiquez aux habitants ce qu'ils doivent faire.",
