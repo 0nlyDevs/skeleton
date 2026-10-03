@@ -19,6 +19,7 @@ import { SERVICE_ICONS, TRANSLATABLE_SERVICE_FIELDS } from "@/modules/city-servi
 
 import { FormField, SELECT_CLASS } from "./form-field";
 import { MapPositionPicker } from "./map-position-picker";
+import { OpeningHoursEditor, emptyHoursDraft, type HoursDraft } from "./opening-hours-editor";
 
 type TextKey = "name" | "category" | "summary" | "description" | "howTo" | "email" | "phone" | "hours" | "address";
 type TranslatableKey = (typeof TRANSLATABLE_SERVICE_FIELDS)[number];
@@ -52,6 +53,8 @@ export function ServiceEditor({ initial }: { readonly initial: ServiceDto | null
   const [sortOrder, setSortOrder] = useState(initial?.sortOrder ?? 0);
   const [active, setActive] = useState(initial?.active ?? true);
   const [featured, setFeatured] = useState(initial?.featured ?? false);
+  const [partner, setPartner] = useState(initial?.partner ?? false);
+  const [openingHours, setOpeningHours] = useState<HoursDraft>(() => ({ ...emptyHoursDraft(), ...(initial?.openingHours ?? {}) }));
   const [position, setPosition] = useState<{ x: number; y: number } | null>(initial?.location ? { x: initial.location.x, y: initial.location.y } : null);
   const [emergency, setEmergency] = useState(initial?.emergency ?? false);
   // F27 — the English copy of each text field; empty means "show the French".
@@ -77,6 +80,8 @@ export function ServiceEditor({ initial }: { readonly initial: ServiceDto | null
           sortOrder,
           active,
           featured,
+          partner,
+          openingHours: Object.values(openingHours).some((day) => day !== null) ? openingHours : null,
           emergency,
           mapX: position?.x ?? null,
           mapY: position?.y ?? null,
@@ -144,6 +149,12 @@ export function ServiceEditor({ initial }: { readonly initial: ServiceDto | null
         <Switch checked={featured} onCheckedChange={setFeatured} />
         {t("tn.agent.services.form.featured")}
       </label>
+      <label className="flex items-center gap-2 text-sm">
+        <Switch checked={partner} onCheckedChange={setPartner} />
+        {t("tn.agent.services.form.partner")}
+      </label>
+
+      <OpeningHoursEditor value={openingHours} onChange={setOpeningHours} error={fields.openingHours} />
 
       <fieldset className="flex flex-col gap-3 rounded-xl border border-border/70 p-4">
         <legend className="px-1 text-sm font-medium">{t("tn.agent.services.form.location")}</legend>

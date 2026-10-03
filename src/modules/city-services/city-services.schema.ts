@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { openingHoursSchema } from "./opening-hours";
+
 /** Icons a service may use (rendered from lucide, never arbitrary markup). */
 export const SERVICE_ICONS = [
   "building", "zap", "droplets", "wind", "bus", "heart-pulse", "id-card", "home", "shield", "recycle",
@@ -35,6 +37,9 @@ export const serviceInputSchema = z
     sortOrder: z.number().int().min(0).max(1000).default(0),
     active: z.boolean().default(true),
     featured: z.boolean().default(false),
+    /** F74 — run by a partner association; its hours and place show on its card. */
+    partner: z.boolean().default(false),
+    openingHours: openingHoursSchema,
     translations: z
       .object({
         en: z
