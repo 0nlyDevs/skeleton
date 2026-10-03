@@ -5,9 +5,14 @@ import { jsonOk } from "@/lib/api/response";
 
 import { getWebcupFeed, syncWebcupFeed, triageWebcupRequest } from "./webcup.service";
 
+export const webcupFeedQuerySchema = z.object({
+  status: z.enum(["ALL", "all", "TODO", "IN_PROGRESS", "DONE", "SKIPPED", "todo", "pending"]).optional(),
+});
+
 export const getWebcupFeedRoute = apiRoute({
   roles: ["MODERATOR", "ADMIN"],
-  handler: async ({ auth }) => jsonOk({ data: await getWebcupFeed(auth.user) }),
+  query: webcupFeedQuerySchema,
+  handler: async ({ auth, query }) => jsonOk({ data: await getWebcupFeed(auth.user, query.status) }),
 });
 
 /** Manual refresh, on top of the server's own polling. */
