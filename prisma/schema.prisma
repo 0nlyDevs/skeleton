@@ -823,6 +823,7 @@ model Message {
   /// MEMBER_LEFT, MEMBER_REMOVED). When set, the client renders a localized
   /// label with the sender's name instead of the raw content.
   systemKind String?
+
   createdAt DateTime  @default(now())
 
   hiddenFor MessageHide[]
