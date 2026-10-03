@@ -945,4 +945,12 @@ export const frTerraNova = {
   "auth.passkey.removed": "Passkey supprimée.",
   "auth.passkey.remove_failed": "La passkey n'a pas pu être supprimée.",
   "auth.passkey.privacy": "Votre visage ou votre empreinte ne quittent jamais votre appareil : Terra Nova ne reçoit qu'une clé publique.",
+  "tn.login.locked_title": "Connexion suspendue pour protéger le compte",
+  "tn.login.locked_body": "Trop de tentatives ont échoué. C'est une protection automatique contre les tentatives répétées sur les comptes des habitants.",
+  "tn.login.locked_retry": "Vous pourrez réessayer dans",
+  "tn.login.locked_owner": "Si un compte correspond, son titulaire est prévenu. Mot de passe oublié ?",
+  "tn.login.locked_reset": "Réinitialiser mon mot de passe",
+  "tn.login.attempts_left_one": "Il vous reste {count} tentative avant une pause de 15 minutes.",
+  "tn.login.attempts_left_other": "Il vous reste {count} tentatives avant une pause de 15 minutes.",
+  "tn.login.protected": "Connexion protégée contre les tentatives répétées",
 } as const;

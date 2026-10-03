@@ -940,4 +940,12 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "auth.passkey.removed": "Passkey removed.",
   "auth.passkey.remove_failed": "The passkey could not be removed.",
   "auth.passkey.privacy": "Your face or fingerprint never leaves your device: Terra Nova only receives a public key.",
+  "tn.login.locked_title": "Sign-in paused to protect the account",
+  "tn.login.locked_body": "Too many attempts failed. This is an automatic protection against repeated attempts on residents' accounts.",
+  "tn.login.locked_retry": "You can try again in",
+  "tn.login.locked_owner": "If an account matches, its owner has been notified. Forgot your password?",
+  "tn.login.locked_reset": "Reset my password",
+  "tn.login.attempts_left_one": "{count} attempt left before a 15-minute pause.",
+  "tn.login.attempts_left_other": "{count} attempts left before a 15-minute pause.",
+  "tn.login.protected": "Sign-in protected against repeated attempts",
 };
