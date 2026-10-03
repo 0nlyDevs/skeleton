@@ -8,6 +8,7 @@ import {
   ConeGeometry,
   CylinderGeometry,
   DirectionalLight,
+  type DataTexture,
   DodecahedronGeometry,
   Float32BufferAttribute,
   Fog,
@@ -29,6 +30,7 @@ import {
   SRGBColorSpace,
   Vector2,
   Vector3,
+  Vector4,
   WebGLRenderer,
   type BufferAttribute,
   type WebGLProgramParametersWithUniforms,
@@ -41,7 +43,7 @@ import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRe
 import { CITY_PLACES, type PlaceKind } from "@/modules/alerts/city-map-data";
 import { CITY_ZONES, CITY_ZONE_IDS, CITY_ZONE_VERTICES, zoneAt, zoneCentroid, type CityZoneId, type ZoneStatusId } from "@/modules/alerts/city-zones";
 
-import { buildRoadNetwork, distanceToRoads, type RoadSegment } from "./city-map-roads";
+import { buildDowntownGrid, buildRoadNetwork, distanceToRoads, type RoadSegment } from "./city-map-roads";
 import { buildTerrain, toMap, toWorld } from "./city-map-terrain";
 import { waterFragment, waterVertex } from "./city-map-water";
 
@@ -62,7 +64,19 @@ export const STATUS_COLORS: Readonly<Record<ZoneStatusId, string>> = {
 export interface SceneCallbacks {
   readonly onSelectZone: (zone: CityZoneId | null) => void;
   readonly onSelectPlace: (index: number) => void;
+  readonly onSelectService: (slug: string) => void;
 }
+
+/** A municipal service with premises, as the map needs it. */
+export interface MapServicePoint {
+  readonly slug: string;
+  readonly x: number;
+  readonly y: number;
+  readonly emergency: boolean;
+}
+
+/** Which services show: every one, only emergency facilities, or none. */
+export type ServiceLayer = "all" | "emergency" | "none";
 
 const SKY_TOP = new Color("#7fa9dc");
 const HAZE = new Color("#dfe8ef");
@@ -93,7 +107,10 @@ export class CityMapScene {
   private readonly controls: OrbitControls;
   private readonly terrain: Mesh<BufferGeometry, MeshStandardMaterial>;
   private readonly heightAt: (x: number, y: number) => number;
+  private readonly heightTexture: DataTexture;
+  private readonly heightBounds: { readonly minX: number; readonly minZ: number; readonly width: number; readonly depth: number };
   private readonly roads: RoadSegment[] = buildRoadNetwork();
+  private readonly streets: RoadSegment[] = buildDowntownGrid((x, y) => zoneAt(x, y) === "NOVA_PRIME");
   private readonly time = { value: 0 };
   private readonly raycaster = new Raycaster();
   private readonly pointer = new Vector2();
@@ -107,6 +124,8 @@ export class CityMapScene {
   private hovered: CityZoneId | null = null;
   private highlight: readonly CityZoneId[] = [];
   private categories: ReadonlySet<PlaceKind> | null = null;
+  private readonly serviceObjects = new Map<string, { object: CSS2DObject; element: HTMLDivElement; point: MapServicePoint }>();
+  private serviceLayer: ServiceLayer = "all";
   private frame = 0;
   private downAt = { x: 0, y: 0 };
   private readonly resizeObserver: ResizeObserver;
@@ -119,12 +138,13 @@ export class CityMapScene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = PCFShadowMap;
     this.renderer.domElement.className = "block size-full touch-none";
     container.appendChild(this.renderer.domElement);
-    this.labels.domElement.className = "pointer-events-none absolute inset-0 overflow-hidden";
+    // Its own stacking context: CSS2D gives each label a z-index, which must not climb over the map controls.
+    this.labels.domElement.className = "pointer-events-none absolute inset-0 isolate z-0 overflow-hidden";
     container.appendChild(this.labels.domElement);
 
     this.scene.background = skyTexture();
@@ -142,8 +162,10 @@ export class CityMapScene {
     sun.shadow.normalBias = 0.02;
     this.scene.add(sun, new HemisphereLight("#d6e6ff", "#6e5c46", 0.95));
 
-    const { geometry, heightAt } = buildTerrain(360, 252);
+    const { geometry, heightAt, heightTexture, bounds } = buildTerrain(420, 294);
     this.heightAt = heightAt;
+    this.heightTexture = heightTexture;
+    this.heightBounds = bounds;
     const material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
     this.patchTerrain(material);
     this.terrain = new Mesh(geometry, material);
@@ -240,17 +262,9 @@ export class CityMapScene {
   }
 
   private addWater(sunPosition: Vector3): void {
-    const geometry = new PlaneGeometry(90, 66, 220, 160);
+    const geometry = new PlaneGeometry(90, 66);
     geometry.rotateX(-Math.PI / 2);
-    const position = geometry.getAttribute("position") as BufferAttribute;
-    const shallow = new Float32Array(position.count);
-    for (let i = 0; i < position.count; i += 1) {
-      const { x, y } = toMap(position.getX(i), position.getZ(i));
-      const ground = this.heightAt(Math.max(-150, Math.min(1150, x)), Math.max(-150, Math.min(790, y)));
-      // 1 at the shore, 0 in deep water.
-      shallow[i] = Math.max(0, Math.min(1, 1 + ground / 0.32));
-    }
-    geometry.setAttribute("aShallow", new Float32BufferAttribute(shallow, 1));
+    const bounds = this.heightBounds;
     const water = new Mesh(
       geometry,
       new ShaderMaterial({
@@ -259,18 +273,23 @@ export class CityMapScene {
         uniforms: {
           uTime: this.time,
           uSun: { value: sunPosition.clone().normalize() },
-          uDeep: { value: new Color("#0d4a6b") },
-          uShallow: { value: new Color("#3fa7b5") },
+          uDeep: { value: new Color("#0a3b57") },
+          uMid: { value: new Color("#14698a") },
+          uShallow: { value: new Color("#4fb3b5") },
           uSky: { value: new Color("#cfe0f0") },
+          uHeight: { value: this.heightTexture },
+          uBounds: { value: new Vector4(bounds.minX, bounds.minZ, bounds.width, bounds.depth) },
           fogColor: { value: HAZE },
           fogNear: { value: 30 },
           fogFar: { value: 75 },
         },
         fog: true,
         transparent: true,
+        depthWrite: false,
       }),
     );
-    water.position.y = -0.002;
+    water.position.y = 0;
+    water.renderOrder = 1;
     this.scene.add(water);
   }
 
@@ -288,7 +307,9 @@ export class CityMapScene {
         const x = ax + (bx - ax) * t + nx * half * side;
         const y = ay + (by - ay) * t + ny * half * side;
         const world = toWorld(x, y);
-        return [world.x, Math.max(0.01, this.heightAt(x, y)) + lift, world.z];
+        // Over water the road becomes a bridge deck.
+        const ground = this.heightAt(x, y);
+        return [world.x, (ground < 0.03 ? 0.075 : ground) + lift, world.z];
       };
       for (let s = 0; s < steps; s += 1) {
         const t0 = s / steps;
@@ -300,6 +321,7 @@ export class CityMapScene {
         target.push(...a, ...c, ...b, ...b, ...c, ...d);
       }
     };
+    for (const street of this.streets) addRibbon(asphalt, street.a[0], street.a[1], street.b[0], street.b[1], 2.6, 0.016);
     for (const road of this.roads) {
       addRibbon(asphalt, road.a[0], road.a[1], road.b[0], road.b[1], road.major ? 6.5 : 3.6, 0.018);
       if (road.major) addRibbon(markings, road.a[0], road.a[1], road.b[0], road.b[1], 0.45, 0.022);
@@ -381,6 +403,7 @@ export class CityMapScene {
     const dummy = new Object3D();
     const facades = ["#d9d2c5", "#c8c1b4", "#a9b0b8", "#8f9aa5", "#b8a58b", "#9fa6ad", "#cfc6b6", "#7d8894"].map((value) => new Color(value));
     let count = 0;
+    const roofs: { x: number; y: number; width: number; depth: number; wall: number; angle: number }[] = [];
     const place = (x: number, y: number, width: number, depth: number, height: number, angle: number) => {
       if (count >= maxCount) return;
       const ground = this.heightAt(x, y);
@@ -395,18 +418,25 @@ export class CityMapScene {
       count += 1;
     };
 
-    // Downtown: a dense grid of towers, tallest at the centre of Nova Prime.
+    // Downtown: each block between the streets is filled with a few buildings,
+    // tallest around the centre of Nova Prime, with a little setback from the street.
     const capital = CITY_ZONES.find((zone) => zone.id === "NOVA_PRIME");
     if (capital) {
       const [cx, cy] = zoneCentroid(capital);
-      for (let gx = -150; gx <= 150; gx += 9) {
-        for (let gy = -90; gy <= 90; gy += 9) {
-          const x = cx + gx + (Math.random() - 0.5) * 3;
-          const y = cy + gy + (Math.random() - 0.5) * 3;
-          if (zoneAt(x, y) !== "NOVA_PRIME" || distanceToRoads(this.roads, x, y) < 5 || Math.random() < 0.18) continue;
-          const core = Math.max(0, 1 - Math.hypot(gx, gy * 1.4) / 170);
-          const height = 0.12 + Math.pow(Math.random(), 1.6) * 1.35 * core * core + 0.08 * core;
-          place(x, y, 0.1 + Math.random() * 0.06, 0.1 + Math.random() * 0.06, height, 0);
+      for (let by = 228; by < 410; by += 24) {
+        for (let bx = 324; bx < 780; bx += 24) {
+          const mx = bx + 12;
+          const my = by + 12;
+          if (zoneAt(mx, my) !== "NOVA_PRIME" || distanceToRoads(this.roads, mx, my) < 9) continue;
+          const core = Math.max(0, 1 - Math.hypot(mx - cx, (my - cy) * 1.4) / 190);
+          const lots = core > 0.5 ? 1 + Math.floor(Math.random() * 2) : 2 + Math.floor(Math.random() * 3);
+          for (let lot = 0; lot < lots; lot += 1) {
+            const ox = (lots === 1 ? 0 : (lot % 2 === 0 ? -1 : 1) * 4.5) + (Math.random() - 0.5) * 1.5;
+            const oy = (lots <= 2 ? 0 : (lot < 2 ? -1 : 1) * 4.5) + (Math.random() - 0.5) * 1.5;
+            const size = lots === 1 ? 0.27 : 0.14;
+            const height = 0.08 + Math.pow(Math.random(), 1.5) * 1.5 * core * core + 0.1 * core;
+            place(mx + ox, my + oy, size * (0.8 + Math.random() * 0.25), size * (0.8 + Math.random() * 0.25), height, 0);
+          }
         }
       }
     }
@@ -420,7 +450,12 @@ export class CityMapScene {
         const y = landmark.y + Math.sin(angle) * radius;
         if (distanceToRoads(this.roads, x, y) < 3.5 || zoneAt(x, y) !== landmark.zone) continue;
         const tall = landmark.kind === "STAY" && i < 3;
-        place(x, y, 0.06 + Math.random() * 0.05, 0.06 + Math.random() * 0.05, tall ? 0.2 + Math.random() * 0.2 : 0.04 + Math.random() * 0.06, Math.random() * Math.PI);
+        const width = 0.06 + Math.random() * 0.05;
+        const depth = 0.06 + Math.random() * 0.05;
+        const wall = tall ? 0.2 + Math.random() * 0.2 : 0.035 + Math.random() * 0.03;
+        const facing = Math.random() * Math.PI;
+        place(x, y, width, depth, wall, facing);
+        if (!tall) roofs.push({ x, y, width, depth, wall, angle: facing });
       }
     }
     // Spaceport hangars.
@@ -429,6 +464,24 @@ export class CityMapScene {
     buildings.instanceMatrix.needsUpdate = true;
     if (buildings.instanceColor) buildings.instanceColor.needsUpdate = true;
     this.scene.add(buildings);
+
+    // Pitched roofs on the houses: a four-sided pyramid per house, terracotta or slate.
+    const pyramid = new ConeGeometry(0.72, 1, 4);
+    pyramid.rotateY(Math.PI / 4);
+    pyramid.translate(0, 0.5, 0);
+    const roofMesh = new InstancedMesh(pyramid, new MeshStandardMaterial({ color: "#ffffff", roughness: 0.8, flatShading: true }), roofs.length);
+    roofMesh.castShadow = true;
+    const roofColors = ["#9c4f36", "#8a4632", "#5d6066", "#6e4a3a", "#a35b3c"].map((value) => new Color(value));
+    roofs.forEach((roof, index) => {
+      const world = toWorld(roof.x, roof.y);
+      dummy.position.set(world.x, this.heightAt(roof.x, roof.y) - 0.01 + roof.wall, world.z);
+      dummy.scale.set(roof.width, roof.wall * 0.8 + 0.02, roof.depth);
+      dummy.rotation.set(0, roof.angle, 0);
+      dummy.updateMatrix();
+      roofMesh.setMatrixAt(index, dummy.matrix);
+      roofMesh.setColorAt(index, roofColors[index % roofColors.length] ?? roofColors[0]!);
+    });
+    this.scene.add(roofMesh);
 
     // A launch tower at the spaceport, the city's landmark on the skyline.
     const tower = new Mesh(new CylinderGeometry(0.03, 0.05, 1.1, 12), new MeshStandardMaterial({ color: "#d9dde2", metalness: 0.6, roughness: 0.3 }));
@@ -519,6 +572,39 @@ export class CityMapScene {
       object.visible = allowed && (distance < 17 || this.categories !== null);
     });
     for (const [, element] of this.zoneLabels) element.style.opacity = distance < 6 ? "0" : "1";
+    // Emergency facilities stay visible at every zoom; other services appear closer in or on demand.
+    for (const { object, point } of this.serviceObjects.values()) {
+      object.visible =
+        this.serviceLayer === "emergency" ? point.emergency : this.serviceLayer === "all" && (point.emergency || distance < 22);
+    }
+  }
+
+  /** Creates one pin per service (React fills it with the translated content). */
+  setServices(points: readonly MapServicePoint[]): ReadonlyMap<string, HTMLDivElement> {
+    for (const { object } of this.serviceObjects.values()) this.scene.remove(object);
+    this.serviceObjects.clear();
+    for (const point of points) {
+      const element = document.createElement("div");
+      element.className = point.emergency ? "tn-map-service is-emergency" : "tn-map-service";
+      element.addEventListener("click", () => this.callbacks.onSelectService(point.slug));
+      const object = new CSS2DObject(element);
+      const world = toWorld(point.x, point.y);
+      object.position.set(world.x, Math.max(0.05, this.heightAt(point.x, point.y)) + 0.14, world.z);
+      this.scene.add(object);
+      this.serviceObjects.set(point.slug, { object, element, point });
+    }
+    this.updateLabelVisibility();
+    return new Map([...this.serviceObjects].map(([slug, entry]) => [slug, entry.element]));
+  }
+
+  setServiceLayer(layer: ServiceLayer): void {
+    this.serviceLayer = layer;
+    this.updateLabelVisibility();
+  }
+
+  flyToService(slug: string): void {
+    const entry = this.serviceObjects.get(slug);
+    if (entry) this.flyTo(entry.point.x, entry.point.y, 4.4);
   }
 
   zoneLabelElement(zone: CityZoneId): HTMLDivElement | undefined {
@@ -718,6 +804,7 @@ export class CityMapScene {
       for (const material of materials) material?.dispose();
     });
     (this.scene.background as CanvasTexture | null)?.dispose();
+    this.heightTexture.dispose();
     this.scene.environment?.dispose();
     this.renderer.dispose();
     canvas.remove();
