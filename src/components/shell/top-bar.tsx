@@ -20,8 +20,9 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
   const t = useTranslation();
   const { messageUnreadTotal } = useRealtime();
 
+  // F44 — on a short screen (strong zoom) the bar scrolls away instead of covering the page.
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-surface/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 [@media(max-height:30rem)]:static border-b border-border/60 bg-surface/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center gap-3 px-3 lg:px-6">
         <Brand href="/" className="shrink-0" compact={false} />
 

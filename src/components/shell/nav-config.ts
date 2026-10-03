@@ -1,4 +1,6 @@
 import {
+  Accessibility,
+  BookOpen,
   Bookmark,
   BusFront,
   Briefcase,
@@ -76,6 +78,8 @@ export const MORE_NAV: readonly ShellNavItem[] = [
   { href: "/pages", labelKey: "nav.pages", icon: FileText },
   { href: "/saved", labelKey: "nav.saved", icon: Bookmark },
   { href: "/map", labelKey: "nav.map", icon: MapIcon },
+  { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
+  { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
 ];
 
 /** What a guest can open without an account. */
@@ -86,6 +90,8 @@ export const GUEST_NAV: readonly ShellNavItem[] = [
   { href: "/transports", labelKey: "tn.nav.transports", icon: BusFront },
   { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
   { href: "/feed", labelKey: "nav.feed", icon: Newspaper },
+  { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
+  { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
 ];
 
 /** Staff: one door each; their workspaces have their own navigation. */

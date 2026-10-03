@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Term } from "@/components/ui/term";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import type { MessageKey } from "@/lib/i18n";
@@ -29,10 +30,13 @@ export function ContactForm({
   services,
   initialServiceId,
   initialKind = "question",
+  initialSubject = "",
 }: {
   readonly services: readonly { id: string; name: string }[];
   readonly initialServiceId: string;
   readonly initialKind?: "question" | "issue";
+  /** Prefilled subject, e.g. when coming from the accessibility page. */
+  readonly initialSubject?: string;
 }) {
   const t = useTranslation();
   const router = useRouter();
@@ -42,7 +46,7 @@ export function ContactForm({
   const [point, setPoint] = useState<PickedPlace | null>(null);
   const [picking, setPicking] = useState(false);
   const [serviceId, setServiceId] = useState(initialServiceId);
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState(initialSubject);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -74,7 +78,12 @@ export function ContactForm({
       });
       router.push(`/space/requests/${response.data.reference}?sent=1`);
     } catch (error) {
-      if (error instanceof ApiRequestError && error.fields) setFields(error.fields);
+      if (error instanceof ApiRequestError && error.fields) {
+        setFields(error.fields);
+        // F42 — move to the first field to fix, so keyboard and screen reader users land on it.
+        const first = ["location", "subject", "message"].find((key) => error.fields?.[key]);
+        if (first) requestAnimationFrame(() => document.getElementById(`contact-${first}`)?.focus());
+      }
       toast.error(describeApiError(error, t));
       setBusy(false);
     }
@@ -216,7 +225,9 @@ export function ContactForm({
 
       <p className="flex items-start gap-2 text-[0.7812rem] text-muted-foreground">
         <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-        {t("tn.contact.privacy")}
+        <span>
+          {t("tn.contact.privacy")} <Term id="encrypted">{t("tn.contact.privacy_term")}</Term>
+        </span>
       </p>
 
       <Button type="submit" disabled={busy || subject.trim().length < 3 || message.trim().length < 10 || !issueReady} className="self-end">

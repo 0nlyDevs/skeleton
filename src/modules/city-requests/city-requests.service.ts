@@ -30,7 +30,7 @@ const STATUS_LABEL: Record<string, string> = {
   IN_PROGRESS: "en cours de traitement",
   WAITING_CITIZEN: "en attente de votre réponse",
   RESOLVED: "résolue",
-  CLOSED: "clôturée",
+  CLOSED: "fermée",
 };
 
 const summaryInclude = {

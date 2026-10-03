@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { KeyboardShortcuts } from "./keyboard-shortcuts";
 import { LeftRail } from "./left-rail";
 import { MobileNav } from "./mobile-nav";
 import { RightRail } from "./right-rail";
@@ -61,6 +62,7 @@ export function AppShell({
         ) : null}
       </div>
       <MobileNav viewer={viewer} zone={zone} />
+      <KeyboardShortcuts />
     </div>
   );
 }

@@ -164,6 +164,7 @@ export const MentionInput = forwardRef<
         maxLength={maxLength}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
+        role="combobox"
         aria-autocomplete="list"
         aria-controls={open ? listId : undefined}
         aria-expanded={open}

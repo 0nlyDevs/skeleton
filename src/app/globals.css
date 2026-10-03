@@ -440,6 +440,17 @@ html[data-contrast="high"] :focus-visible {
   }
 }
 
+/*
+ * F43 — a link inside running text is recognisable without colour: it is
+ * underlined, whatever the theme. The rule targets links that sit directly in
+ * a sentence (paragraph, definition, table cell); links styled as buttons,
+ * cards or menu items are not inside running text, so they keep their shape.
+ */
+:where(p, dd, td) > a:not([role]) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ---------------------------------------------------------------------------
  * Terra Nova cinematic landing (src/components/cinematic).
  * ------------------------------------------------------------------------- */

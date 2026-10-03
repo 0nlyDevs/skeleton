@@ -11,6 +11,7 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Term } from "@/components/ui/term";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth/client";
@@ -137,7 +138,7 @@ export function TwoFactorCard({ enabled: initial, hasPassword }: { readonly enab
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="size-4 text-muted-foreground" />
-          {t("settings.security.twofa")}
+          <Term id="two_factor">{t("settings.security.twofa")}</Term>
           <Badge variant={enabled ? "success" : "neutral"} className="ml-1">
             {enabled ? t("settings.security.twofa_on") : t("settings.security.twofa_off")}
           </Badge>
