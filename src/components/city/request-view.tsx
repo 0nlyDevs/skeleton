@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, ExternalLink, Hourglass, Lock, MapPin, TriangleAlert } from "lucide-react";
+import { CheckCircle2, ExternalLink, Lock, MapPin, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { RequestControls } from "@/components/agent/request-controls";
@@ -20,6 +20,7 @@ import type { CityRequestDto } from "@/modules/city-requests/city-requests.dto";
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
 import { RequestComposer } from "./request-composer";
 import { RequestProgress } from "./request-progress";
+import { RequestStatusGuide } from "./request-status-guide";
 import { RequestTimeline } from "./request-timeline";
 
 /**
@@ -96,12 +97,8 @@ export function RequestView({
         </div>
       ) : null}
 
-      {!agent && request.status === "WAITING_CITIZEN" ? (
-        <div role="status" className="flex items-center gap-2 rounded-2xl border border-warning/50 bg-warning/10 p-3 text-sm">
-          <Hourglass className="size-4 shrink-0" aria-hidden />
-          {t("tn.request.waiting_you")}
-        </div>
-      ) : null}
+      {/* F49 — what the current state means and what to do, for the resident. */}
+      {!agent ? <RequestStatusGuide status={request.status} /> : null}
 
       <header className="flex flex-col gap-2 px-1">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -198,7 +195,9 @@ export function RequestView({
             {closed ? (
               <p className="rounded-2xl bg-surface-muted px-4 py-3 text-sm text-muted-foreground">{t("tn.request.closed")}</p>
             ) : (
-              <RequestComposer reference={request.reference} allowInternal={agent} onSent={setRequest} />
+              <div id="reply" className="scroll-mt-24">
+                <RequestComposer reference={request.reference} allowInternal={agent} onSent={setRequest} />
+              </div>
             )}
           </section>
         </div>
