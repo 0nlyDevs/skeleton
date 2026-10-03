@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, Clock, Hourglass, Inbox, Radio, Sparkles, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 
+import { ActivityList } from "@/components/agent/activity-list";
 import { withAgentAccess } from "@/components/agent/agent-guard";
 import { RequestList } from "@/components/city/request-list";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
 import { formatRelative } from "@/lib/format";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { listActivity } from "@/modules/activity/activity.service";
 import { awaitingPickup, cityRequestStats, listCityRequests } from "@/modules/city-requests/city-requests.service";
 import { minutesUntil, nextWaveAt } from "@/modules/webcup/webcup.schedule";
 import { getWebcupFeed } from "@/modules/webcup/webcup.service";
@@ -18,11 +20,12 @@ export const metadata: Metadata = { title: "Espace agent" };
 export default async function AgentDashboardPage() {
   return withAgentAccess("/agent", async (user) => {
     const { t, locale } = await getServerDictionary();
-    const [pickup, stats, open, feed] = await Promise.all([
+    const [pickup, stats, open, feed, recent] = await Promise.all([
       awaitingPickup(user),
       cityRequestStats(user, "all"),
       listCityRequests({ scope: "all", status: "OPEN", page: 1, limit: 8 }, user),
       getWebcupFeed(user),
+      listActivity({ page: 1, limit: 6, category: "all", period: "all" }, user),
     ]);
     const counters = [
       { icon: Sparkles, label: t("tn.agent.dash.new"), value: stats.NEW ?? 0, status: "NEW", tone: "text-primary" },
@@ -109,6 +112,22 @@ export default async function AgentDashboardPage() {
             </Button>
           </section>
         </div>
+
+        {/* D21 — who did what lately, one click from the full history. */}
+        <section className="flex flex-col gap-3" aria-labelledby="recent-activity">
+          <div className="flex items-center justify-between gap-2 px-1">
+            <h2 id="recent-activity" className="font-semibold">{t("tn.history.recent")}</h2>
+            <Link href="/agent/history" className="inline-flex items-center gap-1 text-[0.8125rem] text-primary hover:underline">
+              {t("tn.history.see_all")}
+              <ArrowRight className="size-3.5" aria-hidden />
+            </Link>
+          </div>
+          {recent.data.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">{t("tn.history.empty")}</p>
+          ) : (
+            <ActivityList entries={recent.data} groupByDay={false} />
+          )}
+        </section>
       </div>
     );
   });

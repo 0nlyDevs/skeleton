@@ -35,5 +35,5 @@ export const updateCityRequestRoute = apiRoute({
 export const addCityRequestMessageRoute = apiRoute({
   params: cityRequestRefParamSchema,
   body: cityRequestMessageSchema,
-  handler: async ({ params, body, auth }) => jsonOk({ data: await addCityRequestMessage(params.reference, body, auth.user) }),
+  handler: async ({ params, body, auth, ip }) => jsonOk({ data: await addCityRequestMessage(params.reference, body, auth.user, ip) }),
 });

@@ -14,6 +14,7 @@ import { slugify } from "@/lib/utils";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
+import { changedFields } from "../audit/audit.diff";
 import { recordAudit } from "../audit/audit.service";
 import { zoneAt, type CityZoneId } from "../alerts/city-zones";
 import { TRANSLATABLE_SERVICE_FIELDS, type ServiceInput, type ServiceTranslations } from "./city-services.schema";
@@ -162,7 +163,7 @@ function assertAdmin(actor: AuthUser): void {
 export async function createService(input: ServiceInput, actor: AuthUser, ip: string | null): Promise<ServiceDto> {
   assertAdmin(actor);
   const row = await prisma.municipalService.create({ data: { ...fieldsOf(input), translations: input.translations ?? {}, slug: await uniqueSlug(input.name) } });
-  await recordAudit({ actorId: actor.id, action: auditActions.serviceChanged, targetType: "service", targetId: row.id, metadata: { op: "create" }, ip });
+  await recordAudit({ actorId: actor.id, action: auditActions.serviceChanged, targetType: "service", targetId: row.id, metadata: { op: "create", name: row.name, slug: row.slug }, ip });
   return toDto(row);
 }
 
@@ -178,6 +179,11 @@ export async function updateService(slug: string, input: ServiceInput, actor: Au
       slug: input.name !== existing.name ? await uniqueSlug(input.name, existing.id) : existing.slug,
     },
   });
-  await recordAudit({ actorId: actor.id, action: auditActions.serviceChanged, targetType: "service", targetId: row.id, metadata: { op: "update" }, ip });
+  const changed = changedFields(existing as Record<string, unknown>, row as Record<string, unknown>, [
+    "name", "category", "summary", "description", "howTo", "email", "phone", "hours", "address", "latitude", "longitude", "icon", "sortOrder", "active", "featured", "translations",
+  ]);
+  // Opening, closing or highlighting a service reads as its own action in the history.
+  const op = changed.includes("active") ? (row.active ? "reopen" : "close") : "update";
+  await recordAudit({ actorId: actor.id, action: auditActions.serviceChanged, targetType: "service", targetId: row.id, metadata: { op, name: row.name, slug: row.slug, changed }, ip });
   return toDto(row);
 }

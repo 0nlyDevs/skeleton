@@ -54,9 +54,30 @@ export const auditActions = {
   announcementChanged: "announcement.changed",
   cityRequestChanged: "city_request.changed",
   webcupTriaged: "webcup.triaged",
+  transportChanged: "transport.changed",
   pageCreated: "page.created",
   pageUpdated: "page.updated",
   pageDeleted: "page.deleted",
 } as const;
 
 export type AuditAction = (typeof auditActions)[keyof typeof auditActions];
+
+/**
+ * Administrative actions: what the city must be able to justify. They make up
+ * the agents' history, grouped by area, and the retention cron never deletes
+ * them (routine rows such as sign-ins are trimmed after 90 days).
+ */
+export const ADMIN_ACTION_CATEGORIES = {
+  requests: [auditActions.cityRequestChanged],
+  announcements: [auditActions.announcementChanged],
+  services: [auditActions.serviceChanged],
+  transports: [auditActions.transportChanged],
+  accounts: [auditActions.userBanned, auditActions.userUnbanned, auditActions.userRoleChanged, auditActions.userSessionsRevoked, auditActions.userDeleted],
+  moderation: [auditActions.reportResolved, auditActions.reportDismissed, auditActions.postModerated, auditActions.commentDeleted],
+  feed: [auditActions.webcupTriaged],
+  settings: [auditActions.featureFlagToggled],
+} as const satisfies Record<string, readonly AuditAction[]>;
+
+export type AdminActionCategory = keyof typeof ADMIN_ACTION_CATEGORIES;
+
+export const ADMIN_ACTIONS: readonly AuditAction[] = Object.values(ADMIN_ACTION_CATEGORIES).flat();

@@ -19,6 +19,7 @@ import {
 } from "./users.schema";
 import {
   checkUsernameAvailability,
+  completeOnboarding,
   changeOwnPassword,
   setInitialPassword,
   changeUserRole,
@@ -109,6 +110,14 @@ export const updateUserBanRoute = apiRoute({
   body: updateUserBanSchema,
   handler: async ({ params, body, auth, ip }) =>
     jsonOk(await setUserBan(params.id, body, { user: auth.user, ip })),
+});
+
+/** `POST /api/users/me/onboarding` — the welcome guide was finished or skipped. */
+export const completeOnboardingRoute = apiRoute({
+  handler: async ({ auth }) => {
+    await completeOnboarding(auth.user.id);
+    return noContent();
+  },
 });
 
 // --- Agents: resident accounts only (F34) -----------------------------------

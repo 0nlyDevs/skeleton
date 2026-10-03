@@ -235,5 +235,5 @@ export async function triageWebcupRequest(
     where: { code },
     data: { ...(input.triage ? { triage: input.triage } : {}), ...(input.note !== undefined ? { note: input.note } : {}) },
   });
-  await recordAudit({ actorId: actor.id, action: auditActions.webcupTriaged, targetType: "webcup_request", targetId: code, metadata: { triage: input.triage ?? null }, ip });
+  await recordAudit({ actorId: actor.id, action: auditActions.webcupTriaged, targetType: "webcup_request", targetId: code, metadata: { code, from: input.triage && input.triage !== row.triage ? row.triage : null, triage: input.triage ?? null, noteChanged: input.note !== undefined && input.note !== row.note }, ip });
 }

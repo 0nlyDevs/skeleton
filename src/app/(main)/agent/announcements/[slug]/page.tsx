@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { EntityHistory } from "@/components/agent/activity-history";
 import { AnnouncementEditor } from "@/components/agent/announcement-editor";
 import { withAgentAccess } from "@/components/agent/agent-guard";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
@@ -24,6 +25,11 @@ export default async function EditAnnouncementPage({ params }: { readonly params
       listServices({}, user),
     ]);
     if (!announcement) return <NotFoundPanel backHref="/agent/announcements" />;
-    return <AnnouncementEditor initial={announcement} services={services.map(({ id, name, slug }) => ({ id, name, slug }))} />;
+    return (
+      <div className="flex flex-col gap-6">
+        <AnnouncementEditor initial={announcement} services={services.map(({ id, name, slug }) => ({ id, name, slug }))} />
+        <EntityHistory targetType="announcement" targetId={announcement.id} />
+      </div>
+    );
   });
 }

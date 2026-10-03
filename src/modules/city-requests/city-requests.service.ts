@@ -98,7 +98,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
     },
     include: summaryInclude,
   });
-  await recordAudit({ actorId: actor.id, action: auditActions.cityRequestChanged, targetType: "city_request", targetId: row.id, metadata: { op: "create" }, ip });
+  await recordAudit({ actorId: actor.id, action: auditActions.cityRequestChanged, targetType: "city_request", targetId: row.id, metadata: { op: "create", reference: row.reference, issueType: row.issueType ?? null, service: row.service?.name ?? null }, ip });
 
   notifyInBackground(
     (async () => {
@@ -223,7 +223,7 @@ export async function getCityRequest(reference: string, actor: AuthUser): Promis
   };
 }
 
-export async function addCityRequestMessage(reference: string, input: { body: string; internal: boolean }, actor: AuthUser): Promise<CityRequestDto> {
+export async function addCityRequestMessage(reference: string, input: { body: string; internal: boolean }, actor: AuthUser, ip: string | null = null): Promise<CityRequestDto> {
   const row = await loadAccessible(reference, actor);
   const agent = isStaff(actor);
   if (input.internal && !agent) throw new ForbiddenError("Only city agents can write internal notes.");
@@ -243,6 +243,17 @@ export async function addCityRequestMessage(reference: string, input: { body: st
   });
 
   await pushRequestUpdate(row, actor.id, input.internal);
+  // The trail keeps that an agent answered or noted something, never the text itself.
+  if (agent && !fromCitizen) {
+    await recordAudit({
+      actorId: actor.id,
+      action: auditActions.cityRequestChanged,
+      targetType: "city_request",
+      targetId: row.id,
+      metadata: { op: input.internal ? "internal_note" : "reply", reference: row.reference },
+      ip,
+    });
+  }
 
   if (!input.internal) {
     if (fromCitizen) {
@@ -299,7 +310,7 @@ export async function updateCityRequest(reference: string, input: UpdateCityRequ
       ...events.map((event) => prisma.cityRequestEvent.create({ data: { requestId: row.id, actorId: actor.id, ...event } })),
     ]);
     await pushRequestUpdate(row, actor.id);
-    await recordAudit({ actorId: actor.id, action: auditActions.cityRequestChanged, targetType: "city_request", targetId: row.id, metadata: { changes: events.map((event) => event.kind) }, ip });
+    await recordAudit({ actorId: actor.id, action: auditActions.cityRequestChanged, targetType: "city_request", targetId: row.id, metadata: { op: "update", reference: row.reference, changes: events.map((event) => ({ kind: event.kind, from: event.fromValue, to: event.toValue })) }, ip });
     const statusChange = events.filter((event) => event.kind === "status").at(-1);
     if (statusChange?.toValue) {
       notifyInBackground(

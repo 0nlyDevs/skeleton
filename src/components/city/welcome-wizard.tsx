@@ -15,7 +15,7 @@ import Link from "@/components/ui/link";
 import { Textarea } from "@/components/ui/textarea";
 import { patchProfile } from "@/hooks/use-profile-overrides";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
-import { WIZARD_DONE_COOKIE, WELCOME_SERVICE_COOKIE, setWelcomeCookie } from "@/lib/onboarding";
+import { WELCOME_SERVICE_COOKIE, setWelcomeCookie } from "@/lib/onboarding";
 import { cn, initials } from "@/lib/utils";
 import { CITY_ZONES, cityZoneLabelKey, type CityZoneId } from "@/modules/alerts/city-zones";
 import type { UserProfileDto } from "@/modules/users/users.dto";
@@ -68,9 +68,16 @@ export function WelcomeWizard({
     titleRef.current?.focus();
   }, [step]);
 
+  /** Saved on the account, so the guide does not open again on any device. */
+  const markDone = () => {
+    void apiFetch("/api/users/me/onboarding", { method: "POST" }).catch(() => undefined);
+  };
+
   const close = () => {
-    setWelcomeCookie(WIZARD_DONE_COOKIE);
+    markDone();
     setOpen(false);
+    // Opened from the top bar (`?guide=1`): leave the URL so it does not reopen.
+    router.replace("/space", { scroll: false });
     router.refresh();
   };
 
@@ -233,7 +240,7 @@ export function WelcomeWizard({
                     href={`/services/${service.slug}`}
                     onClick={() => {
                       setWelcomeCookie(WELCOME_SERVICE_COOKIE);
-                      setWelcomeCookie(WIZARD_DONE_COOKIE);
+                      markDone();
                     }}
                     className="flex items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:border-primary/40 hover:bg-surface-muted/50"
                   >
@@ -246,7 +253,7 @@ export function WelcomeWizard({
                 </li>
               ))}
             </ul>
-            <Link href="/services" onClick={() => setWelcomeCookie(WIZARD_DONE_COOKIE)} className="w-fit text-sm text-primary hover:underline">
+            <Link href="/services" onClick={markDone} className="w-fit text-sm text-primary hover:underline">
               {t("tn.wizard.services.all")}
             </Link>
           </div>
@@ -263,7 +270,7 @@ export function WelcomeWizard({
                 <Link
                   key={option.href}
                   href={option.href}
-                  onClick={() => setWelcomeCookie(WIZARD_DONE_COOKIE)}
+                  onClick={markDone}
                   className="flex flex-col gap-1.5 rounded-xl border border-border/70 p-4 transition-colors hover:border-primary/40 hover:bg-surface-muted/50"
                 >
                   <option.icon className="size-5 text-primary" aria-hidden />
