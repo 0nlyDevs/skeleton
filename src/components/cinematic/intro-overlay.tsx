@@ -26,17 +26,17 @@ export const IntroOverlay = forwardRef<HTMLDivElement, { readonly onSkip: () => 
       </div>
 
       <div data-intro="label" aria-hidden className="absolute bottom-[calc(8vh-0.35rem)] left-[calc(8vw+2.75rem)] flex items-baseline gap-3 text-white">
-        <span className="text-[22px] font-light leading-none tabular-nums tracking-tight">
+        <span className="text-[1.375rem] font-light leading-none tabular-nums tracking-tight">
           <span data-intro="counter">0</span>
           <span className="text-white/40">%</span>
         </span>
-        <span className="text-[10px] uppercase tracking-[0.32em] text-white/40">{t("tn.landing.loading")}</span>
+        <span className="text-[0.625rem] uppercase tracking-[0.32em] text-white/40">{t("tn.landing.loading")}</span>
       </div>
 
       <button
         type="button"
         onClick={onSkip}
-        className="absolute right-5 top-5 px-2 py-1 text-[11px] uppercase tracking-[0.28em] text-white/40 transition-colors hover:text-white"
+        className="absolute right-5 top-5 px-2 py-1 text-[0.6875rem] uppercase tracking-[0.28em] text-white/40 transition-colors hover:text-white"
       >
         {t("tn.landing.skip")}
       </button>

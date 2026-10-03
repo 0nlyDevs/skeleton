@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CinematicLanding, type LandingData } from "@/components/cinematic/cinematic-landing";
 import { isStaff } from "@/lib/auth/guards";
 import { getAuthContext } from "@/lib/auth/session";
+import { getLocale } from "@/lib/i18n/server";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
 import { countHandledCityRequests } from "@/modules/city-requests/city-requests.service";
 import { listServices } from "@/modules/city-services/city-services.service";
@@ -18,8 +19,10 @@ export const metadata: Metadata = { title: { absolute: "Terra Nova — portail d
 export default async function LandingPage() {
   const context = await getAuthContext();
   const user = context?.user ?? null;
+  const locale = await getLocale();
   const [services, news, handled] = await Promise.all([
-    listServices({}, user),
+    // F27 — services in the reader's language.
+    listServices({}, user, locale),
     listAnnouncements({ page: 1, limit: 3 }, user),
     countHandledCityRequests(),
   ]);

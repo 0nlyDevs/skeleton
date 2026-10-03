@@ -12,7 +12,7 @@ import type { LandingData } from "./cinematic-landing";
 
 function Kicker({ children }: { readonly children: string }) {
   return (
-    <p data-reveal className="mb-4 flex items-center gap-3 text-[11.5px] font-medium uppercase tracking-[0.32em] text-cyan-300/90">
+    <p data-reveal className="mb-4 flex items-center gap-3 text-[0.7188rem] font-medium uppercase tracking-[0.32em] text-cyan-300/90">
       <span className="h-px w-8 bg-cyan-300/60" />
       {children}
     </p>
@@ -46,7 +46,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
             <h2 data-reveal className="text-[clamp(2rem,4.4vw,3.4rem)] font-semibold leading-[1.05] tracking-tight">
               {t("tn.landing.portal.title")}
             </h2>
-            <p data-reveal className="mt-5 max-w-[52ch] text-[15.5px] leading-relaxed text-white/65">
+            <p data-reveal className="mt-5 max-w-[52ch] text-[0.9688rem] leading-relaxed text-white/65">
               {t("tn.landing.portal.body")}
             </p>
             <ul data-reveal-stagger className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -60,7 +60,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
                       <ArrowUpRight className="size-4 text-white/30 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-300" aria-hidden />
                     </span>
                     <span className="font-semibold">{path.title}</span>
-                    <span className="text-[13px] leading-snug text-white/55">{path.body}</span>
+                    <span className="text-[0.8125rem] leading-snug text-white/55">{path.body}</span>
                   </Link>
                 </li>
               ))}
@@ -77,7 +77,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
               <dd className="font-display text-[clamp(3rem,6vw,4.6rem)] font-bold leading-none text-white" data-count={stat.value}>
                 {stat.value}
               </dd>
-              <dt className="text-[13px] uppercase tracking-[0.2em] text-white/50">{stat.label}</dt>
+              <dt className="text-[0.8125rem] uppercase tracking-[0.2em] text-white/50">{stat.label}</dt>
             </div>
           ))}
         </dl>
@@ -93,7 +93,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
                 {t("tn.home.services_title")}
               </h2>
             </div>
-            <Link href="/services" data-reveal className="tn-cta-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px]">
+            <Link href="/services" data-reveal className="tn-cta-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.8438rem]">
               {t("tn.landing.services.all")}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
@@ -103,9 +103,9 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
               <li key={service.slug}>
                 <Link href={`/services/${service.slug}`} className="tn-card group flex h-full flex-col gap-3 p-5">
                   <ServiceIcon name={service.icon} className="size-11 rounded-full bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-300/30" />
-                  <span className="text-[11px] uppercase tracking-[0.22em] text-white/40">{service.category}</span>
-                  <span className="text-[16px] font-semibold leading-snug">{service.name}</span>
-                  <span className="line-clamp-2 text-[13px] text-white/55">{service.summary}</span>
+                  <span className="text-[0.6875rem] uppercase tracking-[0.22em] text-white/40">{service.category}</span>
+                  <span className="text-[1rem] font-semibold leading-snug">{service.name}</span>
+                  <span className="line-clamp-2 text-[0.8125rem] text-white/55">{service.summary}</span>
                 </Link>
               </li>
             ))}
@@ -121,7 +121,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
             <h2 data-reveal className="text-[clamp(1.9rem,4vw,3rem)] font-semibold leading-[1.08] tracking-tight">
               {t("tn.landing.agents.title")}
             </h2>
-            <p data-reveal className="mt-5 text-[15px] leading-relaxed text-white/65">
+            <p data-reveal className="mt-5 text-[0.9375rem] leading-relaxed text-white/65">
               {t("tn.landing.agents.body")}
             </p>
             <ul data-reveal-stagger className="mt-7 flex flex-col gap-3">
@@ -130,7 +130,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
                 { icon: Radio, key: "tn.landing.agents.point2" as MessageKey },
                 { icon: ShieldCheck, key: "tn.landing.agents.point3" as MessageKey },
               ].map((point) => (
-                <li key={point.key} className="flex items-center gap-3 text-[14.5px]">
+                <li key={point.key} className="flex items-center gap-3 text-[0.9062rem]">
                   <span className="grid size-8 place-items-center rounded-full bg-orange-400/10 text-orange-300 ring-1 ring-orange-300/30">
                     <point.icon className="size-4" aria-hidden />
                   </span>
@@ -139,7 +139,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
               ))}
             </ul>
             {data.viewer?.staff ? (
-              <Link href="/agent" data-reveal className="tn-cta-primary mt-8 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold">
+              <Link href="/agent" data-reveal className="tn-cta-primary mt-8 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.875rem] font-semibold">
                 {t("tn.nav.agent")}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -158,7 +158,7 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
                 {t("tn.home.news_title")}
               </h2>
             </div>
-            <Link href="/announcements" data-reveal className="tn-cta-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px]">
+            <Link href="/announcements" data-reveal className="tn-cta-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.8438rem]">
               {t("tn.landing.news.all")}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
@@ -170,12 +170,12 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
               {data.news.map((item) => (
                 <li key={item.slug}>
                   <Link href={`/announcements/${item.slug}`} className="tn-card group flex h-full flex-col gap-3 p-6">
-                    <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] ${item.category === "ALERT" ? "bg-red-400/15 text-red-300" : "bg-cyan-400/10 text-cyan-300"}`}>
+                    <span className={`w-fit rounded-full px-2.5 py-1 text-[0.6875rem] uppercase tracking-[0.18em] ${item.category === "ALERT" ? "bg-red-400/15 text-red-300" : "bg-cyan-400/10 text-cyan-300"}`}>
                       {t(`tn.category.${item.category}` as MessageKey)}
                     </span>
-                    <span className="text-[18px] font-semibold leading-snug">{item.title}</span>
-                    <span className="line-clamp-3 text-[13.5px] text-white/55">{item.summary}</span>
-                    {item.publishedAt ? <time dateTime={item.publishedAt} className="mt-auto text-[12px] text-white/40">{fmt.date(item.publishedAt)}</time> : null}
+                    <span className="text-[1.125rem] font-semibold leading-snug">{item.title}</span>
+                    <span className="line-clamp-3 text-[0.8438rem] text-white/55">{item.summary}</span>
+                    {item.publishedAt ? <time dateTime={item.publishedAt} className="mt-auto text-[0.75rem] text-white/40">{fmt.date(item.publishedAt)}</time> : null}
                   </Link>
                 </li>
               ))}
@@ -189,23 +189,23 @@ export function LandingSections({ data }: { readonly data: LandingData }) {
         <h2 data-reveal className="font-display mx-auto max-w-[14ch] text-[clamp(2.8rem,8vw,7rem)] font-bold leading-[0.95]">
           {t("tn.landing.final.title")}
         </h2>
-        <p data-reveal className="mx-auto mt-6 max-w-[52ch] text-[16px] text-white/65">{t("tn.landing.final.body")}</p>
+        <p data-reveal className="mx-auto mt-6 max-w-[52ch] text-[1rem] text-white/65">{t("tn.landing.final.body")}</p>
         <div data-reveal className="mt-10 flex flex-wrap justify-center gap-3">
           {data.viewer ? (
-            <Link href="/contact" className="tn-cta-primary rounded-full px-7 py-3.5 text-[15px] font-semibold">
+            <Link href="/contact" className="tn-cta-primary rounded-full px-7 py-3.5 text-[0.9375rem] font-semibold">
               {t("tn.home.cta_request")}
             </Link>
           ) : (
-            <Link href="/register" className="tn-cta-primary rounded-full px-7 py-3.5 text-[15px] font-semibold">
+            <Link href="/register" className="tn-cta-primary rounded-full px-7 py-3.5 text-[0.9375rem] font-semibold">
               {t("tn.home.cta_join")}
             </Link>
           )}
-          <Link href="/services" className="tn-cta-ghost rounded-full px-7 py-3.5 text-[15px]">
+          <Link href="/services" className="tn-cta-ghost rounded-full px-7 py-3.5 text-[0.9375rem]">
             {t("tn.home.cta_services")}
           </Link>
         </div>
-        <footer className="mx-auto mt-[16vh] flex max-w-[1240px] flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-[12.5px] text-white/40">
-          <span className="font-display text-[15px] text-white/70">TERRA NOVA</span>
+        <footer className="mx-auto mt-[16vh] flex max-w-[1240px] flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-[0.7812rem] text-white/40">
+          <span className="font-display text-[0.9375rem] text-white/70">TERRA NOVA</span>
           <span>{t("tn.landing.footer")}</span>
           <span className="flex gap-4">
             <Link href="/privacy" className="hover:text-white">{t("footer.privacy")}</Link>
