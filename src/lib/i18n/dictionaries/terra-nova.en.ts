@@ -243,6 +243,7 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.agent.req.priority": "Priority",
   "tn.agent.req.assignee": "Agent in charge",
   "tn.agent.req.take": "Take this request",
+  "tn.agent.req.take_first": "Take this request to change its status.",
   "tn.agent.req.release": "Put back in the queue",
   "tn.agent.req.updated": "Request updated.",
   "tn.agent.req.back": "All requests",

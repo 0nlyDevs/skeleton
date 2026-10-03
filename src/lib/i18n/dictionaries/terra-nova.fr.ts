@@ -246,6 +246,7 @@ export const frTerraNova = {
   "tn.agent.req.priority": "Priorité",
   "tn.agent.req.assignee": "Agent responsable",
   "tn.agent.req.take": "Prendre en charge",
+  "tn.agent.req.take_first": "Prenez la demande en charge pour changer son statut.",
   "tn.agent.req.release": "Remettre dans la file",
   "tn.agent.req.updated": "Demande mise à jour.",
   "tn.agent.req.back": "Toutes les demandes",
