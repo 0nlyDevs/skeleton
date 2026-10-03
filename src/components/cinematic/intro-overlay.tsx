@@ -18,14 +18,15 @@ export const IntroOverlay = forwardRef<HTMLDivElement, { readonly onSkip: () => 
       <div data-intro="panel-a" className="tn-intro-panel absolute inset-0 [clip-path:polygon(0_0,100%_0,0_100%)]" />
       <div data-intro="panel-b" className="tn-intro-panel absolute inset-0 [clip-path:polygon(100%_0,100%_100%,0_100%)]" />
 
-      {/* Hairline along the seam; its length and angle are set from the viewport. */}
-      <div data-intro="slash" aria-hidden className="tn-slash absolute bottom-0 left-0 h-px origin-left" />
+      {/* Hairline that starts where the star starts and grows with it: its head is the star. */}
+      <div data-intro="slash" aria-hidden className="tn-slash absolute left-[4vw] top-[96vh] h-px origin-left" />
 
-      <div data-intro="star" aria-hidden className="absolute left-[8vw] top-[92vh] size-14 sm:size-16">
+      {/* Centred on the seam (4vw + 96vh = one diagonal): negative margins, so GSAP transforms stay free. */}
+      <div data-intro="star" aria-hidden className="absolute left-[4vw] top-[96vh] -ml-7 -mt-7 size-14 sm:-ml-8 sm:-mt-8 sm:size-16">
         <canvas data-intro="star-canvas" className="size-full" />
       </div>
 
-      <div data-intro="label" aria-hidden className="absolute bottom-[calc(8vh-0.35rem)] left-[calc(8vw+2.75rem)] flex items-baseline gap-3 text-white">
+      <div data-intro="label" aria-hidden className="absolute bottom-[calc(4vh+1.6rem)] left-[calc(4vw+2.25rem)] flex items-baseline gap-3 text-white">
         <span className="text-[1.375rem] font-light leading-none tabular-nums tracking-tight">
           <span data-intro="counter">0</span>
           <span className="text-white/40">%</span>
