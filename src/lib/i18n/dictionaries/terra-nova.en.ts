@@ -3,6 +3,14 @@ import type { frTerraNova } from "./terra-nova.fr";
 /** English copy for the Terra Nova city platform, key for key with French. */
 export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   // --- Navigation ---
+  "tn.nav.group.procedures": "My procedures",
+  "tn.nav.group.city": "My city",
+  "tn.nav.group.community": "Community",
+  "tn.nav.request": "Make a request",
+  "tn.nav.more": "More",
+  "tn.nav.staff": "City team",
+  "tn.nav.my_district": "My district",
+  "tn.nav.choose_district": "Choose my district",
   "tn.nav.home": "Home",
   "tn.nav.services": "Services",
   "tn.nav.announcements": "Announcements",
@@ -137,6 +145,16 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.contact.sent_email": "A confirmation email was also sent to you.",
 
   // --- Citizen space (D03) ---
+  "tn.space.question": "What would you like to do today?",
+  "tn.space.do.request": "Make a request",
+  "tn.space.do.request_body": "A question or a problem: write to the city and follow the answer here.",
+  "tn.space.do.services": "Find a service",
+  "tn.space.do.services_body": "Hours, contacts and procedures for every city service.",
+  "tn.space.do.alerts": "City alerts",
+  "tn.space.do.alerts_body": "What is happening now, and what to do.",
+  "tn.space.do.map": "City map",
+  "tn.space.do.map_body": "Each district's state, places and where you live.",
+  "tn.space.attention": "{count} request(s) are waiting for your answer.",
   "tn.space.title": "My space",
   "tn.space.subtitle": "Your details and all your requests to the city.",
   "tn.space.profile": "My details",

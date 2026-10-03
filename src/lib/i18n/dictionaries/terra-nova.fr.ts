@@ -5,6 +5,14 @@
  */
 export const frTerraNova = {
   // --- Navigation ---
+  "tn.nav.group.procedures": "Mes démarches",
+  "tn.nav.group.city": "Ma ville",
+  "tn.nav.group.community": "Communauté",
+  "tn.nav.request": "Faire une demande",
+  "tn.nav.more": "Plus",
+  "tn.nav.staff": "Équipe municipale",
+  "tn.nav.my_district": "Mon quartier",
+  "tn.nav.choose_district": "Choisir mon quartier",
   "tn.nav.home": "Accueil",
   "tn.nav.services": "Services",
   "tn.nav.announcements": "Annonces",
@@ -140,6 +148,16 @@ export const frTerraNova = {
   "tn.contact.sent_email": "Un e-mail de confirmation vous a aussi été envoyé.",
 
   // --- Citizen space (D03) ---
+  "tn.space.question": "Que voulez-vous faire aujourd'hui ?",
+  "tn.space.do.request": "Faire une demande",
+  "tn.space.do.request_body": "Une question, un problème : écrivez à la mairie et suivez la réponse ici.",
+  "tn.space.do.services": "Trouver un service",
+  "tn.space.do.services_body": "Horaires, contacts et démarches de chaque service de la ville.",
+  "tn.space.do.alerts": "Alertes de la ville",
+  "tn.space.do.alerts_body": "Ce qui se passe maintenant, et ce qu'il faut faire.",
+  "tn.space.do.map": "Carte de la cité",
+  "tn.space.do.map_body": "L'état de chaque quartier, les lieux et votre position.",
+  "tn.space.attention": "{count} demande(s) attendent votre réponse.",
   "tn.space.title": "Mon espace",
   "tn.space.subtitle": "Vos informations et toutes vos démarches auprès de la ville.",
   "tn.space.profile": "Mes informations",

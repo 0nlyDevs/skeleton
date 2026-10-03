@@ -1,4 +1,4 @@
-import { Bell, CheckCircle2, Clock, FileText, Hourglass, Pencil, Plus } from "lucide-react";
+import { ArrowRight, Building2, FileText, Globe2, Hourglass, MapPin, Pencil, Send, Siren } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
@@ -18,7 +18,8 @@ import { getServerDictionary } from "@/lib/i18n/server";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
 import { cityRequestStats, listCityRequests } from "@/modules/city-requests/city-requests.service";
 import { listServices } from "@/modules/city-services/city-services.service";
-import { getUnreadCount } from "@/modules/notifications/notifications.service";
+import { getZoneStatuses, viewerZone } from "@/modules/alerts/alerts.service";
+import { cityZoneLabelKey } from "@/modules/alerts/city-zones";
 
 export const metadata: Metadata = { title: "Mon espace" };
 
@@ -34,12 +35,15 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
   const { t, locale } = await getServerDictionary();
   const raw = (await searchParams).history;
   const history: HistoryFilter = raw === "open" || raw === "done" ? raw : "all";
-  const [requests, stats, unread, news] = await Promise.all([
+  const [requests, stats, news, zone, zones] = await Promise.all([
     listCityRequests({ scope: "mine", page: 1, limit: 50, status: HISTORY_FILTERS[history] }, user),
     cityRequestStats(user, "mine"),
-    getUnreadCount(user.id),
     listAnnouncements({ page: 1, limit: 3 }, user),
+    viewerZone(user),
+    getZoneStatuses(),
   ]);
+  const district = zone ? zones.find((entry) => entry.zone === zone) : undefined;
+  const waiting = stats.WAITING_CITIZEN ?? 0;
 
   const openCount = (stats.NEW ?? 0) + (stats.IN_PROGRESS ?? 0) + (stats.WAITING_CITIZEN ?? 0);
   const doneCount = (stats.RESOLVED ?? 0) + (stats.CLOSED ?? 0);
@@ -67,48 +71,73 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
     { key: "done", label: t("tn.space.history.done", { count: doneCount }) },
   ];
 
-  const counters = [
-    { icon: Clock, label: t("tn.space.counts.open"), value: (stats.NEW ?? 0) + (stats.IN_PROGRESS ?? 0) },
-    { icon: Hourglass, label: t("tn.space.counts.waiting"), value: stats.WAITING_CITIZEN ?? 0, highlight: (stats.WAITING_CITIZEN ?? 0) > 0 },
-    { icon: CheckCircle2, label: t("tn.space.counts.done"), value: (stats.RESOLVED ?? 0) + (stats.CLOSED ?? 0) },
-    { icon: Bell, label: t("tn.space.notifications"), value: unread, href: "/notifications" },
+  // The things people come to do, in plain words, first on the page.
+  const actions = [
+    { href: "/contact", icon: Send, title: t("tn.space.do.request"), body: t("tn.space.do.request_body") },
+    { href: "/services", icon: Building2, title: t("tn.space.do.services"), body: t("tn.space.do.services_body") },
+    { href: "/alerts", icon: Siren, title: t("tn.space.do.alerts"), body: t("tn.space.do.alerts_body") },
+    { href: "/city-map", icon: Globe2, title: t("tn.space.do.map"), body: t("tn.space.do.map_body") },
   ];
+  const statusTone = { SAFE: "border-success/40 bg-success/8", WATCH: "border-primary/40 bg-accent", WARNING: "border-warning/50 bg-warning/10", DANGER: "border-error/50 bg-error/10" } as const;
 
   return (
     <div className="mx-auto flex w-full max-w-[920px] flex-col gap-5">
-      <header className="flex flex-wrap items-end justify-between gap-3 px-1">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t("tn.space.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("tn.space.subtitle")}</p>
-        </div>
-        <Button asChild>
-          <Link href="/contact">
-            <Plus aria-hidden />
-            {t("tn.space.new_request")}
-          </Link>
-        </Button>
+      <header className="flex flex-col gap-1 px-1">
+        <h1 className="text-2xl font-semibold tracking-tight">{t("tn.home.hello", { name: user.name.split(" ")[0] ?? user.name })}</h1>
+        <p className="text-sm text-muted-foreground">{t("tn.space.question")}</p>
       </header>
 
       {showWelcome ? <WelcomeGuide name={user.name.split(" ")[0] ?? user.name} steps={welcome} /> : null}
       {showWizard ? <WelcomeWizard name={user.name.split(" ")[0] ?? user.name} image={user.image} services={wizardServices} /> : null}
 
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {counters.map((counter) => {
-          const body = (
-            <>
-              <counter.icon className="size-4 text-muted-foreground" aria-hidden />
-              <span className="text-2xl font-semibold tabular-nums">{counter.value}</span>
-              <span className="text-[0.7812rem] text-muted-foreground">{counter.label}</span>
-            </>
-          );
-          const className = `flex h-full flex-col gap-1 rounded-2xl border bg-card p-4 shadow-panel ${counter.highlight ? "border-warning/60" : "border-border/70"}`;
-          return (
-            <li key={counter.label}>
-              {counter.href ? <Link href={counter.href} className={`${className} hover:border-primary/40`}>{body}</Link> : <div className={className}>{body}</div>}
-            </li>
-          );
-        })}
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label={t("tn.space.question")}>
+        {actions.map((action) => (
+          <li key={action.href}>
+            <Link href={action.href} className="group flex h-full flex-col gap-2 rounded-2xl border border-border/70 bg-card p-4 shadow-panel transition-colors hover:border-primary/50">
+              <span className="grid size-10 place-items-center rounded-xl bg-accent text-primary">
+                <action.icon className="size-5" aria-hidden />
+              </span>
+              <span className="flex items-center gap-1 font-semibold">
+                {action.title}
+                <ArrowRight className="size-4 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+              </span>
+              <span className="text-[0.8125rem] leading-snug text-muted-foreground">{action.body}</span>
+            </Link>
+          </li>
+        ))}
       </ul>
+
+      {district ? (
+        <Link href="/city-map" className={`flex flex-wrap items-center gap-3 rounded-2xl border p-4 ${statusTone[district.status]}`}>
+          <MapPin className="size-5 shrink-0 text-primary" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">
+              {t("tn.nav.my_district")} · {t(cityZoneLabelKey(district.zone))}
+            </span>
+            <span className="block text-[0.8125rem] text-muted-foreground">
+              {t(`alerts.zone_status.${district.status}` as MessageKey)} — {t(`alerts.zone_status_body.${district.status}` as MessageKey)}
+            </span>
+          </span>
+          <span className="text-[0.8125rem] font-semibold tabular-nums">
+            {t("alerts.map.health")} {district.score}/100
+          </span>
+        </Link>
+      ) : (
+        <Link href="/settings/profile" className="flex items-center gap-3 rounded-2xl border border-dashed border-primary/50 p-4 hover:bg-accent">
+          <MapPin className="size-5 shrink-0 text-primary" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold text-primary">{t("tn.nav.choose_district")}</span>
+            <span className="block text-[0.8125rem] text-muted-foreground">{t("alerts.location.required")}</span>
+          </span>
+        </Link>
+      )}
+
+      {waiting > 0 ? (
+        <p className="flex items-center gap-2 rounded-2xl border border-warning/60 bg-warning/10 px-4 py-3 text-[0.875rem] font-medium" role="status">
+          <Hourglass className="size-4 shrink-0" aria-hidden />
+          {t("tn.space.attention", { count: waiting })}
+        </p>
+      ) : null}
 
       <div className="grid gap-5 md:grid-cols-[1fr_300px]">
         <section className="flex flex-col gap-3" aria-labelledby="my-requests">
