@@ -267,6 +267,10 @@ export async function deleteUserSessions(userId: string): Promise<number> {
   return count;
 }
 
+export async function countPasskeys(userId: string): Promise<number> {
+  return prisma.passkey.count({ where: { userId } });
+}
+
 export async function countCredentialAccounts(userId: string): Promise<number> {
   return prisma.account.count({ where: { userId, providerId: "credential", password: { not: null } } });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Eye, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, Database, Eye, ShieldCheck, UserRound } from "lucide-react";
 import Link from "@/components/ui/link";
 import { usePathname } from "next/navigation";
 
@@ -13,6 +13,7 @@ const TABS: ReadonlyArray<{ href: string; key: MessageKey; icon: typeof UserRoun
   { href: "/settings/security", key: "settings.tabs.account", icon: ShieldCheck },
   { href: "/settings/privacy", key: "settings.tabs.privacy", icon: Eye },
   { href: "/settings/notifications", key: "settings.tabs.notifications", icon: Bell },
+  { href: "/settings/data", key: "tn.data.tab", icon: Database },
 ];
 
 export function SettingsTabs({ profileHref }: { readonly profileHref: string | null }) {

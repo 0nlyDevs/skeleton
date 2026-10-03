@@ -105,7 +105,7 @@ export function PasskeysCard() {
   };
 
   return (
-    <Card>
+    <Card id="passkeys-card" className="scroll-mt-24">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Fingerprint className="size-4 text-muted-foreground" aria-hidden />

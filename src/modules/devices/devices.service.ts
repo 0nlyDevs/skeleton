@@ -59,7 +59,7 @@ export async function recordSignIn(input: {
     }
 
     const knownCount = await prisma.knownDevice.count({ where: { userId: input.userId } });
-    await prisma.knownDevice.create({ data: { userId: input.userId, deviceHash, label, lastIp: input.ip } });
+    const created = await prisma.knownDevice.create({ data: { userId: input.userId, deviceHash, label, lastIp: input.ip } });
 
     // The very first device is the account's own creation, not an intrusion.
     if (knownCount === 0) return;
@@ -70,10 +70,47 @@ export async function recordSignIn(input: {
       type: "SECURITY",
       title: "Nouvelle connexion à votre compte — est-ce bien vous ?",
       body: `${browser} sur ${os}${input.ip ? ` · IP ${input.ip}` : ""} · ${when} (UTC). Si ce n'était pas vous, déconnectez les autres appareils et changez votre mot de passe.`,
-      link: "/settings/security?alert=new-device",
+      // F54 — the alert opens on this very device, with "it was me / it was not me".
+      link: `/settings/security?alert=new-device&device=${created.id}`,
       email: true,
     });
   } catch (error) {
     logger.warn("device tracking failed", { userId: input.userId, error });
   }
+}
+
+export interface KnownDeviceDto {
+  readonly id: string;
+  readonly label: string;
+  readonly firstSeenAt: string;
+  readonly lastSeenAt: string;
+  /** The browser making this request. */
+  readonly current: boolean;
+}
+
+/** F54 — the browsers that have signed in to this account, most recent first. */
+export async function listKnownDevices(userId: string, currentDeviceId: string | null): Promise<KnownDeviceDto[]> {
+  const currentHash = currentDeviceId && isDeviceId(currentDeviceId) ? hash(currentDeviceId) : null;
+  const rows = await prisma.knownDevice.findMany({ where: { userId }, orderBy: { lastSeenAt: "desc" }, take: 50 });
+  return rows.map((row) => ({
+    id: row.id,
+    label: row.label,
+    firstSeenAt: row.firstSeenAt.toISOString(),
+    lastSeenAt: row.lastSeenAt.toISOString(),
+    current: row.deviceHash === currentHash,
+  }));
+}
+
+/**
+ * Forget a device: its next sign-in counts as new again and raises the alert.
+ * Only the owner's own rows can be removed.
+ */
+export async function forgetKnownDevice(userId: string, deviceId: string): Promise<boolean> {
+  const { count } = await prisma.knownDevice.deleteMany({ where: { id: deviceId, userId } });
+  return count > 0;
+}
+
+/** Whether the device belongs to this account (for "yes, it was me"). */
+export async function ownsKnownDevice(userId: string, deviceId: string): Promise<boolean> {
+  return (await prisma.knownDevice.count({ where: { id: deviceId, userId } })) > 0;
 }

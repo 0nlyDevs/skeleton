@@ -595,6 +595,18 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
 }
 
 /*
+ * F55/F56 — printable documents (request summary, personal data report):
+ * printing such a page prints only the document, not the app around it.
+ */
+@media print {
+  body:has(.print-document) * {
+    visibility: hidden;
+  }
+  body:has(.print-document) .print-document,
+  body:has(.print-document) .print-document * {
+    visibility: visible;
+  }
+  body:has(.print-document) .print-document {
  * F71 — printing the access sheets prints only the sheets, one per page,
  * whatever page the dialog was opened on.
  */
@@ -612,3 +624,4 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
     color: #000;
   }
 }
+
