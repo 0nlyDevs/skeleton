@@ -197,7 +197,7 @@ export function CinematicLanding({ data }: { readonly data: LandingData }) {
           <div data-hero="title-wrap" className="absolute inset-x-0 bottom-[46svh] z-[1] flex flex-col items-center px-2 text-center portrait:bottom-[38svh]">
             <p
               data-hero="kicker"
-              className="absolute bottom-[calc(min(19vw,36svh)*0.52+1.6rem)] text-[11px] uppercase tracking-[0.45em] text-white/60 opacity-0 sm:text-[12px]"
+              className="absolute bottom-[calc(min(19vw,36svh)*0.52+1.6rem)] text-[0.6875rem] uppercase tracking-[0.45em] text-white/60 opacity-0 sm:text-[0.75rem]"
             >
               {t("tn.home.badge")}
             </p>
@@ -206,33 +206,33 @@ export function CinematicLanding({ data }: { readonly data: LandingData }) {
           {/* Scrim over the planet so the text and buttons on it stay readable. */}
           <div data-hero-ui data-hero="scrim" aria-hidden className="tn-hero-scrim pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-[64svh] opacity-0" />
           <div data-hero="hero-ui" className="absolute inset-x-0 bottom-[12svh] z-[3] flex flex-col items-center gap-5 px-4 text-center">
-            <p data-hero-ui className="max-w-[44ch] text-[14.5px] font-medium leading-relaxed text-white opacity-0 [text-shadow:0_1px_14px_rgb(0_0_0/0.9)] sm:text-[16px]">
+            <p data-hero-ui className="max-w-[44ch] text-[0.9062rem] font-medium leading-relaxed text-white opacity-0 [text-shadow:0_1px_14px_rgb(0_0_0/0.9)] sm:text-[1rem]">
               {data.viewer ? t("tn.home.hello", { name: data.viewer.firstName }) + " — " : ""}
               {t("tn.home.subtitle")}
             </p>
             <div data-hero-ui className="flex flex-wrap justify-center gap-3 opacity-0">
               {data.viewer ? (
                 <>
-                  <Link href="/contact" className="tn-cta-primary rounded-full px-6 py-3 text-[14.5px] font-semibold">
+                  <Link href="/contact" className="tn-cta-primary rounded-full px-6 py-3 text-[0.9062rem] font-semibold">
                     {t("tn.home.cta_request")}
                   </Link>
-                  <Link href="/space" className="tn-cta-ghost rounded-full px-6 py-3 text-[14.5px]">
+                  <Link href="/space" className="tn-cta-ghost rounded-full px-6 py-3 text-[0.9062rem]">
                     {t("tn.home.cta_space")}
                   </Link>
                 </>
               ) : (
                 <>
-                  <Link href="/register" className="tn-cta-primary rounded-full px-6 py-3 text-[14.5px] font-semibold">
+                  <Link href="/register" className="tn-cta-primary rounded-full px-6 py-3 text-[0.9062rem] font-semibold">
                     {t("tn.home.cta_join")}
                   </Link>
-                  <Link href="/services" className="tn-cta-ghost rounded-full px-6 py-3 text-[14.5px]">
+                  <Link href="/services" className="tn-cta-ghost rounded-full px-6 py-3 text-[0.9062rem]">
                     {t("tn.home.cta_services")}
                   </Link>
                 </>
               )}
             </div>
           </div>
-          <span data-hero-ui className="absolute bottom-[2.5svh] left-1/2 z-[3] flex -translate-x-1/2 flex-col items-center gap-0.5 text-[10px] uppercase tracking-[0.4em] text-white/50 opacity-0">
+          <span data-hero-ui className="absolute bottom-[2.5svh] left-1/2 z-[3] flex -translate-x-1/2 flex-col items-center gap-0.5 text-[0.625rem] uppercase tracking-[0.4em] text-white/50 opacity-0">
             {t("tn.landing.scroll")}
             <ChevronDown className="tn-bounce size-4" aria-hidden />
           </span>

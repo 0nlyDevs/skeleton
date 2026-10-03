@@ -589,3 +589,25 @@ html.lenis body {
   box-shadow: 0 -2px 60px rgb(255 154 92 / 0.25);
   mask-image: radial-gradient(130vw 62svh at 50% 100%, #000 60%, transparent 61.5%);
 }
+
+/* High contrast on the landing (F23): opaque panels, full-white text, solid outlines. */
+html[data-contrast="high"] .tn-landing [class*="text-white/"] {
+  color: #fff !important;
+}
+html[data-contrast="high"] .tn-glass,
+html[data-contrast="high"] .tn-card {
+  background: rgb(0 0 0 / 0.9);
+  border-color: rgb(255 255 255 / 0.65);
+  backdrop-filter: none;
+}
+html[data-contrast="high"] .tn-cta-ghost {
+  background: #000;
+  border-color: #fff;
+}
+html[data-contrast="high"] .tn-hero-scrim {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.92) 0%, rgb(0 0 0 / 0.8) 45%, rgb(0 0 0 / 0) 100%);
+}
+html[data-contrast="high"] .tn-landing header nav {
+  background: #000;
+  border-color: #fff;
+}
