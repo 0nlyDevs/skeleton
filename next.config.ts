@@ -178,6 +178,18 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
+        // Ask Chromium browsers for the connection hints the layout uses to
+        // serve the light page to slow or metered connections (see lib/eco).
+        source: "/:path*",
+        headers: [{ key: "Accept-CH", value: "Save-Data, ECT" }],
+      },
+      {
+        // 3D models are versioned by name (`earth-v2.glb`): a new model gets a
+        // new name, so the browser may keep each one for good.
+        source: "/models/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
         // API responses are per-session; never let a proxy cache them.
         source: "/api/:path*",
         headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],

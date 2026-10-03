@@ -4,7 +4,7 @@ import { Leaf } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
-import { ECO_COOKIE } from "@/lib/eco";
+import { ECO_AUTO_COOKIE, ECO_COOKIE } from "@/lib/eco";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,7 +21,10 @@ export function EcoToggle({ className }: { readonly className?: string }) {
 
   const toggle = () => {
     const next = !on;
+    // An explicit choice replaces the automatic one (slow connection).
     document.cookie = `${ECO_COOKIE}=${next ? "1" : "0"}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    document.cookie = `${ECO_AUTO_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    document.documentElement.removeAttribute("data-eco-auto");
     if (next) document.documentElement.setAttribute("data-eco", "");
     else document.documentElement.removeAttribute("data-eco");
     setOn(next);

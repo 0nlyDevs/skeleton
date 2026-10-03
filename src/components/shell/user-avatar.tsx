@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, initials } from "@/lib/utils";
+import { storedSrc } from "@/lib/media";
 
 import { useProfileOverride } from "@/hooks/use-profile-overrides";
 
@@ -32,7 +33,7 @@ export function UserAvatar({
   return (
     <span className={cn("relative inline-flex shrink-0", className)}>
       <Avatar className={cn(SIZES[size], size === "xl" && "ring-4 ring-card")}>
-        {image ? <AvatarImage src={image} alt="" className="object-cover" /> : null}
+        {image ? <AvatarImage src={storedSrc(image, size === "xl" ? 320 : 160)} alt="" className="object-cover" /> : null}
         <AvatarFallback className={cn(size === "xl" ? "text-3xl" : size === "2xs" ? "text-[0.4375rem]" : "text-[0.75rem]", "font-semibold")}>
           {initials(name)}
         </AvatarFallback>

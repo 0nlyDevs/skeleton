@@ -21,8 +21,11 @@ import path from "node:path";
 
 import { env } from "@/lib/env";
 
-/** Filenames are `<uuid>.<ext>` — the only shape this module accepts. */
-const SAFE_FILENAME = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.[a-z0-9]{2,5}$/;
+/**
+ * Filenames are `<uuid>.<ext>`, or `<uuid>.w<width>.<ext>` for a resized copy
+ * of an image — the only shapes this module accepts.
+ */
+const SAFE_FILENAME = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(\.w\d{3,4})?\.[a-z0-9]{2,5}$/;
 
 export function isSafeFilename(filename: string): boolean {
   return SAFE_FILENAME.test(filename);
@@ -112,6 +115,11 @@ export async function saveUpload(filename: string, data: Buffer): Promise<void> 
 
 export async function readUpload(filename: string): Promise<Buffer> {
   return readFile(resolveUploadPath(filename));
+}
+
+/** The stored name of `filename` resized to `width` pixels. */
+export function variantFilename(filename: string, width: number): string {
+  return filename.replace(/\.([a-z0-9]{2,5})$/, `.w${width}.$1`);
 }
 
 /** Remove a file, tolerating an already-missing one. */

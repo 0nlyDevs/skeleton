@@ -1,6 +1,7 @@
 "use client";
 
 import { Toaster } from "@/components/ui/sonner";
+import { LightModeNotice } from "@/components/layout/light-mode-notice";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Dictionary, Locale } from "@/lib/i18n";
 
@@ -46,6 +47,7 @@ export function AppProviders({
               {children}
               <Toaster />
               <ServiceWorkerRegistration />
+              <LightModeNotice />
             </CallProvider>
           </RealtimeProvider>
         </TooltipProvider>

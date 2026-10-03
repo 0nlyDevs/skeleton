@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { storedSrc, storedSrcSet } from "@/lib/media";
 import type { PostMediaDto } from "@/modules/posts/posts.dto";
 
 /**
@@ -32,7 +33,9 @@ export function MediaGrid({ media }: { readonly media: readonly PostMediaDto[] }
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- authorised, already-optimised WebP */}
           <img
-            src={single.url}
+            src={storedSrc(single.url, 1080)}
+            srcSet={storedSrcSet(single.url)}
+            sizes="(max-width: 700px) 100vw, 640px"
             alt={t("post.image_alt", { n: 1 })}
             loading="lazy"
             decoding="async"
@@ -57,7 +60,9 @@ export function MediaGrid({ media }: { readonly media: readonly PostMediaDto[] }
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- authorised, already-optimised WebP */}
               <img
-                src={item.url}
+                src={storedSrc(item.url, 640)}
+                srcSet={storedSrcSet(item.url)}
+                sizes="(max-width: 700px) 50vw, 320px"
                 alt={t("post.image_alt", { n: index + 1 })}
                 loading="lazy"
                 decoding="async"

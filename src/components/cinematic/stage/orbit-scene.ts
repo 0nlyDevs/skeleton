@@ -38,7 +38,7 @@ import { seeded } from "./noise";
  * camera down onto that beacon, with the dust of space streaking past.
  */
 
-const PLANET_URL = "/models/nova.glb";
+const PLANET_URL = "/models/nova-v2.glb";
 const PLANET_SIZE = 2_873_024;
 
 /** Where the star is in the sky, and so where the light comes from. */

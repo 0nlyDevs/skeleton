@@ -1,0 +1,272 @@
+{
+  "measuredAt": "2026-10-03T20:17:58.329Z",
+  "method": "EcoIndex",
+  "base": "local production build",
+  "pages": [
+    {
+      "path": "/",
+      "label": "Accueil",
+      "normal": {
+        "dom": 586,
+        "requests": 40,
+        "sizeKb": 1913,
+        "loadMs": 382,
+        "score": 58,
+        "grade": "C",
+        "gco2e": 1.85,
+        "waterCl": 2.77
+      },
+      "light": {
+        "dom": 507,
+        "requests": 33,
+        "sizeKb": 566,
+        "loadMs": 234,
+        "score": 68,
+        "grade": "C",
+        "gco2e": 1.63,
+        "waterCl": 2.45
+      },
+      "slow3gLoadMs": 11920,
+      "before": {
+        "sizeKb": 3633,
+        "requests": 51,
+        "grade": "D"
+      }
+    },
+    {
+      "path": "/login",
+      "label": "Connexion",
+      "normal": {
+        "dom": 333,
+        "requests": 45,
+        "sizeKb": 3005,
+        "loadMs": 346,
+        "score": 64,
+        "grade": "C",
+        "gco2e": 1.71,
+        "waterCl": 2.57
+      },
+      "light": {
+        "dom": 335,
+        "requests": 32,
+        "sizeKb": 556,
+        "loadMs": 344,
+        "score": 76,
+        "grade": "B",
+        "gco2e": 1.48,
+        "waterCl": 2.22
+      },
+      "slow3gLoadMs": 12285,
+      "before": {
+        "sizeKb": 6067,
+        "requests": 56,
+        "grade": "C"
+      }
+    },
+    {
+      "path": "/services",
+      "label": "Services municipaux",
+      "normal": {
+        "dom": 553,
+        "requests": 30,
+        "sizeKb": 515,
+        "loadMs": 249,
+        "score": 67,
+        "grade": "C",
+        "gco2e": 1.65,
+        "waterCl": 2.48
+      },
+      "light": {
+        "dom": 553,
+        "requests": 30,
+        "sizeKb": 515,
+        "loadMs": 251,
+        "score": 67,
+        "grade": "C",
+        "gco2e": 1.65,
+        "waterCl": 2.48
+      },
+      "slow3gLoadMs": 11079,
+      "before": {
+        "sizeKb": 625,
+        "requests": 43,
+        "grade": "C"
+      }
+    },
+    {
+      "path": "/services/sante",
+      "label": "Fiche d'un service",
+      "normal": {
+        "dom": 314,
+        "requests": 30,
+        "sizeKb": 503,
+        "loadMs": 278,
+        "score": 77,
+        "grade": "B",
+        "gco2e": 1.45,
+        "waterCl": 2.18
+      },
+      "light": {
+        "dom": 311,
+        "requests": 30,
+        "sizeKb": 503,
+        "loadMs": 234,
+        "score": 78,
+        "grade": "B",
+        "gco2e": 1.45,
+        "waterCl": 2.17
+      },
+      "slow3gLoadMs": 10977,
+      "before": {
+        "sizeKb": 613,
+        "requests": 43,
+        "grade": "B"
+      }
+    },
+    {
+      "path": "/announcements",
+      "label": "Annonces",
+      "normal": {
+        "dom": 350,
+        "requests": 30,
+        "sizeKb": 500,
+        "loadMs": 260,
+        "score": 76,
+        "grade": "B",
+        "gco2e": 1.48,
+        "waterCl": 2.22
+      },
+      "light": {
+        "dom": 349,
+        "requests": 30,
+        "sizeKb": 500,
+        "loadMs": 245,
+        "score": 76,
+        "grade": "B",
+        "gco2e": 1.48,
+        "waterCl": 2.22
+      },
+      "slow3gLoadMs": 10973,
+      "before": {
+        "sizeKb": 610,
+        "requests": 43,
+        "grade": "B"
+      }
+    },
+    {
+      "path": "/alerts",
+      "label": "Alertes",
+      "normal": {
+        "dom": 332,
+        "requests": 31,
+        "sizeKb": 535,
+        "loadMs": 274,
+        "score": 76,
+        "grade": "B",
+        "gco2e": 1.47,
+        "waterCl": 2.21
+      },
+      "light": {
+        "dom": 334,
+        "requests": 31,
+        "sizeKb": 535,
+        "loadMs": 350,
+        "score": 76,
+        "grade": "B",
+        "gco2e": 1.47,
+        "waterCl": 2.21
+      },
+      "slow3gLoadMs": 11676,
+      "before": {
+        "sizeKb": 645,
+        "requests": 44,
+        "grade": "B"
+      }
+    },
+    {
+      "path": "/city-map",
+      "label": "Carte de la cité",
+      "normal": {
+        "dom": 731,
+        "requests": 36,
+        "sizeKb": 741,
+        "loadMs": 343,
+        "score": 59,
+        "grade": "C",
+        "gco2e": 1.82,
+        "waterCl": 2.73
+      },
+      "light": {
+        "dom": 363,
+        "requests": 31,
+        "sizeKb": 542,
+        "loadMs": 360,
+        "score": 75,
+        "grade": "B",
+        "gco2e": 1.5,
+        "waterCl": 2.25
+      },
+      "slow3gLoadMs": 11871,
+      "before": {
+        "sizeKb": 851,
+        "requests": 48,
+        "grade": "C"
+      }
+    },
+    {
+      "path": "/glossary",
+      "label": "Glossaire",
+      "normal": {
+        "dom": 290,
+        "requests": 29,
+        "sizeKb": 489,
+        "loadMs": 238,
+        "score": 79,
+        "grade": "B",
+        "gco2e": 1.43,
+        "waterCl": 2.14
+      },
+      "light": {
+        "dom": 291,
+        "requests": 29,
+        "sizeKb": 489,
+        "loadMs": 243,
+        "score": 79,
+        "grade": "B",
+        "gco2e": 1.43,
+        "waterCl": 2.14
+      },
+      "slow3gLoadMs": 10863,
+      "before": {
+        "sizeKb": 599,
+        "requests": 42,
+        "grade": "B"
+      }
+    },
+    {
+      "path": "/eco",
+      "label": "Sobriété numérique",
+      "normal": {
+        "dom": 450,
+        "requests": 29,
+        "sizeKb": 494,
+        "loadMs": 236,
+        "score": 72,
+        "grade": "B",
+        "gco2e": 1.56,
+        "waterCl": 2.34
+      },
+      "light": {
+        "dom": 451,
+        "requests": 29,
+        "sizeKb": 494,
+        "loadMs": 234,
+        "score": 72,
+        "grade": "B",
+        "gco2e": 1.56,
+        "waterCl": 2.34
+      },
+      "slow3gLoadMs": 10954
+    }
+  ]
+}

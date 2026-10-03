@@ -1,6 +1,8 @@
 import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 
+import { storedSrc, storedSrcSet } from "@/lib/media";
+
 import { AnnouncementCategoryBadge } from "@/components/city/announcement-card";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -53,7 +55,7 @@ export default async function AnnouncementPage({ params }: { readonly params: Pr
 
       {announcement.coverImage ? (
         // eslint-disable-next-line @next/next/no-img-element -- served by the authorised file route
-        <img src={announcement.coverImage} alt="" className="eco-hide aspect-[2/1] w-full rounded-2xl object-cover" />
+        <img src={storedSrc(announcement.coverImage, 1080)} srcSet={storedSrcSet(announcement.coverImage, [640, 1080])} sizes="(max-width: 960px) 100vw, 920px" alt="" decoding="async" className="eco-hide aspect-[2/1] w-full rounded-2xl object-cover" />
       ) : null}
 
       <header className="flex flex-col gap-2 px-1">
