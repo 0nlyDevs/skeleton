@@ -21,7 +21,7 @@ export function FormField({
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
       {children}
-      {error ? <p id={`${id}-error`} className="text-[0.7812rem] text-error">{error}</p> : null}
+      {error ? <p id={`${id}-error`} role="alert" className="text-[0.7812rem] text-error">{error}</p> : null}
     </div>
   );
 }

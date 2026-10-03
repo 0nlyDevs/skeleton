@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { announcementInputSchema } from "@/modules/announcements/announcements.schema";
-import { cityRequestRefParamSchema, createCityRequestSchema, updateCityRequestSchema } from "@/modules/city-requests/city-requests.schema";
+import { cityRequestRefParamSchema, createCityRequestSchema, listCityRequestsQuerySchema, updateCityRequestSchema } from "@/modules/city-requests/city-requests.schema";
 import { toSummaryDto } from "@/modules/city-requests/city-requests.dto";
 import { serviceInputSchema } from "@/modules/city-services/city-services.schema";
 import { minutesUntil, nextWaveAt } from "@/modules/webcup/webcup.schedule";
@@ -23,6 +23,22 @@ describe("city requests", () => {
   it("rejects fields a citizen must not set (mass assignment)", () => {
     const parsed = createCityRequestSchema.safeParse({ subject: "Objet", message: "Un message assez long", status: "RESOLVED" });
     expect(parsed.success).toBe(false);
+  });
+
+  it("requires a place for a reported problem (F25)", () => {
+    const base = { subject: "Lampadaire cassé", message: "Le lampadaire ne s'allume plus depuis hier." };
+    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting" }).success).toBe(false);
+    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", location: "Rue des Dômes, module 12" }).success).toBe(true);
+    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", latitude: 48.85, longitude: 2.35 }).success).toBe(true);
+    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", location: "Ici", latitude: 48.85 }).success).toBe(false);
+    expect(createCityRequestSchema.safeParse({ ...base, issueType: "meteor" }).success).toBe(false);
+    expect(createCityRequestSchema.safeParse(base).success).toBe(true);
+  });
+
+  it("filters ongoing and finished requests (F26) and unassigned ones (D17)", () => {
+    expect(listCityRequestsQuerySchema.safeParse({ status: "DONE" }).success).toBe(true);
+    expect(listCityRequestsQuerySchema.safeParse({ scope: "unassigned" }).success).toBe(true);
+    expect(listCityRequestsQuerySchema.safeParse({ scope: "everyone" }).success).toBe(false);
   });
 
   it("only accepts TN-000000 references", () => {
@@ -54,6 +70,15 @@ describe("services and announcements", () => {
     const base = { name: "Énergie", category: "Infra", summary: "Le réseau", description: "Le réseau solaire de la cité." };
     expect(serviceInputSchema.safeParse({ ...base, icon: "zap" }).success).toBe(true);
     expect(serviceInputSchema.safeParse({ ...base, icon: "<script>" }).success).toBe(false);
+  });
+
+  it("keeps only non-empty English copies and refuses unknown languages (F27)", () => {
+    const base = { name: "Service", category: "Démarches", summary: "Un résumé court", description: "Une description assez longue." };
+    const parsed = serviceInputSchema.safeParse({ ...base, translations: { en: { name: "Service EN", summary: "" } } });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.translations).toEqual({ en: { name: "Service EN" } });
+    expect(serviceInputSchema.safeParse({ ...base, translations: { de: { name: "Dienst" } } }).success).toBe(false);
+    expect(serviceInputSchema.safeParse({ ...base, featured: true }).data?.featured).toBe(true);
   });
 
   it("only accepts covers uploaded to the app", () => {

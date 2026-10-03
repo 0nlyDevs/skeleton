@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { Badge } from "@/components/ui/badge";
 import Link from "@/components/ui/link";
 import { useFormatters } from "@/hooks/use-formatters";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export function RequestList({
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="font-mono text-[0.75rem] text-muted-foreground">{request.reference}</span>
                   <RequestStatusBadge status={request.status} />
+                  {request.issueType ? <Badge variant="warning">{t("tn.request.report")}</Badge> : null}
                   {agentView ? <RequestPriorityBadge priority={request.priority} /> : null}
                   {agentView && request.needsAction ? <NeedsActionBadge /> : null}
                 </span>

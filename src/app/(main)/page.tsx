@@ -1,4 +1,4 @@
-import { ArrowRight, Briefcase, Building2, FolderOpen, Megaphone, Send } from "lucide-react";
+import { ArrowRight, Briefcase, Building2, FolderOpen, Megaphone, Send, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AnnouncementCard } from "@/components/city/announcement-card";
@@ -23,9 +23,9 @@ export const metadata: Metadata = { title: { absolute: "Terra Nova — portail d
 export default async function HomePage() {
   const context = await getAuthContext();
   const user = context?.user ?? null;
-  const { t } = await getServerDictionary();
+  const { t, locale } = await getServerDictionary();
   const [services, news, stats] = await Promise.all([
-    listServices({}, user),
+    listServices({}, user, locale),
     listAnnouncements({ page: 1, limit: 3 }, user),
     user ? cityRequestStats(user, "mine") : Promise.resolve(null),
   ]);
@@ -34,6 +34,7 @@ export default async function HomePage() {
   const paths = [
     { href: "/services", icon: Building2, title: t("tn.home.quick.services"), body: t("tn.home.quick.services_body") },
     { href: "/contact", icon: Send, title: t("tn.home.quick.contact"), body: t("tn.home.quick.contact_body") },
+    { href: "/contact?type=issue", icon: TriangleAlert, title: t("tn.home.quick.report"), body: t("tn.home.quick.report_body") },
     { href: "/announcements", icon: Megaphone, title: t("tn.home.quick.news"), body: t("tn.home.quick.news_body") },
     { href: "/space", icon: FolderOpen, title: t("tn.home.quick.space"), body: t("tn.home.quick.space_body") },
   ];
@@ -94,7 +95,7 @@ export default async function HomePage() {
 
       <section aria-labelledby="home-paths" className="flex flex-col gap-3">
         <h2 id="home-paths" className="px-1 text-lg font-semibold">{t("tn.home.quick_title")}</h2>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {paths.map((path) => (
             <li key={path.href}>
               <Link href={path.href} className="flex h-full flex-col gap-2 rounded-2xl border border-border/70 bg-card p-4 shadow-panel transition-colors hover:border-primary/40">
@@ -118,10 +119,15 @@ export default async function HomePage() {
               <li key={service.id}>
                 <Link href={`/services/${service.slug}`} className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3 hover:border-primary/40">
                   <ServiceIcon name={service.icon} className="size-9" />
-                  <span className="min-w-0">
+                  <span className="min-w-0 flex-1">
                     <span className="block truncate text-[0.875rem] font-semibold">{service.name}</span>
                     <span className="block truncate text-[0.7812rem] text-muted-foreground">{service.summary}</span>
                   </span>
+                  {service.featured ? (
+                    <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-foreground">
+                      {t("tn.services.featured_badge")}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             ))}

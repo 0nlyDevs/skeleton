@@ -11,7 +11,7 @@
 import { randomInt } from "node:crypto";
 
 import { isStaff } from "@/lib/auth/guards";
-import { encryptField } from "@/lib/crypto/field-encryption";
+import { decryptField, encryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { publishCityRequestUpdated } from "@/lib/socket/emit";
@@ -22,7 +22,7 @@ import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { createNotification, notifyInBackground } from "../notifications/notifications.service";
 import { decryptBody, toSummaryDto, type CityRequestDto, type CityRequestSummaryDto } from "./city-requests.dto";
-import type { CreateCityRequestInput, ListCityRequestsQuery, UpdateCityRequestInput } from "./city-requests.schema";
+import { ISSUE_SERVICE, type CreateCityRequestInput, type ListCityRequestsQuery, type UpdateCityRequestInput } from "./city-requests.schema";
 
 const STATUS_LABEL: Record<string, string> = {
   NEW: "nouvelle",
@@ -68,7 +68,20 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
     const service = await prisma.municipalService.findFirst({ where: { id: input.serviceId, active: true }, select: { id: true } });
     if (!service) throw new NotFoundError("This service does not exist.");
     serviceId = service.id;
+  } else if (input.issueType && ISSUE_SERVICE[input.issueType]) {
+    // F25 — "I don't know which service to contact": a reported problem goes
+    // to the service in charge of that kind of issue.
+    const service = await prisma.municipalService.findFirst({ where: { slug: ISSUE_SERVICE[input.issueType] ?? "", active: true }, select: { id: true } });
+    serviceId = service?.id ?? null;
   }
+  const report = input.issueType
+    ? {
+        issueType: input.issueType,
+        location: input.location ? encryptField(input.location) : null,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
+      }
+    : {};
   const row = await prisma.cityRequest.create({
     data: {
       reference: await newReference(),
@@ -76,6 +89,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
       serviceId,
       subject: input.subject,
       message: encryptField(input.message),
+      ...report,
       events: { create: { actorId: actor.id, kind: "created", toValue: "NEW" } },
     },
     include: summaryInclude,
@@ -182,6 +196,9 @@ export async function getCityRequest(reference: string, actor: AuthUser): Promis
   return {
     ...toSummaryDto({ ...row, lastFromCitizen: last?.authorId === row.citizenId }, agent),
     message: decryptBody(row.message),
+    location: row.location ? decryptField(row.location) : null,
+    latitude: row.latitude,
+    longitude: row.longitude,
     closedAt: row.closedAt?.toISOString() ?? null,
     messages: visible.map((message) => ({
       id: message.id,

@@ -1,5 +1,6 @@
 import { apiRoute, publicRoute } from "@/lib/api/route";
 import { jsonOk } from "@/lib/api/response";
+import { getLocale } from "@/lib/i18n/server";
 
 import { listServicesQuerySchema, serviceInputSchema, serviceSlugParamSchema } from "./city-services.schema";
 import { createService, getService, listServices, updateService } from "./city-services.service";
@@ -7,12 +8,12 @@ import { createService, getService, listServices, updateService } from "./city-s
 export const listServicesRoute = publicRoute({
   query: listServicesQuerySchema,
   handler: async ({ query, auth }) =>
-    jsonOk({ data: await listServices({ q: query.q, category: query.category, includeInactive: query.includeInactive === "1" }, auth?.user ?? null) }),
+    jsonOk({ data: await listServices({ q: query.q, category: query.category, includeInactive: query.includeInactive === "1" }, auth?.user ?? null, await getLocale()) }),
 });
 
 export const getServiceRoute = publicRoute({
   params: serviceSlugParamSchema,
-  handler: async ({ params, auth }) => jsonOk({ data: await getService(params.slug, auth?.user ?? null) }),
+  handler: async ({ params, auth }) => jsonOk({ data: await getService(params.slug, auth?.user ?? null, await getLocale()) }),
 });
 
 export const createServiceRoute = apiRoute({

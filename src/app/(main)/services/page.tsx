@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, Star } from "lucide-react";
 import type { Metadata } from "next";
 
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -16,10 +16,12 @@ export const metadata: Metadata = { title: "Services municipaux" };
 /** D05 — the directory of city services, grouped by category, searchable. */
 export default async function ServicesPage({ searchParams }: { readonly searchParams: Promise<Record<string, string | undefined>> }) {
   const query = listServicesQuerySchema.safeParse(await searchParams).data ?? {};
-  const { t } = await getServerDictionary();
+  const { t, locale } = await getServerDictionary();
   const context = await getAuthContext();
-  const services = await listServices({ q: query.q }, context?.user ?? null);
+  const services = await listServices({ q: query.q }, context?.user ?? null, locale);
 
+  // F28 — the most common procedures first, so nobody has to browse it all.
+  const featured = query.q ? [] : services.filter((service) => service.featured);
   const groups = new Map<string, typeof services>();
   for (const service of services) groups.set(service.category, [...(groups.get(service.category) ?? []), service]);
 
@@ -47,7 +49,31 @@ export default async function ServicesPage({ searchParams }: { readonly searchPa
           }
         />
       ) : (
-        [...groups.entries()].map(([category, items]) => (
+        <>
+          {featured.length > 0 ? (
+            <section aria-labelledby="featured-services" className="flex flex-col gap-2.5 rounded-2xl border border-primary/25 bg-accent/60 p-4">
+              <h2 id="featured-services" className="flex items-center gap-2 font-semibold">
+                <Star className="size-4 text-primary" aria-hidden />
+                {t("tn.services.featured_title")}
+              </h2>
+              <ul className="grid gap-3 sm:grid-cols-3">
+                {featured.map((service) => (
+                  <li key={service.id}>
+                    <Link
+                      href={`/services/${service.slug}`}
+                      className="flex h-full flex-col gap-2 rounded-xl border border-border/70 bg-card p-3.5 shadow-panel transition-colors hover:border-primary/40"
+                    >
+                      <ServiceIcon name={service.icon} className="size-9" />
+                      <span className="font-semibold leading-snug">{service.name}</span>
+                      <span className="line-clamp-2 text-[0.8125rem] text-muted-foreground">{service.summary}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {featured.length > 0 ? <h2 className="px-1 pt-1 text-lg font-semibold">{t("tn.services.all_title")}</h2> : null}
+          {[...groups.entries()].map(([category, items]) => (
           <section key={category} className="flex flex-col gap-2.5" aria-labelledby={`cat-${category}`}>
             <h2 id={`cat-${category}`} className="px-1 text-[0.8125rem] font-semibold uppercase tracking-wide text-muted-foreground">
               {category}
@@ -70,7 +96,8 @@ export default async function ServicesPage({ searchParams }: { readonly searchPa
               ))}
             </ul>
           </section>
-        ))
+          ))}
+        </>
       )}
     </div>
   );

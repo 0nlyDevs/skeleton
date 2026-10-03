@@ -18,6 +18,8 @@ const FR: Readonly<Record<string, string>> = {
   "This service does not exist.": "Ce service n'existe pas.",
   "Give your request a subject.": "Donnez un objet à votre demande.",
   "Describe your request in a few words.": "Décrivez votre demande en quelques mots.",
+  "Say where the problem is.": "Indiquez où se trouve le problème.",
+  "Pick a point on the map again.": "Choisissez à nouveau un point sur la carte.",
   "Invalid reference.": "Référence invalide.",
   "Write a message.": "Écrivez un message.",
   "Nothing to update.": "Rien à modifier.",
