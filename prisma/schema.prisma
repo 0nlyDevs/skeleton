@@ -926,6 +926,27 @@ model MunicipalService {
   @@map("municipalService")
 }
 
+/// A municipal transport route maintained by Mobility staff.
+model TransportLine {
+  id             String   @id @default(cuid())
+  code           String   @unique @db.VarChar(20)
+  name           String   @db.VarChar(140)
+  description    String?  @db.VarChar(500)
+  /// Ordered stop names, one per line.
+  stops          String   @db.Text
+  firstDeparture String   @db.VarChar(5)
+  lastDeparture  String   @db.VarChar(5)
+  headwayMinutes Int
+  serviceDays    String   @default("Tous les jours") @db.VarChar(120)
+  alert          String?  @db.VarChar(500)
+  published      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([published, code])
+  @@map("transportLine")
+}
+
 enum AnnouncementCategory {
   ANNOUNCEMENT
   SERVICE_CHANGE

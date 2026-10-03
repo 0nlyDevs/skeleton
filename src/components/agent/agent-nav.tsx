@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Inbox, LayoutDashboard, Megaphone, Radio, Building2 } from "lucide-react";
+import { Briefcase, Inbox, LayoutDashboard, Megaphone, Radio, Building2, BusFront } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Breadcrumbs, type Crumb } from "@/components/layout/breadcrumbs";
@@ -15,6 +15,7 @@ const ITEMS: readonly { href: string; labelKey: MessageKey; icon: typeof Inbox; 
   { href: "/agent/feed", labelKey: "tn.agent.nav.feed", icon: Radio },
   { href: "/agent/announcements", labelKey: "tn.agent.nav.news", icon: Megaphone },
   { href: "/agent/services", labelKey: "tn.agent.nav.services", icon: Building2, adminOnly: true },
+  { href: "/agent/transports", labelKey: "tn.agent.nav.transports", icon: BusFront },
 ];
 
 /** The agent workspace's own header and tabs, distinct from the citizen space. */

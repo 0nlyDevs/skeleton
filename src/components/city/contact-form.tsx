@@ -47,6 +47,12 @@ export function ContactForm({
   const [busy, setBusy] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
 
+  const applyTemplate = (template: "arrival" | "transport" | "issue" | "question") => {
+    if (template === "issue") setKind("issue");
+    setSubject(t(`tn.hints.preset.${template}.subject` as MessageKey));
+    setMessage(t(`tn.hints.preset.${template}.message` as MessageKey));
+  };
+
   const issue = kind === "issue";
   const issueReady = !issue || (issueType !== "" && (location.trim().length > 0 || point !== null));
 
@@ -93,6 +99,17 @@ export function ContactForm({
           ))}
         </div>
       </fieldset>
+
+      <aside className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-accent/40 p-3" aria-label={t("tn.hints.title")}>
+        <p className="text-sm font-medium">{t("tn.hints.contact_tip")}</p>
+        <div className="flex flex-wrap gap-2">
+          {(["arrival", "transport", "issue", "question"] as const).map((template) => (
+            <Button key={template} type="button" variant="secondary" size="sm" onClick={() => applyTemplate(template)}>
+              {t(`tn.hints.template.${template}` as MessageKey)}
+            </Button>
+          ))}
+        </div>
+      </aside>
 
       {issue ? (
         <div className="flex flex-col gap-4 rounded-xl border border-border/70 bg-surface-muted/50 p-4">
