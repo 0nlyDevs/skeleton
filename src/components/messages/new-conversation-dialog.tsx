@@ -13,32 +13,38 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
+import type { PeopleRole } from "@/modules/follows/follows.schema";
 import type { RoomDto } from "@/modules/messages/messages.dto";
+
+import { RoleBadge, RoleFilterChips } from "@/components/social/role-filter";
 
 interface Person {
   readonly id: string;
   readonly name: string;
   readonly username: string;
   readonly image: string | null;
+  readonly role?: PeopleRole;
 }
 
-function usePeopleSearch(q: string) {
+function usePeopleSearch(q: string, role: PeopleRole | null) {
   const term = useDebouncedValue(q.trim(), 200);
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    if (term.length < 1) {
+    // A role alone lists that role (e.g. every agent); otherwise a name is needed.
+    if (term.length < 1 && !role) {
       setPeople([]);
       return;
     }
     const controller = new AbortController();
     setLoading(true);
-    void apiFetch<{ data: Person[] }>(`/api/users/search?q=${encodeURIComponent(term)}&limit=8`, { signal: controller.signal })
+    const params = new URLSearchParams({ q: term, limit: "12", ...(role ? { role } : {}) });
+    void apiFetch<{ data: Person[] }>(`/api/users/search?${params.toString()}`, { signal: controller.signal })
       .then((response) => setPeople(response.data))
       .catch(() => undefined)
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [term]);
+  }, [term, role]);
   return { people, loading };
 }
 
@@ -53,7 +59,8 @@ function PeoplePicker({
 }) {
   const t = useTranslation();
   const [q, setQ] = useState("");
-  const { people, loading } = usePeopleSearch(q);
+  const [role, setRole] = useState<PeopleRole | null>(null);
+  const { people, loading } = usePeopleSearch(q, role);
   const chosen = new Set(selected.map((person) => person.id));
 
   return (
@@ -73,6 +80,7 @@ function PeoplePicker({
         <Input value={q} onChange={(event) => setQ(event.target.value)} placeholder={t("messages.pick_people")} className="pl-9" autoFocus />
         {loading ? <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" /> : null}
       </label>
+      <RoleFilterChips value={role} onChange={setRole} />
       <ul className="max-h-72 overflow-y-auto">
         {people
           .filter((person) => !exclude.includes(person.id))
@@ -85,14 +93,17 @@ function PeoplePicker({
               >
                 <UserAvatar name={person.name} image={person.image} size="sm" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.875rem] font-medium">{person.name}</span>
+                  <span className="flex items-center gap-1.5 truncate text-[0.875rem] font-medium">
+                    {person.name}
+                    <RoleBadge role={person.role} showCitizen={role === "USER"} />
+                  </span>
                   <span className="block truncate text-[0.75rem] text-muted-foreground">@{person.username}</span>
                 </span>
                 {chosen.has(person.id) ? <Check className="size-4 text-primary" /> : null}
               </button>
             </li>
           ))}
-        {q.trim() && !loading && people.length === 0 ? <li className="px-2 py-3 text-[0.8125rem] text-muted-foreground">{t("mention.no_results")}</li> : null}
+        {(q.trim() || role) && !loading && people.length === 0 ? <li className="px-2 py-3 text-[0.8125rem] text-muted-foreground">{t("mention.no_results")}</li> : null}
       </ul>
     </div>
   );

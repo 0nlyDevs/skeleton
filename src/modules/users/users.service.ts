@@ -28,6 +28,7 @@ import { parseDateInput } from "@/lib/utils";
 import { disconnectUserSockets } from "@/lib/socket/emit";
 import type { AuthUser } from "@/types";
 
+import { clearMustSetSecret } from "../assisted-accounts/assisted-accounts.service";
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { notifyInBackground } from "../notifications/notifications.service";
@@ -43,6 +44,7 @@ import {
   deleteOwnSession,
   deleteUserSessions,
   findAdminUserById,
+  findMustSetSecret,
   findOnboardingCompletedAt,
   findUserIdByUsername,
   findUserProfileById,
@@ -108,6 +110,11 @@ export async function listUsersForAdmin(
     limit: pagination.limit,
     total,
   });
+}
+
+/** F71 — the account still signs in with an agent's printed access code. */
+export async function needsSecretSetup(userId: string): Promise<boolean> {
+  return findMustSetSecret(userId);
 }
 
 /** D12 — whether the welcome guide still has to open by itself for this account. */
@@ -503,6 +510,8 @@ export async function changeOwnPassword(
     throw new ValidationError({ currentPassword: "The current password is incorrect." });
   }
 
+  // F71 — a resident who signed in with a printed access code has now chosen their own password.
+  await clearMustSetSecret(context.userId);
   await recordAudit({
     actorId: context.userId,
     action: auditActions.userPasswordChanged,

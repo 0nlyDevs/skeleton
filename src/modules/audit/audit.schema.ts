@@ -37,6 +37,7 @@ export const auditActions = {
   dataExported: "user.data_exported",
   deviceConfirmed: "user.device_confirmed",
   deviceForgotten: "user.device_forgotten",
+  assistedAccountCreated: "user.assisted_created",
   postCreated: "post.created",
   postUpdated: "post.updated",
   postDeleted: "post.deleted",
@@ -60,6 +61,7 @@ export const auditActions = {
   serviceChanged: "service.changed",
   announcementChanged: "announcement.changed",
   cityRequestChanged: "city_request.changed",
+  appointmentChanged: "appointment.changed",
   webcupTriaged: "webcup.triaged",
   transportChanged: "transport.changed",
   pageCreated: "page.created",
@@ -76,10 +78,11 @@ export type AuditAction = (typeof auditActions)[keyof typeof auditActions];
  */
 export const ADMIN_ACTION_CATEGORIES = {
   requests: [auditActions.cityRequestChanged],
+  appointments: [auditActions.appointmentChanged],
   announcements: [auditActions.announcementChanged],
   services: [auditActions.serviceChanged],
   transports: [auditActions.transportChanged],
-  accounts: [auditActions.userBanned, auditActions.userUnbanned, auditActions.userRoleChanged, auditActions.userSessionsRevoked, auditActions.userDeleted],
+  accounts: [auditActions.assistedAccountCreated, auditActions.userBanned, auditActions.userUnbanned, auditActions.userRoleChanged, auditActions.userSessionsRevoked, auditActions.userDeleted],
   moderation: [auditActions.reportResolved, auditActions.reportDismissed, auditActions.postModerated, auditActions.commentDeleted],
   feed: [auditActions.webcupTriaged],
   settings: [auditActions.featureFlagToggled],

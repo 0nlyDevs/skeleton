@@ -29,6 +29,9 @@ import { auditActions } from "@/modules/audit/audit.schema";
 import { recordAudit } from "@/modules/audit/audit.service";
 import { DEVICE_COOKIE, DEVICE_COOKIE_MAX_AGE, isDeviceId, newDeviceId, recordSignIn } from "@/modules/devices/devices.service";
 import { createNotification } from "@/modules/notifications/notifications.service";
+import { clearMustSetSecret } from "@/modules/assisted-accounts/assisted-accounts.service";
+import { prisma } from "@/lib/db/prisma";
+import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, isLocale } from "@/lib/i18n/config";
 import {
   birthDateViolation,
   composeDisplayName,
@@ -316,6 +319,8 @@ async function afterPasskeyChange(ctx: Parameters<Parameters<typeof createAuthMi
   if (ctx.context.returned instanceof APIError) return;
   const userId = ctx.context.session?.user?.id;
   if (!userId) return;
+  // F71 — a passkey replaces the printed access code as the way in.
+  if (added) await clearMustSetSecret(String(userId));
   const ip = ctx.headers ? resolveClientIp(ctx.headers, env.trustProxy) : null;
   await recordAudit({
     actorId: String(userId),
@@ -357,6 +362,15 @@ export const authAfterHook = createAuthMiddleware(async (ctx) => {
     userAgent: typeof created.session.userAgent === "string" ? created.session.userAgent : null,
     ip: typeof created.session.ipAddress === "string" ? created.session.ipAddress : null,
   });
+
+  // F71 — open the interface in the language chosen for the resident.
+  const preferred = await prisma.user
+    .findUnique({ where: { id: String(created.user.id) }, select: { preferredLocale: true } })
+    .then((row) => row?.preferredLocale ?? null)
+    .catch(() => null);
+  if (isLocale(preferred)) {
+    ctx.setCookie(LOCALE_COOKIE, preferred, { path: "/", sameSite: "lax", maxAge: LOCALE_COOKIE_MAX_AGE, secure: env.isProduction });
+  }
 
   ctx.setCookie(DEVICE_COOKIE, deviceId, {
     httpOnly: true,

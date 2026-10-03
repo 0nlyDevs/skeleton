@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { EmptyState } from "@/components/feedback/empty-state";
+import { AssistedAccountsDialog } from "@/components/agent/assisted-accounts-dialog";
+import { isPlaceholderEmail } from "@/lib/accounts/no-email";
 import { ErrorState } from "@/components/feedback/error-state";
 import { TableSkeleton } from "@/components/feedback/loading-skeleton";
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -115,9 +117,12 @@ export function CitizensManager() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1 px-1">
+      <header className="flex flex-wrap items-end justify-between gap-3 px-1">
+        <div className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold tracking-tight">{t("tn.agent.citizens.title")}</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">{t("tn.agent.citizens.subtitle")}</p>
+        </div>
+        <AssistedAccountsDialog onCreated={() => void load()} />
       </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -168,7 +173,9 @@ export function CitizensManager() {
                   </Avatar>
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-[0.8125rem] text-muted-foreground">{user.email}</span>
+                    <span className="truncate text-[0.8125rem] text-muted-foreground">
+                      {isPlaceholderEmail(user.email) ? `${t("tn.assisted.no_email")} · @${user.username ?? ""}` : user.email}
+                    </span>
                     <span className="flex flex-wrap items-center gap-1.5 text-[0.75rem] text-muted-foreground">
                       {user.banned ? (
                         <Badge variant="error">{t("tn.agent.citizens.status.suspended")}</Badge>

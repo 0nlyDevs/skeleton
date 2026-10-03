@@ -607,6 +607,18 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
     visibility: visible;
   }
   body:has(.print-document) .print-document {
+ * F71 — printing the access sheets prints only the sheets, one per page,
+ * whatever page the dialog was opened on.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .assisted-sheets,
+  .assisted-sheets * {
+    visibility: visible;
+  }
+  .assisted-sheets {
     position: absolute;
     inset: 0;
     color: #000;
