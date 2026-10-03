@@ -85,7 +85,7 @@ export function FeedView({
               aria-selected={scope === value}
               onClick={() => setScope(value)}
               className={cn(
-                "flex-1 rounded-xl px-3 py-2 text-[13.5px] font-semibold transition-colors",
+                "flex-1 rounded-xl px-3 py-2 text-[0.8438rem] font-semibold transition-colors",
                 scope === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-muted",
               )}
             >
@@ -134,7 +134,7 @@ export function FeedView({
         </div>
       ) : feed.loadError ? (
         <div className="flex flex-col items-center gap-2 py-4 text-center">
-          <p className="text-[13px] text-muted-foreground">{describeApiError(feed.loadError, t)}</p>
+          <p className="text-[0.8125rem] text-muted-foreground">{describeApiError(feed.loadError, t)}</p>
           <Button size="sm" variant="secondary" onClick={() => void feed.loadMore()}>
             {t("common.retry")}
           </Button>
@@ -142,7 +142,7 @@ export function FeedView({
       ) : initial.preview ? (
         previewFooter ?? null
       ) : feed.items.length > 0 && !feed.nextCursor ? (
-        <p className="py-4 text-center text-[12.5px] text-muted-foreground">{t("feed.end")}</p>
+        <p className="py-4 text-center text-[0.7812rem] text-muted-foreground">{t("feed.end")}</p>
       ) : null}
 
       <CommentsDialog

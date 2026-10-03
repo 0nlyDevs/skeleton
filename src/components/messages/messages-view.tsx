@@ -81,8 +81,8 @@ export function MessagesView({ viewer }: { readonly viewer: { id: string; name: 
             <span className="grid size-16 place-items-center rounded-full bg-accent text-accent-foreground">
               <MessageCircle className="size-8" />
             </span>
-            <p className="text-[15px] font-semibold">{t("messages.select")}</p>
-            <p className="max-w-xs text-[13px] text-muted-foreground">{t("messages.empty_body")}</p>
+            <p className="text-[0.9375rem] font-semibold">{t("messages.select")}</p>
+            <p className="max-w-xs text-[0.8125rem] text-muted-foreground">{t("messages.empty_body")}</p>
           </div>
         )}
       </section>

@@ -37,8 +37,8 @@ export function GroupTeam({ slug, viewerId }: { readonly slug: string; readonly 
   return (
     <Card className="flex flex-col gap-3 p-5">
       <div>
-        <h2 className="text-[16px] font-semibold">{t("groups.team")}</h2>
-        <p className="text-[13px] text-muted-foreground">{t("groups.team_hint")}</p>
+        <h2 className="text-[1rem] font-semibold">{t("groups.team")}</h2>
+        <p className="text-[0.8125rem] text-muted-foreground">{t("groups.team_hint")}</p>
       </div>
       {team === null ? (
         <div className="flex flex-col gap-2">
@@ -52,11 +52,11 @@ export function GroupTeam({ slug, viewerId }: { readonly slug: string; readonly 
             <li key={member.user.id} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
               <UserAvatar userId={member.user.id} name={member.user.name} image={member.user.image} size="sm" />
               <Link href={member.user.username ? `/profile/${member.user.username}` : "#"} className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-medium">
+                <span className="block truncate text-[0.875rem] font-medium">
                   {member.user.name}
                   {member.user.id === viewerId ? <span className="font-normal text-muted-foreground"> ({t("groups.you")})</span> : null}
                 </span>
-                {member.user.username ? <span className="block truncate text-[12px] text-muted-foreground">@{member.user.username}</span> : null}
+                {member.user.username ? <span className="block truncate text-[0.75rem] text-muted-foreground">@{member.user.username}</span> : null}
               </Link>
               <GroupRoleBadge role={member.role} />
             </li>

@@ -81,7 +81,7 @@ export function VerifyEmailPanel({ token }: { readonly token?: string }) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
         <Spinner className="size-5" />
-        <p className="text-[14px] text-muted-foreground">{t("auth.verify.checking")}</p>
+        <p className="text-[0.875rem] text-muted-foreground">{t("auth.verify.checking")}</p>
       </div>
     );
   }
@@ -92,7 +92,7 @@ export function VerifyEmailPanel({ token }: { readonly token?: string }) {
         <span className="flex size-11 items-center justify-center rounded-full bg-success/12 text-success">
           <CheckCircle2 className="size-5" />
         </span>
-        <p className="text-[14px] leading-relaxed text-muted-foreground">
+        <p className="text-[0.875rem] leading-relaxed text-muted-foreground">
           {t("auth.verify.success")}
         </p>
         <Button asChild size="lg" className="w-full">
@@ -112,7 +112,7 @@ export function VerifyEmailPanel({ token }: { readonly token?: string }) {
       ) : (
         <div className="flex items-start gap-3 rounded-xl border border-border/80 bg-surface px-4 py-3">
           <MailCheck className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-          <p className="text-[13px] leading-relaxed text-muted-foreground">
+          <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">
             {t("auth.register.success_body", { email: email || "…" })}
           </p>
         </div>

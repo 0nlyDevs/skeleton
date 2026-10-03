@@ -120,13 +120,13 @@ export function TwoFactorForm() {
         <button
           type="button"
           onClick={switchMode}
-          className="text-[13px] font-medium text-primary underline-offset-4 hover:underline"
+          className="text-[0.8125rem] font-medium text-primary underline-offset-4 hover:underline"
         >
           {mode === "totp" ? t("auth.twofa.use_backup") : t("auth.twofa.code")}
         </button>
         <Link
           href="/login"
-          className="text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          className="text-[0.8125rem] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         >
           {t("common.back")}
         </Link>

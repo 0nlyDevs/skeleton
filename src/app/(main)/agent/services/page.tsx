@@ -42,7 +42,7 @@ export default async function AgentServicesPage() {
                       {service.name}
                       {!service.active ? <Badge variant="warning">{t("tn.services.inactive")}</Badge> : null}
                     </span>
-                    <span className="text-[12.5px] text-muted-foreground">{service.category}</span>
+                    <span className="text-[0.7812rem] text-muted-foreground">{service.category}</span>
                   </span>
                 </Link>
               </li>

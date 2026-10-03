@@ -41,11 +41,11 @@ export function PrivacyPicker({
               value === option ? "border-primary bg-accent" : "border-border hover:bg-surface-muted",
             )}
           >
-            <span className="flex items-center gap-2 text-[14px] font-semibold">
+            <span className="flex items-center gap-2 text-[0.875rem] font-semibold">
               <Icon className="size-4" aria-hidden />
               {option === "PUBLIC" ? t("groups.public") : t("groups.private")}
             </span>
-            <span className="text-[12px] leading-snug text-muted-foreground">
+            <span className="text-[0.75rem] leading-snug text-muted-foreground">
               {option === "PUBLIC" ? t("groups.public_hint") : t("groups.private_hint")}
             </span>
           </button>

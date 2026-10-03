@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { Brand } from "@/components/layout/brand";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { RealtimeStatus } from "@/components/layout/realtime-status";
+import { DisplayMenu } from "@/components/layout/display-menu";
 import { EcoToggle } from "@/components/layout/eco-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -36,6 +37,7 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
         <div className="ml-auto flex items-center gap-1 md:ml-0">
           <RealtimeStatus className="hidden lg:inline-flex" />
           <LocaleToggle className="hidden sm:inline-flex" />
+          <DisplayMenu />
           <EcoToggle />
           <ThemeToggle />
           {viewer ? (
@@ -51,7 +53,7 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
                 {messageUnreadTotal > 0 ? (
                   <span
                     aria-hidden
-                    className="absolute right-0.5 top-0.5 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[10px] font-bold leading-4 text-white"
+                    className="absolute right-0.5 top-0.5 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[0.625rem] font-bold leading-4 text-white"
                   >
                     {messageUnreadTotal > 9 ? "9+" : messageUnreadTotal}
                   </span>

@@ -99,7 +99,7 @@ export function LocationPicker({
             <Crosshair />
           </Button>
         </div>
-        {error ? <p role="alert" className="text-[12.5px] text-error">{error}</p> : null}
+        {error ? <p role="alert" className="text-[0.7812rem] text-error">{error}</p> : null}
         {results.length > 0 ? (
           <ul className="max-h-40 overflow-y-auto rounded-xl border border-border/70">
             {results.map((place) => (
@@ -107,7 +107,7 @@ export function LocationPicker({
                 <button
                   type="button"
                   onClick={() => setSelected(place)}
-                  className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-[13.5px] hover:bg-surface-muted", selected?.name === place.name && "bg-accent")}
+                  className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-[0.8438rem] hover:bg-surface-muted", selected?.name === place.name && "bg-accent")}
                 >
                   <MapPin className="size-4 shrink-0 text-muted-foreground" />
                   <span className="truncate">{place.name}</span>
@@ -126,7 +126,7 @@ export function LocationPicker({
           />
         </div>
         <DialogFooter className="items-center sm:justify-between">
-          <span className="truncate text-[13px] text-muted-foreground">
+          <span className="truncate text-[0.8125rem] text-muted-foreground">
             {busy ? <Loader2 className="inline size-4 animate-spin" /> : selected?.name}
           </span>
           <Button

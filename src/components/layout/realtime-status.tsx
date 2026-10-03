@@ -32,7 +32,7 @@ export function RealtimeStatus({ className }: { readonly className?: string }) {
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "hidden items-center gap-1.5 rounded-full border border-border/70 px-2 py-1 text-[11px] font-medium text-muted-foreground sm:inline-flex",
+            "hidden items-center gap-1.5 rounded-full border border-border/70 px-2 py-1 text-[0.6875rem] font-medium text-muted-foreground sm:inline-flex",
             className,
           )}
         >

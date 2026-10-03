@@ -87,7 +87,7 @@ export function RequestView({
           <div className="flex flex-col gap-0.5">
             <p className="font-semibold">{t("tn.contact.sent_title")}</p>
             <p className="text-sm">{t("tn.contact.sent_body", { reference: request.reference })}</p>
-            <p className="text-[12.5px] text-muted-foreground">{t("tn.contact.sent_email")}</p>
+            <p className="text-[0.7812rem] text-muted-foreground">{t("tn.contact.sent_email")}</p>
           </div>
         </div>
       ) : null}
@@ -101,13 +101,13 @@ export function RequestView({
 
       <header className="flex flex-col gap-2 px-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="font-mono text-[13px] text-muted-foreground">{request.reference}</span>
+          <span className="font-mono text-[0.8125rem] text-muted-foreground">{request.reference}</span>
           <RequestStatusBadge status={request.status} />
           {agent ? <RequestPriorityBadge priority={request.priority} /> : null}
           {agent && request.needsAction ? <NeedsActionBadge /> : null}
         </div>
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{request.subject}</h1>
-        <p className="text-[13px] text-muted-foreground">
+        <p className="text-[0.8125rem] text-muted-foreground">
           {request.service?.name ?? t("tn.no_service")} · {t("tn.request.sent_on", { date: fmt.dateTime(request.createdAt) })}
           {agent && request.citizen ? ` · ${t("tn.agent.inbox.citizen")} : ${request.citizen.name}` : null}
         </p>
@@ -116,10 +116,10 @@ export function RequestView({
       <div className="grid gap-5 md:grid-cols-[1fr_280px]">
         <div className="flex min-w-0 flex-col gap-4">
           <section className="rounded-2xl border border-border/70 bg-card p-4 shadow-panel" aria-labelledby="original">
-            <h2 id="original" className="mb-2 text-[13px] font-semibold text-muted-foreground">
+            <h2 id="original" className="mb-2 text-[0.8125rem] font-semibold text-muted-foreground">
               {agent ? t("tn.request.citizen_message") : t("tn.request.your_message")}
             </h2>
-            <p className="prose-body text-[15px]">{request.message}</p>
+            <p className="prose-body text-[0.9375rem]">{request.message}</p>
           </section>
 
           <section className="flex flex-col gap-3" aria-labelledby="conversation">
@@ -127,7 +127,7 @@ export function RequestView({
             {request.messages.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">{t("tn.request.no_reply")}</p>
             ) : (
-              <ol className="flex flex-col gap-3">
+              <ol className="flex flex-col gap-3" aria-live="polite" aria-relevant="additions" aria-label={t("tn.request.conversation")}>
                 {request.messages.map((message) => (
                   <li
                     key={message.id}
@@ -140,7 +140,7 @@ export function RequestView({
                           : "self-start border-border/70 bg-card",
                     )}
                   >
-                    <p className="mb-1 flex flex-wrap items-center gap-1.5 text-[12.5px] text-muted-foreground">
+                    <p className="mb-1 flex flex-wrap items-center gap-1.5 text-[0.7812rem] text-muted-foreground">
                       <span className="font-semibold text-foreground">{message.author.name}</span>
                       {message.internal ? (
                         <Badge variant="warning">
@@ -150,7 +150,7 @@ export function RequestView({
                       ) : null}
                       <time dateTime={message.createdAt}>{fmt.dateTime(message.createdAt)}</time>
                     </p>
-                    <p className="whitespace-pre-line break-words text-[14.5px] [overflow-wrap:anywhere]">{message.body}</p>
+                    <p className="whitespace-pre-line break-words text-[0.9062rem] [overflow-wrap:anywhere]">{message.body}</p>
                   </li>
                 ))}
               </ol>

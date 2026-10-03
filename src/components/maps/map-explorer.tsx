@@ -79,8 +79,8 @@ export function MapExplorer({
     <div className="flex flex-col gap-4">
       <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight">{t("map.title")}</h1>
-          <p className="text-[13.5px] text-muted-foreground">{t("map.subtitle")}</p>
+          <h1 className="text-[1.375rem] font-bold tracking-tight">{t("map.title")}</h1>
+          <p className="text-[0.8438rem] text-muted-foreground">{t("map.subtitle")}</p>
         </div>
         <Button variant="secondary" onClick={locate}>
           <Crosshair />
@@ -103,12 +103,12 @@ export function MapExplorer({
                   // eslint-disable-next-line @next/next/no-img-element -- authorised, re-encoded image
                   <img src={post.image} alt="" className="h-28 w-full rounded-md object-cover" />
                 ) : null}
-                <span className="text-[12px] font-semibold">{post.author.name}</span>
-                <span className="flex items-center gap-1 text-[11px] text-neutral-500">
+                <span className="text-[0.75rem] font-semibold">{post.author.name}</span>
+                <span className="flex items-center gap-1 text-[0.6875rem] text-neutral-500">
                   <MapPin className="size-3" /> {post.placeName} · {fmt.relative(post.createdAt)}
                 </span>
-                {post.excerpt ? <span className="line-clamp-3 text-[12.5px]">{post.excerpt}</span> : null}
-                <Link href={`/feed/${post.id}`} className="text-[12.5px] font-semibold text-indigo-600 hover:underline">
+                {post.excerpt ? <span className="line-clamp-3 text-[0.7812rem]">{post.excerpt}</span> : null}
+                <Link href={`/feed/${post.id}`} className="text-[0.7812rem] font-semibold text-indigo-600 hover:underline">
                   {t("map.open")}
                 </Link>
               </div>
@@ -116,7 +116,7 @@ export function MapExplorer({
           }))}
         />
       </Card>
-      {posts.length === 0 ? <p className="text-center text-[13px] text-muted-foreground">{t("map.empty")}</p> : null}
+      {posts.length === 0 ? <p className="text-center text-[0.8125rem] text-muted-foreground">{t("map.empty")}</p> : null}
     </div>
   );
 }

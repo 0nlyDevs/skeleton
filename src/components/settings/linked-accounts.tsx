@@ -57,13 +57,13 @@ export function LinkedAccounts({ availability }: { readonly availability: OAuthA
           <Link2 className="size-4 text-muted-foreground" />
           {t("settings.security.linked")}
         </CardTitle>
-        <p className="text-[13px] text-muted-foreground">{t("settings.security.linked_hint")}</p>
+        <p className="text-[0.8125rem] text-muted-foreground">{t("settings.security.linked_hint")}</p>
       </CardHeader>
       <CardContent>
         <ul className="flex flex-col divide-y divide-border/70">
           {providers.map((provider) => (
             <li key={provider} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="text-[14px] font-medium">{LABELS[provider]}</span>
+              <span className="text-[0.875rem] font-medium">{LABELS[provider]}</span>
               {linked === null ? (
                 <Spinner className="size-4" />
               ) : linked.has(provider) ? (

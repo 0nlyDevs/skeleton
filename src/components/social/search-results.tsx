@@ -32,22 +32,22 @@ export function SearchResults({
     <div className="flex flex-col gap-4">
       <Card className="flex items-center gap-3 p-5">
         <Search className="size-5 text-muted-foreground" />
-        <h1 className="text-[20px] font-bold tracking-tight">{q ? `${t("search.title")} · « ${q} »` : t("search.title")}</h1>
+        <h1 className="text-[1.25rem] font-bold tracking-tight">{q ? `${t("search.title")} · « ${q} »` : t("search.title")}</h1>
       </Card>
-      {q.trim().length < 2 ? <p className="text-center text-[13.5px] text-muted-foreground">{t("search.hint")}</p> : null}
-      {q.trim().length >= 2 && empty ? <p className="text-center text-[13.5px] text-muted-foreground">{t("search.empty", { q })}</p> : null}
+      {q.trim().length < 2 ? <p className="text-center text-[0.8438rem] text-muted-foreground">{t("search.hint")}</p> : null}
+      {q.trim().length >= 2 && empty ? <p className="text-center text-[0.8438rem] text-muted-foreground">{t("search.empty", { q })}</p> : null}
 
       {results.people.length > 0 ? (
         <Card className="p-4">
-          <h2 className="mb-2 text-[15px] font-semibold">{t("search.people")}</h2>
+          <h2 className="mb-2 text-[0.9375rem] font-semibold">{t("search.people")}</h2>
           <ul className="grid gap-1 sm:grid-cols-2">
             {results.people.map((person) => (
               <li key={person.id}>
                 <Link href={`/profile/${person.username}`} className="flex items-center gap-3 rounded-xl p-2 hover:bg-surface-muted">
                   <UserAvatar name={person.name} image={person.image} size="md" />
                   <span className="min-w-0">
-                    <span className="block truncate text-[14px] font-semibold">{person.name}</span>
-                    <span className="block truncate text-[12.5px] text-muted-foreground">@{person.username}</span>
+                    <span className="block truncate text-[0.875rem] font-semibold">{person.name}</span>
+                    <span className="block truncate text-[0.7812rem] text-muted-foreground">@{person.username}</span>
                   </span>
                 </Link>
               </li>
@@ -58,18 +58,18 @@ export function SearchResults({
 
       {results.groups.length > 0 ? (
         <Card className="p-4">
-          <h2 className="mb-2 text-[15px] font-semibold">{t("search.groups")}</h2>
+          <h2 className="mb-2 text-[0.9375rem] font-semibold">{t("search.groups")}</h2>
           <ul className="grid gap-1 sm:grid-cols-2">
             {results.groups.map((group) => (
               <li key={group.id}>
                 <Link href={`/groups/${group.slug}`} className="flex items-center gap-3 rounded-xl p-2 hover:bg-surface-muted">
                   <GroupAvatar name={group.name} size="sm" />
                   <span className="min-w-0">
-                    <span className="flex items-center gap-1 truncate text-[14px] font-semibold">
+                    <span className="flex items-center gap-1 truncate text-[0.875rem] font-semibold">
                       {group.name}
                       {group.privacy === "PRIVATE" ? <Lock className="size-3 text-muted-foreground" /> : null}
                     </span>
-                    <span className="block text-[12.5px] text-muted-foreground">{t("groups.members", { count: group.memberCount })}</span>
+                    <span className="block text-[0.7812rem] text-muted-foreground">{t("groups.members", { count: group.memberCount })}</span>
                   </span>
                 </Link>
               </li>
@@ -78,7 +78,7 @@ export function SearchResults({
         </Card>
       ) : null}
 
-      {posts.length > 0 ? <h2 className="px-1 text-[15px] font-semibold">{t("search.posts")}</h2> : null}
+      {posts.length > 0 ? <h2 className="px-1 text-[0.9375rem] font-semibold">{t("search.posts")}</h2> : null}
       {posts.map((post) => (
         <PostCard
           key={post.id}

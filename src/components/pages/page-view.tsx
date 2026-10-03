@@ -72,12 +72,12 @@ export function PageView({ page: initial, viewerId }: { readonly page: PageDto; 
     <div className="min-h-dvh">
       <nav className="sticky top-0 z-30 flex items-center gap-2 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur">
         <Brand href="/pages" compact />
-        <Link href={page.author.username ? `/profile/${page.author.username}` : "#"} className="ml-1 flex min-w-0 items-center gap-2 text-[13px]">
+        <Link href={page.author.username ? `/profile/${page.author.username}` : "#"} className="ml-1 flex min-w-0 items-center gap-2 text-[0.8125rem]">
           <UserAvatar userId={page.author.id} name={page.author.name} image={page.author.image} size="xs" />
           <span className="truncate font-medium">{page.author.name}</span>
         </Link>
         <span className="ml-auto flex items-center gap-1">
-          <span className="hidden items-center gap-1 px-2 text-[12.5px] text-muted-foreground sm:inline-flex" title={t("pages.views")}>
+          <span className="hidden items-center gap-1 px-2 text-[0.7812rem] text-muted-foreground sm:inline-flex" title={t("pages.views")}>
             <Eye className="size-4" aria-hidden /> {page.viewCount}
           </span>
           <Button variant="ghost" size="sm" onClick={() => void like()} aria-pressed={page.viewerLiked} aria-label={t("pages.like")}>
@@ -109,9 +109,9 @@ export function PageView({ page: initial, viewerId }: { readonly page: PageDto; 
           ) : null}
         </span>
       </nav>
-      {!page.published ? <p className="bg-warning/15 px-4 py-2 text-center text-[13px] font-medium">{t("pages.draft_banner")}</p> : null}
+      {!page.published ? <p className="bg-warning/15 px-4 py-2 text-center text-[0.8125rem] font-medium">{t("pages.draft_banner")}</p> : null}
       <PageRenderer page={page} />
-      <footer className="px-4 py-8 text-center text-[12.5px] text-muted-foreground">
+      <footer className="px-4 py-8 text-center text-[0.7812rem] text-muted-foreground">
         {t("pages.made_with")} <Link href="/pages" className="font-semibold hover:underline">Terra Nova</Link>
       </footer>
 

@@ -151,7 +151,7 @@ export const MentionInput = forwardRef<
       <div
         ref={backdrop}
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-3 py-2 text-[14.5px] leading-6 text-foreground [overflow-wrap:anywhere]"
+        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-3 py-2 text-[0.9062rem] leading-6 text-foreground [overflow-wrap:anywhere]"
       >
         {highlighted(value)}
       </div>
@@ -211,7 +211,7 @@ export const MentionInput = forwardRef<
             onSubmit();
           }
         }}
-        className="relative block w-full resize-none bg-transparent px-3 py-2 text-[14.5px] leading-6 text-transparent caret-foreground outline-none [overflow-wrap:anywhere] placeholder:text-muted-foreground selection:bg-primary/25 disabled:opacity-60"
+        className="relative block w-full resize-none bg-transparent px-3 py-2 text-[0.9062rem] leading-6 text-transparent caret-foreground outline-none [overflow-wrap:anywhere] placeholder:text-muted-foreground selection:bg-primary/25 disabled:opacity-60"
       />
       {open ? (
         <ul
@@ -223,11 +223,11 @@ export const MentionInput = forwardRef<
           )}
         >
           {loading && items.length === 0 ? (
-            <li className="flex items-center gap-2 px-3 py-2 text-[12.5px] text-muted-foreground">
+            <li className="flex items-center gap-2 px-3 py-2 text-[0.7812rem] text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" /> {t("mention.searching")}
             </li>
           ) : items.length === 0 ? (
-            <li className="px-3 py-2 text-[12.5px] text-muted-foreground">{t("mention.no_results")}</li>
+            <li className="px-3 py-2 text-[0.7812rem] text-muted-foreground">{t("mention.no_results")}</li>
           ) : (
             items.map((user, index) => (
               <li
@@ -246,8 +246,8 @@ export const MentionInput = forwardRef<
               >
                 <UserAvatar name={user.name} image={user.image} size="xs" />
                 <span className="min-w-0">
-                  <span className="block truncate text-[13px] font-medium">{user.name}</span>
-                  <span className="block truncate text-[11.5px] text-muted-foreground">@{user.username}</span>
+                  <span className="block truncate text-[0.8125rem] font-medium">{user.name}</span>
+                  <span className="block truncate text-[0.7188rem] text-muted-foreground">@{user.username}</span>
                 </span>
               </li>
             ))

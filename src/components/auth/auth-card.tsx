@@ -31,18 +31,18 @@ export function AuthCard({
       )}
     >
       <header className="flex flex-col gap-1.5 pb-6">
-        <h1 id="auth-title" className="text-[22px] font-semibold tracking-[-0.015em]">
+        <h1 id="auth-title" className="text-[1.375rem] font-semibold tracking-[-0.015em]">
           {title}
         </h1>
         {subtitle ? (
-          <p className="text-[14px] leading-relaxed text-muted-foreground">{subtitle}</p>
+          <p className="text-[0.875rem] leading-relaxed text-muted-foreground">{subtitle}</p>
         ) : null}
       </header>
 
       {children}
 
       {footer ? (
-        <footer className="mt-6 border-t border-border/70 pt-5 text-center text-[13px] text-muted-foreground">
+        <footer className="mt-6 border-t border-border/70 pt-5 text-center text-[0.8125rem] text-muted-foreground">
           {footer}
         </footer>
       ) : null}

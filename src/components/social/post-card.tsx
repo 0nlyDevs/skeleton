@@ -165,7 +165,7 @@ export function PostCard({
           <UserAvatar userId={post.author.id} name={post.author.name} image={post.author.image} size="md" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-center gap-x-1.5 text-[14.5px] leading-snug">
+          <p className="flex flex-wrap items-center gap-x-1.5 text-[0.9062rem] leading-snug">
             {profileHref ? (
               <Link href={profileHref} className="font-semibold hover:underline">
                 {post.author.name}
@@ -184,7 +184,7 @@ export function PostCard({
               </>
             ) : null}
           </p>
-          <p className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-[0.7812rem] text-muted-foreground">
             <Link href={href} className="hover:underline" title={fmt.dateTime(post.createdAt)}>
               <time dateTime={post.createdAt}>{fmt.relative(post.createdAt)}</time>
             </Link>
@@ -260,7 +260,7 @@ export function PostCard({
             {canRemove ? (
               <>
                 <DropdownMenuSeparator />
-                {!isAuthor ? <DropdownMenuLabel className="text-[11.5px] text-muted-foreground">{t("post.moderator_action")}</DropdownMenuLabel> : null}
+                {!isAuthor ? <DropdownMenuLabel className="text-[0.7188rem] text-muted-foreground">{t("post.moderator_action")}</DropdownMenuLabel> : null}
                 <DropdownMenuItem variant="destructive" onSelect={() => setConfirm(true)}>
                   {isAuthor ? <Trash2 /> : <ShieldAlert />}
                   {isAuthor ? t("post.delete") : t("post.remove")}
@@ -272,7 +272,7 @@ export function PostCard({
       </header>
 
       {post.repostOf ? (
-        <p className="flex items-center gap-1.5 px-4 pt-2 text-[12.5px] text-muted-foreground">
+        <p className="flex items-center gap-1.5 px-4 pt-2 text-[0.7812rem] text-muted-foreground">
           <Repeat2 className="size-3.5" aria-hidden />
           {t("share.shared")}
         </p>
@@ -283,10 +283,10 @@ export function PostCard({
           <RichText
             text={showAll || !long ? post.body : `${post.body.slice(0, CLAMP_CHARS).trimEnd()}…`}
             mentions={post.mentions}
-            className="whitespace-pre-line break-words text-[15px] leading-relaxed [overflow-wrap:anywhere]"
+            className="whitespace-pre-line break-words text-[0.9375rem] leading-relaxed [overflow-wrap:anywhere]"
           />
           {long ? (
-            <button type="button" onClick={() => setShowAll((value) => !value)} className="mt-1 text-[13.5px] font-semibold text-muted-foreground hover:underline">
+            <button type="button" onClick={() => setShowAll((value) => !value)} className="mt-1 text-[0.8438rem] font-semibold text-muted-foreground hover:underline">
               {showAll ? t("post.see_less") : t("post.see_more")}
             </button>
           ) : null}
@@ -320,7 +320,7 @@ export function PostCard({
 
       <div className="flex items-center justify-between gap-3 px-4 pt-3">
         <ReactionSummary state={post} postId={post.id} />
-        <span className="flex items-center gap-3 text-[13px] text-muted-foreground">
+        <span className="flex items-center gap-3 text-[0.8125rem] text-muted-foreground">
           <button type="button" onClick={() => onOpenComments?.(post)} className="hover:underline">
             {t("feed.comments_count", { count: post.commentCount })}
           </button>
@@ -338,7 +338,7 @@ export function PostCard({
         <button
           type="button"
           onClick={() => onOpenComments?.(post)}
-          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted"
+          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[0.8438rem] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted"
         >
           <MessageCircle className="size-[18px]" aria-hidden />
           {t("post.comment")}
@@ -346,7 +346,7 @@ export function PostCard({
         <button
           type="button"
           onClick={() => (viewer ? setSharing(true) : void copyLink())}
-          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted"
+          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-[0.8438rem] font-semibold text-muted-foreground transition-colors hover:bg-surface-muted"
         >
           <Share2 className="size-[18px]" aria-hidden />
           {t("post.share")}

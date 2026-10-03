@@ -43,13 +43,13 @@ export function RequestList({
             >
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-mono text-[12px] text-muted-foreground">{request.reference}</span>
+                  <span className="font-mono text-[0.75rem] text-muted-foreground">{request.reference}</span>
                   <RequestStatusBadge status={request.status} />
                   {agentView ? <RequestPriorityBadge priority={request.priority} /> : null}
                   {agentView && request.needsAction ? <NeedsActionBadge /> : null}
                 </span>
                 <span className="truncate font-medium">{request.subject}</span>
-                <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-[12.5px] text-muted-foreground">
+                <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-[0.7812rem] text-muted-foreground">
                   <span>{request.service?.name ?? t("tn.no_service")}</span>
                   {agentView && request.citizen ? <span>{t("tn.agent.inbox.citizen")} : {request.citizen.name}</span> : null}
                   {agentView ? (

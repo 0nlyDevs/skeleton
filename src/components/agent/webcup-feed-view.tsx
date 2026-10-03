@@ -112,7 +112,7 @@ export function WebcupFeedView({ initial }: { readonly initial: WebcupFeedDto })
             {t("tn.agent.feed.title")}
           </h1>
           <p className="text-sm text-muted-foreground">{t("tn.agent.feed.subtitle")}</p>
-          <p className="text-[12.5px] text-muted-foreground">
+          <p className="text-[0.7812rem] text-muted-foreground">
             {feed.lastSuccessAt ? t("tn.agent.feed.last_sync", { when: fmt.relative(feed.lastSuccessAt) }) : t("tn.agent.feed.never")}
           </p>
         </div>
@@ -137,9 +137,9 @@ export function WebcupFeedView({ initial }: { readonly initial: WebcupFeedDto })
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((stat) => (
           <div key={stat.label} className="flex flex-col gap-0.5 rounded-2xl border border-border/70 bg-card p-3 shadow-panel">
-            <dt className="text-[12px] text-muted-foreground">{stat.label}</dt>
+            <dt className="text-[0.75rem] text-muted-foreground">{stat.label}</dt>
             <dd className="text-lg font-semibold tabular-nums">{stat.value}</dd>
-            {stat.hint ? <dd className="text-[12px] text-primary">{stat.hint}</dd> : null}
+            {stat.hint ? <dd className="text-[0.75rem] text-primary">{stat.hint}</dd> : null}
           </div>
         ))}
       </dl>
@@ -152,7 +152,7 @@ export function WebcupFeedView({ initial }: { readonly initial: WebcupFeedDto })
             aria-pressed={filter === value}
             onClick={() => setFilter(value)}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-[13px] font-medium",
+              "rounded-full border px-3 py-1.5 text-[0.8125rem] font-medium",
               filter === value ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-surface-muted",
             )}
           >

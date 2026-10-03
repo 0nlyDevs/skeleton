@@ -6,6 +6,7 @@ import { getDictionary, getLocale } from "@/lib/i18n/server";
 
 import { Brand } from "./brand";
 import { LocaleToggle } from "./locale-toggle";
+import { DisplayMenu } from "./display-menu";
 import { EcoToggle } from "./eco-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
@@ -30,31 +31,31 @@ export async function SiteHeader() {
         <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label={t["landing.nav_label"]}>
           <Link
             href="/services"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+            className="rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             {t["tn.nav.services"]}
           </Link>
           <Link
             href="/announcements"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+            className="rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             {t["tn.nav.announcements"]}
           </Link>
           <Link
             href="/contact"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+            className="rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             {t["tn.nav.contact"]}
           </Link>
           <Link
             href="/feed"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+            className="rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             {t["tn.nav.city_life"]}
           </Link>
           <Link
             href="/privacy"
-            className="rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+            className="rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             {t["footer.privacy"]}
           </Link>
@@ -65,6 +66,7 @@ export async function SiteHeader() {
             <Link href="/services">{t["tn.nav.services"]}</Link>
           </Button>
           <LocaleToggle />
+          <DisplayMenu />
           <EcoToggle />
           <ThemeToggle />
           {user ? (

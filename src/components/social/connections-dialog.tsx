@@ -101,7 +101,7 @@ export function ConnectionsDialog({
               aria-selected={kind === value}
               onClick={() => setKind(value)}
               className={cn(
-                "flex-1 border-b-2 px-3 py-2.5 text-[14px] font-semibold",
+                "flex-1 border-b-2 px-3 py-2.5 text-[0.875rem] font-semibold",
                 kind === value ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
@@ -111,7 +111,7 @@ export function ConnectionsDialog({
         </div>
         <div className="max-h-[60dvh] overflow-y-auto px-2 py-2">
           {error ? (
-            <p className="px-3 py-6 text-center text-[13px] text-error">{error}</p>
+            <p className="px-3 py-6 text-center text-[0.8125rem] text-error">{error}</p>
           ) : items === null ? (
             <div className="flex flex-col gap-2 p-2">
               {[0, 1, 2].map((index) => (
@@ -119,7 +119,7 @@ export function ConnectionsDialog({
               ))}
             </div>
           ) : items.length === 0 ? (
-            <p className="flex flex-col items-center gap-2 px-3 py-8 text-center text-[13px] text-muted-foreground">
+            <p className="flex flex-col items-center gap-2 px-3 py-8 text-center text-[0.8125rem] text-muted-foreground">
               <UserRound className="size-6" aria-hidden />
               {t(kind === "followers" ? "connections.no_followers" : "connections.no_following")}
             </p>
@@ -131,10 +131,10 @@ export function ConnectionsDialog({
                     <UserAvatar userId={person.id} name={person.name} image={person.image} size="sm" />
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5">
-                        <span className="truncate text-[14px] font-medium">{person.name}</span>
+                        <span className="truncate text-[0.875rem] font-medium">{person.name}</span>
                         <RelationBadge isFriend={person.isFriend} followsYou={person.followsYou} />
                       </span>
-                      <span className="block truncate text-[12px] text-muted-foreground">@{person.username}</span>
+                      <span className="block truncate text-[0.75rem] text-muted-foreground">@{person.username}</span>
                     </span>
                   </Link>
                   {signedIn && !person.isSelf ? <FollowButton userId={person.id} initialFollowing={person.isFollowing} compact /> : null}

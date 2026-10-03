@@ -87,7 +87,7 @@ export function GroupView({
     }
     if (access.status === "BANNED") {
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-error/10 px-3 py-2 text-[13px] font-medium text-error">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-error/10 px-3 py-2 text-[0.8125rem] font-medium text-error">
           <ShieldBan className="size-4" /> {t("groups.banned")}
         </span>
       );
@@ -143,8 +143,8 @@ export function GroupView({
         <div className="flex flex-wrap items-end gap-4 px-5 pb-4">
           <GroupAvatar name={group.name} size="lg" className="-mt-10 ring-4 ring-card" />
           <div className="min-w-0 flex-1 pt-3">
-            <h1 className="truncate text-[24px] font-bold tracking-tight">{group.name}</h1>
-            <p className="flex items-center gap-1.5 text-[13.5px] text-muted-foreground">
+            <h1 className="truncate text-[1.5rem] font-bold tracking-tight">{group.name}</h1>
+            <p className="flex items-center gap-1.5 text-[0.8438rem] text-muted-foreground">
               {group.privacy === "PRIVATE" ? <Lock className="size-3.5" /> : <Globe className="size-3.5" />}
               {group.privacy === "PRIVATE" ? t("groups.private") : t("groups.public")} · {t("groups.members", { count: group.memberCount })}
               {group.privacy === "PUBLIC" && group.requiresApproval ? <> · {t("groups.approval_badge")}</> : null}
@@ -161,11 +161,11 @@ export function GroupView({
         </div>
         {access.isMember && access.role ? (
           access.role === "MEMBER" ? (
-            <p className="px-5 pb-3 text-[13px] text-muted-foreground">{t("groups.you_are_member")}</p>
+            <p className="px-5 pb-3 text-[0.8125rem] text-muted-foreground">{t("groups.you_are_member")}</p>
           ) : (
             <div className={cn("mx-5 mb-4 flex flex-wrap items-start gap-x-3 gap-y-1 rounded-xl px-3 py-2.5", ROLE_STYLE[access.role].className)}>
               <GroupRoleBadge role={access.role} className="bg-background/60" />
-              <div className="min-w-0 flex-1 text-[13px] text-foreground">
+              <div className="min-w-0 flex-1 text-[0.8125rem] text-foreground">
                 <p className="font-semibold">
                   {t("groups.you_are", { role: t(`groups.role.${access.role}` as MessageKey).toLocaleLowerCase() })}
                 </p>
@@ -183,7 +183,7 @@ export function GroupView({
               aria-selected={tab === value}
               onClick={() => setTab(value)}
               className={cn(
-                "border-b-2 px-3 py-3 text-[14px] font-semibold transition-colors",
+                "border-b-2 px-3 py-3 text-[0.875rem] font-semibold transition-colors",
                 tab === value ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
@@ -205,8 +205,8 @@ export function GroupView({
             emptyBody={t("groups.empty_feed")}
             previewFooter={
               <Card className="flex flex-col items-center gap-3 p-6 text-center">
-                <h2 className="text-[16px] font-semibold">{t("groups.preview_title")}</h2>
-                <p className="max-w-sm text-[13.5px] text-muted-foreground">
+                <h2 className="text-[1rem] font-semibold">{t("groups.preview_title")}</h2>
+                <p className="max-w-sm text-[0.8438rem] text-muted-foreground">
                   {t(group.requiresApproval ? "groups.preview_body_request" : "groups.preview_body")}
                 </p>
                 {membershipButton()}
@@ -216,8 +216,8 @@ export function GroupView({
         ) : (
           <Card className="flex flex-col items-center gap-2 p-10 text-center">
             <Lock className="size-8 text-muted-foreground" />
-            <h2 className="text-[17px] font-semibold">{t("groups.locked_title")}</h2>
-            <p className="max-w-sm text-[13.5px] text-muted-foreground">{t("groups.locked_body")}</p>
+            <h2 className="text-[1.0625rem] font-semibold">{t("groups.locked_title")}</h2>
+            <p className="max-w-sm text-[0.8438rem] text-muted-foreground">{t("groups.locked_body")}</p>
           </Card>
         )
       ) : null}
@@ -230,13 +230,13 @@ export function GroupView({
 
       {tab === "about" ? (
         <Card className="flex flex-col gap-3 p-5">
-          <h2 className="text-[16px] font-semibold">{t("groups.about")}</h2>
-          <p className="whitespace-pre-line text-[14.5px] leading-relaxed">{group.description || "—"}</p>
-          <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <h2 className="text-[1rem] font-semibold">{t("groups.about")}</h2>
+          <p className="whitespace-pre-line text-[0.9062rem] leading-relaxed">{group.description || "—"}</p>
+          <p className="flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
             {group.privacy === "PRIVATE" ? <Lock className="size-4" /> : <Globe className="size-4" />}
             {group.privacy === "PRIVATE" ? t("groups.private_hint") : t("groups.public_hint")}
           </p>
-          <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
             <CalendarDays className="size-4" />
             {t("groups.created_on", { date: formatLongDate(group.createdAt) })}
           </p>

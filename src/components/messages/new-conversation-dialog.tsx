@@ -61,7 +61,7 @@ function PeoplePicker({
       {selected.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {selected.map((person) => (
-            <button key={person.id} type="button" onClick={() => onToggle(person)} className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[12.5px] font-medium text-accent-foreground">
+            <button key={person.id} type="button" onClick={() => onToggle(person)} className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[0.7812rem] font-medium text-accent-foreground">
               {person.name}
               <X className="size-3" />
             </button>
@@ -85,14 +85,14 @@ function PeoplePicker({
               >
                 <UserAvatar name={person.name} image={person.image} size="sm" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium">{person.name}</span>
-                  <span className="block truncate text-[12px] text-muted-foreground">@{person.username}</span>
+                  <span className="block truncate text-[0.875rem] font-medium">{person.name}</span>
+                  <span className="block truncate text-[0.75rem] text-muted-foreground">@{person.username}</span>
                 </span>
                 {chosen.has(person.id) ? <Check className="size-4 text-primary" /> : null}
               </button>
             </li>
           ))}
-        {q.trim() && !loading && people.length === 0 ? <li className="px-2 py-3 text-[13px] text-muted-foreground">{t("mention.no_results")}</li> : null}
+        {q.trim() && !loading && people.length === 0 ? <li className="px-2 py-3 text-[0.8125rem] text-muted-foreground">{t("mention.no_results")}</li> : null}
       </ul>
     </div>
   );

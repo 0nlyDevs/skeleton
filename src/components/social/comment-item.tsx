@@ -54,7 +54,7 @@ export function CommentItem({
 
   if (comment.deleted) {
     return (
-      <p className={cn("rounded-2xl bg-surface-muted px-3 py-2 text-[13px] italic text-muted-foreground", isReply && "ml-11")}>
+      <p className={cn("rounded-2xl bg-surface-muted px-3 py-2 text-[0.8125rem] italic text-muted-foreground", isReply && "ml-11")}>
         {t("comments.removed")}
       </p>
     );
@@ -117,16 +117,16 @@ export function CommentItem({
               {author ? (
                 <span className="flex flex-wrap items-center gap-1.5">
                   {profile ? (
-                    <Link href={profile} className="text-[13px] font-semibold hover:underline">
+                    <Link href={profile} className="text-[0.8125rem] font-semibold hover:underline">
                       {author.name}
                     </Link>
                   ) : (
-                    <span className="text-[13px] font-semibold">{author.name}</span>
+                    <span className="text-[0.8125rem] font-semibold">{author.name}</span>
                   )}
                   <GroupRoleBadge role={author.groupRole} size="xs" />
                 </span>
               ) : null}
-              <RichText text={comment.body} mentions={comment.mentions} className="whitespace-pre-line break-words text-[14px] leading-snug [overflow-wrap:anywhere]" />
+              <RichText text={comment.body} mentions={comment.mentions} className="whitespace-pre-line break-words text-[0.875rem] leading-snug [overflow-wrap:anywhere]" />
             </div>
             {viewerId ? (
               <DropdownMenu>
@@ -154,7 +154,7 @@ export function CommentItem({
             ) : null}
           </div>
         )}
-        <div className="mt-0.5 flex items-center gap-3 px-3 text-[12px] text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-3 px-3 text-[0.75rem] text-muted-foreground">
           <time dateTime={comment.createdAt} title={fmt.dateTime(comment.createdAt)}>
             {fmt.relative(comment.createdAt)}
           </time>

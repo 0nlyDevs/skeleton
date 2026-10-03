@@ -28,17 +28,17 @@ export function SimilarPosts({ postId }: { readonly postId: string }) {
   if (posts.length === 0) return null;
   return (
     <Card className="p-4">
-      <h2 className="mb-2 text-[15px] font-semibold">{t("feed.similar")}</h2>
+      <h2 className="mb-2 text-[0.9375rem] font-semibold">{t("feed.similar")}</h2>
       <ul className="flex flex-col divide-y divide-border/60">
         {posts.map((post) => (
           <li key={post.id}>
             <Link href={`/feed/${post.id}`} className="flex items-start gap-3 py-2.5 hover:opacity-90">
               <UserAvatar userId={post.author.id} name={post.author.name} image={post.author.image} size="xs" />
               <span className="min-w-0">
-                <span className="block text-[12.5px] text-muted-foreground">
+                <span className="block text-[0.7812rem] text-muted-foreground">
                   {post.author.name} · {fmt.relative(post.createdAt)}
                 </span>
-                <span className="line-clamp-2 text-[14px]">{post.body || post.title}</span>
+                <span className="line-clamp-2 text-[0.875rem]">{post.body || post.title}</span>
               </span>
             </Link>
           </li>

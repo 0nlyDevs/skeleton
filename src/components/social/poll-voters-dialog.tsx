@@ -39,7 +39,7 @@ export function PollVotersDialog({ postId, open, onOpenChange }: { readonly post
         </DialogHeader>
         <div className="max-h-[60dvh] overflow-y-auto">
           {error ? (
-            <p className="py-6 text-center text-[13px] text-error">{error}</p>
+            <p className="py-6 text-center text-[0.8125rem] text-error">{error}</p>
           ) : data === null ? (
             <div className="flex flex-col gap-2">
               {[0, 1, 2].map((index) => (
@@ -50,12 +50,12 @@ export function PollVotersDialog({ postId, open, onOpenChange }: { readonly post
             <div className="flex flex-col gap-4">
               {data.options.map((option) => (
                 <section key={option.id}>
-                  <h3 className="mb-1 flex items-center justify-between text-[13px] font-semibold">
+                  <h3 className="mb-1 flex items-center justify-between text-[0.8125rem] font-semibold">
                     <span className="min-w-0 break-words">{option.label}</span>
                     <span className="shrink-0 tabular-nums text-muted-foreground">{option.voters.length}</span>
                   </h3>
                   {option.voters.length === 0 ? (
-                    <p className="text-[12.5px] text-muted-foreground">{t("poll.no_votes")}</p>
+                    <p className="text-[0.7812rem] text-muted-foreground">{t("poll.no_votes")}</p>
                   ) : (
                     <ul className="flex flex-col">
                       {option.voters.map((voter) => (
@@ -66,7 +66,7 @@ export function PollVotersDialog({ postId, open, onOpenChange }: { readonly post
                             className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-surface-muted"
                           >
                             <UserAvatar userId={voter.id} name={voter.name} image={voter.image} size="xs" />
-                            <span className="truncate text-[13.5px]">{voter.name}</span>
+                            <span className="truncate text-[0.8438rem]">{voter.name}</span>
                           </Link>
                         </li>
                       ))}

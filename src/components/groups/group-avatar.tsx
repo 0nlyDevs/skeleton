@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /** Initial on a gradient tile; the group's identity without an upload. */
 export function GroupAvatar({ name, size = "md", className }: { readonly name: string; readonly size?: "sm" | "md" | "lg"; readonly className?: string }) {
-  const sizes = { sm: "size-9 text-[13px] rounded-xl", md: "size-12 text-[17px] rounded-2xl", lg: "size-20 text-[30px] rounded-3xl" } as const;
+  const sizes = { sm: "size-9 text-[0.8125rem] rounded-xl", md: "size-12 text-[1.0625rem] rounded-2xl", lg: "size-20 text-[1.875rem] rounded-3xl" } as const;
   return (
     <span
       aria-hidden

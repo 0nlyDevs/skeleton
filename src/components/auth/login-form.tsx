@@ -149,7 +149,7 @@ export function LoginForm({
       </FormField>
 
       <div className="flex items-center justify-between gap-3">
-        <label className="flex cursor-pointer items-center gap-2 text-[13px] text-muted-foreground">
+        <label className="flex cursor-pointer items-center gap-2 text-[0.8125rem] text-muted-foreground">
           <Checkbox
             checked={rememberMe}
             onCheckedChange={(value) => setRememberMe(value === true)}
@@ -159,7 +159,7 @@ export function LoginForm({
 
         <Link
           href="/forgot-password"
-          className="text-[13px] font-medium text-primary underline-offset-4 hover:underline"
+          className="text-[0.8125rem] font-medium text-primary underline-offset-4 hover:underline"
         >
           {t("auth.login.forgot")}
         </Link>

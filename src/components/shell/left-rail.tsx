@@ -24,7 +24,7 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-colors duration-[var(--duration-fast)]",
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.875rem] font-medium transition-colors duration-[var(--duration-fast)]",
         active ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25" : "text-foreground/80 hover:bg-surface-muted",
       )}
     >
@@ -33,7 +33,7 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
       {badge > 0 ? (
         <span
           className={cn(
-            "grid min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-bold leading-5",
+            "grid min-w-5 place-items-center rounded-full px-1.5 text-[0.6875rem] font-bold leading-5",
             active ? "bg-primary-foreground/20" : "bg-error text-white",
           )}
         >
@@ -63,8 +63,8 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
           </nav>
         </Card>
         <Card className="flex flex-col gap-3 p-5">
-          <h2 className="text-[16px] font-semibold">{t("shell.join_title")}</h2>
-          <p className="text-[13.5px] leading-relaxed text-muted-foreground">{t("shell.join_body")}</p>
+          <h2 className="text-[1rem] font-semibold">{t("shell.join_title")}</h2>
+          <p className="text-[0.8438rem] leading-relaxed text-muted-foreground">{t("shell.join_body")}</p>
           <Button asChild>
             <Link href="/register">{t("nav.join")}</Link>
           </Button>
@@ -85,9 +85,9 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
         <Link href={profileHref} className="flex items-center gap-3 rounded-xl p-1 hover:bg-surface-muted">
           <UserAvatar userId={viewer.id} name={viewer.name} image={viewer.image} size="md" />
           <span className="min-w-0">
-            <span className="block truncate text-[14.5px] font-semibold">{viewer.name}</span>
+            <span className="block truncate text-[0.9062rem] font-semibold">{viewer.name}</span>
             {viewer.username ? (
-              <span className="block truncate text-[12.5px] text-muted-foreground">@{viewer.username}</span>
+              <span className="block truncate text-[0.7812rem] text-muted-foreground">@{viewer.username}</span>
             ) : null}
           </span>
         </Link>
@@ -101,8 +101,8 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
               ] as const
             ).map(([key, value]) => (
               <div key={key}>
-                <dd className="text-[15px] font-bold tabular-nums">{value}</dd>
-                <dt className="text-[11px] text-muted-foreground">{t(key)}</dt>
+                <dd className="text-[0.9375rem] font-bold tabular-nums">{value}</dd>
+                <dt className="text-[0.6875rem] text-muted-foreground">{t(key)}</dt>
               </div>
             ))}
           </dl>
@@ -115,7 +115,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
             <NavLink key={item.href} item={item} badge={item.badge ? badges[item.badge] : 0} />
           ))}
         </nav>
-        <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="px-3 pb-1 pt-3 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
           {t("tn.nav.city_life")}
         </p>
         <nav aria-label={t("tn.nav.city_life")} className="flex flex-col gap-0.5">
@@ -125,7 +125,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
         </nav>
         {staff.length > 0 ? (
           <>
-            <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="px-3 pb-1 pt-3 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
               {t("nav.staff")}
             </p>
             <nav aria-label={t("nav.staff")} className="flex flex-col gap-0.5">
@@ -139,7 +139,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
 
       {rail && rail.groups.length > 0 ? (
         <Card className="p-3">
-          <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="px-2 pb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
             {t("nav.your_groups")}
           </p>
           <ul className="flex flex-col gap-0.5">
@@ -147,9 +147,9 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
               <li key={group.slug}>
                 <Link
                   href={`/groups/${group.slug}`}
-                  className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13.5px] hover:bg-surface-muted"
+                  className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[0.8438rem] hover:bg-surface-muted"
                 >
-                  <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent text-[12px] font-bold text-accent-foreground">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent text-[0.75rem] font-bold text-accent-foreground">
                     {group.name.slice(0, 1).toUpperCase()}
                   </span>
                   <span className="min-w-0 flex-1 truncate">{group.name}</span>
@@ -160,7 +160,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
           </ul>
           <Link
             href="/groups"
-            className="mt-1 flex items-center gap-2 rounded-xl px-2 py-1.5 text-[13px] font-medium text-primary hover:bg-accent"
+            className="mt-1 flex items-center gap-2 rounded-xl px-2 py-1.5 text-[0.8125rem] font-medium text-primary hover:bg-accent"
           >
             <UsersRound className="size-4" aria-hidden />
             {t("nav.see_all")}
@@ -168,7 +168,7 @@ export function LeftRail({ viewer, rail }: { readonly viewer: ShellViewer | null
         </Card>
       ) : null}
 
-      <p className="px-2 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="px-2 text-[0.7188rem] leading-relaxed text-muted-foreground">
         <Link href="/privacy" className="hover:underline">
           {t("footer.privacy")}
         </Link>

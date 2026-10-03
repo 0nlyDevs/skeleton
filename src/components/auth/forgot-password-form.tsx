@@ -71,7 +71,7 @@ export function ForgotPasswordForm() {
           <MailCheck className="size-5" />
         </span>
 
-        <p className="text-[14px] leading-relaxed text-muted-foreground">
+        <p className="text-[0.875rem] leading-relaxed text-muted-foreground">
           {t("auth.forgot.success")}
         </p>
 

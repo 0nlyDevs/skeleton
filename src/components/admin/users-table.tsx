@@ -184,7 +184,7 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-[-0.015em]">{t("admin.users.title")}</h1>
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.015em]">{t("admin.users.title")}</h1>
       </header>
 
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
@@ -225,9 +225,9 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[42rem] text-left text-[13.5px]">
+            <table className="w-full min-w-[42rem] text-left text-[0.8438rem]">
               <thead>
-                <tr className="border-b border-border/70 text-[12px] uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border/70 text-[0.75rem] uppercase tracking-wide text-muted-foreground">
                   <th scope="col" className="px-4 py-3 font-medium">{t("admin.users.user")}</th>
                   <th scope="col" className="px-4 py-3 font-medium">{t("admin.users.role")}</th>
                   <th scope="col" className="px-4 py-3 font-medium">{t("admin.users.status")}</th>
@@ -243,18 +243,18 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
                       <div className="flex items-center gap-3">
                         <Avatar className="size-8">
                           {user.image ? <AvatarImage src={user.image} alt="" /> : null}
-                          <AvatarFallback className="text-[11px]">{initials(user.name)}</AvatarFallback>
+                          <AvatarFallback className="text-[0.6875rem]">{initials(user.name)}</AvatarFallback>
                         </Avatar>
                         <div className="flex min-w-0 flex-col">
                           <span className="flex items-center gap-1.5 truncate font-medium">
                             {user.name}
                             {isSelf(user) ? (
-                              <span className="text-[11px] font-normal text-muted-foreground">
+                              <span className="text-[0.6875rem] font-normal text-muted-foreground">
                                 ({t("admin.users.self")})
                               </span>
                             ) : null}
                           </span>
-                          <span className="truncate text-[12px] text-muted-foreground">{user.email}</span>
+                          <span className="truncate text-[0.75rem] text-muted-foreground">{user.email}</span>
                         </div>
                       </div>
                     </td>
@@ -271,7 +271,7 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
                       )}
                     </td>
                     <td className="px-4 py-3 tabular-nums">{user.postCount}</td>
-                    <td className="px-4 py-3 text-[12.5px] text-muted-foreground">
+                    <td className="px-4 py-3 text-[0.7812rem] text-muted-foreground">
                       {fmt.date(user.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -320,7 +320,7 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
           <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             {t("common.previous")}
           </Button>
-          <span className="text-[13px] tabular-nums text-muted-foreground">
+          <span className="text-[0.8125rem] tabular-nums text-muted-foreground">
             {t("common.page")} {page} {t("common.of")} {totalPages}
           </span>
           <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
