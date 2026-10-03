@@ -1,38 +1,54 @@
-import { Button, Section, Text } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 
-import { EmailLayout, button, paragraph } from "./layout";
+import { createMailTranslator, type EmailLocale } from "./copy";
+import { BulletList, EmailButton, EmailLayout, lead } from "./layout";
 
 export interface WelcomeProps {
   readonly name: string;
   readonly appUrl: string;
+  readonly locale?: EmailLocale;
 }
 
-export default function Welcome({ name, appUrl }: WelcomeProps) {
+/** Fixture for `npm run email:preview`, so review shows a real message. */
+export const PreviewProps: WelcomeProps = {
+  name: "Colombe",
+  appUrl: "https://terra-nova.webcup.fr",
+  locale: "fr",
+};
+
+/**
+ * First contact after sign-up, and the message with the highest open rate the
+ * product sends.
+ *
+ * It used to advertise a scaffold that no longer exists — "create a post from the
+ * dashboard", "say hi in the chat room" — and its button pointed at `/dashboard`
+ * while every auth flow in the app lands on `/space`. It now lists the three
+ * things a Terra Nova resident can actually do, in the order they are useful.
+ */
+export default function Welcome({ name, appUrl, locale }: WelcomeProps) {
+  const t = createMailTranslator(locale ?? "fr");
+
   return (
     <EmailLayout
-      preview="Votre compte est prêt"
-      heading={`Votre compte est prêt, ${name}`}
+      preview={t("mail.welcome.preview")}
+      heading={t("mail.welcome.heading", { name })}
       appUrl={appUrl}
+      locale={locale}
+      reason={t("mail.welcome.reason")}
     >
-      <Text style={paragraph}>
-        Merci pour votre inscription. Votre compte est créé — si nous vous avons
-        aussi envoyé un lien de confirmation, ouvrez-le avant de vous connecter.
-      </Text>
+      <Text style={lead}>{t("mail.welcome.lead")}</Text>
 
-      <Text style={paragraph}>Quelques pistes pour commencer :</Text>
-      <Text style={{ ...paragraph, paddingLeft: "16px" }}>
-        • Créez une publication depuis le tableau de bord — c&apos;est le modèle que
-        tous les modules suivent.
-        <br />• Activez l&apos;authentification à deux facteurs dans Réglages →
-        Sécurité.
-        <br />• Dites bonjour dans le salon de chat.
-      </Text>
+      <BulletList
+        items={[
+          t("mail.welcome.step1"),
+          t("mail.welcome.step2"),
+          t("mail.welcome.step3"),
+        ]}
+      />
 
-      <Section style={{ margin: "28px 0" }}>
-        <Button href={`${appUrl}/dashboard`} style={button}>
-          Ouvrir mon tableau de bord
-        </Button>
-      </Section>
+      <Section style={{ height: "20px", lineHeight: "20px", fontSize: "0" }} />
+
+      <EmailButton href={`${appUrl}/space`}>{t("mail.welcome.cta")}</EmailButton>
     </EmailLayout>
   );
 }

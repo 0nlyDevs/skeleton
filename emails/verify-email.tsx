@@ -1,12 +1,7 @@
-import { Button, Section, Text } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 
-import {
-  EmailLayout,
-  button,
-  helperText,
-  paragraph,
-  emailStyles,
-} from "./layout";
+import { createMailTranslator, type EmailLocale } from "./copy";
+import { ActionLink, EmailButton, EmailLayout, emailStyles, lead } from "./layout";
 
 export interface VerifyEmailProps {
   readonly name: string;
@@ -14,36 +9,51 @@ export interface VerifyEmailProps {
   readonly url: string;
   readonly appUrl: string;
   readonly expiresInMinutes?: number;
+  readonly locale?: EmailLocale;
 }
+
+/** Fixture for `npm run email:preview`. */
+export const PreviewProps: VerifyEmailProps = {
+  name: "Colombe",
+  url: "https://terra-nova.webcup.fr/verify-email?token=8fA2kQ7xZ1pLm4vR",
+  appUrl: "https://terra-nova.webcup.fr",
+  expiresInMinutes: 60,
+  locale: "fr",
+};
 
 export default function VerifyEmail({
   name,
   url,
   appUrl,
   expiresInMinutes = 60,
+  locale,
 }: VerifyEmailProps) {
+  const t = createMailTranslator(locale ?? "fr");
+
   return (
     <EmailLayout
-      preview="Confirmez votre adresse e-mail pour activer votre compte"
-      heading={`Bienvenue, ${name}`}
+      preview={t("mail.verify.preview")}
+      heading={t("mail.verify.heading", { name })}
       appUrl={appUrl}
+      locale={locale}
+      reason={t("mail.verify.reason")}
     >
-      <Text style={paragraph}>
-        Confirmez cette adresse e-mail pour activer votre compte. Le lien ci-dessous
-        est valable {expiresInMinutes} minutes et ne peut être utilisé qu&apos;une seule
-        fois.
-      </Text>
+      <Text style={lead}>{t("mail.verify.lead")}</Text>
 
-      <Section style={{ margin: "28px 0" }}>
-        <Button href={url} style={button}>
-          Vérifier mon adresse
-        </Button>
+      <EmailButton href={url}>{t("mail.verify.cta")}</EmailButton>
+
+      {/*
+        The expiry was buried mid-sentence in the lead paragraph. It is a
+        constraint the reader needs *before* they click, so it gets its own
+        block, directly above the button it constrains.
+      */}
+      <Section style={emailStyles.notice}>
+        <Text style={emailStyles.noticeText}>
+          {t("mail.verify.constraint", { minutes: expiresInMinutes })}
+        </Text>
       </Section>
 
-      <Text style={helperText}>
-        Le bouton ne fonctionne pas ? Copiez cette adresse dans votre navigateur :
-      </Text>
-      <Text style={emailStyles.fallbackLink}>{url}</Text>
+      <ActionLink url={url} t={t} short />
     </EmailLayout>
   );
 }
