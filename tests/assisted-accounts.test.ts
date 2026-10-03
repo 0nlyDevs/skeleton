@@ -7,7 +7,7 @@ import { baseUsername, newAccessCode } from "@/modules/assisted-accounts/assiste
 
 describe("accounts without email (F71)", () => {
   it("prints access codes the password policy accepts", () => {
-    for (let index = 0; index < 50; index += 1) {
+    for (let index = 0; index < 500; index += 1) {
       const code = newAccessCode();
       expect(code).toMatch(/^[A-Z]{4}-[a-z]{4}-[0-9]{4}!$/);
       expect(findPasswordViolation(code)).toBeNull();

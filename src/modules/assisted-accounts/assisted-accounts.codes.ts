@@ -11,8 +11,14 @@ const UPPER = "ABCDEFGHJKMNPQRSTUVWXYZ";
 const LOWER = "abcdefghjkmnpqrstuvwxyz";
 const DIGITS = "23456789";
 
+/** Never the same character twice in a row: easier to copy, and the password policy refuses repeats. */
 function pick(alphabet: string, length: number): string {
-  return Array.from({ length }, () => alphabet[randomInt(alphabet.length)]).join("");
+  let out = "";
+  while (out.length < length) {
+    const next = alphabet[randomInt(alphabet.length)] ?? "";
+    if (next !== out.at(-1)) out += next;
+  }
+  return out;
 }
 
 /** e.g. "KQTR-mxpa-4827!": every character class the password policy asks for. */
