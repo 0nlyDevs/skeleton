@@ -80,7 +80,7 @@ export function LoginForm({
     try {
       const result = await signIn.passkey();
       if (result?.error) {
-        const cancelled = /abort|cancel|not ?allowed/i.test(`${result.error.message ?? ""} ${result.error.code ?? ""}`);
+        const cancelled = /abort|cancel|not ?allowed/i.test(`${result.error.message ?? ""} ${"code" in result.error ? result.error.code : ""}`);
         if (!cancelled) setErrorKey(isRateLimited(result.error) ? "auth.login.too_many" : "auth.passkey.failed");
         setPending(false);
         return;

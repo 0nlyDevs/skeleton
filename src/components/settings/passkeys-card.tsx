@@ -64,7 +64,7 @@ export function PasskeysCard() {
     try {
       const result = await authClient.passkey.addPasskey({ name: deviceName() });
       if (result?.error) {
-        const cancelled = /abort|cancel|not ?allowed/i.test(`${result.error.message ?? ""} ${result.error.code ?? ""}`);
+        const cancelled = /abort|cancel|not ?allowed/i.test(`${result.error.message ?? ""} ${"code" in result.error ? result.error.code : ""}`);
         if (!cancelled) toast.error(t("auth.passkey.add_failed"));
         return;
       }
