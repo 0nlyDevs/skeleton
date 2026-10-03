@@ -84,6 +84,8 @@ export const SOCKET_EVENTS = {
   cityRequestUpdated: "city-request:updated",
   /** Server -> everyone: public alert data changed; clients refetch their view. */
   cityAlertUpdated: "city-alert:updated",
+  /** Server -> everyone: an official message was published or withdrawn. */
+  officialMessageUpdated: "official-message:updated",
 } as const;
 
 export type SocketEventName = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
@@ -105,6 +107,11 @@ export interface CityRequestUpdatedPayload {
 export interface CityAlertUpdatedPayload {
   readonly slug: string;
   readonly action: "published" | "changed" | "resolved" | "removed";
+}
+
+export interface OfficialMessageUpdatedPayload {
+  readonly id: string;
+  readonly action: "published" | "withdrawn";
 }
 
 export type PostEngagementPayload = PostEngagementDto;
@@ -275,6 +282,7 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.webcupFeed]: (payload: { added: string[] }) => void;
   [SOCKET_EVENTS.cityRequestUpdated]: (payload: CityRequestUpdatedPayload) => void;
   [SOCKET_EVENTS.cityAlertUpdated]: (payload: CityAlertUpdatedPayload) => void;
+  [SOCKET_EVENTS.officialMessageUpdated]: (payload: OfficialMessageUpdatedPayload) => void;
   [SOCKET_EVENTS.callIncoming]: (payload: CallIncomingPayload) => void;
   [SOCKET_EVENTS.callAccepted]: (payload: { callId: string }) => void;
   [SOCKET_EVENTS.callEnded]: (payload: CallEndedPayload) => void;
