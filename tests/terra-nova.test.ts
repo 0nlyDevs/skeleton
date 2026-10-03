@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { announcementInputSchema } from "@/modules/announcements/announcements.schema";
 import { cityRequestRefParamSchema, createCityRequestSchema, listCityRequestsQuerySchema, updateCityRequestSchema } from "@/modules/city-requests/city-requests.schema";
 import { toSummaryDto } from "@/modules/city-requests/city-requests.dto";
+import { statusChangeAllowed } from "@/modules/city-requests/city-requests.service";
 import { serviceInputSchema } from "@/modules/city-services/city-services.schema";
 import { minutesUntil, nextWaveAt } from "@/modules/webcup/webcup.schedule";
 import { webcupFeedQuerySchema } from "@/modules/webcup/webcup.routes";
@@ -51,6 +52,14 @@ describe("city requests", () => {
     expect(updateCityRequestSchema.safeParse({}).success).toBe(false);
     expect(updateCityRequestSchema.safeParse({ assignee: "someone-else" }).success).toBe(false);
     expect(updateCityRequestSchema.safeParse({ assignee: "me" }).success).toBe(true);
+  });
+
+  it("refuses a status change until the request is in someone's hands", () => {
+    expect(statusChangeAllowed(null, undefined)).toBe(false);
+    expect(statusChangeAllowed(null, null)).toBe(false);
+    expect(statusChangeAllowed(null, "me")).toBe(true);
+    expect(statusChangeAllowed("agent-1", undefined)).toBe(true);
+    expect(statusChangeAllowed("agent-1", null)).toBe(false);
   });
 
   it("flags requests that need an agent's action", () => {

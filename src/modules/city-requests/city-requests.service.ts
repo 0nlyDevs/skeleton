@@ -273,12 +273,27 @@ export async function addCityRequestMessage(reference: string, input: { body: st
   return getCityRequest(reference, actor);
 }
 
+/**
+ * Bug — a request must be in someone's hands before its status can move, so an
+ * untouched backlog can never look "in progress" without an owner. The same
+ * call may take the request first (`assignee: "me"`), and releasing it takes
+ * the right to change the status away again.
+ */
+export function statusChangeAllowed(assigneeId: string | null, requestedAssignee: "me" | null | undefined): boolean {
+  if (requestedAssignee === "me") return true;
+  if (requestedAssignee === null) return false;
+  return assigneeId !== null;
+}
+
 export async function updateCityRequest(reference: string, input: UpdateCityRequestInput, actor: AuthUser, ip: string | null): Promise<CityRequestDto> {
   if (!isStaff(actor)) throw new NotFoundError("This request does not exist.");
   const row = await loadAccessible(reference, actor);
   const events: { kind: string; fromValue: string | null; toValue: string | null }[] = [];
   const data: { status?: (typeof row)["status"]; priority?: (typeof row)["priority"]; assigneeId?: string | null; closedAt?: Date | null } = {};
 
+  if (input.status && input.status !== row.status && !statusChangeAllowed(row.assigneeId, input.assignee)) {
+    throw new ForbiddenError("Take charge of this request before changing its status.");
+  }
   if (input.status && input.status !== row.status) {
     data.status = input.status;
     data.closedAt = input.status === "CLOSED" || input.status === "RESOLVED" ? new Date() : null;
