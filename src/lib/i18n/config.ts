@@ -28,6 +28,24 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
 }
 
+/**
+ * Reads the locale out of a raw `Cookie` header.
+ *
+ * The cookie is written on the client by the i18n provider, so the two places
+ * that need the locale outside a server render read the header themselves:
+ *
+ *   * the socket handshake, where only `handshake.headers` exists;
+ *   * the BetterAuth callbacks that send transactional mail, which run outside
+ *     any Next.js request scope where `cookies()` would throw.
+ */
+export function localeFromCookieHeader(header: string | null | undefined): Locale {
+  if (!header) return DEFAULT_LOCALE;
+
+  const match = new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=([^;]+)`).exec(header);
+  const value = match?.[1];
+  return isLocale(value) ? value : DEFAULT_LOCALE;
+}
+
 export const LOCALE_LABELS: Record<Locale, string> = {
   fr: "Français",
   en: "English",

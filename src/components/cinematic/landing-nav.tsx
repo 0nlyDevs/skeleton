@@ -4,7 +4,6 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 
 import { DisplayMenu } from "@/components/layout/display-menu";
-import { EcoToggle } from "@/components/layout/eco-toggle";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import Link from "@/components/ui/link";
@@ -40,11 +39,10 @@ export function LandingNav({ viewer }: { readonly viewer: { firstName: string; s
             </li>
           ))}
         </ul>
-        <div className="ml-auto flex items-center gap-2 md:ml-0">
-          {/* D14, F23, F24 — language and reading comfort stay one click away on the landing too. */}
-          <LocaleToggle className="text-white/80 hover:bg-white/10 hover:text-white" />
-          <DisplayMenu className="text-white/80 hover:bg-white/10 hover:text-white" />
-          <EcoToggle className="hidden text-white/80 hover:bg-white/10 sm:grid" />
+        <div className="ml-auto flex items-center gap-1.5 md:ml-0">
+          {/* F14/F23/F24: language, text size and contrast, as everywhere else in the portal. */}
+          <LocaleToggle className="text-white/75 hover:bg-white/10 hover:text-white" />
+          <DisplayMenu className="text-white/75 hover:bg-white/10 hover:text-white" />
           {viewer ? (
             <>
               {viewer.staff ? (
@@ -52,7 +50,7 @@ export function LandingNav({ viewer }: { readonly viewer: { firstName: string; s
                   {t("tn.nav.agent")}
                 </Link>
               ) : null}
-              <Link href="/space" className="tn-cta-primary rounded-full px-4 py-2 text-[0.8438rem] font-semibold">
+              <Link href="/space" className="tn-cta-primary hidden rounded-full px-4 py-2 sm:inline-flex text-[0.8438rem] font-semibold">
                 {t("tn.home.cta_space")}
               </Link>
             </>
@@ -61,7 +59,7 @@ export function LandingNav({ viewer }: { readonly viewer: { firstName: string; s
               <Link href="/login" className="hidden rounded-full px-3.5 py-2 text-[0.8438rem] text-white/70 hover:text-white sm:inline-flex">
                 {t("nav.sign_in")}
               </Link>
-              <Link href="/register" className="tn-cta-primary rounded-full px-4 py-2 text-[0.8438rem] font-semibold">
+              <Link href="/register" className="tn-cta-primary hidden rounded-full px-4 py-2 sm:inline-flex text-[0.8438rem] font-semibold">
                 {t("tn.home.cta_join")}
               </Link>
             </>
@@ -79,7 +77,15 @@ export function LandingNav({ viewer }: { readonly viewer: { firstName: string; s
       </nav>
       {open ? (
         <ul className="mx-auto mt-2 flex max-w-[1240px] flex-col rounded-3xl border border-white/10 bg-[#050b18]/90 p-2 text-white backdrop-blur-xl md:hidden">
-          {[...LINKS, ...(viewer ? [] : [{ href: "/login", key: "nav.sign_in" as MessageKey }])].map((link) => (
+          {[
+            ...LINKS,
+            ...(viewer
+              ? [{ href: "/space", key: "tn.home.cta_space" as MessageKey }]
+              : [
+                  { href: "/login", key: "nav.sign_in" as MessageKey },
+                  { href: "/register", key: "tn.home.cta_join" as MessageKey },
+                ]),
+          ].map((link) => (
             <li key={link.href}>
               <Link href={link.href} className="block rounded-2xl px-4 py-3 text-[0.9375rem] hover:bg-white/5" onClick={() => setOpen(false)}>
                 {t(link.key)}

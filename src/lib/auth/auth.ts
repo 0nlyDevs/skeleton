@@ -32,6 +32,7 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "@/lib/mail/transactional";
+import { localeFromCookieHeader } from "@/lib/i18n/config";
 import { clearLimits, rateLimitKey } from "@/lib/rate-limit";
 
 import { authAfterHook, authBeforeHook } from "./auth-hooks";
@@ -81,7 +82,7 @@ if (!env.emailEnabled && env.isProduction) {
 }
 
 export const auth = betterAuth({
-  appName: "Webcup Base",
+  appName: "Terra Nova",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [...env.corsAllowedOrigins],
@@ -137,9 +138,16 @@ export const auth = betterAuth({
      * token never appears in a URL that a browser history or referrer could leak
      * beyond the reset screen.
      */
-    sendResetPassword: async ({ user, token }) => {
+    sendResetPassword: async ({ user, token }, request) => {
       const resetUrl = `${env.appUrl}/reset-password?token=${encodeURIComponent(token)}`;
-      await sendPasswordResetEmail({ to: user.email, name: user.name, url: resetUrl });
+      await sendPasswordResetEmail({
+        to: user.email,
+        name: user.name,
+        url: resetUrl,
+        // The request carries the interface cookie, so someone who registered in
+        // English gets the reset message in English rather than a French one.
+        locale: localeFromCookieHeader(request?.headers.get("cookie")),
+      });
     },
   },
 
@@ -148,9 +156,14 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: TOKEN_TTL_SECONDS,
     // Same reasoning as the reset link: our page, our copy, our error handling.
-    sendVerificationEmail: async ({ user, token }) => {
+    sendVerificationEmail: async ({ user, token }, request) => {
       const verifyUrl = `${env.appUrl}/verify-email?token=${encodeURIComponent(token)}`;
-      await sendVerificationEmail({ to: user.email, name: user.name, url: verifyUrl });
+      await sendVerificationEmail({
+        to: user.email,
+        name: user.name,
+        url: verifyUrl,
+        locale: localeFromCookieHeader(request?.headers.get("cookie")),
+      });
     },
   },
 
@@ -259,7 +272,7 @@ export const auth = betterAuth({
         // OAuth sign-ups arrive without a handle or split name; derive both
         // so every account has a public, unique username from day one.
         before: async (user) => ({ data: await assignMissingProfileFields(user) }),
-        after: async (user) => {
+        after: async (user, ctx) => {
           const email = String(user.email);
           const name = String(user.name);
 
@@ -278,7 +291,11 @@ export const auth = betterAuth({
             },
           });
 
-          await sendWelcomeEmail({ to: email, name });
+          await sendWelcomeEmail({
+            to: email,
+            name,
+            locale: localeFromCookieHeader(ctx?.headers?.get("cookie")),
+          });
         },
       },
     },
@@ -287,7 +304,9 @@ export const auth = betterAuth({
   // Must stay last: it teaches BetterAuth to write cookies through Next's
   // cookie store when auth is called from a Server Action or Route Handler.
   plugins: [
-    twoFactor({ issuer: "Webcup Base" }),
+    // The issuer is what an authenticator app shows next to the entry, so it has
+    // to match the product rather than the scaffold it was copied from.
+    twoFactor({ issuer: "Terra Nova" }),
     username({
       minUsernameLength: USERNAME_MIN_LENGTH,
       maxUsernameLength: USERNAME_MAX_LENGTH,

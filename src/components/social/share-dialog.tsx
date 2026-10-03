@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
+import { matchesSearch } from "@/lib/search";
 import { cn } from "@/lib/utils";
 import type { RoomDto } from "@/modules/messages/messages.dto";
 import type { FeedItemDto, RepostedPostDto } from "@/modules/posts/posts.dto";
@@ -113,8 +114,7 @@ export function ShareDialog({
   }, [query, tab]);
 
   const visible = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    const fromRooms = (rooms ?? []).filter((room) => !term || room.label.toLowerCase().includes(term));
+    const fromRooms = (rooms ?? []).filter((room) => matchesSearch([room.label], query));
     const known = new Set(fromRooms.map((room) => room.userId).filter(Boolean));
     return [...fromRooms, ...people.filter((person) => !known.has(person.userId))];
   }, [rooms, people, query]);

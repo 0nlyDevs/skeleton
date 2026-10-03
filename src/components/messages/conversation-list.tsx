@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/shell/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePresence } from "@/hooks/use-presence";
+import { matchesSearch } from "@/lib/search";
 import { cn } from "@/lib/utils";
 import type { RoomDto } from "@/modules/messages/messages.dto";
 
@@ -37,7 +38,7 @@ export function ConversationList({
   const peers = useMemo(() => (rooms ?? []).flatMap((room) => (room.targetUser ? [room.targetUser.id] : [])), [rooms]);
   const presence = usePresence(peers);
 
-  const visible = (rooms ?? []).filter((room) => room.name.toLowerCase().includes(q.trim().toLowerCase()));
+  const visible = (rooms ?? []).filter((room) => matchesSearch([room.name], q));
 
   return (
     <div className="flex h-full min-h-0 flex-col">

@@ -12,6 +12,8 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api/client";
+import { useSocket } from "@/hooks/use-socket";
+import { SOCKET_EVENTS } from "@/lib/socket/events";
 import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { CityRequestSummaryDto } from "@/modules/city-requests/city-requests.dto";
@@ -32,6 +34,7 @@ export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly i
   const t = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
+  const { socket } = useSocket();
   const [status, setStatus] = useState<StatusTab>(
     (STATUS_TABS as readonly string[]).includes(initialStatus) ? (initialStatus as StatusTab) : "OPEN",
   );
@@ -62,6 +65,18 @@ export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly i
   useEffect(() => {
     void load();
   }, [load]);
+
+  // F26 — live. The server publishes `city-request:updated` to exactly the user
+  // rooms of every citizen and agent on a request; pull the page again so tab
+  // counts and the "needs action" badge never go stale between reloads.
+  useEffect(() => {
+    if (!socket) return;
+    const onUpdated = () => void load();
+    socket.on(SOCKET_EVENTS.cityRequestUpdated, onUpdated);
+    return () => {
+      socket.off(SOCKET_EVENTS.cityRequestUpdated, onUpdated);
+    };
+  }, [socket, load]);
 
   const pickStatus = (next: StatusTab) => {
     setStatus(next);

@@ -154,6 +154,8 @@ const FR: Readonly<Record<string, string>> = {
   "Provide at least one preference to update.": "Modifiez au moins une préférence.",
   "Something went wrong on our side.": "Une erreur est survenue de notre côté.",
   "That account does not exist.": "Ce compte n'existe pas.",
+  "That transport line does not exist.": "Cette ligne de transport n'existe pas.",
+  "Last departure must be later than first departure.": "Le dernier départ doit avoir lieu après le premier.",
   "That expiry date could not be understood.": "Cette date d'expiration est illisible.",
   "That profile does not exist.": "Ce profil n'existe pas.",
   "That session does not exist.": "Cette session n'existe pas.",

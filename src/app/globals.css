@@ -409,12 +409,24 @@ html[data-contrast="high"].dark {
   --input: oklch(1 0 0 / 70%);
   --ring: oklch(1 0 0);
 }
-html[data-contrast="high"] main a:not([class*="bg-"]):not([role]) {
+/* High contrast (F23): links are underlined wherever they are, so a colour-only
+ * distinction can never be the only thing telling a link from body text. The old
+ * rule was a class-substring test that also matched hover-only backgrounds
+ * (e.g. `hover:bg-surface-muted`) and skipped the nav rail, which lives outside
+ * <main>. A resting background fill is the only reason to skip an underline;
+ * "current page" covers that in the left rail, and a button role is not a link
+ * anyway. */
+html[data-contrast="high"] a:not([role]):not([aria-current="page"]) {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+/* Form primitives ship with `focus-visible:outline-none` + a ring shadow, which
+ * removes the outline entirely. Setting only `outline-width` could not put it
+ * back, because `outline-style` stayed `none`. Write the shorthand so style,
+ * width and colour are all owned here. */
 html[data-contrast="high"] :focus-visible {
-  outline-width: 3px;
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -460,7 +472,8 @@ html.lenis body {
   will-change: transform;
 }
 .tn-slash {
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.85) 40%, rgb(255 255 255 / 0.35));
+  /* Fades out towards the tail, brightest at the head where the star is. */
+  background: linear-gradient(90deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.18) 45%, rgb(255 255 255 / 0.95) 100%);
   will-change: transform;
 }
 
@@ -487,6 +500,8 @@ html.lenis body {
 }
 /* Long, many-stop falloff: darkens the planet under the hero text with no visible edge. */
 .tn-hero-scrim {
+  /* The top edge dissolves so the darkening never shows where it starts. */
+  mask-image: linear-gradient(to top, #000 0%, #000 45%, transparent 100%);
   background: radial-gradient(
     ellipse 90% 95% at 50% 88%,
     rgb(2 4 11 / 0.72) 0%,
@@ -543,24 +558,6 @@ html.lenis body {
 .tn-nav-link {
   position: relative;
 }
-
-/*
- * F23 — high contrast on the landing, whose colours are fixed (always dark):
- * every dimmed white text becomes plain white, and cards and glass panels
- * get an opaque background and a visible border.
- */
-html[data-contrast="high"] .tn-landing [class*="text-white/"] {
-  color: #fff !important;
-}
-html[data-contrast="high"] .tn-landing .tn-glass,
-html[data-contrast="high"] .tn-landing .tn-card {
-  border-color: rgb(255 255 255 / 0.6);
-  background: rgb(2 4 11 / 0.92);
-}
-html[data-contrast="high"] .tn-landing .tn-cta-ghost {
-  border-color: #fff;
-  background: rgb(2 4 11 / 0.92);
-}
 .tn-nav-link::after {
   content: "";
   position: absolute;
@@ -594,4 +591,26 @@ html[data-contrast="high"] .tn-landing .tn-cta-ghost {
   background: radial-gradient(130vw 62svh at 50% 100%, #c8643a 0%, #7a2f1f 38%, #2a0f12 60%, transparent 61%);
   box-shadow: 0 -2px 60px rgb(255 154 92 / 0.25);
   mask-image: radial-gradient(130vw 62svh at 50% 100%, #000 60%, transparent 61.5%);
+}
+
+/* High contrast on the landing (F23): opaque panels, full-white text, solid outlines. */
+html[data-contrast="high"] .tn-landing [class*="text-white/"] {
+  color: #fff !important;
+}
+html[data-contrast="high"] .tn-glass,
+html[data-contrast="high"] .tn-card {
+  background: rgb(0 0 0 / 0.9);
+  border-color: rgb(255 255 255 / 0.65);
+  backdrop-filter: none;
+}
+html[data-contrast="high"] .tn-cta-ghost {
+  background: #000;
+  border-color: #fff;
+}
+html[data-contrast="high"] .tn-hero-scrim {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.92) 0%, rgb(0 0 0 / 0.8) 45%, rgb(0 0 0 / 0) 100%);
+}
+html[data-contrast="high"] .tn-landing header nav {
+  background: #000;
+  border-color: #fff;
 }

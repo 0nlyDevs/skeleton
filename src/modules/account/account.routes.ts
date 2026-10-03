@@ -25,6 +25,9 @@ export const deleteMyAccountRoute = apiRoute({
   body: z.object({ password: z.string().max(200).optional(), confirmUsername: z.string().max(60).optional() }).strict(),
   handler: async ({ body, auth, ip }) => {
     await deleteMyAccount(body, auth.user, ip);
-    return jsonOk({ deleted: true });
+    const response = jsonOk({ deleted: true });
+    response.headers.append("Set-Cookie", "better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax");
+    response.headers.append("Set-Cookie", "better-auth.session_data=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax");
+    return response;
   },
 });

@@ -9,6 +9,7 @@ import { useFormatters } from "@/hooks/use-formatters";
 import { FollowButton } from "@/components/social/follow-button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { matchesSearch } from "@/lib/search";
 import { usePresence } from "@/hooks/use-presence";
 import { apiFetch } from "@/lib/api/client";
 import type { ContactDto, SuggestionsDto } from "@/modules/discovery/discovery.service";
@@ -43,7 +44,7 @@ export function RightRail() {
   const presence = usePresence(ids);
 
   const visible = (contacts ?? [])
-    .filter((contact) => contact.name.toLowerCase().includes(filter.toLowerCase()))
+    .filter((contact) => matchesSearch([contact.name], filter))
     // Online people first: the list answers "who can I talk to now?".
     .sort((a, b) => Number(presence.get(b.id)?.online ?? false) - Number(presence.get(a.id)?.online ?? false));
 

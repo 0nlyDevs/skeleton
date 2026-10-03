@@ -6,8 +6,8 @@
 export function HeroTitle() {
   const letter = "tn-letter inline-block will-change-transform";
   return (
-    <h1 aria-label="Terra Nova" data-hero="title" className="font-display relative flex items-baseline justify-center whitespace-nowrap text-[min(19vw,36svh)] font-black leading-[0.82] tracking-[-0.02em]">
-      <span aria-hidden className="flex" data-hero="terre">
+    <h1 aria-label="Terra Nova" data-hero="title" className="font-display relative flex items-end justify-center whitespace-nowrap text-[min(19vw,36svh)] font-black leading-[0.82] tracking-[-0.02em]">
+      <span aria-hidden className="flex items-end" data-hero="terre">
         {["T", "E", "R", "R"].map((value, index) => (
           <span key={index} className="tn-mask">
             <span className={letter}>{value}</span>
@@ -25,7 +25,7 @@ export function HeroTitle() {
           </span>
         </span>
       </span>
-      <span aria-hidden data-hero="nova" className="flex overflow-hidden" style={{ width: 0 }}>
+      <span aria-hidden data-hero="nova" className="flex items-end overflow-hidden" style={{ width: 0 }}>
         <span className="inline-block w-[0.28em]" />
         {["N", "O", "V", "A"].map((value, index) => (
           <span key={index} className="tn-mask">

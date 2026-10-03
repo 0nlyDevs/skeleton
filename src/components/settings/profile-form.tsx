@@ -1,6 +1,7 @@
 "use client";
 
-import { Camera, Loader2, PartyPopper } from "lucide-react";
+import { Camera, Loader2, PartyPopper, ShieldAlert } from "lucide-react";
+import Link from "@/components/ui/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -329,6 +330,23 @@ export function ProfileForm({
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="border-error/30 bg-error/5">
+        <CardHeader>
+          <CardTitle className="text-base text-error">{t("tn.account.danger_zone")}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-md text-[0.8125rem] text-muted-foreground">
+            {t("tn.account.delete_desc")}
+          </p>
+          <Button asChild variant="secondary" className="border-error/30 text-error hover:bg-error/10 hover:text-error">
+            <Link href="/settings/security">
+              <ShieldAlert className="size-4" />
+              {t("tn.account.delete_title")}
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     </div>
