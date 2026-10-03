@@ -16,6 +16,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { publishCityRequestUpdated } from "@/lib/socket/emit";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
+import { roundCoordinate } from "@/modules/places/places.service";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
@@ -78,8 +79,11 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
     ? {
         issueType: input.issueType,
         location: input.location ? encryptField(input.location) : null,
-        latitude: input.latitude ?? null,
-        longitude: input.longitude ?? null,
+        // Round citizen-supplied coordinates the same way posts.service.ts does:
+        // ~100 m is precise enough for a lamp post, too coarse for a front door,
+        // and below the precision at which a GPS reading is personally identifying.
+        latitude: input.latitude ? roundCoordinate(input.latitude) : null,
+        longitude: input.longitude ? roundCoordinate(input.longitude) : null,
       }
     : {};
   const row = await prisma.cityRequest.create({
