@@ -1,4 +1,4 @@
-import { Clock, Mail, MapPin, Phone, Send } from "lucide-react";
+import { Clock, Mail, MapPin, Phone, Send, CalendarClock } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AnnouncementCard } from "@/components/city/announcement-card";
@@ -83,12 +83,21 @@ export default async function ServicePage({ params }: { readonly params: Promise
           <h1 className="text-2xl font-semibold tracking-tight">{service.name}</h1>
           <p className="text-[0.9375rem] text-muted-foreground">{service.summary}</p>
         </div>
-        <Button asChild className="shrink-0">
-          <Link href={`/contact?service=${encodeURIComponent(service.slug)}`}>
-            <Send aria-hidden />
-            {t("tn.services.ask")}
-          </Link>
-        </Button>
+        <div className="flex shrink-0 flex-col gap-2">
+          <Button asChild>
+            <Link href={`/contact?service=${encodeURIComponent(service.slug)}`}>
+              <Send aria-hidden />
+              {t("tn.services.ask")}
+            </Link>
+          </Button>
+          {/* F39 — meet an agent of this service. */}
+          <Button asChild variant="secondary">
+            <Link href={`/appointments/new?service=${encodeURIComponent(service.slug)}`}>
+              <CalendarClock aria-hidden />
+              {t("tn.appointments.book_service")}
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <div className="grid gap-5 md:grid-cols-[1fr_280px]">
