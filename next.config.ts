@@ -43,13 +43,26 @@ const nextConfig: NextConfig = {
   /*
    * The production build uses webpack (`next build --webpack`): on the
    * contest host the account is capped at 2 GB of RAM, and a cold Turbopack
-   * build peaks around 2.4 GB and is killed mid-compile. Webpack with these
-   * options stays under the cap. `next dev` keeps Turbopack.
+   * build peaks around 2.4 GB and is killed mid-compile, and the running app
+   * shares that budget. Webpack with these options peaks around 1.5 GB.
+   * `next dev` keeps Turbopack.
    */
   experimental: {
     webpackMemoryOptimizations: true,
-    webpackBuildWorker: true,
+    // The build worker is a second Node process holding its own copy of the
+    // module graph; compiling in the main process roughly halves peak memory.
+    webpackBuildWorker: false,
+    serverSourceMaps: false,
+    // One worker for page data and static generation (each is a process).
+    cpus: 1,
   },
+
+  /*
+   * Type checking runs in `npm run typecheck` (and the pre-commit gates), not
+   * inside `next build`: the checker is a ~1 GB process of its own, and on the
+   * host the build shares 2 GB with the running app.
+   */
+  typescript: { ignoreBuildErrors: true },
 
   /*
    * Fewer, larger client chunks. The host serves an account at most ~20
