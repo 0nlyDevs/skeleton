@@ -797,24 +797,24 @@ model Follow {
 }
 
 model Message {
-  id        String    @id @default(cuid())
-  roomId    String
-  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  senderId  String
-  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  content   String    @db.Text
+  id         String    @id @default(cuid())
+  roomId     String
+  room       Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content    String    @db.Text
   /// Optional image; served through the authorised file route.
-  uploadId  String?   @unique
-  upload    Upload?   @relation(fields: [uploadId], references: [id], onDelete: SetNull)
-  editedAt  DateTime?
+  uploadId   String?   @unique
+  upload     Upload?   @relation(fields: [uploadId], references: [id], onDelete: SetNull)
+  editedAt   DateTime?
   /// "Deleted for everyone": the row stays as a tombstone so the thread keeps
   /// its shape, but its content is never sent again.
-  deletedAt DateTime?
+  deletedAt  DateTime?
   /// System event kind for group lifecycle messages (e.g. MEMBER_JOINED,
   /// MEMBER_LEFT, MEMBER_REMOVED). When set, the client renders a localized
   /// label with the sender's name instead of the raw content.
   systemKind String?
-  createdAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
 
   hiddenFor MessageHide[]
   reactions MessageReaction[]
