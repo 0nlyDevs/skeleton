@@ -36,10 +36,12 @@ export interface CityRequestEventDto {
 
 export interface CityRequestDto extends CityRequestSummaryDto {
   readonly message: string;
-  /** Where the reported problem is (free text and/or a map point). */
+  /** Where the reported problem is (free text and/or a point on the Terra Nova map). */
   readonly location: string | null;
-  readonly latitude: number | null;
-  readonly longitude: number | null;
+  readonly mapX: number | null;
+  readonly mapY: number | null;
+  /** District derived from the map point, when there is one. */
+  readonly zone: string | null;
   readonly messages: CityRequestMessageDto[];
   readonly events: CityRequestEventDto[];
   readonly closedAt: string | null;

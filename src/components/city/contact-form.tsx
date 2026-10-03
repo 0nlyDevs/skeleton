@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
-import { LocationPicker, type PickedPlace } from "@/components/maps/location-picker";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +19,7 @@ import type { ServiceAvailabilityDto } from "@/modules/city-services/service-ava
 import { ISSUE_TYPES, type IssueType } from "@/modules/city-requests/city-requests.schema";
 
 import { ServiceAvailabilityNotice } from "./service-availability-notice";
+import { TerraNovaPicker, type PickedPoint } from "./terra-nova-picker";
 
 const SELECT_CLASS =
   "h-10 w-full rounded-[var(--radius-control)] border border-input bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
@@ -46,7 +46,7 @@ export function ContactForm({
   const [kind, setKind] = useState(initialKind);
   const [issueType, setIssueType] = useState<IssueType | "">("");
   const [location, setLocation] = useState("");
-  const [point, setPoint] = useState<PickedPlace | null>(null);
+  const [point, setPoint] = useState<PickedPoint | null>(null);
   const [picking, setPicking] = useState(false);
   const [serviceId, setServiceId] = useState(initialServiceId);
   const [subject, setSubject] = useState(initialSubject);
@@ -76,7 +76,7 @@ export function ContactForm({
           subject: subject.trim(),
           message: message.trim(),
           ...(issue
-            ? { issueType, location: location.trim() || null, latitude: point?.latitude ?? null, longitude: point?.longitude ?? null }
+            ? { issueType, location: location.trim() || null, mapX: point?.mapX ?? null, mapY: point?.mapY ?? null }
             : {}),
         },
       });
@@ -176,7 +176,7 @@ export function ContactForm({
             </div>
             {fields.location ? <p id="contact-location-error" role="alert" className="text-[0.7812rem] text-error">{fields.location}</p> : null}
           </div>
-          <LocationPicker open={picking} onOpenChange={setPicking} onPick={setPoint} />
+          <TerraNovaPicker open={picking} onOpenChange={setPicking} onPick={setPoint} />
         </div>
       ) : null}
 

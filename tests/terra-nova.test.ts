@@ -31,8 +31,8 @@ describe("city requests", () => {
     const base = { subject: "Lampadaire cassé", message: "Le lampadaire ne s'allume plus depuis hier." };
     expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting" }).success).toBe(false);
     expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", location: "Rue des Dômes, module 12" }).success).toBe(true);
-    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", latitude: 48.85, longitude: 2.35 }).success).toBe(true);
-    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", location: "Ici", latitude: 48.85 }).success).toBe(false);
+    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", mapX: 500, mapY: 300 }).success).toBe(true);
+    expect(createCityRequestSchema.safeParse({ ...base, issueType: "lighting", location: "Ici", mapX: 500 }).success).toBe(false);
     expect(createCityRequestSchema.safeParse({ ...base, issueType: "meteor" }).success).toBe(false);
     expect(createCityRequestSchema.safeParse(base).success).toBe(true);
   });

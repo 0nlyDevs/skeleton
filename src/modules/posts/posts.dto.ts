@@ -68,7 +68,7 @@ export interface PostDto {
   /** Who can read it: everyone, the author's followers, or the author alone. */
   readonly audience: "PUBLIC" | "FOLLOWERS" | "PRIVATE";
   readonly poll: PollDto | null;
-  readonly location: { readonly name: string; readonly latitude: number; readonly longitude: number } | null;
+  readonly location: { readonly name: string; readonly zone: string | null; readonly x: number; readonly y: number } | null;
   readonly editedAt: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -162,8 +162,8 @@ export function toPostDto(row: PostWithAuthor): PostDto {
     audience: row.audience,
     poll: row.poll ? toPollDto(row.poll) : null,
     location:
-      row.placeName && row.latitude !== null && row.longitude !== null
-        ? { name: row.placeName, latitude: row.latitude, longitude: row.longitude }
+      row.placeName && row.mapX !== null && row.mapY !== null
+        ? { name: row.placeName, zone: row.zone, x: row.mapX, y: row.mapY }
         : null,
     editedAt: row.editedAt ? row.editedAt.toISOString() : null,
     createdAt: row.createdAt.toISOString(),
