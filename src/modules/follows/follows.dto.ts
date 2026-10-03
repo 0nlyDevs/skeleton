@@ -1,4 +1,4 @@
-import type { PublicProfileRow, PublicUserRow, SearchUserRow } from "@/modules/users/users.repository";
+import type { PublicProfileRow, SearchUserRow } from "@/modules/users/users.repository";
 
 export interface PublicProfileDto {
   readonly id: string;
@@ -29,8 +29,6 @@ export interface ConnectionDto {
   readonly name: string;
   readonly username: string;
   readonly image: string | null;
-  /** Citizen, city agent or administrator, so residents can tell who is who. */
-  readonly role: "USER" | "AGENT" | "ADMIN";
   readonly isFollowing: boolean;
   readonly followsYou: boolean;
   readonly isFriend: boolean;
@@ -42,6 +40,8 @@ export interface SearchUserDto {
   readonly name: string;
   readonly username: string;
   readonly image: string | null;
+  /** Citizen, city agent or administrator, so residents can tell who is who. */
+  readonly role: "USER" | "AGENT" | "ADMIN";
   readonly isFollowing: boolean;
 }
 
