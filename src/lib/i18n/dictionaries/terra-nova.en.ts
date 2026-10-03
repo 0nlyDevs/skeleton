@@ -102,6 +102,10 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.landing.footer": "Official portal of the residents of Terra Nova",
 
   // --- Services ---
+  "tn.services.where": "Where to find us",
+  "tn.services.emergency_body": "In immediate danger, call. Otherwise, the nearest one to your home is on the map.",
+  "tn.services.emergency_map": "See on the map",
+  "tn.services.emergency_call": "Emergency service: in immediate danger, call {phone}",
   "tn.services.title": "City services",
   "tn.services.subtitle": "Every Terra Nova service, with its hours, contacts and the steps to follow.",
   "tn.services.search": "Search a service (energy, water, civil registry…)",
@@ -155,6 +159,7 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.space.do.map": "City map",
   "tn.space.do.map_body": "Each district's state, places and where you live.",
   "tn.space.attention": "{count} request(s) are waiting for your answer.",
+  "tn.space.emergency_hint": "the hospital or rescue nearest to your home",
   "tn.space.title": "My space",
   "tn.space.subtitle": "Your details and all your requests to the city.",
   "tn.space.profile": "My details",

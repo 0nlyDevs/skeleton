@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
+import { EmergencyStrip } from "@/components/city/emergency-strip";
 import { ContextTip } from "@/components/feedback/context-tip";
 import { ServicesDirectory } from "@/components/city/services-directory";
 import { getAuthContext } from "@/lib/auth/session";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { listServices } from "@/modules/city-services/city-services.service";
 import { listServicesQuerySchema } from "@/modules/city-services/city-services.schema";
+import { cityZoneLabelKey } from "@/modules/alerts/city-zones";
 
 export const metadata: Metadata = { title: "Services municipaux" };
 
@@ -22,6 +24,13 @@ export default async function ServicesPage({ searchParams }: { readonly searchPa
         <p className="text-sm text-muted-foreground">{t("tn.services.subtitle")}</p>
       </header>
       <ContextTip id="services">{t("tn.tip.services")}</ContextTip>
+
+      <EmergencyStrip
+        entries={services
+          .filter((service) => service.emergency && service.location)
+          .map((service) => ({ slug: service.slug, name: service.name, zone: t(cityZoneLabelKey(service.location!.zone)), hours: service.hours, phone: service.phone }))}
+        labels={{ title: t("alerts.map.emergency_title"), body: t("tn.services.emergency_body"), call: t("alerts.map.call"), map: t("tn.services.emergency_map") }}
+      />
 
       <ServicesDirectory
         key={query.q ?? ""}

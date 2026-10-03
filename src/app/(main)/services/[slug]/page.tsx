@@ -5,6 +5,8 @@ import { AnnouncementCard } from "@/components/city/announcement-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
 import { ServiceIcon } from "@/components/city/service-icon";
+import { ServiceLocationCard } from "@/components/city/service-location-card";
+import { cityZoneLabelKey } from "@/modules/alerts/city-zones";
 import { MarkServiceSeen } from "@/components/city/welcome-guide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,16 @@ export default async function ServicePage({ params }: { readonly params: Promise
         </p>
       ) : null}
 
+      {service.emergency && service.phone ? (
+        <a
+          href={`tel:${service.phone.replace(/\s+/g, "")}`}
+          className="flex items-center gap-3 rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-[0.9375rem] font-semibold text-error"
+        >
+          <Phone className="size-5 shrink-0" aria-hidden />
+          {t("tn.services.emergency_call", { phone: service.phone })}
+        </a>
+      ) : null}
+
       <header lang={service.contentLocale} className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-panel sm:flex-row sm:items-start">
         <ServiceIcon name={service.icon} className="size-14 rounded-2xl" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -95,6 +107,16 @@ export default async function ServicePage({ params }: { readonly params: Promise
           ) : null}
         </div>
 
+        <div className="flex h-fit flex-col gap-4">
+        {service.location ? (
+          <ServiceLocationCard
+            slug={service.slug}
+            location={service.location}
+            address={service.address}
+            emergency={service.emergency}
+            labels={{ title: t("tn.services.where"), zone: t(cityZoneLabelKey(service.location.zone)), openMap: t("alerts.map.open_map") }}
+          />
+        ) : null}
         {contact.length > 0 ? (
           <aside className="h-fit rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="contact">
             <h2 id="contact" className="mb-3 font-semibold">{t("tn.services.contact")}</h2>
@@ -113,6 +135,7 @@ export default async function ServicePage({ params }: { readonly params: Promise
             </dl>
           </aside>
         ) : null}
+        </div>
       </div>
     </div>
   );

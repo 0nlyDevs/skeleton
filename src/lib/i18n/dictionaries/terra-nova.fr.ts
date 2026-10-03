@@ -104,6 +104,10 @@ export const frTerraNova = {
   "tn.landing.footer": "Portail officiel des habitants de Terra Nova",
 
   // --- Services ---
+  "tn.services.where": "Où nous trouver",
+  "tn.services.emergency_body": "En danger immédiat, appelez. Pour le reste, le plus proche de chez vous est sur la carte.",
+  "tn.services.emergency_map": "Voir sur la carte",
+  "tn.services.emergency_call": "Service d'urgence : en danger immédiat, appelez le {phone}",
   "tn.services.title": "Services municipaux",
   "tn.services.subtitle": "Tous les services de Terra Nova, avec leurs horaires, leurs contacts et la marche à suivre.",
   "tn.services.search": "Rechercher un service (énergie, eau, état civil…)",
@@ -158,6 +162,7 @@ export const frTerraNova = {
   "tn.space.do.map": "Carte de la cité",
   "tn.space.do.map_body": "L'état de chaque quartier, les lieux et votre position.",
   "tn.space.attention": "{count} demande(s) attendent votre réponse.",
+  "tn.space.emergency_hint": "l'hôpital ou les secours les plus proches de chez vous",
   "tn.space.title": "Mon espace",
   "tn.space.subtitle": "Vos informations et toutes vos démarches auprès de la ville.",
   "tn.space.profile": "Mes informations",
