@@ -24,7 +24,6 @@ import { WebcupRequestCard } from "./webcup-request-card";
 
 export const FEED_STATUS_FILTERS = [
   { id: "all", labelKey: "tn.agent.feed.filter_all" },
-  { id: "todo", labelKey: "tn.agent.feed.filter_todo" },
   { id: "TODO", labelKey: "tn.triage.TODO" },
   { id: "IN_PROGRESS", labelKey: "tn.triage.IN_PROGRESS" },
   { id: "DONE", labelKey: "tn.triage.DONE" },
@@ -158,7 +157,6 @@ export function WebcupFeedView({
     const list = feed.requests;
     return {
       all: list.length,
-      todo: list.filter((r) => r.triage === "TODO" || r.triage === "IN_PROGRESS").length,
       TODO: list.filter((r) => r.triage === "TODO").length,
       IN_PROGRESS: list.filter((r) => r.triage === "IN_PROGRESS").length,
       DONE: list.filter((r) => r.triage === "DONE").length,
@@ -169,9 +167,7 @@ export function WebcupFeedView({
   const requests = useMemo(() => {
     const query = q.trim().toLowerCase();
     return feed.requests.filter((request) => {
-      if (filter === "todo") {
-        if (request.triage !== "TODO" && request.triage !== "IN_PROGRESS") return false;
-      } else if (filter !== "all") {
+      if (filter !== "all") {
         if (request.triage !== filter) return false;
       }
 
