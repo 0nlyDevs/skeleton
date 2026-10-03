@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Database,
   FileText,
+  LockKeyhole,
   ScrollText,
   ShieldAlert,
   Users,
@@ -18,6 +19,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBytes } from "@/lib/utils";
 import type { AdminOverview } from "@/modules/stats/stats.service";
+import type { ProtectionStatus } from "@/modules/login-protection/login-protection.stats";
+
+/** Sign-in protection summary; admins only, so absent for agents. */
+export interface AdminSecuritySummary {
+  readonly status: ProtectionStatus;
+  readonly failures: number;
+  readonly locks: number;
+}
 import { APP_VERSION } from "@/lib/version";
 
 /**
@@ -27,7 +36,7 @@ import { APP_VERSION } from "@/lib/version";
  * only formats. Each card links to the page where the underlying list lives, so
  * the overview works as a triage surface rather than a dead-end chart wall.
  */
-export function AdminOverview({ data }: { readonly data: AdminOverview }) {
+export function AdminOverview({ data, security }: { readonly data: AdminOverview; readonly security?: AdminSecuritySummary | undefined }) {
   const t = useTranslation();
   const fmt = useFormatters();
 
@@ -59,6 +68,18 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
       value: data.audit.last24h.toLocaleString(),
       href: "/admin/audit",
     },
+    ...(security
+      ? [
+          {
+            icon: LockKeyhole,
+            label: t("tn.admin.security.card"),
+            value: security.failures.toLocaleString(),
+            hint: `${t(`tn.admin.security.status.${security.status}`)} · ${t("tn.admin.security.card_locks", { count: security.locks })}`,
+            href: "/admin/security",
+            accent: security.status !== "NORMAL",
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -68,7 +89,7 @@ export function AdminOverview({ data }: { readonly data: AdminOverview }) {
         <p className="text-[0.875rem] text-muted-foreground">{t("admin.subtitle")}</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={cards.length > 4 ? "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" : "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"}>
         {cards.map((card) => {
           const Icon = card.icon;
           const body = (

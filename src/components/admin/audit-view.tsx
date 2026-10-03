@@ -26,6 +26,8 @@ const PAGE_SIZE = 20;
 
 const ACTION_TONES: Record<string, "primary" | "success" | "warning" | "error" | "neutral"> = {
   "user.registered": "success",
+  "auth.sign_in_failed": "warning",
+  "auth.sign_in_locked": "error",
   "user.role_changed": "warning",
   "user.banned": "error",
   "user.unbanned": "success",

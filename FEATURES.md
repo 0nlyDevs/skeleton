@@ -22,6 +22,7 @@ it. Test accounts: see `prisma/seed.ts` (password set by `SEED_PASSWORD`).
 | D09 | Access control | done | Agent pages show a 403 to citizens; every endpoint re-checks the role; another citizen's request reads as 404; services are admin only |
 | D19 | Agent workspace showing the Nova Terra API | done | `/agent` (separate layout and navigation), `/agent/feed`: session, wave, countdown, requests with difficulty and XP, team tracking |
 | F22 | Agents see citizen requests, their state and what needs action | done | `/agent/requests`: status tabs with counts, "Action requise" when new or when the citizen answered, take / release, internal notes, history |
+| F37 | Visible protection against repeated sign-in attempts on many accounts | done | `/login`: attempts left after a wrong password, then a pause with a live countdown and a reset link; the owner gets an alert (`/settings/security?alert=locked`, failed attempts listed); admins see `/admin/security` (live status, failures per hour, sources, locked accounts) |
 
 Technical notes:
 
@@ -61,6 +62,14 @@ Technical notes:
 - Pluggable store: in-memory by default, `RATE_LIMIT_STORE=database` for
   multiple workers
 - Brute-force attempts are answered with `429` and `Retry-After`
+- Sign-in: 5 wrong passwords per account in 15 minutes pause that account; 20
+  failures per IP in an hour, across all accounts, pause that IP (credential
+  stuffing). A successful sign-in clears the account counter only, so logging
+  into one's own account never resets the IP budget
+- One resident's typos never lock out a shared network: sign-in has no
+  every-attempt IP counter
+- Each failure is audited (`auth.sign_in_failed`, `auth.sign_in_locked`); the
+  owner of a locked account is alerted at most once an hour
 
 ## Performance
 
