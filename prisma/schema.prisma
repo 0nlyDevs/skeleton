@@ -40,7 +40,8 @@ datasource db {
 
 enum Role {
   USER
-  MODERATOR
+  /// City agent: handles residents' requests, alerts and announcements, and moderates content.
+  AGENT
   ADMIN
 }
 

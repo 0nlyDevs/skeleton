@@ -39,7 +39,7 @@ export function groupRoleRank(role: GroupRoleName): number {
 }
 
 function isPlatformStaff(role: Role | undefined): boolean {
-  return role === "MODERATOR" || role === "ADMIN";
+  return role === "AGENT" || role === "ADMIN";
 }
 
 export function resolveGroupAccess(

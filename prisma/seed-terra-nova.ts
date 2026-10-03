@@ -261,7 +261,7 @@ const REQUESTS = [
 
 export async function seedTerraNova(prisma: Client, users: readonly SeedUser[]): Promise<void> {
   const admin = users.find((user) => user.role === "ADMIN") ?? users[0];
-  const agent = users.find((user) => user.role === "MODERATOR") ?? admin;
+  const agent = users.find((user) => user.role === "AGENT") ?? admin;
 
   const serviceIds = new Map<string, string>();
   for (const [index, service] of SERVICES.entries()) {

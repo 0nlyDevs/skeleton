@@ -96,7 +96,7 @@ export const GUEST_NAV: readonly ShellNavItem[] = [
 
 /** Staff: one door each; their workspaces have their own navigation. */
 export const STAFF_NAV: readonly ShellNavItem[] = [
-  { href: "/agent", labelKey: "tn.nav.agent", icon: Briefcase, roles: ["MODERATOR", "ADMIN"] },
+  { href: "/agent", labelKey: "tn.nav.agent", icon: Briefcase, roles: ["AGENT", "ADMIN"] },
   { href: "/admin", labelKey: "nav.admin", icon: ShieldCheck, roles: ["ADMIN"] },
 ];
 

@@ -26,7 +26,7 @@ export const getCityRequestRoute = apiRoute({
 });
 
 export const updateCityRequestRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   params: cityRequestRefParamSchema,
   body: updateCityRequestSchema,
   handler: async ({ params, body, auth, ip }) => jsonOk({ data: await updateCityRequest(params.reference, body, auth.user, ip) }),

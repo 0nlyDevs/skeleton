@@ -7,7 +7,7 @@
  * without a cast.
  */
 
-export const ROLES = ["USER", "MODERATOR", "ADMIN"] as const;
+export const ROLES = ["USER", "AGENT", "ADMIN"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const NOTIFICATION_TYPES = [

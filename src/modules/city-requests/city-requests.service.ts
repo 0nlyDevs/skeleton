@@ -2,7 +2,7 @@
  * Citizen requests to the city ("démarches").
  *
  *   - a citizen creates a request and only ever sees their own (others: 404);
- *   - city agents (MODERATOR) and administrators see and process them all:
+ *   - city agents (AGENT) and administrators see and process them all:
  *     status, priority, assignment, replies and internal notes;
  *   - internal notes never reach the citizen; message bodies are encrypted
  *     at rest; every change is recorded in the request history.
@@ -58,7 +58,7 @@ async function pushRequestUpdate(row: { citizenId: string; assigneeId: string | 
 }
 
 async function staffIds(): Promise<string[]> {
-  const rows = await prisma.user.findMany({ where: { role: { in: ["MODERATOR", "ADMIN"] }, banned: false }, select: { id: true }, take: 200 });
+  const rows = await prisma.user.findMany({ where: { role: { in: ["AGENT", "ADMIN"] }, banned: false }, select: { id: true }, take: 200 });
   return rows.map((row) => row.id);
 }
 

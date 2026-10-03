@@ -48,7 +48,7 @@ export async function requireRole(roles: readonly Role[]): Promise<AuthContext> 
   return context;
 }
 
-/** Require MODERATOR or ADMIN. */
+/** Require AGENT or ADMIN. */
 export async function requireStaff(): Promise<AuthContext> {
   return requireRole(STAFF_ROLES);
 }

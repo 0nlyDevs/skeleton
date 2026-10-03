@@ -10,14 +10,14 @@ export const webcupFeedQuerySchema = z.object({
 });
 
 export const getWebcupFeedRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   query: webcupFeedQuerySchema,
   handler: async ({ auth, query }) => jsonOk({ data: await getWebcupFeed(auth.user, query.status) }),
 });
 
 /** Manual refresh, on top of the server's own polling. */
 export const refreshWebcupFeedRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   rateLimit: { limit: 6, windowMs: 60_000 },
   rateLimitScope: "webcup:refresh",
   handler: async ({ auth }) => {
@@ -27,7 +27,7 @@ export const refreshWebcupFeedRoute = apiRoute({
 });
 
 export const triageWebcupRoute = apiRoute({
-  roles: ["MODERATOR", "ADMIN"],
+  roles: ["AGENT", "ADMIN"],
   params: z.object({ code: z.string().trim().min(1).max(40) }),
   body: z
     .object({

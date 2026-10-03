@@ -19,7 +19,7 @@ export const roleSchema = z.enum(ROLES);
 /** Higher outranks lower. */
 const RANK: Record<Role, number> = {
   USER: 10,
-  MODERATOR: 20,
+  AGENT: 20,
   ADMIN: 30,
 };
 
@@ -42,7 +42,7 @@ export function roleIn(role: Role, allowed: readonly Role[]): boolean {
 }
 
 /** Roles allowed to act on resources they do not own. */
-export const STAFF_ROLES: readonly Role[] = ["MODERATOR", "ADMIN"];
+export const STAFF_ROLES: readonly Role[] = ["AGENT", "ADMIN"];
 
 /** Roles allowed into the admin area. */
 export const ADMIN_ROLES: readonly Role[] = ["ADMIN"];

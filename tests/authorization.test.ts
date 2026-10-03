@@ -36,8 +36,8 @@ function user(role: AuthUser["role"], id = "user-1"): AuthUser {
 
 describe("role ranking", () => {
   it("treats roles as an order, not a set", () => {
-    expect(roleAtLeast("ADMIN", "MODERATOR")).toBe(true);
-    expect(roleAtLeast("MODERATOR", "ADMIN")).toBe(false);
+    expect(roleAtLeast("ADMIN", "AGENT")).toBe(true);
+    expect(roleAtLeast("AGENT", "ADMIN")).toBe(false);
     expect(roleAtLeast("USER", "USER")).toBe(true);
   });
 
@@ -50,8 +50,8 @@ describe("role ranking", () => {
   });
 
   it("keeps a moderator out of admin-only areas", () => {
-    expect(roleIn("MODERATOR", STAFF_ROLES)).toBe(true);
-    expect(roleIn("MODERATOR", ADMIN_ROLES)).toBe(false);
+    expect(roleIn("AGENT", STAFF_ROLES)).toBe(true);
+    expect(roleIn("AGENT", ADMIN_ROLES)).toBe(false);
     expect(roleIn("ADMIN", ADMIN_ROLES)).toBe(true);
     expect(roleIn("USER", STAFF_ROLES)).toBe(false);
   });
@@ -63,15 +63,15 @@ describe("role assignment", () => {
   });
 
   it("stops a moderator from escalating anyone, including themselves", () => {
-    expect(canAssignRole("MODERATOR", "ADMIN")).toBe(false);
-    expect(canAssignRole("USER", "MODERATOR")).toBe(false);
+    expect(canAssignRole("AGENT", "ADMIN")).toBe(false);
+    expect(canAssignRole("USER", "AGENT")).toBe(false);
     expect(canAssignRole("USER", "ADMIN")).toBe(false);
   });
 
   it("offers exactly the roles an actor may grant", () => {
     expect(assignableRoles("USER")).toEqual(["USER"]);
-    expect(assignableRoles("MODERATOR")).toEqual(["USER", "MODERATOR"]);
-    expect(assignableRoles("ADMIN")).toEqual(["USER", "MODERATOR", "ADMIN"]);
+    expect(assignableRoles("AGENT")).toEqual(["USER", "AGENT"]);
+    expect(assignableRoles("ADMIN")).toEqual(["USER", "AGENT", "ADMIN"]);
   });
 });
 
@@ -82,12 +82,12 @@ describe("ownership", () => {
 
   it("does not let a stranger act, even with a role name that looks privileged", () => {
     expect(canAccessOwnedResource({ userId: "someone-else" }, user("USER"))).toBe(false);
-    expect(canAccessOwnedResource({ userId: "someone-else" }, user("MODERATOR"))).toBe(false);
+    expect(canAccessOwnedResource({ userId: "someone-else" }, user("AGENT"))).toBe(false);
   });
 
   it("lets staff through when the caller asks for it", () => {
     expect(
-      canAccessOwnedResource({ userId: "someone-else" }, user("MODERATOR"), STAFF_ROLES),
+      canAccessOwnedResource({ userId: "someone-else" }, user("AGENT"), STAFF_ROLES),
     ).toBe(true);
   });
 
