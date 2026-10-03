@@ -4,10 +4,11 @@ import { apiRoute, publicRoute } from "@/lib/api/route";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 import { z } from "zod";
 import { jsonOk, noContent } from "@/lib/api/response";
-import { ADMIN_ROLES } from "@/lib/auth/roles";
+import { ADMIN_ROLES, STAFF_ROLES } from "@/lib/auth/roles";
 
 import {
   adminListUsersQuerySchema,
+  agentListCitizensQuerySchema,
   changePasswordSchema,
   setInitialPasswordSchema,
   sessionIdParamSchema,
@@ -23,10 +24,13 @@ import {
   changeUserRole,
   getOwnProfile,
   getUserForAdmin,
+  listCitizensForAgent,
   listUsersForAdmin,
   revokeOtherOwnSessions,
   revokeOwnSession,
+  setCitizenSuspension,
   setUserBan,
+  signOutCitizenEverywhere,
   updateOwnProfile,
 } from "./users.service";
 
@@ -105,6 +109,27 @@ export const updateUserBanRoute = apiRoute({
   body: updateUserBanSchema,
   handler: async ({ params, body, auth, ip }) =>
     jsonOk(await setUserBan(params.id, body, { user: auth.user, ip })),
+});
+
+// --- Agents: resident accounts only (F34) -----------------------------------
+
+export const agentListCitizensRoute = apiRoute({
+  roles: STAFF_ROLES,
+  query: agentListCitizensQuerySchema,
+  handler: async ({ query }) => jsonOk(await listCitizensForAgent(query)),
+});
+
+export const agentCitizenSuspensionRoute = apiRoute({
+  roles: STAFF_ROLES,
+  params: userIdParamSchema,
+  body: updateUserBanSchema,
+  handler: async ({ params, body, auth, ip }) => jsonOk(await setCitizenSuspension(params.id, body, { user: auth.user, ip })),
+});
+
+export const agentCitizenSignOutRoute = apiRoute({
+  roles: STAFF_ROLES,
+  params: userIdParamSchema,
+  handler: async ({ params, auth, ip }) => jsonOk(await signOutCitizenEverywhere(params.id, { user: auth.user, ip })),
 });
 
 const usernameQuerySchema = z.object({ username: z.string().max(60) });

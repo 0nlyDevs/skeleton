@@ -53,6 +53,7 @@ import {
 const USERNAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 import type {
   AdminListUsersQuery,
+  AgentListCitizensQuery,
   ChangePasswordInput,
   SetInitialPasswordInput,
   UpdateProfileInput,
@@ -104,6 +105,61 @@ export async function listUsersForAdmin(
     limit: pagination.limit,
     total,
   });
+}
+
+/**
+ * F34 — city agents administer resident accounts, and only those: the list
+ * never includes staff, and every action refuses a non-resident target, so an
+ * agent can neither see nor touch another agent's or an admin's account.
+ * Roles stay an administrator's decision (`changeUserRole`).
+ */
+export async function listCitizensForAgent(query: AgentListCitizensQuery): Promise<Paginated<AdminUserDto>> {
+  return listUsersForAdmin({
+    page: query.page,
+    limit: query.limit,
+    sort: "createdAt",
+    order: "desc",
+    role: "USER",
+    ...(query.q ? { q: query.q } : {}),
+    ...(query.status === "active" ? { banned: false } : {}),
+    ...(query.status === "suspended" ? { banned: true } : {}),
+    ...(query.status === "unverified" ? { emailVerified: false } : {}),
+  });
+}
+
+async function assertCitizenTarget(id: string, actor: ActorContext): Promise<void> {
+  if (!isStaff(actor.user)) throw new ForbiddenError();
+  const target = await findAdminUserById(id);
+  if (!target) throw new NotFoundError("That account does not exist.");
+  if (target.role !== "USER") throw new ForbiddenError("Agents can only manage resident accounts.");
+}
+
+/** Suspend or reinstate a resident; suspension signs them out everywhere (see `setUserBan`). */
+export async function setCitizenSuspension(id: string, input: UpdateUserBanInput, actor: ActorContext): Promise<AdminUserDto> {
+  await assertCitizenTarget(id, actor);
+  return setUserBan(id, input, actor);
+}
+
+/** Sign a resident out of every device, e.g. after a suspicious sign-in they reported. */
+export async function signOutCitizenEverywhere(id: string, actor: ActorContext): Promise<{ revoked: number }> {
+  await assertCitizenTarget(id, actor);
+  const revoked = await deleteUserSessions(id);
+  disconnectUserSockets(id);
+  await recordAudit({
+    actorId: actor.user.id,
+    action: auditActions.userSessionsRevoked,
+    targetType: "user",
+    targetId: id,
+    metadata: { by: "agent", revokedSessions: revoked },
+    ip: actor.ip ?? null,
+  });
+  await notifySystemMessage({
+    userId: id,
+    title: "Vos sessions ont été fermées",
+    body: "Un agent de la ville vous a déconnecté de tous vos appareils pour protéger votre compte. Reconnectez-vous ; changez votre mot de passe si vous ne reconnaissez pas une connexion.",
+    link: "/settings/security",
+  });
+  return { revoked };
 }
 
 export async function getUserForAdmin(id: string): Promise<AdminUserDto> {

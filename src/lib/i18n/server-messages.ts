@@ -214,6 +214,7 @@ const FR: Readonly<Record<string, string>> = {
   "You already have an open report for this content.": "Vous avez déjà signalé ce contenu.",
   "You are not allowed to perform this action.": "Vous n'avez pas l'autorisation de faire cela.",
   "You cannot ban your own account.": "Vous ne pouvez pas exclure votre propre compte.",
+  "Agents can only manage resident accounts.": "Les agents ne peuvent gérer que les comptes des habitants.",
   "You cannot change your own role.": "Vous ne pouvez pas modifier votre propre rôle.",
   "You cannot follow yourself.": "Vous ne pouvez pas vous suivre vous-même.",
   "You cannot grant a role above your own.": "Vous ne pouvez pas attribuer un rôle supérieur au vôtre.",

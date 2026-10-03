@@ -4,6 +4,7 @@ import { CheckCircle2, ExternalLink, Hourglass, Lock, MapPin, TriangleAlert } fr
 import { useCallback, useEffect, useState } from "react";
 
 import { RequestControls } from "@/components/agent/request-controls";
+import { ContextTip } from "@/components/feedback/context-tip";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
@@ -161,6 +162,7 @@ export function RequestView({
 
           <section className="flex flex-col gap-3" aria-labelledby="conversation">
             <h2 id="conversation" className="px-1 font-semibold">{t("tn.request.conversation")}</h2>
+            {agent ? null : <ContextTip id="request">{t("tn.tip.request")}</ContextTip>}
             {request.messages.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">{t("tn.request.no_reply")}</p>
             ) : (

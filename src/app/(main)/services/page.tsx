@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ContextTip } from "@/components/feedback/context-tip";
 import { ServicesDirectory } from "@/components/city/services-directory";
 import { getAuthContext } from "@/lib/auth/session";
 import { getServerDictionary } from "@/lib/i18n/server";
@@ -20,6 +21,7 @@ export default async function ServicesPage({ searchParams }: { readonly searchPa
         <h1 className="text-2xl font-semibold tracking-tight">{t("tn.services.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("tn.services.subtitle")}</p>
       </header>
+      <ContextTip id="services">{t("tn.tip.services")}</ContextTip>
 
       <ServicesDirectory
         key={query.q ?? ""}

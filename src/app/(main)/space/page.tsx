@@ -6,6 +6,7 @@ import { AnnouncementCard } from "@/components/city/announcement-card";
 import { RequestList } from "@/components/city/request-list";
 import { WelcomeGuide } from "@/components/city/welcome-guide";
 import { WelcomeWizard } from "@/components/city/welcome-wizard";
+import { ContextTip } from "@/components/feedback/context-tip";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
@@ -141,7 +142,10 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
               }
             />
           ) : (
-            <RequestList requests={requests.data} hrefBase="/space/requests" />
+            <>
+              <ContextTip id="space">{t("tn.tip.space")}</ContextTip>
+              <RequestList requests={requests.data} hrefBase="/space/requests" />
+            </>
           )}
         </section>
 
