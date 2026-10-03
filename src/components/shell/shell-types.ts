@@ -8,6 +8,8 @@ export interface ShellViewer {
   readonly email: string;
   readonly image: string | null;
   readonly role: Role;
+  /** F71 — still signs in with an agent's printed access code. */
+  readonly mustSetSecret?: boolean;
 }
 
 export interface ShellGroup {

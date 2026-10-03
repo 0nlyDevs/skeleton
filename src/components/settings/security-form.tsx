@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 
+import { useTranslation } from "@/components/providers/i18n-provider";
+
 import type { OAuthAvailability } from "@/components/auth/oauth-buttons";
 import type { FailedSignInDto } from "@/modules/login-protection/login-protection.stats";
 
@@ -24,6 +26,7 @@ export function SecurityForm({
   alert = false,
   lockAlert = false,
   failedSignIns,
+  mustSetSecret = false,
 }: {
   readonly twoFactorEnabled: boolean;
   readonly hasPassword: boolean;
@@ -34,10 +37,19 @@ export function SecurityForm({
   /** Arrived from the "account locked" notification. */
   readonly lockAlert?: boolean;
   readonly failedSignIns: { readonly total: number; readonly items: readonly FailedSignInDto[] };
+  /** F71 — first visit with an agent's printed access code. */
+  readonly mustSetSecret?: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslation();
   return (
     <div className="flex flex-col gap-4">
+      {mustSetSecret ? (
+        <section role="status" className="flex flex-col gap-1.5 rounded-2xl border border-primary/40 bg-accent p-4">
+          <h2 className="font-semibold">{t("tn.assisted.setup.title")}</h2>
+          <p className="text-sm">{t("tn.assisted.setup.body")}</p>
+        </section>
+      ) : null}
       {alert ? <SecurityAlert onSecured={() => router.refresh()} /> : null}
       {lockAlert ? (
         <FailedSignInsCard {...failedSignIns} highlight twoFactorEnabled={twoFactorEnabled} />

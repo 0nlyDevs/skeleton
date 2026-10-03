@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/shell/app-shell";
 import { getAuthContext } from "@/lib/auth/session";
 import { viewerZone } from "@/modules/alerts/alerts.service";
+import { needsSecretSetup } from "@/modules/users/users.service";
 
 /**
  * Every product page renders inside the same shell, for guests and members
@@ -12,13 +13,15 @@ import { viewerZone } from "@/modules/alerts/alerts.service";
 export default async function MainLayout({ children }: { readonly children: ReactNode }) {
   const context = await getAuthContext();
   const user = context?.user ?? null;
-  const zone = user ? await viewerZone(user).catch(() => null) : null;
+  const [zone, mustSetSecret] = user
+    ? await Promise.all([viewerZone(user).catch(() => null), needsSecretSetup(user.id).catch(() => false)])
+    : [null, false];
 
   return (
     <AppShell
       viewer={
         user
-          ? { id: user.id, name: user.name, username: user.username, email: user.email, image: user.image, role: user.role }
+          ? { id: user.id, name: user.name, username: user.username, email: user.email, image: user.image, role: user.role, mustSetSecret }
           : null
       }
       zone={zone}

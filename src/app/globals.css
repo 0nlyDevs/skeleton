@@ -593,3 +593,22 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(1.4); opacity: 0; }
 }
+
+/*
+ * F71 — printing the access sheets prints only the sheets, one per page,
+ * whatever page the dialog was opened on.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .assisted-sheets,
+  .assisted-sheets * {
+    visibility: visible;
+  }
+  .assisted-sheets {
+    position: absolute;
+    inset: 0;
+    color: #000;
+  }
+}

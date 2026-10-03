@@ -1,4 +1,5 @@
 import {
+  Compass,
   Accessibility,
   BookOpen,
   Bookmark,
@@ -51,6 +52,7 @@ export const NAV_GROUPS: readonly ShellNavGroup[] = [
   {
     labelKey: "tn.nav.group.procedures",
     items: [
+      { href: "/start", labelKey: "tn.start.nav", icon: Compass },
       { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
       { href: "/contact", labelKey: "tn.nav.request", icon: Send },
       { href: "/appointments", labelKey: "tn.appointments.nav", icon: CalendarClock },
@@ -88,6 +90,7 @@ export const MORE_NAV: readonly ShellNavItem[] = [
 
 /** What a guest can open without an account. */
 export const GUEST_NAV: readonly ShellNavItem[] = [
+  { href: "/start", labelKey: "tn.start.nav", icon: Compass },
   { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
   { href: "/alerts", labelKey: "tn.nav.alerts", icon: Siren },
   { href: "/city-map", labelKey: "tn.nav.city_map", icon: Globe2 },

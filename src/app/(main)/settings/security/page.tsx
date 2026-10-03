@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth/auth";
 import { getAuthContext } from "@/lib/auth/session";
 import { env } from "@/lib/env";
 import { headers } from "next/headers";
-import { hasPasswordCredential } from "@/modules/users/users.service";
+import { hasPasswordCredential, needsSecretSetup } from "@/modules/users/users.service";
 import { listMyFailedSignIns } from "@/modules/login-protection/login-protection.stats";
 
 export const metadata: Metadata = { title: "Sécurité" };
@@ -28,16 +28,18 @@ export default async function SecuritySettingsPage({
   if (!context) redirect("/login");
 
   const requestHeaders = await headers();
-  const [sessions, hasPassword, failedSignIns] = await Promise.all([
+  const [sessions, hasPassword, failedSignIns, mustSetSecret] = await Promise.all([
     auth.api.listSessions({ headers: requestHeaders }),
     hasPasswordCredential(context.user.id),
     listMyFailedSignIns(context.user.id),
+    needsSecretSetup(context.user.id),
   ]);
 
   return (
     <SecurityForm
       twoFactorEnabled={context.user.twoFactorEnabled}
       hasPassword={hasPassword}
+      mustSetSecret={mustSetSecret}
       alert={params.alert === "new-device"}
       lockAlert={params.alert === "locked"}
       failedSignIns={failedSignIns}

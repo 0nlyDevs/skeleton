@@ -23,6 +23,7 @@ import { Resend } from "resend";
 import type { ReactElement } from "react";
 
 import { env } from "@/lib/env";
+import { isPlaceholderEmail } from "@/lib/accounts/no-email";
 import { logger } from "@/lib/logger";
 // Importing the module applies the DNS order; the call documents that this file
 // is the one that depends on it.
@@ -265,6 +266,8 @@ async function resendAttempt(message: MailMessage, client: Resend): Promise<Atte
 }
 
 export async function sendMail(message: MailMessage): Promise<MailResult> {
+  // F71 — an account without email has a placeholder address: never send to it.
+  if (isPlaceholderEmail(message.to)) return { delivered: false };
   if (!env.emailEnabled) {
     await recordUndelivered(
       message,
