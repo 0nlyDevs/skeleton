@@ -500,4 +500,10 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.transports.share_schedule": "Copy schedule",
   "tn.transports.schedule_copied": "Schedule copied to clipboard!",
   "tn.transports.view_live": "View live timetables",
+  "tn.transports.favorite_lines": "My favourite lines: {lines}",
+  "tn.transports.favorite_add_line": "Add line {code} to my favourites",
+  "tn.transports.favorite_remove_line": "Remove line {code} from my favourites",
+  "tn.transports.favorite_short": "Favourite",
+  "tn.transports.search_label": "Search for a line or a stop",
+  "tn.transports.loading_times": "Working out the next departures…",
 };

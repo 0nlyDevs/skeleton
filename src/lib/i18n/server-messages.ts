@@ -19,6 +19,7 @@ const FR: Readonly<Record<string, string>> = {
   "Give your request a subject.": "Donnez un objet à votre demande.",
   "Describe your request in a few words.": "Décrivez votre demande en quelques mots.",
   "Say where the problem is.": "Indiquez où se trouve le problème.",
+  "Use letters, digits or dashes for the line code.": "Utilisez des lettres, des chiffres ou des tirets pour le code de la ligne.",
   "Pick a point on the map again.": "Choisissez à nouveau un point sur la carte.",
   "Invalid reference.": "Référence invalide.",
   "Write a message.": "Écrivez un message.",
