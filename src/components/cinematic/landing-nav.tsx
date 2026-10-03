@@ -16,13 +16,13 @@ const LINKS: readonly { href: string; key: MessageKey }[] = [
   { href: "/feed", key: "tn.nav.city_life" },
 ];
 
-/** Glass navigation bar; it slides in at the end of the intro. */
+/** Glass navigation bar; it appears once the visitor has landed. */
 export function LandingNav({ viewer }: { readonly viewer: { firstName: string; staff: boolean } | null }) {
   const t = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
-    <header data-hero="nav" className="fixed inset-x-0 top-0 z-40 px-4 pt-4 opacity-0 sm:px-6">
+    <header data-hero="nav" className="fixed inset-x-0 top-0 z-40 px-4 pt-4 sm:px-6">
       <nav
         aria-label={t("nav.label")}
         className="mx-auto flex max-w-[1240px] items-center gap-6 rounded-full border border-white/10 bg-[#050b18]/55 py-2.5 pl-5 pr-2.5 text-white shadow-[0_10px_40px_-20px_rgba(0,0,0,0.8)] backdrop-blur-xl"
@@ -50,7 +50,7 @@ export function LandingNav({ viewer }: { readonly viewer: { firstName: string; s
                   {t("tn.nav.agent")}
                 </Link>
               ) : null}
-              <Link href="/space" className="tn-cta-primary hidden rounded-full px-4 py-2 sm:inline-flex text-[0.8438rem] font-semibold">
+              <Link href="/space" className="tn-cta-brand hidden rounded-full px-4 py-2 sm:inline-flex text-[0.8438rem] font-semibold">
                 {t("tn.home.cta_space")}
               </Link>
             </>
@@ -59,7 +59,7 @@ export function LandingNav({ viewer }: { readonly viewer: { firstName: string; s
               <Link href="/login" className="hidden rounded-full px-3.5 py-2 text-[0.8438rem] text-white/70 hover:text-white sm:inline-flex">
                 {t("nav.sign_in")}
               </Link>
-              <Link href="/register" className="tn-cta-primary hidden rounded-full px-4 py-2 sm:inline-flex text-[0.8438rem] font-semibold">
+              <Link href="/register" className="tn-cta-brand hidden rounded-full px-4 py-2 sm:inline-flex text-[0.8438rem] font-semibold">
                 {t("tn.home.cta_join")}
               </Link>
             </>

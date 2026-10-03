@@ -1,4 +1,5 @@
 import type { Dictionary } from "./fr";
+import { enLanding } from "./landing.en";
 import { enTerraNova } from "./terra-nova.en";
 
 /**
@@ -9,6 +10,7 @@ import { enTerraNova } from "./terra-nova.en";
  */
 export const en: Dictionary = {
   ...enTerraNova,
+  ...enLanding,
   // --- Generic ---
   "app.name": "Webcup Base",
   "app.tagline": "The production-grade foundation for the 24H by Webcup sprint",

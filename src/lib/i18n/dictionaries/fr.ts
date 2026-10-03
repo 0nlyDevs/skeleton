@@ -1,3 +1,4 @@
+import { frLanding } from "./landing.fr";
 import { frTerraNova } from "./terra-nova.fr";
 
 /**
@@ -12,6 +13,7 @@ import { frTerraNova } from "./terra-nova.fr";
  */
 export const fr = {
   ...frTerraNova,
+  ...frLanding,
   // --- Generic ---
   "app.name": "Webcup Base",
   "app.tagline": "La base de production pour le sprint 24H by Webcup",
