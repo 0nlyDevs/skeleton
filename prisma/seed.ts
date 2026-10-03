@@ -17,6 +17,7 @@ import { encryptField } from "../src/lib/crypto/field-encryption";
 // turn DATABASE_URL into driver pool options.
 import { prisma } from "../src/lib/db/prisma";
 
+import { seedCityAlerts } from "./seed-city-alerts";
 import { seedTerraNova } from "./seed-terra-nova";
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "";
@@ -311,6 +312,7 @@ async function main() {
   console.log("  feature flags: 2");
 
   await seedTerraNova(prisma, users);
+  await seedCityAlerts(prisma, users);
 
   console.log("\nTest accounts (password: SEED_PASSWORD):");
   for (const account of ACCOUNTS) {
