@@ -11,6 +11,13 @@ import { cn } from "@/lib/utils";
 
 const YEAR = 60 * 60 * 24 * 365;
 
+/** Persists a preference and applies it to `<html>` right away. */
+function applyPreference(cookie: string, value: string, attribute: string, attributeValue: string | null): void {
+  document.cookie = `${cookie}=${value}; Path=/; Max-Age=${YEAR}; SameSite=Lax`;
+  if (attributeValue === null) document.documentElement.removeAttribute(attribute);
+  else document.documentElement.setAttribute(attribute, attributeValue);
+}
+
 /**
  * F23/F24 — reading comfort: a larger text size and a high-contrast palette.
  * Stored in cookies so the server renders the chosen display from the first byte.
@@ -22,21 +29,17 @@ export function DisplayMenu({ className }: { readonly className?: string }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    setSize(parseTextSize(root.dataset.textSize));
-    setContrast(root.dataset.contrast === "high");
+    setSize(parseTextSize(root.getAttribute("data-text-size") ?? undefined));
+    setContrast(root.getAttribute("data-contrast") === "high");
   }, []);
 
   const chooseSize = (next: TextSize) => {
-    document.cookie = `${TEXT_SIZE_COOKIE}=${next}; Path=/; Max-Age=${YEAR}; SameSite=Lax`;
-    if (next === "normal") delete document.documentElement.dataset.textSize;
-    else document.documentElement.dataset.textSize = next;
+    applyPreference(TEXT_SIZE_COOKIE, next, "data-text-size", next === "normal" ? null : next);
     setSize(next);
   };
 
   const toggleContrast = (next: boolean) => {
-    document.cookie = `${CONTRAST_COOKIE}=${next ? "1" : "0"}; Path=/; Max-Age=${YEAR}; SameSite=Lax`;
-    if (next) document.documentElement.dataset.contrast = "high";
-    else delete document.documentElement.dataset.contrast;
+    applyPreference(CONTRAST_COOKIE, next ? "1" : "0", "data-contrast", next ? "high" : null);
     setContrast(next);
   };
 
