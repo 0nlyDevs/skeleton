@@ -18,6 +18,7 @@ import { encryptField } from "../src/lib/crypto/field-encryption";
 import { prisma } from "../src/lib/db/prisma";
 
 import { seedCityAlerts } from "./seed-city-alerts";
+import { seedServiceLocations } from "./seed-service-locations";
 import { seedTerraNova } from "./seed-terra-nova";
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "";
@@ -313,6 +314,7 @@ async function main() {
 
   await seedTerraNova(prisma, users);
   await seedCityAlerts(prisma, users);
+  await seedServiceLocations(prisma);
 
   console.log("\nTest accounts (password: SEED_PASSWORD):");
   for (const account of ACCOUNTS) {

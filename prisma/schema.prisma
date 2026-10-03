@@ -946,37 +946,46 @@ model FeatureFlag {
 
 /// A municipal service of Terra Nova (énergie, transports, état civil…).
 model MunicipalService {
-  id           String   @id @default(cuid())
-  slug         String   @unique @db.VarChar(80)
-  name         String   @db.VarChar(120)
-  category     String   @db.VarChar(60)
+  id           String    @id @default(cuid())
+  slug         String    @unique @db.VarChar(80)
+  name         String    @db.VarChar(120)
+  category     String    @db.VarChar(60)
   /// One-line summary for cards.
-  summary      String   @db.VarChar(240)
-  description  String   @db.Text
+  summary      String    @db.VarChar(240)
+  description  String    @db.Text
   /// Steps or practical information, one per line.
-  howTo        String?  @db.Text
-  email        String?  @db.VarChar(160)
-  phone        String?  @db.VarChar(40)
-  hours        String?  @db.VarChar(160)
-  address      String?  @db.VarChar(200)
+  howTo        String?   @db.Text
+  email        String?   @db.VarChar(160)
+  phone        String?   @db.VarChar(40)
+  hours        String?   @db.VarChar(160)
+  address      String?   @db.VarChar(200)
   latitude     Float?
   longitude    Float?
+  /// Where the service receives people, on the city map (1000 × 640 plane).
+  /// Both null for services that are only reachable remotely.
+  mapX         Int?
+  mapY         Int?
+  /// District of the service's premises, for "near me" and the map.
+  zone         CityZone?
+  /// Hospitals, emergency rooms, fire and rescue: listed first when it matters.
+  emergency    Boolean   @default(false)
   /// lucide icon name, from an allow-list.
-  icon         String   @default("building") @db.VarChar(40)
-  sortOrder    Int      @default(0)
-  active       Boolean  @default(true)
+  icon         String    @default("building") @db.VarChar(40)
+  sortOrder    Int       @default(0)
+  active       Boolean   @default(true)
   /// Highlighted at the top of the catalogue and on the home page (F28).
-  featured     Boolean  @default(false)
+  featured     Boolean   @default(false)
   /// Other-language copies of the text fields, keyed by locale (F27):
   /// `{ "en": { name, summary, description, howTo } }`. French is the base.
   translations Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   requests      CityRequest[]
   announcements Announcement[]
 
   @@index([active, sortOrder])
+  @@index([emergency])
   @@map("municipalService")
 }
 
@@ -1011,26 +1020,26 @@ enum AnnouncementCategory {
 
 /// A publication of the city, written by agents or administrators.
 model Announcement {
-  id          String               @id @default(cuid())
-  slug        String               @unique @db.VarChar(100)
-  title       String               @db.VarChar(160)
-  summary     String               @db.VarChar(300)
-  body        String               @db.Text
-  category    AnnouncementCategory @default(ANNOUNCEMENT)
-  alertScope    CityAlertScope?
-  alertSeverity CityAlertSeverity?
-  alertStatus   CityAlertStatus?
+  id              String               @id @default(cuid())
+  slug            String               @unique @db.VarChar(100)
+  title           String               @db.VarChar(160)
+  summary         String               @db.VarChar(300)
+  body            String               @db.Text
+  category        AnnouncementCategory @default(ANNOUNCEMENT)
+  alertScope      CityAlertScope?
+  alertSeverity   CityAlertSeverity?
+  alertStatus     CityAlertStatus?
   alertResolvedAt DateTime?
-  pinned      Boolean              @default(false)
-  coverImage  String?              @db.VarChar(200)
-  serviceId   String?
-  service     MunicipalService?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  authorId    String
-  author      User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  publishedAt DateTime?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  deletedAt   DateTime?
+  pinned          Boolean              @default(false)
+  coverImage      String?              @db.VarChar(200)
+  serviceId       String?
+  service         MunicipalService?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  authorId        String
+  author          User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt     DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
 
   @@index([publishedAt, deletedAt])
   @@index([category])

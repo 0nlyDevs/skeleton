@@ -1,4 +1,4 @@
-import { BufferAttribute, Color, PlaneGeometry } from "three";
+import { BufferAttribute, Color, DataTexture, LinearFilter, PlaneGeometry, RedFormat, UnsignedByteType } from "three";
 
 import { ZONE_TERRAIN } from "@/modules/alerts/city-map-data";
 import { CITY_ZONES, CITY_ZONE_IDS, CITY_ZONE_VERTICES, zoneAt, type CityZoneId } from "@/modules/alerts/city-zones";
@@ -97,6 +97,51 @@ function coastDistance(x: number, y: number): number {
   return insideCoast(x, y) ? best : -best;
 }
 
+/** Small islands off the east and south-west coasts: [x, y, radius]. */
+const ISLETS: readonly (readonly [number, number, number])[] = [
+  [958, 335, 40],
+  [942, 468, 30],
+  [905, 552, 24],
+  [128, 548, 22],
+  [612, 600, 18],
+];
+
+/** The river from the northern hills to the west coast, and the delta's channels. */
+const RIVER: readonly (readonly [number, number])[] = [
+  [432, 92], [418, 140], [388, 186], [350, 228], [306, 262], [262, 292], [205, 318], [140, 338], [70, 352],
+];
+const DELTA: readonly (readonly (readonly [number, number])[])[] = [
+  [[300, 360], [282, 402], [250, 438], [214, 474], [186, 506]],
+  [[300, 360], [330, 410], [338, 458], [330, 512]],
+  [[262, 292], [255, 340], [240, 382], [214, 420]],
+];
+/** Coral Harbor's bay. */
+const BAY: readonly [number, number, number] = [176, 468, 42];
+
+function distanceToPolyline(points: readonly (readonly [number, number])[], x: number, y: number): number {
+  let best = Infinity;
+  for (let i = 1; i < points.length; i += 1) {
+    const [ax, ay] = points[i - 1] ?? [0, 0];
+    const [bx, by] = points[i] ?? [0, 0];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
+    best = Math.min(best, Math.hypot(x - (ax + t * dx), y - (ay + t * dy)));
+  }
+  return best;
+}
+
+/** 0 on dry land, 1 in the middle of a river, a delta channel or the bay. */
+export function waterwayAt(x: number, y: number): number {
+  const wobble = (fbm(x / 30, y / 30, 2) - 0.5) * 6;
+  const river = 1 - Math.min(1, Math.max(0, (distanceToPolyline(RIVER, x, y) + wobble - 5) / 9));
+  const delta = Math.max(
+    ...DELTA.map((channel) => 1 - Math.min(1, Math.max(0, (distanceToPolyline(channel, x, y) + wobble - 3) / 6))),
+  );
+  const bay = 1 - Math.min(1, Math.max(0, (Math.hypot(x - BAY[0], y - BAY[1]) + wobble * 2 - BAY[2]) / 18));
+  return Math.max(river, delta, bay);
+}
+
 function blur(values: Float32Array, columns: number, rows: number, radius: number, passes: number): void {
   const temp = new Float32Array(values.length);
   for (let pass = 0; pass < passes; pass += 1) {
@@ -129,6 +174,13 @@ function blur(values: Float32Array, columns: number, rows: number, radius: numbe
 
 export interface TerrainResult {
   readonly geometry: PlaneGeometry;
+  /**
+   * Ground height as a texture, for the water shader: shallows, depth and foam
+   * follow a smooth, filtered surface instead of the triangle grid.
+   * Red channel = world height mapped from [-0.4, 0.4].
+   */
+  readonly heightTexture: DataTexture;
+  readonly bounds: { readonly minX: number; readonly minZ: number; readonly width: number; readonly depth: number };
   /** Height in world units at any map point (bilinear on the grid). */
   readonly heightAt: (x: number, y: number) => number;
 }
@@ -156,7 +208,9 @@ export function buildTerrain(segmentsX = 300, segmentsY = 210): TerrainResult {
     const { x, y } = toMap(position.getX(i), position.getZ(i));
     // Bays and capes at two scales, so the coast never follows the straight district edges.
     const ripple = (fbm(x / 110, y / 110, 4) - 0.5) * 90 + (fbm(x / 28 + 9, y / 28 + 4, 3) - 0.5) * 26;
-    const d = coastDistance(x, y) + ripple;
+    // The main island, plus a few islets beyond its coast.
+    const islets = Math.max(...ISLETS.map(([cx, cy, r]) => r - Math.hypot(x - cx, y - cy) + ripple * 0.3));
+    const d = Math.max(coastDistance(x, y) + ripple, islets);
     coast[i] = d;
     const zone = d > 0 ? (zoneAt(x, y) ?? nearestZone(x, y)) : null;
     zoneIndex[i] = zone ? CITY_ZONE_IDS.indexOf(zone) : -1;
@@ -180,6 +234,10 @@ export function buildTerrain(segmentsX = 300, segmentsY = 210): TerrainResult {
     // Land slopes gently down to a beach, then a shelf under the water.
     let h = (heights[i] ?? 0) * (0.04 + 0.96 * land * land * (3 - 2 * land)) + Math.min(1, d / 8) * 0.6;
     if (d <= 0) h = Math.min(h, -1.5 + d * 0.06);
+    // Rivers, delta channels and the bay: carved below sea level with soft banks.
+    const { x: mx, y: my } = toMap(position.getX(i), position.getZ(i));
+    const wet = d > 0 ? waterwayAt(mx, my) : 0;
+    if (wet > 0) h = h * (1 - wet) + -1.4 * wet;
     heights[i] = h;
     position.setY(i, h * HEIGHT_SCALE);
 
@@ -192,6 +250,7 @@ export function buildTerrain(segmentsX = 300, segmentsY = 210): TerrainResult {
       const t = Math.min(1, Math.max(0, (h - profile.base) / Math.max(1, profile.relief)));
       color.set(profile.low).lerp(new Color(profile.high), t);
       if (d < 9) color.lerp(SAND, 1 - d / 9);
+      if (wet > 0.05) color.lerp(WET, Math.min(1, wet * 1.6));
       if (h > 46) color.lerp(SNOW, Math.min(1, (h - 46) / 16));
       const grain = (hash(i * 0.37, i * 0.11) - 0.5) * 0.06;
       color.offsetHSL(0, 0, grain);
@@ -220,7 +279,16 @@ export function buildTerrain(segmentsX = 300, segmentsY = 210): TerrainResult {
     const bottom = at(c0, r0 + 1) * (1 - fx) + at(c0 + 1, r0 + 1) * fx;
     return (top * (1 - fz) + bottom * fz) * HEIGHT_SCALE;
   };
-  return { geometry, heightAt };
+  const pixels = new Uint8Array(count);
+  for (let i = 0; i < count; i += 1) {
+    const world = (heights[i] ?? 0) * HEIGHT_SCALE;
+    pixels[i] = Math.round(Math.max(0, Math.min(1, (world + 0.4) / 0.8)) * 255);
+  }
+  const heightTexture = new DataTexture(pixels, columns, rows, RedFormat, UnsignedByteType);
+  heightTexture.magFilter = LinearFilter;
+  heightTexture.minFilter = LinearFilter;
+  heightTexture.needsUpdate = true;
+  return { geometry, heightAt, heightTexture, bounds: { minX: -width / 2, minZ: -height / 2, width, depth: height } };
 }
 
 /** Land just outside every polygon (inside the noisy coast) belongs to the closest zone. */
