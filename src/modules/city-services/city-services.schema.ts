@@ -27,6 +27,10 @@ export const serviceInputSchema = z
     address: optionalText(200),
     latitude: z.number().min(-90).max(90).nullable().optional(),
     longitude: z.number().min(-180).max(180).nullable().optional(),
+    /** Position on the city map; the district is derived from it on the server. */
+    mapX: z.number().int().min(0).max(1000).nullable().optional(),
+    mapY: z.number().int().min(0).max(640).nullable().optional(),
+    emergency: z.boolean().default(false),
     icon: z.enum(SERVICE_ICONS).default("building"),
     sortOrder: z.number().int().min(0).max(1000).default(0),
     active: z.boolean().default(true),
@@ -48,7 +52,8 @@ export const serviceInputSchema = z
       .strict()
       .optional(),
   })
-  .strict();
+  .strict()
+  .refine((value) => (value.mapX == null) === (value.mapY == null), { message: "Give both map coordinates, or neither.", path: ["mapX"] });
 
 export type ServiceInput = z.infer<typeof serviceInputSchema>;
 
