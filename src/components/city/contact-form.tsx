@@ -221,6 +221,7 @@ export function ContactForm({
             {fields.location ? <p id="contact-location-error" role="alert" className="text-[0.7812rem] text-error">{fields.location}</p> : null}
           </div>
           <TerraNovaPicker open={picking} onOpenChange={setPicking} onPick={setPoint} />
+<<<<<<< HEAD
           {similar.length > 0 && !similarDismissed ? (
             <aside className="flex flex-col gap-2 rounded-xl border border-primary/30 bg-accent/40 p-3" aria-label={t("tn.contact.similar_title")}>
               <p className="text-sm font-medium">{t("tn.contact.similar_title")}</p>
@@ -246,6 +247,8 @@ export function ContactForm({
               </button>
             </aside>
           ) : null}
+=======
+>>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
         </div>
       ) : null}
 

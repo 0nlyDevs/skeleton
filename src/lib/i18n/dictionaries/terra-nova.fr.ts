@@ -424,6 +424,7 @@ export const frTerraNova = {
   "tn.map.landmarks": "Lieux de la cité",
   "tn.map.no_landmark": "Aucun lieu ne correspond.",
   "tn.map.all_districts": "Toute la cité",
+<<<<<<< HEAD
   "tn.reports.title": "Signalements des habitants",
   "tn.reports.subtitle": "Les problèmes signalés dans la ville. Soutenez ceux qui vous concernent.",
   "tn.reports.filter.issue": "Type de problème",
@@ -451,6 +452,8 @@ export const frTerraNova = {
   "tn.myrequests.search": "Rechercher un objet ou une référence",
   "tn.myrequests.empty_title": "Aucune demande",
   "tn.myrequests.empty_body": "Aucune demande ne correspond à ces filtres pour le moment.",
+=======
+>>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
   "tn.home.quick.report": "Signaler un problème",
   "tn.home.quick.report_body": "Lampadaire cassé, fuite, déchets : indiquez quoi et où.",
   "tn.wizard.step": "Étape {current} sur {total}",

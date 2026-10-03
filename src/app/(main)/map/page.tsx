@@ -1,7 +1,16 @@
 import { redirect } from "next/navigation";
+import { TerraNovaExplorer } from "@/components/city/terra-nova-explorer";
+import { CITY_ZONE_IDS, type CityZoneId } from "@/modules/alerts/city-zones";
 
-/** The one map of Terra Nova is `/city-map`, the landing's island with the city's functions. */
+export const metadata: Metadata = { title: "Carte" };
+
+/** The city map: Terra Nova's districts and landmarks (never a real-world map). */
 export default async function MapPage({ searchParams }: { readonly searchParams: Promise<{ zone?: string }> }) {
   const { zone } = await searchParams;
-  redirect(zone ? `/city-map?zone=${encodeURIComponent(zone)}` : "/city-map");
+  const initialZone = zone && (CITY_ZONE_IDS as readonly string[]).includes(zone) ? (zone as CityZoneId) : null;
+  return (
+    <div className="mx-auto w-full max-w-[1000px]">
+      <TerraNovaExplorer initialZone={initialZone} />
+    </div>
+  );
 }

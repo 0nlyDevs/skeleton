@@ -419,6 +419,7 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.map.landmarks": "City landmarks",
   "tn.map.no_landmark": "No landmark matches.",
   "tn.map.all_districts": "All districts",
+<<<<<<< HEAD
   "tn.reports.title": "Resident reports",
   "tn.reports.subtitle": "Problems reported in the city. Back the ones that concern you.",
   "tn.reports.filter.issue": "Kind of problem",
@@ -446,6 +447,8 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.myrequests.search": "Search a subject or reference",
   "tn.myrequests.empty_title": "No request",
   "tn.myrequests.empty_body": "No request matches these filters right now.",
+=======
+>>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
   "tn.home.quick.report": "Report a problem",
   "tn.home.quick.report_body": "Broken light, leak, rubbish: say what and where.",
   "tn.wizard.step": "Step {current} of {total}",

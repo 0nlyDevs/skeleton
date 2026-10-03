@@ -32,8 +32,11 @@ export const createCityRequestSchema = z
     /** Position on the Terra Nova map (1000 × 640); the district is derived server-side. */
     mapX: z.number().int().min(0).max(1000).nullable().optional(),
     mapY: z.number().int().min(0).max(640).nullable().optional(),
+<<<<<<< HEAD
     /** F81 — the form's token and its hidden trap field (see lib/security/form-guard). */
     guard: z.object({ token: z.string().max(200).nullable().optional(), trap: z.string().max(200).optional() }).strict().optional(),
+=======
+>>>>>>> 58c6be8 (feat: put request and post places on the Terra Nova city map)
   })
   .strict()
   .superRefine((value, context) => {
