@@ -14,8 +14,8 @@ export default async function SearchPage({
 }) {
   const [params, context] = await Promise.all([searchParams, getAuthContext()]);
   const q = typeof params.q === "string" ? params.q.slice(0, 80) : "";
-  const role = PEOPLE_ROLES.find((value) => value === params.role);
   const viewer = context?.user ?? null;
+  const role = viewer ? PEOPLE_ROLES.find((value) => value === params.role) : undefined;
   const results = await searchEverything(q, viewer, role);
   return (
     <div className="mx-auto w-full max-w-[720px]">

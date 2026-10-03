@@ -22,16 +22,9 @@ import type { AuthUser } from "@/types";
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { createNotification, notifyInBackground } from "../notifications/notifications.service";
+import { statusNotice } from "./city-requests.status-notice";
 import { decryptBody, toSummaryDto, type CityRequestDto, type CityRequestSummaryDto } from "./city-requests.dto";
 import { ISSUE_SERVICE, type CreateCityRequestInput, type ListCityRequestsQuery, type UpdateCityRequestInput } from "./city-requests.schema";
-
-const STATUS_LABEL: Record<string, string> = {
-  NEW: "nouvelle",
-  IN_PROGRESS: "en cours de traitement",
-  WAITING_CITIZEN: "en attente de votre réponse",
-  RESOLVED: "résolue",
-  CLOSED: "fermée",
-};
 
 const summaryInclude = {
   service: { select: { slug: true, name: true } },
@@ -267,7 +260,8 @@ export async function addCityRequestMessage(reference: string, input: { body: st
           userId: row.citizenId,
           type: "CITY_REQUEST",
           title: `Nouvelle réponse des services sur votre demande ${row.reference}`,
-          link: `/space/requests/${row.reference}`,
+          body: "Lisez la réponse dans la demande. Si une question vous est posée, répondez-y directement sous le message.",
+          link: `/space/requests/${row.reference}#reply`,
           email: true,
         }),
         { cityRequestId: row.id },
@@ -313,12 +307,15 @@ export async function updateCityRequest(reference: string, input: UpdateCityRequ
     await recordAudit({ actorId: actor.id, action: auditActions.cityRequestChanged, targetType: "city_request", targetId: row.id, metadata: { op: "update", reference: row.reference, changes: events.map((event) => ({ kind: event.kind, from: event.fromValue, to: event.toValue })) }, ip });
     const statusChange = events.filter((event) => event.kind === "status").at(-1);
     if (statusChange?.toValue) {
+      // F49 — what the new state means and what to do, not just its name.
+      const notice = statusNotice(statusChange.toValue, row.reference, row.subject);
       notifyInBackground(
         createNotification({
           userId: row.citizenId,
           type: "CITY_REQUEST",
-          title: `Votre demande ${row.reference} est ${STATUS_LABEL[statusChange.toValue] ?? statusChange.toValue}`,
-          link: `/space/requests/${row.reference}`,
+          title: notice.title,
+          body: notice.body,
+          link: `/space/requests/${row.reference}${statusChange.toValue === "WAITING_CITIZEN" ? "#reply" : ""}`,
           email: true,
         }),
         { cityRequestId: row.id },

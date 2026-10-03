@@ -47,10 +47,12 @@ export function SearchResults({
         <Search className="size-5 text-muted-foreground" />
         <h1 className="text-[1.25rem] font-bold tracking-tight">{q ? `${t("search.title")} · « ${q} »` : t("search.title")}</h1>
       </Card>
-      <div className="flex flex-col gap-1.5 px-1">
-        <RoleFilterChips value={role} onChange={setRole} />
-        <p className="text-[0.75rem] text-muted-foreground">{t("tn.people.role.hint")}</p>
-      </div>
+      {viewer ? (
+        <div className="flex flex-col gap-1.5 px-1">
+          <RoleFilterChips value={role} onChange={setRole} />
+          <p className="text-[0.75rem] text-muted-foreground">{t("tn.people.role.hint")}</p>
+        </div>
+      ) : null}
       {q.trim().length < 2 && !role ? <p className="text-center text-[0.8438rem] text-muted-foreground">{t("search.hint")}</p> : null}
       {(q.trim().length >= 2 || role) && empty ? <p className="text-center text-[0.8438rem] text-muted-foreground">{q ? t("search.empty", { q }) : t("tn.people.role.empty")}</p> : null}
 
