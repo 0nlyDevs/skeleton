@@ -1,8 +1,9 @@
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AnnouncementCategoryBadge } from "@/components/city/announcement-card";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
@@ -35,10 +36,11 @@ export default async function AnnouncementPage({ params }: { readonly params: Pr
   return (
     <article className="mx-auto flex w-full max-w-[760px] flex-col gap-5">
       <div className="flex items-center justify-between gap-2 px-1">
-        <Link href="/announcements" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" aria-hidden />
-          {t("tn.news.back")}
-        </Link>
+        <Breadcrumbs
+          label={t("tn.breadcrumb.label")}
+          className="min-w-0 px-0"
+          items={[{ label: t("tn.nav.home"), href: "/" }, { label: t("tn.nav.announcements"), href: "/announcements" }, { label: announcement.title }]}
+        />
         {viewer && isStaff(viewer) ? (
           <Button asChild size="sm" variant="secondary">
             <Link href={`/agent/announcements/${announcement.slug}`}>

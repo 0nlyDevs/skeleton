@@ -3,12 +3,14 @@
 import { ChevronRight } from "lucide-react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { Badge } from "@/components/ui/badge";
 import Link from "@/components/ui/link";
 import { useFormatters } from "@/hooks/use-formatters";
 import { cn } from "@/lib/utils";
 import type { CityRequestSummaryDto } from "@/modules/city-requests/city-requests.dto";
 
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
+import { RequestProgress } from "./request-progress";
 
 /**
  * A list of request summaries. `hrefBase` decides which space opens the
@@ -45,10 +47,12 @@ export function RequestList({
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="font-mono text-[0.75rem] text-muted-foreground">{request.reference}</span>
                   <RequestStatusBadge status={request.status} />
+                  {request.issueType ? <Badge variant="warning">{t("tn.request.report")}</Badge> : null}
                   {agentView ? <RequestPriorityBadge priority={request.priority} /> : null}
                   {agentView && request.needsAction ? <NeedsActionBadge /> : null}
                 </span>
                 <span className="truncate font-medium">{request.subject}</span>
+                {agentView ? null : <RequestProgress status={request.status} assigned={request.assignee !== null} compact />}
                 <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-[0.7812rem] text-muted-foreground">
                   <span>{request.service?.name ?? t("tn.no_service")}</span>
                   {agentView && request.citizen ? <span>{t("tn.agent.inbox.citizen")} : {request.citizen.name}</span> : null}

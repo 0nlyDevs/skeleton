@@ -13,12 +13,24 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
+import type { MessageKey } from "@/lib/i18n";
 import type { ServiceDto } from "@/modules/city-services/city-services.service";
-import { SERVICE_ICONS } from "@/modules/city-services/city-services.schema";
+import { SERVICE_ICONS, TRANSLATABLE_SERVICE_FIELDS } from "@/modules/city-services/city-services.schema";
 
 import { FormField, SELECT_CLASS } from "./form-field";
 
 type TextKey = "name" | "category" | "summary" | "description" | "howTo" | "email" | "phone" | "hours" | "address";
+type TranslatableKey = (typeof TRANSLATABLE_SERVICE_FIELDS)[number];
+
+const TRANSLATION_LIMITS: Readonly<Record<TranslatableKey, number>> = { name: 120, category: 60, summary: 240, description: 5000, howTo: 4000, hours: 160 };
+const TRANSLATION_LABELS: Readonly<Record<TranslatableKey, MessageKey>> = {
+  name: "tn.agent.services.form.name",
+  category: "tn.agent.services.form.category",
+  summary: "tn.agent.services.form.summary",
+  description: "tn.agent.services.form.description",
+  howTo: "tn.agent.services.form.how_to",
+  hours: "tn.agent.services.form.hours",
+};
 
 /** Admin form for one municipal service. */
 export function ServiceEditor({ initial }: { readonly initial: ServiceDto | null }) {
@@ -38,6 +50,12 @@ export function ServiceEditor({ initial }: { readonly initial: ServiceDto | null
   const [icon, setIcon] = useState(initial?.icon ?? "building");
   const [sortOrder, setSortOrder] = useState(initial?.sortOrder ?? 0);
   const [active, setActive] = useState(initial?.active ?? true);
+  const [featured, setFeatured] = useState(initial?.featured ?? false);
+  // F27 — the English copy of each text field; empty means "show the French".
+  const [english, setEnglish] = useState<Record<TranslatableKey, string>>(() => {
+    const copy = initial?.translations.en ?? {};
+    return Object.fromEntries(TRANSLATABLE_SERVICE_FIELDS.map((key) => [key, copy[key] ?? ""])) as Record<TranslatableKey, string>;
+  });
   const [fields, setFields] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -50,7 +68,16 @@ export function ServiceEditor({ initial }: { readonly initial: ServiceDto | null
     try {
       const response = await apiFetch<{ data: ServiceDto }>(initial ? `/api/city-services/${initial.slug}` : "/api/city-services", {
         method: initial ? "PUT" : "POST",
-        body: { ...values, icon, sortOrder, active, latitude: initial?.latitude ?? null, longitude: initial?.longitude ?? null },
+        body: {
+          ...values,
+          icon,
+          sortOrder,
+          active,
+          featured,
+          translations: { en: english },
+          latitude: initial?.latitude ?? null,
+          longitude: initial?.longitude ?? null,
+        },
       });
       toast.success(t("tn.agent.services.saved"));
       router.push(`/services/${response.data.slug}`);
@@ -107,6 +134,29 @@ export function ServiceEditor({ initial }: { readonly initial: ServiceDto | null
         <Switch checked={active} onCheckedChange={setActive} />
         {t("tn.agent.services.form.active")}
       </label>
+      <label className="flex items-center gap-2 text-sm">
+        <Switch checked={featured} onCheckedChange={setFeatured} />
+        {t("tn.agent.services.form.featured")}
+      </label>
+
+      <fieldset lang="en" className="flex flex-col gap-4 rounded-xl border border-border/70 p-4">
+        <legend className="px-1 font-semibold">{t("tn.agent.services.translation.title")}</legend>
+        <p className="-mt-2 text-[0.8125rem] text-muted-foreground">{t("tn.agent.services.translation.hint")}</p>
+        {TRANSLATABLE_SERVICE_FIELDS.map((key) => {
+          const id = `service-en-${key}`;
+          const long = key === "description" || key === "howTo";
+          const onChange = (event: { target: { value: string } }) => setEnglish((current) => ({ ...current, [key]: event.target.value }));
+          return (
+            <FormField key={key} id={id} label={`${t(TRANSLATION_LABELS[key])} (EN)`}>
+              {long ? (
+                <Textarea id={id} value={english[key]} onChange={onChange} rows={key === "description" ? 5 : 4} maxLength={TRANSLATION_LIMITS[key]} />
+              ) : (
+                <Input id={id} value={english[key]} onChange={onChange} maxLength={TRANSLATION_LIMITS[key]} />
+              )}
+            </FormField>
+          );
+        })}
+      </fieldset>
       <Button type="submit" disabled={busy} className="self-end">
         {busy ? <Loader2 className="animate-spin" aria-hidden /> : null}
         {t("common.save")}

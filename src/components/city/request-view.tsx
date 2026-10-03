@@ -1,14 +1,15 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Hourglass, Lock } from "lucide-react";
+import { CheckCircle2, ExternalLink, Hourglass, Lock, MapPin, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { RequestControls } from "@/components/agent/request-controls";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
-import Link from "@/components/ui/link";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useSocket } from "@/hooks/use-socket";
+import type { MessageKey } from "@/lib/i18n";
 import { apiFetch } from "@/lib/api/client";
 import { SOCKET_EVENTS, type CityRequestUpdatedPayload } from "@/lib/socket/events";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ import type { CityRequestDto } from "@/modules/city-requests/city-requests.dto";
 
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
 import { RequestComposer } from "./request-composer";
+import { RequestProgress } from "./request-progress";
 import { RequestTimeline } from "./request-timeline";
 
 /**
@@ -73,13 +75,13 @@ export function RequestView({
 
   return (
     <div className="mx-auto flex w-full max-w-[920px] flex-col gap-5">
-      <Link
-        href={agent ? "/agent/requests" : "/space"}
-        className="inline-flex items-center gap-1.5 px-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        {agent ? t("tn.agent.req.back") : t("tn.request.back_space")}
-      </Link>
+      {/* D15 — agents get the same path in the workspace header. */}
+      {agent ? null : (
+        <Breadcrumbs
+          label={t("tn.breadcrumb.label")}
+          items={[{ label: t("tn.nav.home"), href: "/" }, { label: t("tn.nav.my_space"), href: "/space" }, { label: request.reference }]}
+        />
+      )}
 
       {justSent ? (
         <div role="status" className="flex gap-3 rounded-2xl border border-success/40 bg-success/10 p-4">
@@ -113,6 +115,10 @@ export function RequestView({
         </p>
       </header>
 
+      <section className="rounded-2xl border border-border/70 bg-card px-3 py-4 shadow-panel" aria-label={t("tn.progress.label")}>
+        <RequestProgress status={request.status} assigned={request.assignee !== null} />
+      </section>
+
       <div className="grid gap-5 md:grid-cols-[1fr_280px]">
         <div className="flex min-w-0 flex-col gap-4">
           <section className="rounded-2xl border border-border/70 bg-card p-4 shadow-panel" aria-labelledby="original">
@@ -121,6 +127,37 @@ export function RequestView({
             </h2>
             <p className="prose-body text-[0.9375rem]">{request.message}</p>
           </section>
+
+          {request.issueType ? (
+            <section className="flex flex-col gap-2 rounded-2xl border border-warning/50 bg-warning/10 p-4" aria-labelledby="report">
+              <h2 id="report" className="flex items-center gap-2 text-[0.8125rem] font-semibold">
+                <TriangleAlert className="size-4" aria-hidden />
+                {t("tn.request.report")} · {t(`tn.issue.${request.issueType}` as MessageKey)}
+              </h2>
+              {request.location || request.latitude !== null ? (
+                <div className="flex flex-col gap-1 text-sm">
+                  <span className="text-[0.75rem] text-muted-foreground">{t("tn.request.location")}</span>
+                  {request.location ? (
+                    <p className="flex items-start gap-1.5">
+                      <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
+                      {request.location}
+                    </p>
+                  ) : null}
+                  {request.latitude !== null && request.longitude !== null ? (
+                    <a
+                      href={`https://www.openstreetmap.org/?mlat=${request.latitude}&mlon=${request.longitude}#map=18/${request.latitude}/${request.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-fit items-center gap-1 text-primary hover:underline"
+                    >
+                      {t("tn.request.open_map")} ({request.latitude.toFixed(5)}, {request.longitude.toFixed(5)})
+                      <ExternalLink className="size-3.5" aria-hidden />
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="flex flex-col gap-3" aria-labelledby="conversation">
             <h2 id="conversation" className="px-1 font-semibold">{t("tn.request.conversation")}</h2>

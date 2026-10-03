@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, Clock, Hourglass, Inbox, Radio, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Hourglass, Inbox, Radio, Sparkles, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 
 import { withAgentAccess } from "@/components/agent/agent-guard";
@@ -6,8 +6,9 @@ import { RequestList } from "@/components/city/request-list";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
+import { formatRelative } from "@/lib/format";
 import { getServerDictionary } from "@/lib/i18n/server";
-import { cityRequestStats, listCityRequests } from "@/modules/city-requests/city-requests.service";
+import { awaitingPickup, cityRequestStats, listCityRequests } from "@/modules/city-requests/city-requests.service";
 import { minutesUntil, nextWaveAt } from "@/modules/webcup/webcup.schedule";
 import { getWebcupFeed } from "@/modules/webcup/webcup.service";
 
@@ -16,8 +17,9 @@ export const metadata: Metadata = { title: "Espace agent" };
 /** D19/F22 — what needs the city team's attention right now. */
 export default async function AgentDashboardPage() {
   return withAgentAccess("/agent", async (user) => {
-    const { t } = await getServerDictionary();
-    const [stats, open, feed] = await Promise.all([
+    const { t, locale } = await getServerDictionary();
+    const [pickup, stats, open, feed] = await Promise.all([
+      awaitingPickup(user),
       cityRequestStats(user, "all"),
       listCityRequests({ scope: "all", status: "OPEN", page: 1, limit: 8 }, user),
       getWebcupFeed(user),
@@ -33,6 +35,32 @@ export default async function AgentDashboardPage() {
 
     return (
       <div className="flex flex-col gap-5">
+        {/* D17 — the backlog first: how many requests still have no agent. */}
+        <section
+          aria-labelledby="pickup-title"
+          className={`flex flex-col gap-3 rounded-2xl border p-4 shadow-panel sm:flex-row sm:items-center ${pickup.count > 0 ? "border-warning/60 bg-warning/10" : "border-success/40 bg-success/10"}`}
+        >
+          <span className="text-4xl font-semibold tabular-nums" aria-hidden>{pickup.count}</span>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <h2 id="pickup-title" className="font-semibold">
+              {pickup.count > 0 ? t("tn.agent.pickup.title", { count: pickup.count }) : t("tn.agent.pickup.none")}
+            </h2>
+            {pickup.count > 0 ? (
+              <p className="text-[0.8125rem] text-muted-foreground">
+                {t("tn.agent.pickup.body")} {pickup.oldestAt ? t("tn.agent.pickup.oldest", { when: formatRelative(pickup.oldestAt, locale) }) : null}
+              </p>
+            ) : null}
+          </div>
+          {pickup.count > 0 ? (
+            <Button asChild size="sm" className="shrink-0">
+              <Link href="/agent/requests?scope=unassigned&status=OPEN">
+                <UserPlus aria-hidden />
+                {t("tn.agent.pickup.open")}
+              </Link>
+            </Button>
+          ) : null}
+        </section>
+
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {counters.map((counter) => (
             <li key={counter.status}>

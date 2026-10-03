@@ -6,6 +6,12 @@ export const SERVICE_ICONS = [
   "graduation-cap", "trees", "wrench", "satellite", "rocket", "landmark", "users", "leaf",
 ] as const;
 
+/** Text fields an administrator can provide in another language (F27). */
+export const TRANSLATABLE_SERVICE_FIELDS = ["name", "category", "summary", "description", "howTo", "hours"] as const;
+
+/** `{ en: { name, summary, … } }` — French is the base text, so it never appears here. */
+export type ServiceTranslations = { readonly en?: Partial<Record<(typeof TRANSLATABLE_SERVICE_FIELDS)[number], string>> };
+
 const optionalText = (max: number) => z.string().trim().max(max).optional().nullable().transform((value) => value || null);
 
 export const serviceInputSchema = z
@@ -24,6 +30,23 @@ export const serviceInputSchema = z
     icon: z.enum(SERVICE_ICONS).default("building"),
     sortOrder: z.number().int().min(0).max(1000).default(0),
     active: z.boolean().default(true),
+    featured: z.boolean().default(false),
+    translations: z
+      .object({
+        en: z
+          .object({
+            name: z.string().trim().max(120).optional(),
+            category: z.string().trim().max(60).optional(),
+            summary: z.string().trim().max(240).optional(),
+            description: z.string().trim().max(5000).optional(),
+            howTo: z.string().trim().max(4000).optional(),
+            hours: z.string().trim().max(160).optional(),
+          })
+          .strict()
+          .transform((copy) => Object.fromEntries(Object.entries(copy).filter(([, text]) => text))),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

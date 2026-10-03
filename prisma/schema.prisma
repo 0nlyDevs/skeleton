@@ -892,27 +892,32 @@ model FeatureFlag {
 
 /// A municipal service of Terra Nova (énergie, transports, état civil…).
 model MunicipalService {
-  id          String   @id @default(cuid())
-  slug        String   @unique @db.VarChar(80)
-  name        String   @db.VarChar(120)
-  category    String   @db.VarChar(60)
+  id           String   @id @default(cuid())
+  slug         String   @unique @db.VarChar(80)
+  name         String   @db.VarChar(120)
+  category     String   @db.VarChar(60)
   /// One-line summary for cards.
-  summary     String   @db.VarChar(240)
-  description String   @db.Text
+  summary      String   @db.VarChar(240)
+  description  String   @db.Text
   /// Steps or practical information, one per line.
-  howTo       String?  @db.Text
-  email       String?  @db.VarChar(160)
-  phone       String?  @db.VarChar(40)
-  hours       String?  @db.VarChar(160)
-  address     String?  @db.VarChar(200)
-  latitude    Float?
-  longitude   Float?
+  howTo        String?  @db.Text
+  email        String?  @db.VarChar(160)
+  phone        String?  @db.VarChar(40)
+  hours        String?  @db.VarChar(160)
+  address      String?  @db.VarChar(200)
+  latitude     Float?
+  longitude    Float?
   /// lucide icon name, from an allow-list.
-  icon        String   @default("building") @db.VarChar(40)
-  sortOrder   Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  icon         String   @default("building") @db.VarChar(40)
+  sortOrder    Int      @default(0)
+  active       Boolean  @default(true)
+  /// Highlighted at the top of the catalogue and on the home page (F28).
+  featured     Boolean  @default(false)
+  /// Other-language copies of the text fields, keyed by locale (F27):
+  /// `{ "en": { name, summary, description, howTo } }`. French is the base.
+  translations Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   requests      CityRequest[]
   announcements Announcement[]
@@ -982,6 +987,12 @@ model CityRequest {
   message    String              @db.Text
   status     CityRequestStatus   @default(NEW)
   priority   CityRequestPriority @default(NORMAL)
+  /// F25 — set when the request reports a problem in the city (`lighting`, `roads`…).
+  issueType  String?             @db.VarChar(40)
+  /// Where the problem is: a free-text place (encrypted at rest) and, optionally, a map point.
+  location   String?             @db.Text
+  latitude   Float?
+  longitude  Float?
   assigneeId String?
   assignee   User?               @relation("CityRequestAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   createdAt  DateTime            @default(now())

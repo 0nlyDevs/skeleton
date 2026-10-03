@@ -11,7 +11,7 @@
 import { randomInt } from "node:crypto";
 
 import { isStaff } from "@/lib/auth/guards";
-import { encryptField } from "@/lib/crypto/field-encryption";
+import { decryptField, encryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { publishCityRequestUpdated } from "@/lib/socket/emit";
@@ -22,7 +22,7 @@ import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { createNotification, notifyInBackground } from "../notifications/notifications.service";
 import { decryptBody, toSummaryDto, type CityRequestDto, type CityRequestSummaryDto } from "./city-requests.dto";
-import type { CreateCityRequestInput, ListCityRequestsQuery, UpdateCityRequestInput } from "./city-requests.schema";
+import { ISSUE_SERVICE, type CreateCityRequestInput, type ListCityRequestsQuery, type UpdateCityRequestInput } from "./city-requests.schema";
 
 const STATUS_LABEL: Record<string, string> = {
   NEW: "nouvelle",
@@ -68,7 +68,20 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
     const service = await prisma.municipalService.findFirst({ where: { id: input.serviceId, active: true }, select: { id: true } });
     if (!service) throw new NotFoundError("This service does not exist.");
     serviceId = service.id;
+  } else if (input.issueType && ISSUE_SERVICE[input.issueType]) {
+    // F25 — "I don't know which service to contact": a reported problem goes
+    // to the service in charge of that kind of issue.
+    const service = await prisma.municipalService.findFirst({ where: { slug: ISSUE_SERVICE[input.issueType] ?? "", active: true }, select: { id: true } });
+    serviceId = service?.id ?? null;
   }
+  const report = input.issueType
+    ? {
+        issueType: input.issueType,
+        location: input.location ? encryptField(input.location) : null,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
+      }
+    : {};
   const row = await prisma.cityRequest.create({
     data: {
       reference: await newReference(),
@@ -76,6 +89,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
       serviceId,
       subject: input.subject,
       message: encryptField(input.message),
+      ...report,
       events: { create: { actorId: actor.id, kind: "created", toValue: "NEW" } },
     },
     include: summaryInclude,
@@ -119,12 +133,20 @@ export async function listCityRequests(query: ListCityRequestsQuery, actor: Auth
   const agent = isStaff(actor);
   if (query.scope !== "mine" && !agent) throw new ForbiddenError("Only city agents can see every request.");
   const scope =
-    query.scope === "mine" ? { citizenId: actor.id } : query.scope === "assigned" ? { assigneeId: actor.id } : {};
+    query.scope === "mine"
+      ? { citizenId: actor.id }
+      : query.scope === "assigned"
+        ? { assigneeId: actor.id }
+        : query.scope === "unassigned"
+          ? { assigneeId: null }
+          : {};
   const status =
     query.status === "OPEN"
       ? { status: { in: ["NEW", "IN_PROGRESS", "WAITING_CITIZEN"] as ("NEW" | "IN_PROGRESS" | "WAITING_CITIZEN")[] } }
-      : query.status
-        ? { status: query.status }
+      : query.status === "DONE"
+        ? { status: { in: ["RESOLVED", "CLOSED"] as ("RESOLVED" | "CLOSED")[] } }
+        : query.status
+          ? { status: query.status }
         : {};
   const where = {
     ...scope,
@@ -174,6 +196,9 @@ export async function getCityRequest(reference: string, actor: AuthUser): Promis
   return {
     ...toSummaryDto({ ...row, lastFromCitizen: last?.authorId === row.citizenId }, agent),
     message: decryptBody(row.message),
+    location: row.location ? decryptField(row.location) : null,
+    latitude: row.latitude,
+    longitude: row.longitude,
     closedAt: row.closedAt?.toISOString() ?? null,
     messages: visible.map((message) => ({
       id: message.id,
@@ -286,6 +311,20 @@ export async function updateCityRequest(reference: string, input: UpdateCityRequ
     }
   }
   return getCityRequest(reference, actor);
+}
+
+/**
+ * D17 — the agents' backlog at a glance: open requests nobody has taken on
+ * yet, and since when the oldest one has been waiting.
+ */
+export async function awaitingPickup(actor: AuthUser): Promise<{ count: number; oldestAt: string | null }> {
+  if (!isStaff(actor)) throw new ForbiddenError("Only city agents can see every request.");
+  const where = { assigneeId: null, status: { in: ["NEW", "IN_PROGRESS", "WAITING_CITIZEN"] as ("NEW" | "IN_PROGRESS" | "WAITING_CITIZEN")[] } };
+  const [count, oldest] = await Promise.all([
+    prisma.cityRequest.count({ where }),
+    prisma.cityRequest.findFirst({ where, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+  ]);
+  return { count, oldestAt: oldest?.createdAt.toISOString() ?? null };
 }
 
 /** Small counters for the citizen space and the agent dashboard. */
