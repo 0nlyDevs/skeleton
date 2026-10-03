@@ -810,6 +810,10 @@ model Message {
   /// "Deleted for everyone": the row stays as a tombstone so the thread keeps
   /// its shape, but its content is never sent again.
   deletedAt DateTime?
+  /// System event kind for group lifecycle messages (e.g. MEMBER_JOINED,
+  /// MEMBER_LEFT, MEMBER_REMOVED). When set, the client renders a localized
+  /// label with the sender's name instead of the raw content.
+  systemKind String?
   createdAt DateTime  @default(now())
 
   hiddenFor MessageHide[]

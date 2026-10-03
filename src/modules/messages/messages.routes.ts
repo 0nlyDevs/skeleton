@@ -41,7 +41,8 @@ import {
   leaveGroupRoom,
   listMessages,
   listRooms,
-  markRoomRead,
+markRoomRead,
+  removeMemberFromGroup,
   sendMessage,
 } from "./messages.service";
 
@@ -107,6 +108,14 @@ export const leaveRoomRoute = apiRoute({
   handler: async ({ params, auth }) => {
     await leaveGroupRoom(params.id, auth.user);
     return jsonOk({ left: true });
+  },
+});
+
+export const removeMemberRoute = apiRoute({
+  params: roomParamSchema.extend({ userId: z.string().trim().min(1).max(100) }),
+  handler: async ({ params, auth }) => {
+    await removeMemberFromGroup(params.id, params.userId, auth.user);
+    return jsonOk({ removed: true });
   },
 });
 

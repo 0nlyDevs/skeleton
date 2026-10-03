@@ -212,6 +212,7 @@ export function useThread(roomId: string | null, viewer: { id: string; name: str
         editedAt: null,
         image: uploadId && previewUrl ? { id: uploadId, url: previewUrl, width: null, height: null } : null,
         sender: { id: viewer.id, name: viewer.name, username: null, image: viewer.image },
+        systemKind: null,
         createdAt: new Date().toISOString(),
         reactions: [],
       replyTo: replyTo ?? null,

@@ -198,6 +198,7 @@ export async function listRooms(actor: AuthUser): Promise<RoomDto[]> {
             senderId: latestMsg.sender.id,
             senderName: latestMsg.sender.name,
             hasImage: latestMsg.uploadId !== null && latestMsg.deletedAt === null,
+            systemKind: latestMsg.systemKind ?? null,
             createdAt: latestMsg.createdAt.toISOString(),
           }
         : null;
@@ -352,7 +353,7 @@ export async function sendMessage(
 
   const message = toMessageDto(row);
 
-  // Publication is part of this module's contract, not the caller's job. Doing
+  // Publications are part of this module's contract, not the caller's job. Doing
   // it here means the HTTP endpoint and the socket handler cannot drift into
   // broadcasting differently — and there is exactly one place to look when a
   // message does not arrive.
@@ -368,6 +369,19 @@ export async function sendMessage(
   });
 
   return message;
+}
+
+/**
+ * Persist a system event message (member joined/left/removed) and fan it out
+ * to the room over the socket, same as a regular message.
+ */
+async function announceSystemMessage(
+  roomId: string,
+  senderId: string,
+  systemKind: string,
+): Promise<void> {
+  const row = await createMessage({ roomId, senderId, content: "", systemKind });
+  publishMessage(roomId, toMessageDto(row));
 }
 
 /**
@@ -636,6 +650,8 @@ export async function addMemberToGroup(
   }).catch((error: unknown) => {
     logger.warn("group invite notification failed", { roomId, userId: targetUserId, error });
   });
+
+  void announceSystemMessage(roomId, targetUserId, "MEMBER_JOINED");
 }
 
 export async function leaveGroupRoom(
@@ -650,6 +666,36 @@ export async function leaveGroupRoom(
   await removeRoomMember(roomId, actor.id);
   publishRoomMembers({ roomId });
   revokeRoomMembership(actor.id, roomId);
+
+  void announceSystemMessage(roomId, actor.id, "MEMBER_LEFT");
+}
+
+/** Remove a member from a group conversation (group admins only). */
+export async function removeMemberFromGroup(
+  roomId: string,
+  targetUserId: string,
+  actor: AuthUser,
+): Promise<void> {
+  const room = await assertRoomAccess(roomId, actor);
+  if (room.type !== "GROUP") {
+    throw new ForbiddenError("Members can only be removed from group conversations.");
+  }
+
+  const actorMember = await findRoomMember(roomId, actor.id);
+  if (actorMember?.role !== "ADMIN") {
+    throw new ForbiddenError("Only a group admin can remove members.");
+  }
+  if (targetUserId === actor.id) {
+    throw new BadRequestError("Use the leave action to remove yourself from the group.");
+  }
+  const target = await findActiveUserById(targetUserId);
+  if (!target) throw new NotFoundError("That account does not exist.");
+
+  await removeRoomMember(roomId, targetUserId);
+  publishRoomMembers({ roomId });
+  revokeRoomMembership(targetUserId, roomId);
+
+  void announceSystemMessage(roomId, targetUserId, "MEMBER_REMOVED");
 }
 
 /** Staff-only removal path used while resolving a message report. */
