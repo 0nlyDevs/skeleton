@@ -16,7 +16,7 @@ import { signIn } from "@/lib/auth/client";
 import type { MessageKey } from "@/lib/i18n";
 
 import { isNetworkFailure, isRateLimited, loginErrorMessageKey } from "./auth-errors";
-import { AttemptsLeft, LoginLockout, ProtectedSignInNote, useCountdown } from "./login-protection-notice";
+import { AttemptsLeft, LoginLockout, ProtectedSignInNote, SlowDown, useLoginProtection } from "./login-protection-notice";
 import { OAuthButtons, type OAuthAvailability } from "./oauth-buttons";
 
 /**
@@ -55,22 +55,8 @@ export function LoginForm({
   const [errorKey, setErrorKey] = useState<MessageKey | null>(
     (initialError as MessageKey | undefined) ?? null,
   );
-  // Read from the failed response: attempts left before the pause, and when
-  // the pause ends. The server enforces both; the form only makes them visible.
-  const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
-  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
-  const secondsLeft = useCountdown(lockedUntil);
-  const locked = lockedUntil !== null && secondsLeft > 0;
-
-  const readProtection = (response: Response) => {
-    const remaining = Number(response.headers.get("X-Login-Attempts-Remaining"));
-    // Our limiter sends Retry-After; BetterAuth's short burst guard sends X-Retry-After.
-    const retryAfter = Number(response.headers.get("Retry-After") ?? response.headers.get("X-Retry-After"));
-    if (response.headers.has("X-Login-Attempts-Remaining") && Number.isFinite(remaining)) setAttemptsLeft(remaining);
-    if (Number.isFinite(retryAfter) && retryAfter > 0 && (response.status === 429 || remaining === 0)) {
-      setLockedUntil(Date.now() + retryAfter * 1000);
-    }
-  };
+  const protection = useLoginProtection();
+  const { locked, paused, secondsLeft } = protection;
 
   const navigated = useRef(false);
 
@@ -130,7 +116,7 @@ export function LoginForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (pending || locked) return;
+    if (pending || paused) return;
 
     setPending(true);
     setErrorKey(null);
@@ -140,7 +126,7 @@ export function LoginForm({
       // else is a username. Both are rate-limited and answer identically on a
       // wrong identifier or a wrong password.
       const identifier = email.trim();
-      const fetchOptions = { onError: ({ response }: { response: Response }) => readProtection(response) };
+      const { fetchOptions } = protection;
       const result = identifier.includes("@")
         ? await signIn.email({ email: identifier, password, rememberMe, callbackURL: redirectTo, fetchOptions })
         : await signIn.username({ username: identifier, password, rememberMe, callbackURL: redirectTo, fetchOptions });
@@ -164,7 +150,8 @@ export function LoginForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       {locked ? <LoginLockout secondsLeft={secondsLeft} /> : null}
-      {errorKey && !locked ? (
+      {protection.slowDown ? <SlowDown secondsLeft={secondsLeft} /> : null}
+      {errorKey && !paused ? (
         <Alert variant="error">
           <AlertCircle />
           <AlertDescription className="text-foreground">
@@ -180,7 +167,7 @@ export function LoginForm({
           </AlertDescription>
         </Alert>
       ) : null}
-      {!locked && attemptsLeft !== null && attemptsLeft > 0 && attemptsLeft < 5 ? <AttemptsLeft remaining={attemptsLeft} /> : null}
+      {!paused && protection.showAttemptsLeft ? <AttemptsLeft remaining={protection.attemptsLeft ?? 0} /> : null}
 
       <FormField label={t("auth.login.identifier")} required>
         {(field) => (
@@ -242,7 +229,7 @@ export function LoginForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Button type="submit" size="lg" disabled={pending || locked || email.length === 0 || password.length === 0}>
+        <Button type="submit" size="lg" disabled={pending || paused || email.length === 0 || password.length === 0}>
           {pending ? <Spinner className="size-4" /> : null}
           {pending ? t("common.loading") : t("auth.login.submit")}
         </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { LockKeyhole, ShieldCheck } from "lucide-react";
+import { LockKeyhole, ShieldCheck, Timer } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import Link from "@/components/ui/link";
@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 
 /** Attempts a resident gets before the pause; mirrors `RATE_LIMITS.login`. */
 export const LOGIN_ATTEMPTS = 5;
+/** Below this, a pause is the burst guard's breather, not an account lock. */
+const SHORT_PAUSE_SECONDS = 60;
 
 function formatClock(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
@@ -24,6 +26,44 @@ export function useCountdown(until: number | null): number {
     return () => window.clearInterval(timer);
   }, [until]);
   return until === null ? 0 : Math.max(0, Math.ceil((until - now) / 1000));
+}
+
+/**
+ * What the server said about the sign-in budget, read from a failed response:
+ * attempts left before the pause, and when the pause ends. The server
+ * enforces both; this only makes them visible. Pass `fetchOptions` to
+ * `signIn.email` / `signIn.username`.
+ */
+export function useLoginProtection() {
+  const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [pauseSeconds, setPauseSeconds] = useState(0);
+  const secondsLeft = useCountdown(lockedUntil);
+
+  const readResponse = (response: Response) => {
+    const remaining = Number(response.headers.get("X-Login-Attempts-Remaining"));
+    // Our limiter sends Retry-After; BetterAuth's short burst guard sends X-Retry-After.
+    const retryAfter = Number(response.headers.get("Retry-After") ?? response.headers.get("X-Retry-After"));
+    if (response.headers.has("X-Login-Attempts-Remaining") && Number.isFinite(remaining)) setAttemptsLeft(remaining);
+    if (Number.isFinite(retryAfter) && retryAfter > 0 && (response.status === 429 || remaining === 0)) {
+      setLockedUntil(Date.now() + retryAfter * 1000);
+      setPauseSeconds(retryAfter);
+    }
+  };
+
+  const paused = lockedUntil !== null && secondsLeft > 0;
+  return {
+    attemptsLeft,
+    secondsLeft,
+    /** The account (or source) is paused: the full panel with the reset path. */
+    locked: paused && pauseSeconds >= SHORT_PAUSE_SECONDS,
+    /** A few seconds' breather after rapid-fire attempts; nobody was alerted. */
+    slowDown: paused && pauseSeconds < SHORT_PAUSE_SECONDS,
+    paused,
+    /** Show "N attempts left" once some are spent, until the pause. */
+    showAttemptsLeft: attemptsLeft !== null && attemptsLeft > 0 && attemptsLeft < LOGIN_ATTEMPTS,
+    fetchOptions: { onError: ({ response }: { response: Response }) => readResponse(response) },
+  };
 }
 
 /**
@@ -73,6 +113,17 @@ export function AttemptsLeft({ remaining }: { readonly remaining: number }) {
         {t(remaining === 1 ? "tn.login.attempts_left_one" : "tn.login.attempts_left_other", { count: remaining })}
       </span>
     </div>
+  );
+}
+
+/** "Too many attempts in a row, wait N s": the burst guard, said plainly. */
+export function SlowDown({ secondsLeft }: { readonly secondsLeft: number }) {
+  const t = useTranslation();
+  return (
+    <p role="status" className="flex items-center gap-2 rounded-lg bg-warning/10 px-3 py-2 text-[0.8125rem]">
+      <Timer className="size-4 shrink-0 text-warning" aria-hidden />
+      {t("tn.login.slow_down", { seconds: secondsLeft })}
+    </p>
   );
 }
 

@@ -989,4 +989,5 @@ export const frTerraNova = {
   "tn.admin.security.rule_ip": "20 échecs en une heure depuis une même source, tous comptes confondus, mettent cette source en pause. Une connexion réussie ne remet pas ce compteur à zéro.",
   "tn.admin.security.rule_owner": "Le titulaire d'un compte bloqué reçoit une alerte (notification et e-mail), au plus une par heure.",
   "tn.admin.security.rule_enumeration": "Le message d'erreur et les compteurs sont identiques que le compte existe ou non.",
+  "tn.login.slow_down": "Trop de tentatives rapprochées : patientez {seconds} s avant de réessayer.",
 } as const;
