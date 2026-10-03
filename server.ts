@@ -20,6 +20,7 @@ import { createServer } from "node:http";
 import { installFileLog } from "./src/lib/file-log";
 import { recoverReleaseUploads } from "./src/lib/storage/disk";
 import { startWebcupPoller } from "./src/modules/webcup/webcup.poller";
+import { startAppointmentReminders } from "./src/modules/appointments/appointments.reminders";
 
 import next from "next";
 
@@ -115,6 +116,9 @@ async function main(): Promise<void> {
 
   const stopWebcupPoller = startWebcupPoller();
   server.on("close", stopWebcupPoller);
+  // F40 — reminders before appointments, checked every minute.
+  const stopAppointmentReminders = startAppointmentReminders();
+  server.on("close", stopAppointmentReminders);
 
   server.listen(port, hostname, () => {
     logger.info("server listening", {
