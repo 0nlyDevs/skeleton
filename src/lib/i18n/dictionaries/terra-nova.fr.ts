@@ -953,4 +953,12 @@ export const frTerraNova = {
   "tn.login.attempts_left_one": "Il vous reste {count} tentative avant une pause de 15 minutes.",
   "tn.login.attempts_left_other": "Il vous reste {count} tentatives avant une pause de 15 minutes.",
   "tn.login.protected": "Connexion protégée contre les tentatives répétées",
+  "tn.security.failed_title": "Tentatives de connexion échouées",
+  "tn.security.failed_hint": "Les mots de passe erronés saisis pour votre compte ces 30 derniers jours.",
+  "tn.security.failed_none": "Aucune tentative échouée sur votre compte ces 30 derniers jours.",
+  "tn.security.failed_count": "{count} tentative(s) échouée(s) ces 30 derniers jours.",
+  "tn.security.failed_from": "depuis {ip}",
+  "tn.security.failed_locked": "Connexion suspendue",
+  "tn.security.failed_advice": "Si ce n'était pas vous, votre mot de passe n'a pas été divulgué : la connexion a été bloquée. Activez la double authentification ci-dessus pour protéger votre compte même si votre mot de passe était deviné.",
+  "tn.security.failed_advice_2fa": "Si ce n'était pas vous, rien à faire : la connexion a été bloquée et la double authentification protège votre compte.",
 } as const;

@@ -948,4 +948,12 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.login.attempts_left_one": "{count} attempt left before a 15-minute pause.",
   "tn.login.attempts_left_other": "{count} attempts left before a 15-minute pause.",
   "tn.login.protected": "Sign-in protected against repeated attempts",
+  "tn.security.failed_title": "Failed sign-in attempts",
+  "tn.security.failed_hint": "Wrong passwords entered for your account in the last 30 days.",
+  "tn.security.failed_none": "No failed attempts on your account in the last 30 days.",
+  "tn.security.failed_count": "{count} failed attempt(s) in the last 30 days.",
+  "tn.security.failed_from": "from {ip}",
+  "tn.security.failed_locked": "Sign-in paused",
+  "tn.security.failed_advice": "If this wasn't you, your password was not revealed: sign-in was blocked. Turn on two-factor authentication above to stay protected even if your password were guessed.",
+  "tn.security.failed_advice_2fa": "If this wasn't you, nothing to do: sign-in was blocked and two-factor authentication protects your account.",
 };
