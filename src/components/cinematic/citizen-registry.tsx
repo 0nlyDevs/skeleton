@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Fingerprint, Landmark, X } f
 import gsap from "gsap";
 import { useEffect, useId, useRef, useState } from "react";
 
-import { isNetworkFailure, isRateLimited, loginErrorMessageKey } from "@/components/auth/auth-errors";
+import { banReasonOf, isNetworkFailure, isRateLimited, loginErrorMessageKey } from "@/components/auth/auth-errors";
 import { AttemptsLeft, LoginLockout, SlowDown, useLoginProtection } from "@/components/auth/login-protection-notice";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import Link from "@/components/ui/link";
@@ -99,6 +99,10 @@ export function CitizenRegistry({
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [errorKey, setErrorKey] = useState<MessageKey | null>(initialError);
+  // Kept beside the key rather than inside the rendered sentence: the reason is
+  // the moderator's own words, but the sentence around it must follow a locale
+  // switch — see `banReasonOf`.
+  const [banReason, setBanReason] = useState<string | null>(null);
   const [granted, setGranted] = useState<string | null>(null);
 
   const [step, setStep] = useState<1 | 2 | "done">(1);
@@ -148,8 +152,9 @@ export function CitizenRegistry({
     window.setTimeout(onGranted, 1500);
   };
 
-  const fail = (key: MessageKey | null) => {
+  const fail = (key: MessageKey | null, reason: string | null = null) => {
     setErrorKey(key);
+    setBanReason(reason);
     setPending(false);
     onCue("error");
   };
@@ -159,6 +164,7 @@ export function CitizenRegistry({
     if (pending || protection.paused) return;
     setPending(true);
     setErrorKey(null);
+    setBanReason(null);
     try {
       // One field, two doors: an address goes to the email endpoint, anything else is a username.
       // No `callbackURL`: the auth client would reload the page before the card is stamped.
@@ -170,7 +176,7 @@ export function CitizenRegistry({
       if (result.error) {
         setPassword("");
         // A pause is shown by the lockout panel instead of a red line.
-        fail(isRateLimited(result.error) ? null : loginErrorMessageKey(result.error));
+        fail(isRateLimited(result.error) ? null : loginErrorMessageKey(result.error), banReasonOf(result.error));
         return;
       }
       const data = result.data as { twoFactorRedirect?: boolean; user?: { name?: string } } | null;
@@ -188,6 +194,7 @@ export function CitizenRegistry({
     if (!window.PublicKeyCredential) return fail("auth.passkey.unsupported");
     setPending(true);
     setErrorKey(null);
+    setBanReason(null);
     try {
       const result = await signIn.passkey();
       if (result?.error) {
@@ -350,7 +357,7 @@ export function CitizenRegistry({
                   {protection.slowDown ? <SlowDown secondsLeft={protection.secondsLeft} /> : null}
                   {errorKey && !protection.paused ? (
                     <p role="alert" className="rounded-2xl bg-red-500/15 px-4 py-3 text-[0.8438rem] text-red-100 shadow-[inset_0_0_0_1px_rgb(248_113_113/0.45)]">
-                      {t(errorKey)}
+                      {banReason && errorKey === "auth.login.banned" ? t("auth.login.banned_reason", { reason: banReason }) : t(errorKey)}
                     </p>
                   ) : null}
                   {!protection.paused && protection.showAttemptsLeft ? <AttemptsLeft remaining={protection.attemptsLeft ?? 0} /> : null}

@@ -10,7 +10,10 @@
  *   rule "5 *failed* attempts per 15 minutes" rather than "5 attempts".
  *
  * * **Bans are enforced at session creation.** A banned account cannot obtain a
- *   session at all, rather than being filtered out later in the UI.
+ *   session at all, rather than being filtered out later in the UI. The refusal
+ *   names the moderator's reason: credentials are already verified by the time
+ *   a session is requested, so the answer costs nothing in enumeration and
+ *   spares a banned resident the useless "invalid email or password".
  *
  * * **No cookie cache.** BetterAuth can serve the session from a signed cookie
  *   to avoid a database read per request, but a cached session keeps the old
@@ -37,7 +40,7 @@ import { clearLimits } from "@/lib/rate-limit";
 import { accountCounterKey } from "@/modules/login-protection/login-protection.service";
 
 import { authAfterHook, authBeforeHook } from "./auth-hooks";
-import { resolveBanState } from "./ban";
+import { bannedAccountError, resolveBanState } from "./ban";
 import { hashPassword, verifyPassword } from "./password";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./password-policy";
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH, usernameViolation } from "@/lib/validation/profile";
@@ -234,7 +237,11 @@ export const auth = betterAuth({
               userId: session.userId,
               until: state.until,
             });
-            return false;
+            // Thrown rather than `return false`: the hook runs after the
+            // credentials have been checked, so the resident is told the
+            // account is suspended — and why — instead of being sent back to
+            // a password field that was never the problem.
+            throw bannedAccountError(state);
           }
 
           return true;
