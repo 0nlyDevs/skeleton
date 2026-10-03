@@ -78,6 +78,8 @@ export const SOCKET_EVENTS = {
   messageAlert: "message:alert",
   /** Server → everyone: a user's public identity (name/avatar/handle) changed. */
   profileUpdated: "profile:updated",
+  /** Server → agents: new requests arrived in the Terra Nova API feed. */
+  webcupFeed: "webcup:feed",
 } as const;
 
 export type SocketEventName = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
@@ -256,6 +258,7 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.presenceState]: (payload: PresenceStatePayload) => void;
   [SOCKET_EVENTS.profileUpdated]: (payload: ProfileUpdatedPayload) => void;
   [SOCKET_EVENTS.messageAlert]: (payload: MessageAlertPayload) => void;
+  [SOCKET_EVENTS.webcupFeed]: (payload: { added: string[] }) => void;
   [SOCKET_EVENTS.callIncoming]: (payload: CallIncomingPayload) => void;
   [SOCKET_EVENTS.callAccepted]: (payload: { callId: string }) => void;
   [SOCKET_EVENTS.callEnded]: (payload: CallEndedPayload) => void;
