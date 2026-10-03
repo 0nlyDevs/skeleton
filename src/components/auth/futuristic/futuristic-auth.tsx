@@ -15,6 +15,8 @@ import {
   personNameViolation,
   usernameViolation,
 } from "@/lib/validation/profile";
+import { loginErrorMessageKey } from "../auth-errors";
+import { AttemptsLeft, LoginLockout, ProtectedSignInNote, SlowDown, useLoginProtection } from "../login-protection-notice";
 import { FuturisticAuthScene, type SceneState } from "./auth-scene";
 import "./auth-styles.css";
 
@@ -89,6 +91,7 @@ export function FuturisticAuth({
   const [showLoginPass, setShowLoginPass] = useState(false);
   const [loginErr, setLoginErr] = useState<string | null>(initialError ?? null);
   const [loginSubmitting, setLoginSubmitting] = useState(false);
+  const loginProtection = useLoginProtection();
 
   // Form states - Sign Up Step 1
   const [firstName, setFirstName] = useState("");
@@ -479,7 +482,7 @@ export function FuturisticAuth({
   // Submit Login
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginSubmitting) return;
+    if (loginSubmitting || loginProtection.paused) return;
 
     setLoginErr(null);
     const identifier = loginEmail.trim();
@@ -500,11 +503,14 @@ export function FuturisticAuth({
 
     try {
       const result = identifier.includes("@")
-        ? await signIn.email({ email: identifier, password: loginPass, rememberMe, callbackURL: redirectTo })
-        : await signIn.username({ username: identifier, password: loginPass, rememberMe, callbackURL: redirectTo });
+        ? await signIn.email({ email: identifier, password: loginPass, rememberMe, callbackURL: redirectTo, fetchOptions: loginProtection.fetchOptions })
+        : await signIn.username({ username: identifier, password: loginPass, rememberMe, callbackURL: redirectTo, fetchOptions: loginProtection.fetchOptions });
 
       if (result.error) {
-        setLoginErr(t("auth.login.failed"));
+        // A pause is shown by the lockout panel instead of a red line.
+        const key = loginErrorMessageKey(result.error);
+        setLoginErr(key === "auth.login.too_many" ? null : t(key));
+        setLoginPass("");
         setLoginSubmitting(false);
         shakeFields(["fa-login-email", "fa-login-pass"]);
         return;
@@ -767,13 +773,28 @@ export function FuturisticAuth({
               </h1>
               <p className="fa-sub fa-anim">{t("auth.login.subtitle")}</p>
 
-              {loginErr ? (
+              {loginProtection.locked ? (
+                <div className="mb-2">
+                  <LoginLockout secondsLeft={loginProtection.secondsLeft} />
+                </div>
+              ) : null}
+              {loginProtection.slowDown ? (
+                <div className="mb-2">
+                  <SlowDown secondsLeft={loginProtection.secondsLeft} />
+                </div>
+              ) : null}
+              {loginErr && !loginProtection.paused ? (
                 <div className="p-3 mb-2 text-xs font-semibold rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 fa-anim">
                   {loginErr}
                 </div>
               ) : null}
+              {!loginProtection.paused && loginProtection.showAttemptsLeft ? (
+                <div className="mb-2">
+                  <AttemptsLeft remaining={loginProtection.attemptsLeft ?? 0} />
+                </div>
+              ) : null}
 
-              <form className="fa-form" onSubmit={handleLoginSubmit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleLoginSubmit} noValidate>
                 <div className="fa-field fa-anim" id="fa-login-email">
                   <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -838,12 +859,13 @@ export function FuturisticAuth({
                   </button>
                 </div>
 
-                <button className="fa-btn fa-anim" type="submit" disabled={loginSubmitting}>
+                <button className="fa-btn fa-anim" type="submit" disabled={loginSubmitting || loginProtection.paused}>
                   <span>{loginSubmitting ? t("common.loading") : t("auth.login.submit")}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
                 </button>
+                <ProtectedSignInNote />
               </form>
 
               {/* Social buttons */}
@@ -908,7 +930,7 @@ export function FuturisticAuth({
               </h1>
               <p className="fa-sub fa-anim">{t("auth.register.subtitle")}</p>
 
-              <form className="fa-form" onSubmit={handleStep1Submit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleStep1Submit} noValidate>
                 <div className="fa-two fa-anim">
                   <div className={`fa-field ${step1Err.firstName ? "err" : ""}`} id="fa-step1-firstName">
                     <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1055,7 +1077,7 @@ export function FuturisticAuth({
               </h1>
               <p className="fa-sub fa-anim">Définissez vos identifiants pour rejoindre Terra Nova.</p>
 
-              <form className="fa-form" onSubmit={handleStep2Submit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleStep2Submit} noValidate>
                 <div className={`fa-field fa-anim ${step2Err.email ? "err" : ""}`} id="fa-step2-email">
                   <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -1257,7 +1279,7 @@ export function FuturisticAuth({
                   Si un compte correspond à cette adresse, vous recevrez un lien de réinitialisation sous peu.
                 </div>
               ) : (
-                <form className="fa-form" onSubmit={handleForgotSubmit} noValidate>
+                <form className="fa-form" method="post" onSubmit={handleForgotSubmit} noValidate>
                   <div className="fa-field fa-anim" id="fa-forgot-email">
                     <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -1334,7 +1356,7 @@ export function FuturisticAuth({
                   </button>
                 </div>
               ) : (
-                <form className="fa-form" onSubmit={handleResetSubmit} noValidate>
+                <form className="fa-form" method="post" onSubmit={handleResetSubmit} noValidate>
                   <div className="fa-field pw fa-anim" id="fa-reset-pass">
                     <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <rect x="5" y="11" width="14" height="9" rx="3" />
@@ -1393,7 +1415,7 @@ export function FuturisticAuth({
               </h1>
               <p className="fa-sub fa-anim">{t("auth.twofa.subtitle")}</p>
 
-              <form className="fa-form" onSubmit={handleTotpSubmit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleTotpSubmit} noValidate>
                 <div className="fa-field fa-anim" id="fa-totp-code">
                   <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="5" y="11" width="14" height="9" rx="3" />

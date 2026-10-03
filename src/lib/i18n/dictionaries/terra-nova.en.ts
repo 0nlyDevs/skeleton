@@ -984,4 +984,5 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.admin.security.rule_ip": "20 failures within an hour from one source, across all accounts, pause that source. A successful sign-in does not reset this counter.",
   "tn.admin.security.rule_owner": "The owner of a locked account gets an alert (notification and email), at most one per hour.",
   "tn.admin.security.rule_enumeration": "The error message and counters are identical whether the account exists or not.",
+  "tn.login.slow_down": "Too many attempts in a row: wait {seconds} s before trying again.",
 };
