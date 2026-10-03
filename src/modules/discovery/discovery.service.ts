@@ -20,9 +20,12 @@ export interface ContactDto {
   readonly name: string;
   readonly username: string | null;
   readonly image: string | null;
+  /** Citizen, city agent or administrator. */
+  readonly role?: "USER" | "AGENT" | "ADMIN";
 }
 
 const contactSelect = { id: true, name: true, username: true, image: true } as const;
+const personSelect = { ...contactSelect, role: true } as const;
 
 /**
  * People the viewer talks to or follows, most recent conversations first.
@@ -91,8 +94,18 @@ export interface SearchResultsDto {
   readonly posts: FeedItemDto[];
 }
 
-export async function searchEverything(q: string, viewer: AuthUser | null): Promise<SearchResultsDto> {
+export async function searchEverything(q: string, viewer: AuthUser | null, role?: "USER" | "AGENT" | "ADMIN"): Promise<SearchResultsDto> {
   const term = q.trim();
+  // A role on its own lists the people of that role ("show me the agents").
+  if (term.length < 2 && role) {
+    const people = await prisma.user.findMany({
+      where: { banned: false, username: { not: null }, role },
+      orderBy: { name: "asc" },
+      take: 30,
+      select: personSelect,
+    });
+    return { people, groups: [], posts: [] };
+  }
   if (term.length < 2) return { people: [], groups: [], posts: [] };
 
   const [people, groups, keyword, semantic] = await Promise.all([
@@ -100,10 +113,11 @@ export async function searchEverything(q: string, viewer: AuthUser | null): Prom
       where: {
         banned: false,
         username: { not: null },
+        ...(role ? { role } : {}),
         OR: [{ name: { contains: term } }, { username: { contains: term.toLowerCase() } }],
       },
-      take: 6,
-      select: contactSelect,
+      take: role ? 30 : 6,
+      select: personSelect,
     }),
     listGroups({ scope: "discover", q: term, limit: 5 }, viewer),
     listFeed({ q: term, limit: 8, scope: "all" }, viewer),

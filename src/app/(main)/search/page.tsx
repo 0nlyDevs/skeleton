@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { SearchResults } from "@/components/social/search-results";
 import { getAuthContext } from "@/lib/auth/session";
 import { searchEverything } from "@/modules/discovery/discovery.service";
+import { PEOPLE_ROLES } from "@/modules/follows/follows.schema";
 
 export const metadata: Metadata = { title: "Recherche" };
 
@@ -13,11 +14,12 @@ export default async function SearchPage({
 }) {
   const [params, context] = await Promise.all([searchParams, getAuthContext()]);
   const q = typeof params.q === "string" ? params.q.slice(0, 80) : "";
+  const role = PEOPLE_ROLES.find((value) => value === params.role);
   const viewer = context?.user ?? null;
-  const results = await searchEverything(q, viewer);
+  const results = await searchEverything(q, viewer, role);
   return (
     <div className="mx-auto w-full max-w-[720px]">
-      <SearchResults q={q} results={results} viewer={viewer ? { id: viewer.id, name: viewer.name, image: viewer.image } : null} />
+      <SearchResults q={q} role={role ?? null} results={results} viewer={viewer ? { id: viewer.id, name: viewer.name, image: viewer.image } : null} />
     </div>
   );
 }

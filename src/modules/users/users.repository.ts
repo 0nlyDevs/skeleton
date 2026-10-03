@@ -147,26 +147,38 @@ export async function findActivePublicProfileByUsername(username: string): Promi
   });
 }
 
-/** Search public identities only; emails are intentionally not searchable here. */
+export const searchUserSelect = { ...publicUserSelect, role: true } satisfies Prisma.UserSelect;
+export type SearchUserRow = Prisma.UserGetPayload<{ select: typeof searchUserSelect }>;
+
+/**
+ * Search public identities only; emails are intentionally not searchable
+ * here. With a role, an empty query lists the people of that role.
+ */
 export async function searchActivePublicUsers(
   query: string,
   excludedUserId: string,
   take: number,
-): Promise<PublicUserRow[]> {
+  role?: "USER" | "AGENT" | "ADMIN",
+): Promise<SearchUserRow[]> {
   return prisma.user.findMany({
     where: {
       banned: false,
       id: { not: excludedUserId },
       username: { not: null },
-      OR: [
-        { name: { contains: query } },
-        { username: { contains: query } },
-        { displayUsername: { contains: query } },
-      ],
+      ...(role ? { role } : {}),
+      ...(query
+        ? {
+            OR: [
+              { name: { contains: query } },
+              { username: { contains: query } },
+              { displayUsername: { contains: query } },
+            ],
+          }
+        : {}),
     },
     orderBy: [{ username: "asc" }, { id: "asc" }],
     take,
-    select: publicUserSelect,
+    select: searchUserSelect,
   });
 }
 

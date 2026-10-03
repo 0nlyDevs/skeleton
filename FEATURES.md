@@ -31,6 +31,8 @@ it. Test accounts: see `prisma/seed.ts` (password set by `SEED_PASSWORD`).
 | F59 | Usable on a very slow connection, explained without jargon | done | Eco mode switches on by itself for `Save-Data` or a 3G-or-worse connection, from the first byte; a short message says why and offers the full version; the map opens in 2D with every service |
 | F60 | Images and media do not weigh pages down | done | Each upload is served at 160/320/640/1080 px through `srcset`, generated once and cached on disk; off-screen images load on scroll; favicon 26 KB to 1 KB |
 
+Also asked by the team: residents can filter people by role (everyone, citizens, city agents, administrators) on `/search` and when starting a conversation, and each person carries a role badge, so finding an agent needs no name.
+
 Technical notes:
 
 - The API key stays on the server (`WEBCUP_API_KEY`). A poller syncs the feed
