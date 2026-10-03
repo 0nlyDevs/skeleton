@@ -668,6 +668,28 @@ html[data-contrast="high"] .tn-landing header nav {
 .tn-map-pin:hover .tn-map-pin-icon {
   transform: scale(1.12);
 }
+/* Municipal services: square pins (blue), emergency facilities in red with a ring. */
+.tn-map-service {
+  pointer-events: auto;
+}
+.tn-map-service-icon {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.45rem;
+  background: #1a73e8;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+.tn-map-service-icon.is-emergency {
+  background: #d93025;
+  box-shadow: 0 0 0 3px rgb(217 48 37 / 0.25), 0 1px 4px rgb(0 0 0 / 0.4);
+}
+.tn-map-service.is-emergency .tn-map-pin-name {
+  color: #b3261e;
+}
 /* "You are here": a blue dot with a soft pulsing halo. */
 .tn-map-home {
   position: relative;
