@@ -23,6 +23,10 @@ it. Test accounts: see `prisma/seed.ts` (password set by `SEED_PASSWORD`).
 | D19 | Agent workspace showing the Nova Terra API | done | `/agent` (separate layout and navigation), `/agent/feed`: session, wave, countdown, requests with difficulty and XP, team tracking |
 | F22 | Agents see citizen requests, their state and what needs action | done | `/agent/requests`: status tabs with counts, "Action requise" when new or when the citizen answered, take / release, internal notes, history |
 | F37 | Visible protection against repeated sign-in attempts on many accounts | done | `/login`: attempts left after a wrong password, then a pause with a live countdown and a reset link; the owner gets an alert (`/settings/security?alert=locked`, failed attempts listed); admins see `/admin/security` (live status, failures per hour, sources, locked accounts) |
+| F57 | Assess the platform's environmental performance and make it lighter | done | `/eco`: EcoIndex grade, weight, requests, slow-3G time and CO2/water per visit for each main page, before and after; measured by `npm run eco:audit` (headless Chrome) |
+| F58 | Sober design and loading choices on the main journeys | done | 3D models 60% lighter and cached for good; 3D on the home, sign-in and map pages loaded only when shown and never in eco mode; four font files instead of eight; visitors poll for updates every 20 s instead of every second |
+| F59 | Usable on a very slow connection, explained without jargon | done | Eco mode switches on by itself for `Save-Data` or a 3G-or-worse connection, from the first byte; a short message says why and offers the full version; the map opens in 2D with every service |
+| F60 | Images and media do not weigh pages down | done | Each upload is served at 160/320/640/1080 px through `srcset`, generated once and cached on disk; off-screen images load on scroll; favicon 26 KB to 1 KB |
 
 Technical notes:
 
@@ -170,7 +174,13 @@ Technical notes:
   (AES-256-GCM); passwords checked against known breaches (k-anonymity)
 - New-device sign-in alert ("Est-ce bien vous ?")
 - **Eco mode**: no animation, banners, covers or 3D, set by cookie so the
-  server sends the light page directly
+  server sends the light page directly; switched on automatically for data
+  saving or a 3G-or-worse connection (`Save-Data`, `ECT` client hint, or
+  `navigator.connection` before first paint), and an explicit choice always wins
+- **Measured footprint**: `npm run eco:audit` loads the main pages in headless
+  Chrome and writes `src/data/eco-report.json` (EcoIndex), shown on `/eco`
+- Uploaded images exist at four widths (`/api/files/<id>?w=640`), generated
+  once with sharp and served through `srcset`
 - Installable web app (manifest) and a service worker that retries dropped
   requests and caches immutable build assets
 
