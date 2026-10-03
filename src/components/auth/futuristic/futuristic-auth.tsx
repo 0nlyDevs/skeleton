@@ -794,7 +794,7 @@ export function FuturisticAuth({
                 </div>
               ) : null}
 
-              <form className="fa-form" onSubmit={handleLoginSubmit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleLoginSubmit} noValidate>
                 <div className="fa-field fa-anim" id="fa-login-email">
                   <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -930,7 +930,7 @@ export function FuturisticAuth({
               </h1>
               <p className="fa-sub fa-anim">{t("auth.register.subtitle")}</p>
 
-              <form className="fa-form" onSubmit={handleStep1Submit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleStep1Submit} noValidate>
                 <div className="fa-two fa-anim">
                   <div className={`fa-field ${step1Err.firstName ? "err" : ""}`} id="fa-step1-firstName">
                     <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1077,7 +1077,7 @@ export function FuturisticAuth({
               </h1>
               <p className="fa-sub fa-anim">Définissez vos identifiants pour rejoindre Terra Nova.</p>
 
-              <form className="fa-form" onSubmit={handleStep2Submit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleStep2Submit} noValidate>
                 <div className={`fa-field fa-anim ${step2Err.email ? "err" : ""}`} id="fa-step2-email">
                   <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -1279,7 +1279,7 @@ export function FuturisticAuth({
                   Si un compte correspond à cette adresse, vous recevrez un lien de réinitialisation sous peu.
                 </div>
               ) : (
-                <form className="fa-form" onSubmit={handleForgotSubmit} noValidate>
+                <form className="fa-form" method="post" onSubmit={handleForgotSubmit} noValidate>
                   <div className="fa-field fa-anim" id="fa-forgot-email">
                     <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -1356,7 +1356,7 @@ export function FuturisticAuth({
                   </button>
                 </div>
               ) : (
-                <form className="fa-form" onSubmit={handleResetSubmit} noValidate>
+                <form className="fa-form" method="post" onSubmit={handleResetSubmit} noValidate>
                   <div className="fa-field pw fa-anim" id="fa-reset-pass">
                     <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <rect x="5" y="11" width="14" height="9" rx="3" />
@@ -1415,7 +1415,7 @@ export function FuturisticAuth({
               </h1>
               <p className="fa-sub fa-anim">{t("auth.twofa.subtitle")}</p>
 
-              <form className="fa-form" onSubmit={handleTotpSubmit} noValidate>
+              <form className="fa-form" method="post" onSubmit={handleTotpSubmit} noValidate>
                 <div className="fa-field fa-anim" id="fa-totp-code">
                   <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="5" y="11" width="14" height="9" rx="3" />

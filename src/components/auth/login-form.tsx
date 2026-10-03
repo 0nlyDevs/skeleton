@@ -148,7 +148,7 @@ export function LoginForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+    <form method="post" onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       {locked ? <LoginLockout secondsLeft={secondsLeft} /> : null}
       {protection.slowDown ? <SlowDown secondsLeft={secondsLeft} /> : null}
       {errorKey && !paused ? (
