@@ -1,13 +1,13 @@
 /**
- * Seed — jury accounts and realistic demo data.
+ * Seed — test accounts per role and realistic demo data.
  *
- * The passwords below are **documented test credentials** for the hackathon jury,
- * printed here and in the README on purpose. They are not production secrets; the
- * deployed instance is a contest demo. In a real deployment you would rotate or
- * delete these accounts (README explains how).
+ * The test password comes from `SEED_PASSWORD` (set it in `.env` locally and
+ * in the host's environment), so it never lives in the repository. Legacy
+ * `@webcup.demo` accounts from earlier seeds are removed.
  *
  * Idempotent: every step is an upsert or a guarded create, so running the seed
- * twice neither duplicates nor destroys.
+ * twice neither duplicates nor destroys. An account that already exists keeps
+ * its name and username; only its role, verification and password are set.
  */
 
 import { hashPassword } from "../src/lib/auth/password";
@@ -17,50 +17,19 @@ import { encryptField } from "../src/lib/crypto/field-encryption";
 // turn DATABASE_URL into driver pool options.
 import { prisma } from "../src/lib/db/prisma";
 
-const JURY_PASSWORD = "Webcup-2026!jury";
+const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "";
+if (SEED_PASSWORD.length < 10) {
+  throw new Error("Set SEED_PASSWORD (at least 10 characters) before seeding.");
+}
 
 const ACCOUNTS = [
-  {
-    email: "admin@webcup.demo",
-    username: "colombe.admin",
-    firstName: "Colombe",
-    lastName: "Admin",
-    birthDate: "1995-04-12",
-    name: "Colombe Admin",
-    role: "ADMIN" as const,
-    bio: "Administratrice de la plateforme de démonstration.",
-  },
-  {
-    email: "moderator@webcup.demo",
-    username: "marc.moderateur",
-    firstName: "Marc",
-    lastName: "Modérateur",
-    birthDate: "1990-09-03",
-    name: "Marc Modérateur",
-    role: "MODERATOR" as const,
-    bio: "Modérateur — file de signalements et contenu signalé.",
-  },
-  {
-    email: "user@webcup.demo",
-    username: "aline",
-    firstName: "Aline",
-    lastName: "Utilisatrice",
-    birthDate: "2000-01-22",
-    name: "Aline Utilisatrice",
-    role: "USER" as const,
-    bio: "Compte de démonstration standard.",
-  },
-  {
-    email: "user2@webcup.demo",
-    username: "bilal",
-    firstName: "Bilal",
-    lastName: "Deuxième",
-    birthDate: "1998-06-30",
-    name: "Bilal Deuxième",
-    role: "USER" as const,
-    bio: "Second compte standard, pour tester les droits d'accès entre utilisateurs.",
-  },
-] as const;
+  { email: "cocobrowniees@gmail.com", username: "coco.admin", firstName: "Coco", lastName: "Brownies", birthDate: "1998-03-14", role: "ADMIN" as const, bio: "Administratrice de la plateforme." },
+  { email: "hei.colombe@gmail.com", username: "colombe.mod", firstName: "Colombe", lastName: "Hei", birthDate: "2001-07-09", role: "MODERATOR" as const, bio: "Modératrice — signalements et contenus." },
+  { email: "hei.tafita.2@gmail.com", username: "tafita", firstName: "Tafita", lastName: "Hei", birthDate: "2002-11-02", role: "USER" as const, bio: "Compte utilisateur de test." },
+  { email: "hei.harena.2@gmail.com", username: "harena", firstName: "Harena", lastName: "Hei", birthDate: "2003-05-27", role: "USER" as const, bio: "Second compte utilisateur, pour tester les droits entre comptes." },
+  { email: "colomberakotonjanahary@gmail.com", username: "colombe.admin", firstName: "Colombe", lastName: "Rakotonjanahary", birthDate: "2000-02-18", role: "ADMIN" as const, bio: "Administratrice de la plateforme." },
+  { email: "hei.jonathan.3@gmail.com", username: "jonathan.mod", firstName: "Jonathan", lastName: "Hei", birthDate: "2001-09-30", role: "MODERATOR" as const, bio: "Modérateur — signalements et contenus." },
+].map((account) => ({ ...account, name: `${account.firstName} ${account.lastName}` }));
 
 const GLOBAL_ROOM = "global";
 
@@ -121,7 +90,7 @@ const POSTS: ReadonlyArray<{
     author: 3,
     title: "Tester la sécurité entre comptes",
     body:
-      "Connectez-vous avec user@webcup.demo puis essayez d'éditer cette publication : l'API répond 404, jamais 403, pour ne pas révéler l'existence des ressources d'autrui.",
+      "Connectez-vous avec un compte utilisateur puis essayez d'éditer cette publication : l'API répond 404, jamais 403, pour ne pas révéler l'existence des ressources d'autrui.",
     tags: ["security", "idor"],
     published: true,
   },
@@ -166,9 +135,15 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
       // was true are repaired here rather than left for someone to debug.
       data: { password: passwordHash, accountId: existing.id },
     });
+    // An OAuth-only account gets a password too, so every role can be tested.
+    if ((await prisma.account.count({ where: { userId: existing.id, providerId: "credential" } })) === 0) {
+      await prisma.account.create({
+        data: { id: crypto.randomUUID(), userId: existing.id, accountId: existing.id, providerId: "credential", password: passwordHash },
+      });
+    }
     return prisma.user.update({
       where: { id: existing.id },
-      data: { role: account.role, emailVerified: true, bio: account.bio, ...profileOf(account) },
+      data: { role: account.role, emailVerified: true },
     });
   }
 
@@ -197,9 +172,12 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
 }
 
 async function main() {
-  console.log("Seeding jury accounts and demo data…");
+  console.log("Seeding test accounts and demo data…");
 
-  const passwordHash = await hashPassword(JURY_PASSWORD);
+  const legacy = await prisma.user.deleteMany({ where: { email: { endsWith: "@webcup.demo" } } });
+  if (legacy.count > 0) console.log(`  removed ${legacy.count} legacy demo account(s)`);
+
+  const passwordHash = await hashPassword(SEED_PASSWORD);
 
   const users = [];
   for (const account of ACCOUNTS) {
@@ -330,9 +308,9 @@ async function main() {
   });
   console.log("  feature flags: 2");
 
-  console.log("\nJury credentials (documented in README.md):");
+  console.log("\nTest accounts (password: SEED_PASSWORD):");
   for (const account of ACCOUNTS) {
-    console.log(`  ${account.role.padEnd(9)} ${account.email} / ${JURY_PASSWORD}`);
+    console.log(`  ${account.role.padEnd(9)} ${account.email}`);
   }
 
   console.log("\nSeed complete.");

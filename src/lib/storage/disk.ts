@@ -14,7 +14,9 @@
  * writing one more module, not editing the upload service.
  */
 
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { existsSync, readdirSync } from "node:fs";
+import { copyFile, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 
 import { env } from "@/lib/env";
@@ -26,8 +28,54 @@ export function isSafeFilename(filename: string): boolean {
   return SAFE_FILENAME.test(filename);
 }
 
+/**
+ * Hosts that deploy each release into a fresh folder (Hodifly:
+ * `~/…/releases/<id>/`) would lose every upload at the next deploy if files
+ * lived under the release, which is where a relative `UPLOAD_DIR` points.
+ * In that layout a relative setting is anchored in the home directory
+ * instead, which survives releases.
+ */
+function releaseRoot(): string | null {
+  const marker = `${path.sep}releases${path.sep}`;
+  const cwd = process.cwd();
+  const index = cwd.indexOf(marker);
+  return index === -1 ? null : cwd.slice(0, index + marker.length - 1);
+}
+
 export function uploadRoot(): string {
+  if (path.isAbsolute(env.UPLOAD_DIR)) return env.UPLOAD_DIR;
+  if (releaseRoot()) return path.join(homedir(), "skeleton-data", path.normalize(env.UPLOAD_DIR).replace(/^(\.\.?[\\/])+/, ""));
   return path.resolve(env.UPLOAD_DIR);
+}
+
+/**
+ * Bring back files that earlier releases wrote inside their own folder (before
+ * uploads were anchored outside releases). Copies only missing, safely named
+ * files; never overwrites. Best effort, run once at startup.
+ */
+export async function recoverReleaseUploads(): Promise<number> {
+  const releases = releaseRoot();
+  if (!releases || path.isAbsolute(env.UPLOAD_DIR)) return 0;
+  const target = uploadRoot();
+  await mkdir(target, { recursive: true });
+  let recovered = 0;
+  for (const release of readdirSync(releases, { withFileTypes: true })) {
+    if (!release.isDirectory()) continue;
+    for (const candidate of [
+      path.join(releases, release.name, env.UPLOAD_DIR),
+      path.join(releases, release.name, ".next", "standalone", env.UPLOAD_DIR),
+    ]) {
+      if (!existsSync(candidate) || path.resolve(candidate) === target) continue;
+      for (const file of readdirSync(candidate)) {
+        if (!isSafeFilename(file) || existsSync(path.join(target, file))) continue;
+        await copyFile(path.join(candidate, file), path.join(target, file)).then(
+          () => (recovered += 1),
+          () => undefined,
+        );
+      }
+    }
+  }
+  return recovered;
 }
 
 /**

@@ -12,7 +12,7 @@ import type { AuthUser, ReactionType } from "@/types";
 import { notifyInBackground, notifyPostReaction } from "../notifications/notifications.service";
 import { broadcastEngagement, getEngagement } from "../posts/posts.engagement";
 import type { PostEngagementDto } from "../posts/posts.dto";
-import { loadInteractivePost, postAudience, loadReadablePost } from "../posts/posts.service";
+import { loadReactablePost, postAudience, loadReadablePost } from "../posts/posts.service";
 import { deleteReaction, findReactors, upsertReaction } from "./reactions.repository";
 
 export interface ReactionResult {
@@ -25,7 +25,7 @@ export async function reactToPost(
   type: ReactionType,
   actor: AuthUser,
 ): Promise<ReactionResult> {
-  const post = await loadInteractivePost(postId, actor);
+  const post = await loadReactablePost(postId, actor);
 
   await enforceThenRecord([{ key: rateLimitKey("reaction", actor.id), rule: RATE_LIMITS.reaction }]);
 

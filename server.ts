@@ -18,6 +18,7 @@
 import { createServer } from "node:http";
 
 import { installFileLog } from "./src/lib/file-log";
+import { recoverReleaseUploads } from "./src/lib/storage/disk";
 
 import next from "next";
 
@@ -36,6 +37,9 @@ const logFile = env.isProduction ? installFileLog() : null;
 
 async function main(): Promise<void> {
   if (logFile) logger.warn("server log mirrored to file", { file: logFile });
+  void recoverReleaseUploads()
+    .then((count) => count > 0 && logger.warn("recovered uploads from earlier releases", { count }))
+    .catch((error: unknown) => logger.warn("upload recovery failed", { error }));
   const app = next({ dev, hostname, port });
   await app.prepare();
 

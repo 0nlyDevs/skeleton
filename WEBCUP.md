@@ -29,18 +29,21 @@ mysql -u root -p -e "CREATE DATABASE webcup CHARACTER SET utf8mb4 COLLATE utf8mb
 # Apply migrations
 npm run db:deploy
 
-# Seed jury accounts and demo data
-npm run db:seed
+# Seed test accounts and demo data (password from SEED_PASSWORD)
+SEED_PASSWORD='…' npm run db:seed
 ```
 
-Jury accounts — all four use the password `Webcup-2026!jury`:
+Test accounts — all use the password in `SEED_PASSWORD` (also seeded on every
+build when the variable is set on the host):
 
 | Account | Role |
 |---|---|
-| `admin@webcup.demo` | ADMIN |
-| `moderator@webcup.demo` | MODERATOR |
-| `user@webcup.demo` | USER |
-| `user2@webcup.demo` | USER (for testing access control between accounts) |
+| `cocobrowniees@gmail.com` | ADMIN |
+| `colomberakotonjanahary@gmail.com` | ADMIN |
+| `hei.colombe@gmail.com` | MODERATOR |
+| `hei.jonathan.3@gmail.com` | MODERATOR |
+| `hei.tafita.2@gmail.com` | USER |
+| `hei.harena.2@gmail.com` | USER (for testing access control between accounts) |
 
 ### 2. Run the server
 

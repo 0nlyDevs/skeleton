@@ -29,7 +29,7 @@ import {
   notifyPostComment,
 } from "../notifications/notifications.service";
 import { broadcastEngagement } from "../posts/posts.engagement";
-import { loadInteractivePost, loadReadablePost, mentionAudience, postAudience } from "../posts/posts.service";
+import { loadInteractivePost, loadReactablePost, loadReadablePost, mentionAudience, postAudience } from "../posts/posts.service";
 import { resolveMentions, syncCommentMentions } from "../mentions/mentions.service";
 import { toCommentDto, type CommentDto } from "./comments.dto";
 import {
@@ -265,7 +265,7 @@ export async function removeCommentAsStaff(id: string, actor: ActorContext, reas
 export async function reactToComment(id: string, type: ReactionType | null, actor: AuthUser): Promise<CommentDto> {
   const existing = await findCommentById(id);
   if (!existing || existing.deletedAt) throw new NotFoundError("This comment no longer exists.");
-  const post = await loadInteractivePost(existing.postId, actor);
+  const post = await loadReactablePost(existing.postId, actor);
   if (await isBlockedBetween(actor.id, existing.userId)) throw new NotFoundError("This comment no longer exists.");
   await enforceThenRecord([{ key: rateLimitKey("comment:react", actor.id), rule: RATE_LIMITS.reaction }]);
 

@@ -350,6 +350,7 @@ export function PostCard({
         >
           <Share2 className="size-[18px]" aria-hidden />
           {t("post.share")}
+          {post.shareCount > 0 ? <span className="tabular-nums">· {post.shareCount}</span> : null}
         </button>
       </div>
 

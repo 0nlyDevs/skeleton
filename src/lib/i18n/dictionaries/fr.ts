@@ -98,6 +98,7 @@ export const fr = {
   "landing.cta.title": "Prêt à être testé",
   "landing.cta.body":    "Les comptes de démonstration et de jury sont documentés dans le README. Connectez-vous pour tout parcourir.",
   "landing.nav_label": "Navigation principale",
+  "landing.demo.provided": "Fourni au jury",
   "landing.demo.title": "Comptes de démonstration",
   "landing.demo.body":
     "Un compte par rôle, avec des données réalistes déjà en place. Les identifiants sont dans le README.",
@@ -133,7 +134,7 @@ export const fr = {
     "Confirmez d'abord votre adresse e-mail : nous venons de vous renvoyer le lien.",
   "auth.login.banned": "Ce compte est suspendu. Contactez un administrateur.",
   "auth.register.neutral":
-    "Si cette adresse est nouvelle, un message de confirmation vient de partir. Pensez aux indésirables.",
+    "Si cette adresse est nouvelle, un message de confirmation vient de partir. Pensez à regarder dans vos spams.",
   "auth.login.too_many": "Trop de tentatives. Patientez une minute puis réessayez.",
   "auth.register.title": "Créer un compte",
   "auth.register.subtitle": "Cela prend moins d'une minute",
@@ -830,6 +831,9 @@ export const fr = {
   "eco.label": "Mode éco",
   "eco.on_hint": "Mode éco activé : sans animations ni images décoratives. Cliquer pour désactiver.",
   "eco.off_hint": "Activer le mode éco (moins de données, moins d'énergie)",
+  "groups.preview_title": "Vous êtes à jour",
+  "groups.preview_body": "Rejoignez le groupe pour voir toutes ses publications et y participer.",
+  "groups.preview_body_request": "Demandez à rejoindre le groupe pour voir toutes ses publications ; un admin validera votre demande.",
   "auth.password.rules_title": "Votre mot de passe doit contenir :",
   "auth.password.rule.length": "Au moins {min} caractères",
   "auth.password.rule.lower": "Une lettre minuscule",

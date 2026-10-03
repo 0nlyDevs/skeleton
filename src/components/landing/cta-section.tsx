@@ -57,9 +57,7 @@ export function CtaSection({ t }: { readonly t: Dictionary }) {
             {ROLES.map((role) => (
               <li key={role} className="flex items-center justify-between gap-4 py-2.5">
                 <span className="text-[13.5px] font-medium">{roleLabels[role]}</span>
-                <span className="font-mono text-[12px] text-muted-foreground">
-                  {role.toLowerCase()}@webcup.demo
-                </span>
+                <span className="text-[12px] text-muted-foreground">{t["landing.demo.provided"]}</span>
               </li>
             ))}
           </ul>

@@ -22,7 +22,7 @@ import {
   postIdParamSchema,
   updatePostSchema,
 } from "./posts.schema";
-import {
+import { recordMessageShare,
   createPostForActor,
   deletePostForActor,
   getFeedItem,
@@ -93,3 +93,10 @@ export const getFeedItemRoute = publicRoute({
   params: postIdParamSchema,
   handler: async ({ params, auth }) => jsonOk({ data: await getFeedItem(params.id, auth?.user ?? null) }),
 });
+
+/** `POST /api/posts/:id/shares` — the post was sent into conversations. */
+export const recordMessageShareRoute = apiRoute({
+  params: postIdParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await recordMessageShare(params.id, auth.user) }),
+});
+

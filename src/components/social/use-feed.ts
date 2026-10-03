@@ -10,6 +10,8 @@ import type { FeedItemDto } from "@/modules/posts/posts.dto";
 export interface FeedPageResponse {
   readonly data: FeedItemDto[];
   readonly nextCursor: string | null;
+  /** Preview of a public group for a visitor: no paging, no live inserts. */
+  readonly preview?: boolean;
 }
 
 export interface FeedScope {
@@ -153,7 +155,7 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
       }
       // Following never shows one's own posts, and which authors are followed
       // is the server's call: new posts there arrive with the next load.
-      if (payload.kind === "updated" || filter.saved || followingOnly) return;
+      if (payload.kind === "updated" || filter.saved || followingOnly || initial.preview) return;
       if (post.author.id === viewerId) {
         // Our own post (from this tab it is already known; from another tab
         // it appears at once, no pill).
@@ -178,7 +180,7 @@ export function useFeed({ initial, viewerId, filter }: { readonly initial: FeedP
       socket.off(SOCKET_EVENTS.feedPost, onPost);
       socket.off(SOCKET_EVENTS.postEngagement, onEngagement);
     };
-  }, [socket, filter.authorId, filter.group, filter.scope, filter.saved, viewerId, insert, patch, remove]);
+  }, [socket, filter.authorId, filter.group, filter.scope, filter.saved, initial.preview, viewerId, insert, patch, remove]);
 
   useEffect(() => {
     if (status !== "polling") return;
