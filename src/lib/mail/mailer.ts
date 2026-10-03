@@ -238,12 +238,18 @@ async function smtpAttempt(message: MailMessage): Promise<Attempt> {
   };
 }
 
-function resendAttempt(message: MailMessage, client: Resend): Attempt {
+async function resendAttempt(message: MailMessage, client: Resend): Promise<Attempt> {
+  // The SMTP path sends a plain-text alternative; this one did not, so Resend
+  // delivered single-part HTML. Text-only clients saw nothing useful, and
+  // Gmail scores single-part HTML down as spam.
+  const html = await render(message.react);
+
   const payload = {
     from: env.MAIL_FROM,
     to: message.to,
     subject: message.subject,
-    react: message.react,
+    html,
+    text: toPlainText(html),
     ...(message.replyTo ? { replyTo: message.replyTo } : {}),
   };
 
@@ -272,7 +278,7 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
     env.MAIL_TRANSPORT === "smtp"
       ? await smtpAttempt(message)
       : client
-        ? resendAttempt(message, client)
+        ? await resendAttempt(message, client)
         : null;
 
   if (!attempt) {

@@ -1,49 +1,54 @@
-import { Button, Section, Text } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 
-import {
-  EmailLayout,
-  button,
-  emailStyles,
-  helperText,
-  paragraph,
-} from "./layout";
+import { createMailTranslator, type EmailLocale } from "./copy";
+import { ActionLink, EmailButton, EmailLayout, emailStyles, lead } from "./layout";
 
 export interface ResetPasswordProps {
   readonly name: string;
   readonly url: string;
   readonly appUrl: string;
   readonly expiresInMinutes?: number;
+  readonly locale?: EmailLocale;
 }
+
+/** Fixture for `npm run email:preview`. */
+export const PreviewProps: ResetPasswordProps = {
+  name: "Colombe",
+  url: "https://terra-nova.webcup.fr/reset-password?token=3nB7yR4wK9dT2hLm",
+  appUrl: "https://terra-nova.webcup.fr",
+  expiresInMinutes: 60,
+  locale: "fr",
+};
 
 export default function ResetPassword({
   name,
   url,
   appUrl,
   expiresInMinutes = 60,
+  locale,
 }: ResetPasswordProps) {
+  const t = createMailTranslator(locale ?? "fr");
+
   return (
     <EmailLayout
-      preview="Réinitialisation de votre mot de passe"
-      heading={`Réinitialisez votre mot de passe, ${name}`}
+      preview={t("mail.reset.preview")}
+      heading={t("mail.reset.heading", { name })}
       appUrl={appUrl}
+      locale={locale}
+      reason={t("mail.reset.reason")}
     >
-      <Text style={paragraph}>
-        Une réinitialisation de mot de passe a été demandée pour votre compte. Le
-        lien ci-dessous est valable {expiresInMinutes} minutes, fonctionne une seule
-        fois et déconnecte vos autres appareils lors de son utilisation.
-      </Text>
+      <Text style={lead}>{t("mail.reset.lead")}</Text>
 
-      <Section style={{ margin: "28px 0" }}>
-        <Button href={url} style={button}>
-          Choisir un nouveau mot de passe
-        </Button>
+      <EmailButton href={url}>{t("mail.reset.cta")}</EmailButton>
+
+      {/* Single use and sign-out are consequences, not details: state them up front. */}
+      <Section style={emailStyles.notice}>
+        <Text style={emailStyles.noticeText}>
+          {t("mail.reset.constraint", { minutes: expiresInMinutes })}
+        </Text>
       </Section>
 
-      <Text style={helperText}>
-        Si vous n&apos;êtes pas à l&apos;origine de cette demande, aucune action n&apos;est
-        nécessaire — votre mot de passe reste inchangé et ce lien expirera de lui-même.
-      </Text>
-      <Text style={emailStyles.fallbackLink}>{url}</Text>
+      <ActionLink url={url} t={t} short />
     </EmailLayout>
   );
 }
