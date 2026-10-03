@@ -30,6 +30,21 @@ const ACTIVE_INTERVAL_MS = 1_000;
 const IDLE_INTERVAL_MS = 2_500;
 const HIDDEN_INTERVAL_MS = 6_000;
 const ACTIVITY_WINDOW_MS = 15_000;
+/**
+ * A signed-out visitor only ever receives city-wide broadcasts (alerts), so
+ * one poll every 20 s is enough; polling every second for them was most of a
+ * public page's requests. Eco mode halves the pace for members too.
+ */
+const GUEST_INTERVAL_MS = 20_000;
+const GUEST_HIDDEN_INTERVAL_MS = 60_000;
+const ECO_FACTOR = 2;
+
+let guestPace = false;
+
+/** Called by the realtime provider whenever the signed-in viewer changes. */
+export function setRealtimeGuest(guest: boolean): void {
+  guestPace = guest;
+}
 
 export class HybridSocket {
   connected = false;
@@ -227,8 +242,11 @@ export class HybridSocket {
   }
 
   private interval(): number {
-    if (typeof document !== "undefined" && document.hidden) return HIDDEN_INTERVAL_MS;
-    return Date.now() - this.lastActivity < ACTIVITY_WINDOW_MS ? ACTIVE_INTERVAL_MS : IDLE_INTERVAL_MS;
+    const hidden = typeof document !== "undefined" && document.hidden;
+    if (guestPace) return hidden ? GUEST_HIDDEN_INTERVAL_MS : GUEST_INTERVAL_MS;
+    const eco = typeof document !== "undefined" && document.documentElement.hasAttribute("data-eco") ? ECO_FACTOR : 1;
+    if (hidden) return HIDDEN_INTERVAL_MS * eco;
+    return (Date.now() - this.lastActivity < ACTIVITY_WINDOW_MS ? ACTIVE_INTERVAL_MS : IDLE_INTERVAL_MS) * eco;
   }
 
   private schedule(delay: number, reconnect = false): void {

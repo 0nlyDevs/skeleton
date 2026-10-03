@@ -7,6 +7,7 @@ import { useProfileOverridesListener } from "@/hooks/use-profile-overrides";
 import { useSocket, type SocketStatus } from "@/hooks/use-socket";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
+import { setRealtimeGuest } from "@/lib/socket/hybrid-client";
 import { SOCKET_EVENTS, type MessageAlertPayload, type NotificationPayload, type ReadyPayload, type RoomReadPayload } from "@/lib/socket/events";
 import type { ListMeta, NotificationType } from "@/types";
 
@@ -58,6 +59,8 @@ export function RealtimeProvider({
   const { socket, status } = useSocket();
   // One listener for live identity changes (avatars, names) app-wide.
   useProfileOverridesListener();
+  // Set during render, before the first poll is scheduled: guests poll slowly.
+  setRealtimeGuest(viewerId === null);
 
   /*
    * The socket is authenticated once, at handshake. A tab that signs in or out
