@@ -498,19 +498,17 @@ html.lenis body {
   color: transparent;
   filter: drop-shadow(0 10px 40px rgb(0 0 0 / 0.45));
 }
-/* Long, many-stop falloff: darkens the planet under the hero text with no visible edge. */
 .tn-hero-scrim {
-  /* The top edge dissolves so the darkening never shows where it starts. */
-  mask-image: linear-gradient(to top, #000 0%, #000 45%, transparent 100%);
-  background: radial-gradient(
-    ellipse 90% 95% at 50% 88%,
-    rgb(2 4 11 / 0.72) 0%,
-    rgb(2 4 11 / 0.6) 18%,
-    rgb(2 4 11 / 0.44) 34%,
-    rgb(2 4 11 / 0.28) 50%,
-    rgb(2 4 11 / 0.14) 66%,
-    rgb(2 4 11 / 0.05) 80%,
-    rgb(2 4 11 / 0) 92%
+  /* Full width, many stops: a darkening with no edge on any side. */
+  background: linear-gradient(
+    to top,
+    rgb(2 4 11 / 0.8) 0%,
+    rgb(2 4 11 / 0.66) 18%,
+    rgb(2 4 11 / 0.48) 34%,
+    rgb(2 4 11 / 0.3) 50%,
+    rgb(2 4 11 / 0.15) 66%,
+    rgb(2 4 11 / 0.05) 82%,
+    rgb(2 4 11 / 0) 100%
   );
 }
 .tn-glass {
