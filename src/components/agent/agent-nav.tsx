@@ -3,6 +3,7 @@
 import { Briefcase, Inbox, LayoutDashboard, Megaphone, Radio, Building2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { Breadcrumbs, type Crumb } from "@/components/layout/breadcrumbs";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import Link from "@/components/ui/link";
 import type { MessageKey } from "@/lib/i18n";
@@ -17,9 +18,29 @@ const ITEMS: readonly { href: string; labelKey: MessageKey; icon: typeof Inbox; 
 ];
 
 /** The agent workspace's own header and tabs, distinct from the citizen space. */
-export function AgentNav({ isAdmin, roleLabel }: { readonly isAdmin: boolean; readonly roleLabel: string }) {
+export function AgentNav({
+  isAdmin,
+  roleLabel,
+  awaitingPickup = 0,
+}: {
+  readonly isAdmin: boolean;
+  readonly roleLabel: string;
+  /** D17 — open requests with no agent, shown on the Requests tab. */
+  readonly awaitingPickup?: number;
+}) {
   const t = useTranslation();
   const pathname = usePathname();
+
+  // D15 — below a section (an editor, one request), show the path back up.
+  const section = ITEMS.find((item) => item.href !== "/agent" && pathname.startsWith(`${item.href}/`));
+  const leaf = section ? decodeURIComponent(pathname.slice(section.href.length + 1).split("/")[0] ?? "") : "";
+  const crumbs: Crumb[] | null = section
+    ? [
+        { label: t("tn.agent.title"), href: "/agent" },
+        { label: t(section.labelKey), href: section.href },
+        { label: leaf === "new" ? t("tn.breadcrumb.new") : section.href === "/agent/requests" ? leaf.toUpperCase() : t("tn.breadcrumb.edit") },
+      ]
+    : null;
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-primary/25 bg-gradient-to-br from-accent to-card p-4 shadow-panel">
@@ -52,10 +73,22 @@ export function AgentNav({ isAdmin, roleLabel }: { readonly isAdmin: boolean; re
             >
               <item.icon className="size-4" aria-hidden />
               {t(item.labelKey)}
+              {item.href === "/agent/requests" && awaitingPickup > 0 ? (
+                <span
+                  className={cn(
+                    "min-w-5 rounded-full px-1.5 text-center text-[0.6875rem] font-semibold tabular-nums",
+                    active ? "bg-primary-foreground text-primary" : "bg-warning text-warning-foreground",
+                  )}
+                >
+                  <span aria-hidden>{awaitingPickup}</span>
+                  <span className="sr-only">{t("tn.agent.pickup.badge", { count: awaitingPickup })}</span>
+                </span>
+              ) : null}
             </Link>
           );
         })}
       </nav>
+      {crumbs ? <Breadcrumbs label={t("tn.breadcrumb.label")} items={crumbs} className="border-t border-border/60 px-0 pt-3" /> : null}
     </div>
   );
 }

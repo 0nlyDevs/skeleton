@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Hourglass, Lock } from "lucide-react";
+import { CheckCircle2, Hourglass, Lock } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { RequestControls } from "@/components/agent/request-controls";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
-import Link from "@/components/ui/link";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useSocket } from "@/hooks/use-socket";
 import { apiFetch } from "@/lib/api/client";
@@ -16,6 +16,7 @@ import type { CityRequestDto } from "@/modules/city-requests/city-requests.dto";
 
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
 import { RequestComposer } from "./request-composer";
+import { RequestProgress } from "./request-progress";
 import { RequestTimeline } from "./request-timeline";
 
 /**
@@ -73,13 +74,13 @@ export function RequestView({
 
   return (
     <div className="mx-auto flex w-full max-w-[920px] flex-col gap-5">
-      <Link
-        href={agent ? "/agent/requests" : "/space"}
-        className="inline-flex items-center gap-1.5 px-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        {agent ? t("tn.agent.req.back") : t("tn.request.back_space")}
-      </Link>
+      {/* D15 — agents get the same path in the workspace header. */}
+      {agent ? null : (
+        <Breadcrumbs
+          label={t("tn.breadcrumb.label")}
+          items={[{ label: t("tn.nav.home"), href: "/" }, { label: t("tn.nav.my_space"), href: "/space" }, { label: request.reference }]}
+        />
+      )}
 
       {justSent ? (
         <div role="status" className="flex gap-3 rounded-2xl border border-success/40 bg-success/10 p-4">
@@ -112,6 +113,10 @@ export function RequestView({
           {agent && request.citizen ? ` · ${t("tn.agent.inbox.citizen")} : ${request.citizen.name}` : null}
         </p>
       </header>
+
+      <section className="rounded-2xl border border-border/70 bg-card px-3 py-4 shadow-panel" aria-label={t("tn.progress.label")}>
+        <RequestProgress status={request.status} assigned={request.assignee !== null} />
+      </section>
 
       <div className="grid gap-5 md:grid-cols-[1fr_280px]">
         <div className="flex min-w-0 flex-col gap-4">

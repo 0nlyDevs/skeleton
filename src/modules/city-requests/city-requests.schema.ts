@@ -17,8 +17,8 @@ export const cityRequestRefParamSchema = z.object({
 });
 
 export const listCityRequestsQuerySchema = z.object({
-  scope: z.enum(["mine", "all", "assigned"]).default("mine"),
-  status: z.enum([...CITY_REQUEST_STATUSES, "OPEN"]).optional(),
+  scope: z.enum(["mine", "all", "assigned", "unassigned"]).default("mine"),
+  status: z.enum([...CITY_REQUEST_STATUSES, "OPEN", "DONE"]).optional(),
   service: z.string().trim().max(80).optional(),
   q: z.string().trim().max(80).optional(),
   page: z.coerce.number().int().min(1).max(500).default(1),
