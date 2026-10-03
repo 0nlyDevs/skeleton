@@ -505,4 +505,10 @@ export const frTerraNova = {
   "tn.transports.share_schedule": "Copier les horaires",
   "tn.transports.schedule_copied": "Horaires copiés dans le presse-papiers !",
   "tn.transports.view_live": "Consulter les horaires en temps réel",
+  "tn.transports.favorite_lines": "Mes lignes favorites : {lines}",
+  "tn.transports.favorite_add_line": "Ajouter la ligne {code} à mes favoris",
+  "tn.transports.favorite_remove_line": "Retirer la ligne {code} de mes favoris",
+  "tn.transports.favorite_short": "Favori",
+  "tn.transports.search_label": "Rechercher une ligne ou un arrêt",
+  "tn.transports.loading_times": "Calcul des prochains départs…",
 };
