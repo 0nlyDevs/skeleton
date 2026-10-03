@@ -25,9 +25,10 @@ Engineering rules and conventions for the Webcup Base scaffold.
 - Connection pooling comes from the driver: `connection_limit` and
   `pool_timeout` in `DATABASE_URL` are translated into driver options in
   `src/lib/db/prisma.ts`
-- Seed script (`prisma/seed.ts`) creates the jury accounts, all with password
-  `Webcup-2026!jury`: `admin@webcup.demo` (ADMIN), `moderator@webcup.demo`
-  (MODERATOR), `user@webcup.demo` (USER), `user2@webcup.demo` (USER)
+- Seed script (`prisma/seed.ts`) creates the test accounts with the password
+  in `SEED_PASSWORD`: `cocobrowniees@gmail.com`, `colomberakotonjanahary@gmail.com`
+  (ADMIN), `hei.colombe@gmail.com`, `hei.jonathan.3@gmail.com` (MODERATOR),
+  `hei.tafita.2@gmail.com`, `hei.harena.2@gmail.com` (USER)
 - A credential `Account` row must have `accountId === user.id`; BetterAuth
   rejects anything else as "Invalid email or password"
 

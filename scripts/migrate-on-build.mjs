@@ -45,3 +45,15 @@ if (result.status !== 0) {
   console.error("[webcup] database migrations failed - aborting the build");
   process.exit(result.status ?? 1);
 }
+
+/*
+ * Test accounts: when SEED_PASSWORD is set in the host's environment, the
+ * (idempotent) seed runs after the migrations so every role can sign in on
+ * the deployed app. A failing seed warns but never blocks a release.
+ */
+if (process.env.SEED_PASSWORD) {
+  console.log("[webcup] seeding test accounts");
+  const seeded = spawnSync("npx", ["prisma", "db", "seed"], { cwd: ROOT, stdio: "inherit", env: process.env });
+  if (seeded.status !== 0) console.warn("[webcup] seed failed - continuing the build");
+}
+

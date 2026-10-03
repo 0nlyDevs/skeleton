@@ -97,6 +97,7 @@ export const en: Dictionary = {
   "landing.cta.body":
     "Demo and jury accounts are documented in the README. Sign in and explore everything.",
   "landing.nav_label": "Main navigation",
+  "landing.demo.provided": "Provided to the jury",
   "landing.demo.title": "Demo accounts",
   "landing.demo.body":
     "One account per role, with realistic data already in place. Credentials are in the README.",

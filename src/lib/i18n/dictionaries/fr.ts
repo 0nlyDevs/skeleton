@@ -98,6 +98,7 @@ export const fr = {
   "landing.cta.title": "Prêt à être testé",
   "landing.cta.body":    "Les comptes de démonstration et de jury sont documentés dans le README. Connectez-vous pour tout parcourir.",
   "landing.nav_label": "Navigation principale",
+  "landing.demo.provided": "Fourni au jury",
   "landing.demo.title": "Comptes de démonstration",
   "landing.demo.body":
     "Un compte par rôle, avec des données réalistes déjà en place. Les identifiants sont dans le README.",
