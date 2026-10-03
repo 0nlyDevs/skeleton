@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Inbox, LayoutDashboard, Megaphone, Radio, Building2, BusFront, History, Siren, Users } from "lucide-react";
+import { Briefcase, Inbox, LayoutDashboard, Megaphone, Radio, Building2, BusFront, Construction, History, Siren, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Breadcrumbs, type Crumb } from "@/components/layout/breadcrumbs";
@@ -16,6 +16,7 @@ const ITEMS: readonly { href: string; labelKey: MessageKey; icon: typeof Inbox; 
   { href: "/agent/announcements", labelKey: "tn.agent.nav.news", icon: Megaphone },
   { href: "/agent/citizens", labelKey: "tn.agent.nav.citizens", icon: Users },
   { href: "/agent/alerts/new", labelKey: "tn.nav.alerts", icon: Siren },
+  { href: "/agent/service-status", labelKey: "tn.availability.nav", icon: Construction },
   { href: "/agent/services", labelKey: "tn.agent.nav.services", icon: Building2, adminOnly: true },
   { href: "/agent/transports", labelKey: "tn.agent.nav.transports", icon: BusFront },
   { href: "/agent/history", labelKey: "tn.agent.nav.history", icon: History },

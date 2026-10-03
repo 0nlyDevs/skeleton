@@ -18,6 +18,7 @@ import { encryptField } from "../src/lib/crypto/field-encryption";
 import { prisma } from "../src/lib/db/prisma";
 
 import { seedCityAlerts } from "./seed-city-alerts";
+import { seedServiceAvailability } from "./seed-service-availability";
 import { seedServiceLocations } from "./seed-service-locations";
 import { seedTerraNova } from "./seed-terra-nova";
 
@@ -315,6 +316,7 @@ async function main() {
   await seedTerraNova(prisma, users);
   await seedCityAlerts(prisma, users);
   await seedServiceLocations(prisma);
+  await seedServiceAvailability(prisma);
 
   console.log("\nTest accounts (password: SEED_PASSWORD):");
   for (const account of ACCOUNTS) {

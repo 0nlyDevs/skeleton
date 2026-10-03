@@ -64,3 +64,27 @@ export const listServicesQuerySchema = z.object({
   category: z.string().trim().max(60).optional(),
   includeInactive: z.enum(["1", "0"]).optional(),
 });
+
+/**
+ * F38 — an interruption as staff record it. Dates arrive as ISO strings from
+ * the browser (with its time zone); a stopped service must say why.
+ */
+export const serviceAvailabilityInputSchema = z
+  .object({
+    availability: z.enum(["AVAILABLE", "MAINTENANCE", "INCIDENT"]),
+    note: z.string().trim().max(500).optional().nullable().transform((value) => value || null),
+    unavailableFrom: z.string().datetime({ offset: true }).optional().nullable().transform((value) => (value ? new Date(value) : null)),
+    availableAgainAt: z.string().datetime({ offset: true }).optional().nullable().transform((value) => (value ? new Date(value) : null)),
+    alternativeSlug: z.string().trim().toLowerCase().max(80).optional().nullable().transform((value) => value || null),
+  })
+  .strict()
+  .refine((value) => value.availability === "AVAILABLE" || (value.note?.length ?? 0) >= 10, {
+    message: "Explain in a sentence what happens and what residents can do.",
+    path: ["note"],
+  })
+  .refine((value) => !value.unavailableFrom || !value.availableAgainAt || value.availableAgainAt > value.unavailableFrom, {
+    message: "The return must come after the start.",
+    path: ["availableAgainAt"],
+  });
+
+export type ServiceAvailabilityInput = z.infer<typeof serviceAvailabilityInputSchema>;

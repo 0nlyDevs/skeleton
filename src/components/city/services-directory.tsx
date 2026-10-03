@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ServiceIcon } from "@/components/city/service-icon";
+import { ServiceAvailabilityBadge } from "@/components/city/service-availability-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "@/components/ui/link";
@@ -112,6 +113,7 @@ export function ServicesDirectory({
                     >
                       <ServiceIcon name={service.icon} className="size-9" />
                       <span className="font-semibold leading-snug">{service.name}</span>
+                      <ServiceAvailabilityBadge availability={service.availability} />
                       <span className="line-clamp-2 text-[0.8125rem] text-muted-foreground">{service.summary}</span>
                     </Link>
                   </li>
@@ -134,7 +136,10 @@ export function ServicesDirectory({
                     >
                       <ServiceIcon name={service.icon} />
                       <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="font-semibold leading-snug">{service.name}</span>
+                        <span className="flex flex-wrap items-center gap-2 font-semibold leading-snug">
+                          {service.name}
+                          <ServiceAvailabilityBadge availability={service.availability} />
+                        </span>
                         <span className="line-clamp-2 text-[0.8438rem] text-muted-foreground">{service.summary}</span>
                         {service.hours ? <span className="mt-1 text-[0.7812rem] text-muted-foreground">{service.hours}</span> : null}
                         {service.location ? (

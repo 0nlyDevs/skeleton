@@ -18,6 +18,7 @@ import { changedFields } from "../audit/audit.diff";
 import { recordAudit } from "../audit/audit.service";
 import { zoneAt, type CityZoneId } from "../alerts/city-zones";
 import { TRANSLATABLE_SERVICE_FIELDS, type ServiceInput, type ServiceTranslations } from "./city-services.schema";
+import { availabilityOf, type ServiceAvailabilityDto } from "./service-availability";
 
 export interface ServiceDto {
   readonly id: string;
@@ -44,9 +45,16 @@ export interface ServiceDto {
   readonly translations: ServiceTranslations;
   /** The language the text fields are in (French when no copy exists for the reader's). */
   readonly contentLocale: Locale;
+  /** F38 — usable now, announced interruption, or stopped (and until when). */
+  readonly availability: ServiceAvailabilityDto;
 }
 
-type ServiceRow = Awaited<ReturnType<typeof prisma.municipalService.findFirstOrThrow>>;
+/** Every read brings the alternative service along, for "go there instead". */
+export const serviceInclude = {
+  alternativeService: { select: { slug: true, name: true, phone: true, active: true, translations: true } },
+} as const;
+
+export type ServiceRow = Awaited<ReturnType<typeof prisma.municipalService.findFirstOrThrow<{ include: typeof serviceInclude }>>>;
 
 /** Reads the stored JSON defensively: only known locales and string fields survive. */
 function parseTranslations(value: unknown): ServiceTranslations {
@@ -65,7 +73,7 @@ function parseTranslations(value: unknown): ServiceTranslations {
  * F27 — French is the base text; a reader in another language gets that
  * language's copy of each field that has one, and French for the rest.
  */
-function toDto(row: ServiceRow, locale: Locale = "fr"): ServiceDto {
+export function toDto(row: ServiceRow, locale: Locale = "fr"): ServiceDto {
   const translations = parseTranslations(row.translations);
   const copy = locale === "fr" ? undefined : translations[locale];
   const pick = (field: (typeof TRANSLATABLE_SERVICE_FIELDS)[number], base: string | null) => copy?.[field] ?? base;
@@ -91,7 +99,15 @@ function toDto(row: ServiceRow, locale: Locale = "fr"): ServiceDto {
     featured: row.featured,
     translations,
     contentLocale: copy ? locale : "fr",
+    availability: availabilityOf(row, alternativeOf(row, locale)),
   };
+}
+
+function alternativeOf(row: ServiceRow, locale: Locale): ServiceAvailabilityDto["alternative"] {
+  const alternative = row.alternativeService;
+  if (!alternative?.active) return null;
+  const name = locale === "fr" ? alternative.name : (parseTranslations(alternative.translations)[locale]?.name ?? alternative.name);
+  return { slug: alternative.slug, name, phone: alternative.phone };
 }
 
 export async function listServices(
@@ -108,6 +124,7 @@ export async function listServices(
     // F28 — highlighted services first, then the editorial order.
     orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
     take: 200,
+    include: serviceInclude,
   });
   const services = rows.map((row) => toDto(row, locale));
   const term = query.q?.trim();
@@ -132,7 +149,7 @@ export async function listServices(
 }
 
 export async function getService(slug: string, viewer: AuthUser | null, locale: Locale = "fr"): Promise<ServiceDto> {
-  const row = await prisma.municipalService.findUnique({ where: { slug } });
+  const row = await prisma.municipalService.findUnique({ where: { slug }, include: serviceInclude });
   if (!row || (!row.active && !(viewer && isStaff(viewer)))) throw new NotFoundError("This service does not exist.");
   return toDto(row, locale);
 }
@@ -162,7 +179,7 @@ function assertAdmin(actor: AuthUser): void {
 
 export async function createService(input: ServiceInput, actor: AuthUser, ip: string | null): Promise<ServiceDto> {
   assertAdmin(actor);
-  const row = await prisma.municipalService.create({ data: { ...fieldsOf(input), translations: input.translations ?? {}, slug: await uniqueSlug(input.name) } });
+  const row = await prisma.municipalService.create({ data: { ...fieldsOf(input), translations: input.translations ?? {}, slug: await uniqueSlug(input.name) }, include: serviceInclude });
   await recordAudit({ actorId: actor.id, action: auditActions.serviceChanged, targetType: "service", targetId: row.id, metadata: { op: "create", name: row.name, slug: row.slug }, ip });
   return toDto(row);
 }
@@ -178,6 +195,7 @@ export async function updateService(slug: string, input: ServiceInput, actor: Au
       ...(input.translations !== undefined ? { translations: input.translations } : {}),
       slug: input.name !== existing.name ? await uniqueSlug(input.name, existing.id) : existing.slug,
     },
+    include: serviceInclude,
   });
   const changed = changedFields(existing as Record<string, unknown>, row as Record<string, unknown>, [
     "name", "category", "summary", "description", "howTo", "email", "phone", "hours", "address", "latitude", "longitude", "icon", "sortOrder", "active", "featured", "translations",

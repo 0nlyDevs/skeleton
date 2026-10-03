@@ -5,6 +5,7 @@ import { AnnouncementCard } from "@/components/city/announcement-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
 import { ServiceIcon } from "@/components/city/service-icon";
+import { ServiceAvailabilityBadge, ServiceAvailabilityNotice } from "@/components/city/service-availability-notice";
 import { ServiceLocationCard } from "@/components/city/service-location-card";
 import { cityZoneLabelKey } from "@/modules/alerts/city-zones";
 import { MarkServiceSeen } from "@/components/city/welcome-guide";
@@ -68,12 +69,16 @@ export default async function ServicePage({ params }: { readonly params: Promise
         </a>
       ) : null}
 
+      {/* F38 — before "Faire une demande": is the service working, and if not, what to do. */}
+      <ServiceAvailabilityNotice availability={service.availability} />
+
       <header lang={service.contentLocale} className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-panel sm:flex-row sm:items-start">
         <ServiceIcon name={service.icon} className="size-14 rounded-2xl" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{service.category}</Badge>
             {!service.active ? <Badge variant="warning">{t("tn.services.inactive")}</Badge> : null}
+            <ServiceAvailabilityBadge availability={service.availability} />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">{service.name}</h1>
           <p className="text-[0.9375rem] text-muted-foreground">{service.summary}</p>

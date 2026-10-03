@@ -16,7 +16,10 @@ import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import type { ServiceAvailabilityDto } from "@/modules/city-services/service-availability";
 import { ISSUE_TYPES, type IssueType } from "@/modules/city-requests/city-requests.schema";
+
+import { ServiceAvailabilityNotice } from "./service-availability-notice";
 
 const SELECT_CLASS =
   "h-10 w-full rounded-[var(--radius-control)] border border-input bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
@@ -32,7 +35,7 @@ export function ContactForm({
   initialKind = "question",
   initialSubject = "",
 }: {
-  readonly services: readonly { id: string; name: string }[];
+  readonly services: readonly { id: string; name: string; availability: ServiceAvailabilityDto }[];
   readonly initialServiceId: string;
   readonly initialKind?: "question" | "issue";
   /** Prefilled subject, e.g. when coming from the accessibility page. */
@@ -58,6 +61,7 @@ export function ContactForm({
   };
 
   const issue = kind === "issue";
+  const selectedService = services.find((service) => service.id === serviceId);
   const issueReady = !issue || (issueType !== "" && (location.trim().length > 0 || point !== null));
 
   const submit = async (event: FormEvent) => {
@@ -187,6 +191,8 @@ export function ContactForm({
           ))}
         </select>
         <p className="text-[0.7812rem] text-muted-foreground">{issue ? t("tn.contact.issue.service_hint") : t("tn.contact.service_hint")}</p>
+        {/* F38 — said before the resident writes, not after they send. */}
+        {selectedService ? <ServiceAvailabilityNotice availability={selectedService.availability} serviceName={selectedService.name} className="mt-1" /> : null}
       </div>
 
       <div className="flex flex-col gap-1.5">
