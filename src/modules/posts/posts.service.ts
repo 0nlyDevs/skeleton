@@ -16,7 +16,7 @@ import type { Prisma } from "@/generated/prisma/client";
 
 import { isStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { roundCoordinate } from "@/modules/places/places.service";
+import { zoneAt, type CityZoneId } from "@/modules/alerts/city-zones";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
@@ -404,57 +404,11 @@ async function audienceAllows(row: { audience: string; userId: string; groupId: 
   return isFollowing(viewer.id, row.userId);
 }
 
-export interface MapPostDto {
-  readonly id: string;
-  readonly latitude: number;
-  readonly longitude: number;
-  readonly placeName: string;
-  readonly excerpt: string;
-  readonly author: { readonly name: string; readonly image: string | null };
-  readonly image: string | null;
-  readonly createdAt: string;
-}
-
-/** Geotagged posts inside a bounding box, newest first, home-visible only. */
-export async function listMapPosts(
-  box: { south: number; west: number; north: number; east: number },
-  viewer: AuthUser | null,
-): Promise<MapPostDto[]> {
-  const longitude = box.west <= box.east ? { gte: box.west, lte: box.east } : undefined;
-  const rows = await prisma.post.findMany({
-    where: {
-      AND: [
-        await homeVisibility(viewer),
-        { latitude: { gte: box.south, lte: box.north } },
-        // A box crossing the antimeridian (west > east) wraps around.
-        longitude ? { longitude } : { OR: [{ longitude: { gte: box.west } }, { longitude: { lte: box.east } }] },
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    select: {
-      id: true,
-      latitude: true,
-      longitude: true,
-      placeName: true,
-      body: true,
-      createdAt: true,
-      user: { select: { name: true, image: true } },
-      media: { take: 1, orderBy: { position: "asc" }, select: { uploadId: true } },
-    },
-  });
-  return rows
-    .filter((row) => row.latitude !== null && row.longitude !== null)
-    .map((row) => ({
-      id: row.id,
-      latitude: row.latitude as number,
-      longitude: row.longitude as number,
-      placeName: row.placeName ?? "",
-      excerpt: row.body.slice(0, 140),
-      author: { name: row.user.name, image: row.user.image },
-      image: row.media[0] ? `/api/files/${row.media[0].uploadId}` : null,
-      createdAt: row.createdAt.toISOString(),
-    }));
+/** A post's place must sit on Terra Nova; the district is derived from the point. */
+function postZone(mapX: number, mapY: number): CityZoneId {
+  const zone = zoneAt(mapX, mapY);
+  if (!zone) throw new BadRequestError("Place the post inside the city, on land.");
+  return zone;
 }
 
 /** Feed items for ids (in the given order), filtered by home visibility. */
@@ -609,8 +563,9 @@ export async function createPostForActor(input: CreatePostInput, actor: ActorCon
       ...(input.location
         ? {
             placeName: input.location.name,
-            latitude: roundCoordinate(input.location.latitude),
-            longitude: roundCoordinate(input.location.longitude),
+            mapX: input.location.mapX,
+            mapY: input.location.mapY,
+            zone: postZone(input.location.mapX, input.location.mapY),
           }
         : {}),
     },
@@ -684,8 +639,9 @@ export async function updatePostForActor(
   }
   if (input.location !== undefined) {
     data.placeName = input.location?.name ?? null;
-    data.latitude = input.location ? roundCoordinate(input.location.latitude) : null;
-    data.longitude = input.location ? roundCoordinate(input.location.longitude) : null;
+    data.mapX = input.location?.mapX ?? null;
+    data.mapY = input.location?.mapY ?? null;
+    data.zone = input.location ? postZone(input.location.mapX, input.location.mapY) : null;
     changed.push("location");
   }
   if (input.mediaIds !== undefined) {

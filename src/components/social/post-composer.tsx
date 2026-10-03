@@ -13,7 +13,7 @@ import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
-import { LocationPicker, type PickedPlace } from "@/components/maps/location-picker";
+import { TerraNovaPicker, type PickedPoint } from "@/components/city/terra-nova-picker";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 
 import { AudiencePicker, type Audience } from "./audience";
@@ -49,7 +49,7 @@ export function PostComposer({
   const fileInput = useRef<HTMLInputElement>(null);
   const input = useRef<MentionInputHandle>(null);
   const uploads = useImageUploads(MAX_IMAGES);
-  const [place, setPlace] = useState<PickedPlace | null>(null);
+  const [place, setPlace] = useState<PickedPoint | null>(null);
   const [picking, setPicking] = useState(false);
   const [poll, setPoll] = useState<PollDraft | null>(null);
   const [audience, setAudience] = useState<Audience>("PUBLIC");
@@ -227,7 +227,7 @@ export function PostComposer({
           {publishing ? <Loader2 className="animate-spin" /> : null}
           {publishing ? t("composer.publishing") : t("composer.publish")}
         </Button>
-        <LocationPicker open={picking} onOpenChange={setPicking} onPick={setPlace} />
+        <TerraNovaPicker open={picking} onOpenChange={setPicking} onPick={setPlace} />
         <input
           ref={fileInput}
           type="file"
