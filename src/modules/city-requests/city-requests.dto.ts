@@ -7,6 +7,8 @@ export interface CityRequestSummaryDto {
   readonly status: string;
   readonly priority: string;
   readonly service: { slug: string; name: string } | null;
+  /** F25 — set when the request reports a problem in the city. */
+  readonly issueType: string | null;
   readonly citizen: { id: string; name: string } | null;
   readonly assignee: { id: string; name: string } | null;
   readonly createdAt: string;
@@ -34,6 +36,10 @@ export interface CityRequestEventDto {
 
 export interface CityRequestDto extends CityRequestSummaryDto {
   readonly message: string;
+  /** Where the reported problem is (free text and/or a map point). */
+  readonly location: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
   readonly messages: CityRequestMessageDto[];
   readonly events: CityRequestEventDto[];
   readonly closedAt: string | null;
@@ -45,6 +51,7 @@ interface SummaryRow {
   subject: string;
   status: string;
   priority: string;
+  issueType?: string | null;
   createdAt: Date;
   updatedAt: Date;
   service: { slug: string; name: string } | null;
@@ -61,6 +68,7 @@ export function toSummaryDto(row: SummaryRow, forAgent: boolean): CityRequestSum
     status: row.status,
     priority: row.priority,
     service: row.service,
+    issueType: row.issueType ?? null,
     citizen: forAgent ? row.citizen : null,
     assignee: row.assignee,
     createdAt: row.createdAt.toISOString(),

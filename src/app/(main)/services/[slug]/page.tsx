@@ -21,12 +21,12 @@ export const metadata: Metadata = { title: "Service municipal" };
 /** D05 — one service: what it does, how to proceed, how to reach it. */
 export default async function ServicePage({ params }: { readonly params: Promise<{ slug: string }> }) {
   const parsed = serviceSlugParamSchema.safeParse(await params);
-  const { t } = await getServerDictionary();
+  const { t, locale } = await getServerDictionary();
   const context = await getAuthContext();
   const viewer = context?.user ?? null;
 
   const service = parsed.success
-    ? await getService(parsed.data.slug, viewer).catch((error: unknown) => {
+    ? await getService(parsed.data.slug, viewer, locale).catch((error: unknown) => {
         if (error instanceof NotFoundError) return null;
         throw error;
       })
@@ -49,7 +49,14 @@ export default async function ServicePage({ params }: { readonly params: Promise
         items={[{ label: t("tn.nav.home"), href: "/" }, { label: t("tn.nav.services"), href: "/services" }, { label: service.name }]}
       />
 
-      <header className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-panel sm:flex-row sm:items-start">
+      {/* F27 — say so when the reader's language has no copy yet. */}
+      {service.contentLocale !== locale ? (
+        <p role="note" className="rounded-xl border border-border bg-surface-muted px-3 py-2 text-[0.8125rem] text-muted-foreground">
+          {t("tn.services.translation_missing")}
+        </p>
+      ) : null}
+
+      <header lang={service.contentLocale} className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-panel sm:flex-row sm:items-start">
         <ServiceIcon name={service.icon} className="size-14 rounded-2xl" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2">
@@ -68,7 +75,7 @@ export default async function ServicePage({ params }: { readonly params: Promise
       </header>
 
       <div className="grid gap-5 md:grid-cols-[1fr_280px]">
-        <div className="flex flex-col gap-5">
+        <div lang={service.contentLocale} className="flex flex-col gap-5">
           <section className="rounded-2xl border border-border/70 bg-card p-5">
             <p className="prose-body text-[0.9375rem]">{service.description}</p>
           </section>

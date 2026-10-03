@@ -9,6 +9,8 @@
 import { encryptField } from "../src/lib/crypto/field-encryption";
 import type { prisma as Prisma } from "../src/lib/db/prisma";
 
+import { FEATURED_SERVICES, SERVICE_TRANSLATIONS_EN } from "./seed-terra-nova.en";
+
 type Client = typeof Prisma;
 type SeedUser = { id: string; role: string };
 
@@ -265,7 +267,12 @@ export async function seedTerraNova(prisma: Client, users: readonly SeedUser[]):
   for (const [index, service] of SERVICES.entries()) {
     const row = await prisma.municipalService.upsert({
       where: { slug: service.slug },
-      create: { ...service, sortOrder: index },
+      create: {
+        ...service,
+        sortOrder: index,
+        featured: FEATURED_SERVICES.includes(service.slug),
+        ...(SERVICE_TRANSLATIONS_EN[service.slug] ? { translations: { en: { ...SERVICE_TRANSLATIONS_EN[service.slug] } } } : {}),
+      },
       update: {},
     });
     serviceIds.set(service.slug, row.id);
