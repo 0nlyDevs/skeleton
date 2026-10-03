@@ -53,7 +53,7 @@ export function MobileNav({ viewer, zone }: { readonly viewer: ShellViewer | nul
                   <Icon className="size-5" aria-hidden />
                   {t(item.labelKey)}
                   {badge > 0 ? (
-                    <span className="absolute left-1/2 top-1.5 ml-2 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[0.625rem] font-bold leading-4 text-white">
+                    <span className="absolute left-1/2 top-1.5 ml-2 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[0.625rem] font-bold leading-4 text-error-foreground">
                       {badge > 9 ? "9+" : badge}
                     </span>
                   ) : null}

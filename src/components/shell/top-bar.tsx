@@ -57,7 +57,7 @@ export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
                 {messageUnreadTotal > 0 ? (
                   <span
                     aria-hidden
-                    className="absolute right-0.5 top-0.5 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[0.625rem] font-bold leading-4 text-white"
+                    className="absolute right-0.5 top-0.5 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[0.625rem] font-bold leading-4 text-error-foreground"
                   >
                     {messageUnreadTotal > 9 ? "9+" : messageUnreadTotal}
                   </span>
