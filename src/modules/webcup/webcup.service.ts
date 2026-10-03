@@ -111,7 +111,7 @@ async function runSync(): Promise<SyncResult> {
                 userId: id,
                 type: "SYSTEM",
                 title: `${added.length} nouvelle(s) demande(s) du Haut Conseil : ${added.slice(0, 5).join(", ")}`,
-                link: "/agent/flux",
+                link: "/agent/feed",
               });
             }
           })(),

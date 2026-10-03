@@ -60,7 +60,7 @@ const MARKS: Record<OAuthProvider, () => React.JSX.Element> = {
  */
 export function OAuthButton({
   provider,
-  callbackURL = "/espace",
+  callbackURL = "/space",
 }: {
   readonly provider: OAuthProvider;
   readonly callbackURL?: string;

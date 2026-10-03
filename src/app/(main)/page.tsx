@@ -34,8 +34,8 @@ export default async function HomePage() {
   const paths = [
     { href: "/services", icon: Building2, title: t("tn.home.quick.services"), body: t("tn.home.quick.services_body") },
     { href: "/contact", icon: Send, title: t("tn.home.quick.contact"), body: t("tn.home.quick.contact_body") },
-    { href: "/annonces", icon: Megaphone, title: t("tn.home.quick.news"), body: t("tn.home.quick.news_body") },
-    { href: "/espace", icon: FolderOpen, title: t("tn.home.quick.space"), body: t("tn.home.quick.space_body") },
+    { href: "/announcements", icon: Megaphone, title: t("tn.home.quick.news"), body: t("tn.home.quick.news_body") },
+    { href: "/space", icon: FolderOpen, title: t("tn.home.quick.space"), body: t("tn.home.quick.space_body") },
   ];
 
   return (
@@ -54,7 +54,7 @@ export default async function HomePage() {
           </h1>
           <p className="text-[15.5px] leading-relaxed text-muted-foreground">{t("tn.home.subtitle")}</p>
           {user && openRequests > 0 ? (
-            <Link href="/espace" className="w-fit text-sm font-medium text-primary hover:underline">
+            <Link href="/space" className="w-fit text-sm font-medium text-primary hover:underline">
               {t("tn.home.open_requests", { count: openRequests })}
             </Link>
           ) : null}
@@ -68,7 +68,7 @@ export default async function HomePage() {
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="secondary">
-                  <Link href="/espace">{t("tn.home.cta_space")}</Link>
+                  <Link href="/space">{t("tn.home.cta_space")}</Link>
                 </Button>
               </>
             ) : (
@@ -131,7 +131,7 @@ export default async function HomePage() {
         <section aria-labelledby="home-news" className="flex flex-col gap-3">
           <div className="flex items-center justify-between px-1">
             <h2 id="home-news" className="text-lg font-semibold">{t("tn.home.news_title")}</h2>
-            <Link href="/annonces" className="text-[13px] text-primary hover:underline">{t("tn.see_all")}</Link>
+            <Link href="/announcements" className="text-[13px] text-primary hover:underline">{t("tn.see_all")}</Link>
           </div>
           {news.data.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">{t("tn.home.empty_news")}</p>

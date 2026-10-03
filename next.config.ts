@@ -145,6 +145,26 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  /*
+   * Routes used to be French. Notifications and bookmarks created before the
+   * rename still hold the old paths, so they keep working.
+   */
+  async redirects() {
+    return [
+      { source: "/espace", destination: "/space", permanent: true },
+      { source: "/espace/demandes/:reference", destination: "/space/requests/:reference", permanent: true },
+      { source: "/annonces", destination: "/announcements", permanent: true },
+      { source: "/annonces/:slug", destination: "/announcements/:slug", permanent: true },
+      { source: "/agent/demandes", destination: "/agent/requests", permanent: true },
+      { source: "/agent/demandes/:reference", destination: "/agent/requests/:reference", permanent: true },
+      { source: "/agent/flux", destination: "/agent/feed", permanent: true },
+      { source: "/agent/annonces", destination: "/agent/announcements", permanent: true },
+      { source: "/agent/annonces/nouvelle", destination: "/agent/announcements/new", permanent: true },
+      { source: "/agent/annonces/:slug", destination: "/agent/announcements/:slug", permanent: true },
+      { source: "/agent/services/nouveau", destination: "/agent/services/new", permanent: true },
+    ];
+  },
+
   async headers() {
     return [
       {

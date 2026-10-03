@@ -30,18 +30,18 @@ export default async function AnnouncementPage({ params }: { readonly params: Pr
         throw error;
       })
     : null;
-  if (!announcement) return <NotFoundPanel backHref="/annonces" />;
+  if (!announcement) return <NotFoundPanel backHref="/announcements" />;
 
   return (
     <article className="mx-auto flex w-full max-w-[760px] flex-col gap-5">
       <div className="flex items-center justify-between gap-2 px-1">
-        <Link href="/annonces" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/announcements" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" aria-hidden />
           {t("tn.news.back")}
         </Link>
         {viewer && isStaff(viewer) ? (
           <Button asChild size="sm" variant="secondary">
-            <Link href={`/agent/annonces/${announcement.slug}`}>
+            <Link href={`/agent/announcements/${announcement.slug}`}>
               <Pencil aria-hidden />
               {t("tn.news.edit")}
             </Link>

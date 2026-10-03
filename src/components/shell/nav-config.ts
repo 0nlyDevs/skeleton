@@ -37,8 +37,8 @@ export interface ShellNavItem {
 export const CITY_NAV: readonly ShellNavItem[] = [
   { href: "/", labelKey: "tn.nav.home", icon: Landmark },
   { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
-  { href: "/annonces", labelKey: "tn.nav.announcements", icon: Megaphone },
-  { href: "/espace", labelKey: "tn.nav.my_space", icon: FolderOpen },
+  { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
+  { href: "/space", labelKey: "tn.nav.my_space", icon: FolderOpen },
   { href: "/contact", labelKey: "tn.nav.contact", icon: Send },
   { href: "/messages", labelKey: "nav.messages", icon: MessageCircle, badge: "messages" },
   { href: "/notifications", labelKey: "nav.notifications", icon: Bell, badge: "notifications" },

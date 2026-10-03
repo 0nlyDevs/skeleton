@@ -33,7 +33,7 @@ export async function AnnouncementCard({
   const { t, locale } = await getServerDictionary();
   return (
     <Link
-      href={href ?? `/annonces/${announcement.slug}`}
+      href={href ?? `/announcements/${announcement.slug}`}
       className={cn(
         "flex gap-3 rounded-2xl border border-border/70 bg-card shadow-panel transition-colors hover:border-primary/40",
         compact ? "p-3.5" : "p-4",

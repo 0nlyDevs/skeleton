@@ -41,7 +41,7 @@ export function ContactForm({
         method: "POST",
         body: { serviceId: serviceId || null, subject: subject.trim(), message: message.trim() },
       });
-      router.push(`/espace/demandes/${response.data.reference}?envoyee=1`);
+      router.push(`/space/requests/${response.data.reference}?sent=1`);
     } catch (error) {
       if (error instanceof ApiRequestError && error.fields) setFields(error.fields);
       toast.error(describeApiError(error, t));

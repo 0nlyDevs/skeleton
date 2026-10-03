@@ -13,7 +13,7 @@ export async function broadcastAnnouncement(slug: string, title: string, alert: 
       userId: user.id,
       type: "ANNOUNCEMENT",
       title: `${alert ? "Alerte" : "Annonce"} de la ville : ${title.slice(0, 120)}`,
-      link: `/annonces/${encodeURIComponent(slug)}`,
+      link: `/announcements/${encodeURIComponent(slug)}`,
     });
   }
 }

@@ -49,7 +49,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 /** Readable without an account (content-level rules still apply server-side). */
-const PUBLIC_PREFIXES = ["/services", "/annonces", "/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
+const PUBLIC_PREFIXES = ["/services", "/announcements", "/feed/", "/profile/", "/groups", "/u/", "/search", "/map", "/p/", "/pages"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -174,7 +174,7 @@ export function proxy(request: NextRequest): NextResponse {
 
   if (hasSession && GUEST_ONLY_PATHS.has(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/espace";
+    url.pathname = "/space";
     url.search = "";
     return NextResponse.redirect(url);
   }

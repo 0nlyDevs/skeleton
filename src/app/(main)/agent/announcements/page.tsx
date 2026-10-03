@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Annonces — espace agent" };
 
 /** Agents manage the city's announcements, drafts included. */
 export default async function AgentAnnouncementsPage() {
-  return withAgentAccess("/agent/annonces", async (user) => {
+  return withAgentAccess("/agent/announcements", async (user) => {
     const { t } = await getServerDictionary();
     const result = await listAnnouncements({ drafts: "1", page: 1, limit: 50 }, user);
     return (
@@ -24,7 +24,7 @@ export default async function AgentAnnouncementsPage() {
             <p className="text-sm text-muted-foreground">{t("tn.agent.news.subtitle")}</p>
           </div>
           <Button asChild>
-            <Link href="/agent/annonces/nouvelle">
+            <Link href="/agent/announcements/new">
               <Plus aria-hidden />
               {t("tn.agent.news.new")}
             </Link>
@@ -36,7 +36,7 @@ export default async function AgentAnnouncementsPage() {
           <ul className="flex flex-col gap-3">
             {result.data.map((announcement) => (
               <li key={announcement.id}>
-                <AnnouncementCard announcement={announcement} href={`/agent/annonces/${announcement.slug}`} />
+                <AnnouncementCard announcement={announcement} href={`/agent/announcements/${announcement.slug}`} />
               </li>
             ))}
           </ul>

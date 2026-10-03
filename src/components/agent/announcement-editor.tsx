@@ -53,7 +53,7 @@ export function AnnouncementEditor({
         body: payload,
       });
       toast.success(t("tn.agent.news.saved"));
-      router.push(response.data.publishedAt ? `/annonces/${response.data.slug}` : "/agent/annonces");
+      router.push(response.data.publishedAt ? `/announcements/${response.data.slug}` : "/agent/announcements");
       router.refresh();
     } catch (error) {
       if (error instanceof ApiRequestError && error.fields) setFields(error.fields);
@@ -68,7 +68,7 @@ export function AnnouncementEditor({
     try {
       await apiFetch(`/api/announcements/${initial.slug}`, { method: "DELETE" });
       toast.success(t("tn.agent.news.deleted"));
-      router.push("/agent/annonces");
+      router.push("/agent/announcements");
       router.refresh();
     } catch (error) {
       toast.error(describeApiError(error, t));

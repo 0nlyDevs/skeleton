@@ -14,6 +14,7 @@ import { isStaff } from "@/lib/auth/guards";
 import { encryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { publishCityRequestUpdated } from "@/lib/socket/emit";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import type { AuthUser } from "@/types";
 
@@ -44,6 +45,15 @@ async function newReference(): Promise<string> {
     if (!(await prisma.cityRequest.findUnique({ where: { reference }, select: { id: true } }))) return reference;
   }
   throw new Error("Could not allocate a request reference.");
+}
+
+/** Push a "reload this request" signal to its citizen and to the agents (all of them for an internal note). */
+async function pushRequestUpdate(row: { citizenId: string; assigneeId: string | null; reference: string }, actorId: string, staffOnly = false): Promise<void> {
+  const staff = await staffIds();
+  const audience = new Set<string>(staff);
+  if (!staffOnly) audience.add(row.citizenId);
+  audience.delete(actorId);
+  publishCityRequestUpdated([...audience], { reference: row.reference });
 }
 
 async function staffIds(): Promise<string[]> {
@@ -79,7 +89,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
         type: "CITY_REQUEST",
         title: `Demande ${row.reference} bien reçue`,
         body: `Votre demande « ${row.subject} » a été transmise aux services de Terra Nova. Vous serez prévenu·e à chaque étape.`,
-        link: `/espace/demandes/${row.reference}`,
+        link: `/space/requests/${row.reference}`,
         email: true,
       });
       for (const id of await staffIds()) {
@@ -88,7 +98,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
           userId: id,
           type: "CITY_REQUEST",
           title: `Nouvelle demande ${row.reference} : ${row.subject.slice(0, 80)}`,
-          link: `/agent/demandes/${row.reference}`,
+          link: `/agent/requests/${row.reference}`,
         });
       }
     })(),
@@ -203,11 +213,13 @@ export async function addCityRequestMessage(reference: string, input: { body: st
     }
   });
 
+  await pushRequestUpdate(row, actor.id, input.internal);
+
   if (!input.internal) {
     if (fromCitizen) {
       const target = row.assigneeId ? [row.assigneeId] : await staffIds();
       for (const id of target) {
-        notifyInBackground(createNotification({ userId: id, type: "CITY_REQUEST", title: `Réponse du citoyen sur ${row.reference}`, link: `/agent/demandes/${row.reference}` }), { cityRequestId: row.id });
+        notifyInBackground(createNotification({ userId: id, type: "CITY_REQUEST", title: `Réponse du citoyen sur ${row.reference}`, link: `/agent/requests/${row.reference}` }), { cityRequestId: row.id });
       }
     } else {
       notifyInBackground(
@@ -215,7 +227,7 @@ export async function addCityRequestMessage(reference: string, input: { body: st
           userId: row.citizenId,
           type: "CITY_REQUEST",
           title: `Nouvelle réponse des services sur votre demande ${row.reference}`,
-          link: `/espace/demandes/${row.reference}`,
+          link: `/space/requests/${row.reference}`,
           email: true,
         }),
         { cityRequestId: row.id },
@@ -257,6 +269,7 @@ export async function updateCityRequest(reference: string, input: UpdateCityRequ
       prisma.cityRequest.update({ where: { id: row.id }, data }),
       ...events.map((event) => prisma.cityRequestEvent.create({ data: { requestId: row.id, actorId: actor.id, ...event } })),
     ]);
+    await pushRequestUpdate(row, actor.id);
     await recordAudit({ actorId: actor.id, action: auditActions.cityRequestChanged, targetType: "city_request", targetId: row.id, metadata: { changes: events.map((event) => event.kind) }, ip });
     const statusChange = events.filter((event) => event.kind === "status").at(-1);
     if (statusChange?.toValue) {
@@ -265,7 +278,7 @@ export async function updateCityRequest(reference: string, input: UpdateCityRequ
           userId: row.citizenId,
           type: "CITY_REQUEST",
           title: `Votre demande ${row.reference} est ${STATUS_LABEL[statusChange.toValue] ?? statusChange.toValue}`,
-          link: `/espace/demandes/${row.reference}`,
+          link: `/space/requests/${row.reference}`,
           email: true,
         }),
         { cityRequestId: row.id },

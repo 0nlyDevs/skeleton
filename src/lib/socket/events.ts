@@ -80,6 +80,8 @@ export const SOCKET_EVENTS = {
   profileUpdated: "profile:updated",
   /** Server → agents: new requests arrived in the Terra Nova API feed. */
   webcupFeed: "webcup:feed",
+  /** Server → citizen and agents: a city request got a message or changed. */
+  cityRequestUpdated: "city-request:updated",
 } as const;
 
 export type SocketEventName = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
@@ -91,6 +93,11 @@ export interface FeedPostPayload {
   readonly postId: string;
   /** Absent for `deleted`. Viewer-specific fields are reset to neutral. */
   readonly post?: FeedItemDto;
+}
+
+/** Only the reference: each viewer refetches the request with their own rights. */
+export interface CityRequestUpdatedPayload {
+  readonly reference: string;
 }
 
 export type PostEngagementPayload = PostEngagementDto;
@@ -259,6 +266,7 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.profileUpdated]: (payload: ProfileUpdatedPayload) => void;
   [SOCKET_EVENTS.messageAlert]: (payload: MessageAlertPayload) => void;
   [SOCKET_EVENTS.webcupFeed]: (payload: { added: string[] }) => void;
+  [SOCKET_EVENTS.cityRequestUpdated]: (payload: CityRequestUpdatedPayload) => void;
   [SOCKET_EVENTS.callIncoming]: (payload: CallIncomingPayload) => void;
   [SOCKET_EVENTS.callAccepted]: (payload: { callId: string }) => void;
   [SOCKET_EVENTS.callEnded]: (payload: CallEndedPayload) => void;

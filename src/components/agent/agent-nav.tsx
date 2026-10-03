@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 const ITEMS: readonly { href: string; labelKey: MessageKey; icon: typeof Inbox; adminOnly?: boolean }[] = [
   { href: "/agent", labelKey: "tn.agent.nav.dashboard", icon: LayoutDashboard },
-  { href: "/agent/demandes", labelKey: "tn.agent.nav.requests", icon: Inbox },
-  { href: "/agent/flux", labelKey: "tn.agent.nav.feed", icon: Radio },
-  { href: "/agent/annonces", labelKey: "tn.agent.nav.news", icon: Megaphone },
+  { href: "/agent/requests", labelKey: "tn.agent.nav.requests", icon: Inbox },
+  { href: "/agent/feed", labelKey: "tn.agent.nav.feed", icon: Radio },
+  { href: "/agent/announcements", labelKey: "tn.agent.nav.news", icon: Megaphone },
   { href: "/agent/services", labelKey: "tn.agent.nav.services", icon: Building2, adminOnly: true },
 ];
 
@@ -33,7 +33,7 @@ export function AgentNav({ isAdmin, roleLabel }: { readonly isAdmin: boolean; re
             <p className="text-[12.5px] text-muted-foreground">{roleLabel}</p>
           </div>
         </div>
-        <Link href="/espace" className="text-[13px] text-primary hover:underline">
+        <Link href="/space" className="text-[13px] text-primary hover:underline">
           {t("tn.agent.back_citizen")}
         </Link>
       </div>

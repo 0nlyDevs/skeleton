@@ -6,5 +6,5 @@ import { ServiceEditor } from "@/components/agent/service-editor";
 export const metadata: Metadata = { title: "Nouveau service" };
 
 export default async function NewServicePage() {
-  return withAgentAccess("/agent/services/nouveau", () => <ServiceEditor initial={null} />, "admin");
+  return withAgentAccess("/agent/services/new", () => <ServiceEditor initial={null} />, "admin");
 }

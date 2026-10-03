@@ -10,12 +10,12 @@ describe("safe post-login redirect", () => {
 
   it("refuses anything that can leave the site", () => {
     for (const evil of ["https://evil.example", "//evil.example", "/\\evil.example", "javascript:alert(1)", "/%0d%0aSet-Cookie", "evil", "/\u0000x"]) {
-      expect(safeNextPath(evil)).toBe(evil === "/%0d%0aSet-Cookie" ? "/%0d%0aSet-Cookie" : "/espace");
+      expect(safeNextPath(evil)).toBe(evil === "/%0d%0aSet-Cookie" ? "/%0d%0aSet-Cookie" : "/space");
     }
   });
 
   it("never sends a signed-in user back to an auth page", () => {
-    expect(safeNextPath("/login")).toBe("/espace");
-    expect(safeNextPath("/2fa?x=1")).toBe("/espace");
+    expect(safeNextPath("/login")).toBe("/space");
+    expect(safeNextPath("/2fa?x=1")).toBe("/space");
   });
 });

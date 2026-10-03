@@ -99,7 +99,7 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         birthDate,
         email: email.trim(),
         password,
-        callbackURL: "/espace",
+        callbackURL: "/space",
       } as Parameters<typeof signUp.email>[0]);
 
       if (result.error) {
@@ -295,7 +295,7 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         {status === "submitting" ? t("common.loading") : t("auth.register.submit")}
       </Button>
 
-      <OAuthButtons availability={oauth} callbackURL="/espace" />
+      <OAuthButtons availability={oauth} callbackURL="/space" />
     </form>
   );
 }

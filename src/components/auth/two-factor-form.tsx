@@ -61,7 +61,7 @@ export function TwoFactorForm() {
         return;
       }
 
-      router.replace("/espace");
+      router.replace("/space");
       router.refresh();
     } catch {
       setErrorKey("auth.login.network");

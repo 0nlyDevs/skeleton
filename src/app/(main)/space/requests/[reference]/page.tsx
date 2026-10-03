@@ -15,10 +15,10 @@ export default async function CitizenRequestPage({
   searchParams,
 }: {
   readonly params: Promise<{ reference: string }>;
-  readonly searchParams: Promise<{ envoyee?: string }>;
+  readonly searchParams: Promise<{ sent?: string }>;
 }) {
   const raw = await params;
-  const { user } = await requirePageAuth(`/espace/demandes/${encodeURIComponent(raw.reference)}`);
+  const { user } = await requirePageAuth(`/space/requests/${encodeURIComponent(raw.reference)}`);
   const parsed = cityRequestRefParamSchema.safeParse(raw);
   const request = parsed.success
     ? await getCityRequest(parsed.data.reference, user).catch((error: unknown) => {
@@ -27,8 +27,8 @@ export default async function CitizenRequestPage({
       })
     : null;
   // The citizen space only shows the viewer's own requests, even to agents.
-  if (!request || (request.citizen !== null && request.citizen.id !== user.id)) return <NotFoundPanel backHref="/espace" />;
+  if (!request || (request.citizen !== null && request.citizen.id !== user.id)) return <NotFoundPanel backHref="/space" />;
 
-  const { envoyee } = await searchParams;
-  return <RequestView initial={request} mode="citizen" viewerId={user.id} justSent={envoyee === "1"} />;
+  const { sent } = await searchParams;
+  return <RequestView initial={request} mode="citizen" viewerId={user.id} justSent={sent === "1"} />;
 }

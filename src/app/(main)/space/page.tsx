@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Mon espace" };
 
 /** D03 — the resident's personal space: their details and every request they made. */
 export default async function CitizenSpacePage() {
-  const { user } = await requirePageAuth("/espace");
+  const { user } = await requirePageAuth("/space");
   const { t, locale } = await getServerDictionary();
   const [requests, stats, unread, news] = await Promise.all([
     listCityRequests({ scope: "mine", page: 1, limit: 50 }, user),
@@ -82,7 +82,7 @@ export default async function CitizenSpacePage() {
               }
             />
           ) : (
-            <RequestList requests={requests.data} hrefBase="/espace/demandes" />
+            <RequestList requests={requests.data} hrefBase="/space/requests" />
           )}
         </section>
 
@@ -119,7 +119,7 @@ export default async function CitizenSpacePage() {
             <section className="flex flex-col gap-2.5" aria-labelledby="to-read">
               <div className="flex items-center justify-between px-1">
                 <h2 id="to-read" className="font-semibold">{t("tn.space.news")}</h2>
-                <Link href="/annonces" className="text-[13px] text-primary hover:underline">{t("tn.see_all")}</Link>
+                <Link href="/announcements" className="text-[13px] text-primary hover:underline">{t("tn.see_all")}</Link>
               </div>
               {news.data.map((announcement) => (
                 <AnnouncementCard key={announcement.id} announcement={announcement} compact />

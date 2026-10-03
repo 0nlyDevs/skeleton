@@ -12,7 +12,7 @@ import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./re
 
 /**
  * A list of request summaries. `hrefBase` decides which space opens the
- * request (`/espace/demandes` for citizens, `/agent/demandes` for agents);
+ * request (`/space/requests` for citizens, `/agent/requests` for agents);
  * agent rows also show the citizen, the agent in charge and "action needed".
  */
 export function RequestList({
