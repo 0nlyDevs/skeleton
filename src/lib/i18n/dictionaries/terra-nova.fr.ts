@@ -990,4 +990,8 @@ export const frTerraNova = {
   "tn.admin.security.rule_owner": "Le titulaire d'un compte bloqué reçoit une alerte (notification et e-mail), au plus une par heure.",
   "tn.admin.security.rule_enumeration": "Le message d'erreur et les compteurs sont identiques que le compte existe ou non.",
   "tn.login.slow_down": "Trop de tentatives rapprochées : patientez {seconds} s avant de réessayer.",
+  "tn.eco.auto_title": "Connexion lente : affichage allégé",
+  "tn.eco.auto_body": "Pour charger plus vite, le mode éco est activé : pas d'animations ni de 3D. Toutes les informations et démarches restent disponibles.",
+  "tn.eco.auto_full": "Afficher la version complète",
+  "tn.eco.auto_dismiss": "Fermer ce message",
 } as const;

@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import { AppProviders } from "@/components/providers/app-providers";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CONTRAST_COOKIE, TEXT_SIZE_COOKIE, parseTextSize } from "@/lib/display";
-import { ECO_COOKIE } from "@/lib/eco";
+import { ECO_AUTO_COOKIE, ECO_AUTO_SCRIPT, ECO_COOKIE, resolveEcoMode } from "@/lib/eco";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { publicEnv } from "@/lib/env.public";
 
@@ -52,7 +52,12 @@ export default async function RootLayout({
   ]);
   const dictionary = getDictionary(locale);
   const cookieStore = await cookies();
-  const eco = cookieStore.get(ECO_COOKIE)?.value === "1";
+  const eco = resolveEcoMode({
+    choice: cookieStore.get(ECO_COOKIE)?.value,
+    autoCookie: cookieStore.get(ECO_AUTO_COOKIE)?.value,
+    saveData: requestHeaders.get("save-data"),
+    ect: requestHeaders.get("ect"),
+  });
   const textSize = parseTextSize(cookieStore.get(TEXT_SIZE_COOKIE)?.value);
   const highContrast = cookieStore.get(CONTRAST_COOKIE)?.value === "1";
   // Per-request CSP nonce minted by `src/proxy.ts`; inline scripts injected by
@@ -65,10 +70,15 @@ export default async function RootLayout({
       suppressHydrationWarning
       data-scroll-behavior="smooth"
       className={`${generalSans.variable} ${boska.variable}`}
-      {...(eco ? { "data-eco": "" } : {})}
+      {...(eco.on ? { "data-eco": "" } : {})}
+      {...(eco.auto ? { "data-eco-auto": "" } : {})}
       {...(textSize !== "normal" ? { "data-text-size": textSize } : {})}
       {...(highContrast ? { "data-contrast": "high" } : {})}
     >
+      <head>
+        {/* Before the first paint: a slow connection gets the light page at once. */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: ECO_AUTO_SCRIPT }} />
+      </head>
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         {/* Keyboard users land here first; the sidebar and header are skippable. */}
         <a

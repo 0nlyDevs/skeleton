@@ -985,4 +985,8 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.admin.security.rule_owner": "The owner of a locked account gets an alert (notification and email), at most one per hour.",
   "tn.admin.security.rule_enumeration": "The error message and counters are identical whether the account exists or not.",
   "tn.login.slow_down": "Too many attempts in a row: wait {seconds} s before trying again.",
+  "tn.eco.auto_title": "Slow connection: lighter display",
+  "tn.eco.auto_body": "To load faster, eco mode is on: no animations or 3D. All information and procedures remain available.",
+  "tn.eco.auto_full": "Show the full version",
+  "tn.eco.auto_dismiss": "Close this message",
 };
