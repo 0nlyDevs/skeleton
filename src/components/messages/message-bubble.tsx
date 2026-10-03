@@ -97,18 +97,37 @@ export function MessageBubble({
     return response.data.map((row) => ({ emoji: REACTION_EMOJI[row.type], user: row.user }));
   }, [message.id]);
 
-  const editable = mine && !message.deleted && !message.pending && !message.failed && mountedAt - Date.parse(message.createdAt) < EDIT_WINDOW_MS;
+const editable = mine && !message.deleted && !message.pending && !message.failed && mountedAt - Date.parse(message.createdAt) < EDIT_WINDOW_MS;
+
+  const systemLabel = message.systemKind
+    ? {
+        MEMBER_JOINED: t("messages.system.member_joined", { name: message.sender.name }),
+        MEMBER_LEFT: t("messages.system.member_left", { name: message.sender.name }),
+        MEMBER_REMOVED: t("messages.system.member_removed", { name: message.sender.name }),
+      }[message.systemKind] ?? null
+    : null;
 
   return (
     <div data-message-id={message.id} className={cn("group flex scroll-mt-24 flex-col rounded-xl transition-colors", mine ? "items-end" : "items-start")}>
-      {showAuthor && !mine ? <span className="mb-0.5 ml-11 text-[0.7188rem] font-medium text-muted-foreground">{message.sender.name}</span> : null}
-      <div className={cn("flex max-w-[85%] items-end gap-2 sm:max-w-[70%]", mine && "flex-row-reverse")}>
-        {!mine ? (
-          <span className="w-9 shrink-0">{showAvatar ? <UserAvatar userId={message.sender.id} name={message.sender.name} image={message.sender.image} size="sm" /> : null}</span>
-        ) : null}
+      {message.systemKind ? (
+        <div className="flex justify-center">
+          <span
+            title={fmt.dateTime(message.createdAt)}
+            className="max-w-[85%] px-3 py-1.5 text-center text-[0.8125rem] italic text-muted-foreground sm:max-w-[70%]"
+          >
+            {systemLabel}
+          </span>
+        </div>
+      ) : (
+        <>
+          {showAuthor && !mine ? <span className="mb-0.5 ml-11 text-[0.7188rem] font-medium text-muted-foreground">{message.sender.name}</span> : null}
+          <div className={cn("flex max-w-[85%] items-end gap-2 sm:max-w-[70%]", mine && "flex-row-reverse")}>
+            {!mine ? (
+              <span className="w-9 shrink-0">{showAvatar ? <UserAvatar userId={message.sender.id} name={message.sender.name} image={message.sender.image} size="sm" /> : null}</span>
+            ) : null}
 
-        <div className={cn("flex min-w-0 flex-col gap-1", mine ? "items-end" : "items-start")}>
-          {message.deleted ? (
+            <div className={cn("flex min-w-0 flex-col gap-1", mine ? "items-end" : "items-start")}>
+              {message.deleted ? (
             <p className="rounded-2xl border border-dashed border-border px-3.5 py-2 text-[0.8438rem] italic text-muted-foreground">
               {t("messages.deleted")}
             </p>
@@ -257,6 +276,8 @@ export function MessageBubble({
           </span>
         ) : null}
       </div>
+        </>
+      )}
     </div>
   );
 }

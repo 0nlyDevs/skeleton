@@ -26,6 +26,8 @@ export interface MessageDto {
   readonly editedAt: string | null;
   readonly image: MessageImageDto | null;
   readonly sender: MessageSenderDto;
+  /** System event kind (MEMBER_JOINED, MEMBER_LEFT, MEMBER_REMOVED) or null for regular messages. */
+  readonly systemKind: string | null;
   /** The message this one answers (preview only). */
   readonly replyTo: MessageReplyDto | null;
   /** Who reacted with what; members only ever see their own rooms' messages. */
@@ -65,6 +67,7 @@ export interface RoomLastMessageDto {
   readonly senderId: string;
   readonly senderName: string;
   readonly hasImage: boolean;
+  readonly systemKind: string | null;
   readonly createdAt: string;
 }
 
@@ -112,6 +115,7 @@ export function toMessageDto(row: MessageWithSender): MessageDto {
       username: row.sender.username,
       image: row.sender.image,
     },
+    systemKind: row.systemKind ?? null,
     reactions: row.deletedAt ? [] : groupReactions(row.reactions),
     replyTo:
       row.deletedAt || !row.replyTo

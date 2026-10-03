@@ -444,6 +444,12 @@ export const en: Dictionary = {
   "messages.general": "General room",
   "messages.photo": "Photo",
   "messages.you": "You",
+  "messages.system.member_joined": "{name} joined the group",
+  "messages.system.member_left": "{name} left the group",
+  "messages.system.member_removed": "{name} was removed from the group",
+  "messages.group_members": "Group members",
+  "messages.remove_member": "Remove",
+  "messages.manage_members": "Manage members",
   "settings.tabs.profile": "Profile",
   "settings.tabs.account": "Account & security",
   "settings.tabs.privacy": "Privacy",
@@ -948,6 +954,9 @@ export const en: Dictionary = {
   "chat.connection_wait": "Chat is reconnecting. Your message is ready to send when the connection returns.",
   "chat.member_added": "Member added to the group.",
   "chat.no_members": "No group members yet.",
+  "chat.member_removed": "Member removed from the group.",
+  "chat.removed_from_group": "was removed from the group",
+  "chat.remove_confirm": "This person will lose access to the group.",
 
   // --- Notifications ---
   "notifications.title": "Notifications",
