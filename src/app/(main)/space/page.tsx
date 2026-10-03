@@ -10,6 +10,7 @@ import { ContextTip } from "@/components/feedback/context-tip";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
+import { Term } from "@/components/ui/term";
 import { requirePageAuth } from "@/lib/auth/page-guards";
 import { formatLongDate } from "@/lib/format";
 import type { MessageKey } from "@/lib/i18n";
@@ -112,7 +113,9 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
 
       <div className="grid gap-5 md:grid-cols-[1fr_300px]">
         <section className="flex flex-col gap-3" aria-labelledby="my-requests">
-          <h2 id="my-requests" className="px-1 font-semibold">{t("tn.space.requests")}</h2>
+          <h2 id="my-requests" className="px-1 font-semibold">
+            <Term id="procedure">{t("tn.space.requests")}</Term>
+          </h2>
           {openCount + doneCount > 0 ? (
             <nav aria-label={t("tn.space.history.label")} className="-mx-1 flex gap-1.5 overflow-x-auto px-1">
               {historyTabs.map((tab) => (

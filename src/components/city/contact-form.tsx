@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Term } from "@/components/ui/term";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import type { MessageKey } from "@/lib/i18n";
@@ -216,7 +217,9 @@ export function ContactForm({
 
       <p className="flex items-start gap-2 text-[0.7812rem] text-muted-foreground">
         <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-        {t("tn.contact.privacy")}
+        <span>
+          {t("tn.contact.privacy")} <Term id="encrypted">{t("tn.contact.privacy_term")}</Term>
+        </span>
       </p>
 
       <Button type="submit" disabled={busy || subject.trim().length < 3 || message.trim().length < 10 || !issueReady} className="self-end">

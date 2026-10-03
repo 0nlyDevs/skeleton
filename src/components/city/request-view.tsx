@@ -8,6 +8,7 @@ import { ContextTip } from "@/components/feedback/context-tip";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
+import { Term } from "@/components/ui/term";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useSocket } from "@/hooks/use-socket";
 import type { MessageKey } from "@/lib/i18n";
@@ -104,7 +105,7 @@ export function RequestView({
 
       <header className="flex flex-col gap-2 px-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="font-mono text-[0.8125rem] text-muted-foreground">{request.reference}</span>
+          <Term id="reference" className="font-mono text-[0.8125rem] text-muted-foreground">{request.reference}</Term>
           <RequestStatusBadge status={request.status} />
           {agent ? <RequestPriorityBadge priority={request.priority} /> : null}
           {agent && request.needsAction ? <NeedsActionBadge /> : null}
