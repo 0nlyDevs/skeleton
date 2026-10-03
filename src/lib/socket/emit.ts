@@ -16,6 +16,7 @@ import {
   SOCKET_EVENTS,
   type CityRequestUpdatedPayload,
   type CityAlertUpdatedPayload,
+  type OfficialMessageUpdatedPayload,
   type MessageAlertPayload,
   type MessageHiddenPayload,
   type ProfileUpdatedPayload,
@@ -213,4 +214,10 @@ export function publishCityRequestUpdated(userIds: readonly string[], payload: C
 export function publishCityAlertUpdated(payload: CityAlertUpdatedPayload): void {
   getSocketServer()?.emit(SOCKET_EVENTS.cityAlertUpdated, payload);
   getRelayHub().broadcastAll(SOCKET_EVENTS.cityAlertUpdated, payload);
+}
+
+/** F73 — an official message concerns everyone: every open screen refetches it. */
+export function publishOfficialMessageUpdated(payload: OfficialMessageUpdatedPayload): void {
+  getSocketServer()?.emit(SOCKET_EVENTS.officialMessageUpdated, payload);
+  getRelayHub().broadcastAll(SOCKET_EVENTS.officialMessageUpdated, payload);
 }
