@@ -473,55 +473,175 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* A barely-there falloff, as on a long exposure: no coloured nebula. */
-.tn-nebula {
-  background: radial-gradient(120vw 80vh at 50% 120%, rgb(20 28 48 / 0.35), transparent 70%);
+/* Until the visitor has landed, the page below the arrival screen is not shown. */
+.tn-landing[data-mode="cinematic"]:not([data-phase="city"]) :is(main, [data-hero="nav"], .tn-hud) {
+  visibility: hidden;
+}
+.tn-landing[data-mode="pending"] main {
+  visibility: hidden;
+}
+/* The flight's instruments mean nothing on the still version. */
+.tn-landing[data-mode="static"] .tn-hud {
+  display: none;
 }
 
-.tn-intro-panel {
-  background: #03050c;
-  will-change: transform;
+/* Panels over the flight: dark glass with one lit corner, readable on any sky. */
+.tn-panel {
+  position: relative;
+  border-radius: 22px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: linear-gradient(180deg, rgb(9 11 20 / 0.82), rgb(6 8 15 / 0.74));
+  backdrop-filter: blur(18px) saturate(1.25);
+  box-shadow: 0 40px 90px -50px rgb(0 0 0 / 0.95);
 }
-.tn-slash {
-  /* Fades out towards the tail, brightest at the head where the star is. */
-  background: linear-gradient(90deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.18) 45%, rgb(255 255 255 / 0.95) 100%);
-  will-change: transform;
+.tn-panel::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 56px;
+  height: 56px;
+  border-top: 1px solid var(--brand-400);
+  border-left: 1px solid var(--brand-400);
+  border-top-left-radius: 22px;
+  pointer-events: none;
 }
-
-.tn-mask {
+/* A headline rises from behind this mask. */
+.tn-line {
   display: inline-block;
   overflow: hidden;
-  padding: 0.04em 0.01em 0.02em;
-  margin: -0.04em -0.01em -0.02em;
+  vertical-align: bottom;
+  padding-bottom: 0.1em;
 }
-/* The E/A window: exactly one letter tall (line box plus the mask's padding). */
-.tn-slot {
-  height: 0.88em;
-  vertical-align: top;
+.tn-line > span {
+  display: inline-block;
 }
-.tn-slot .tn-letter {
-  line-height: 0.82;
+.tn-hero-title {
+  color: #fff3e6;
+  text-shadow: 0 10px 44px rgb(0 0 0 / 0.5);
 }
-.tn-letter {
-  background: linear-gradient(180deg, #ffffff 0%, #eaf2ff 45%, #8ea3bd 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 10px 40px rgb(0 0 0 / 0.45));
+.tn-hero-shade {
+  background: linear-gradient(to top, rgb(4 6 12 / 0.78) 0%, rgb(4 6 12 / 0.42) 38%, rgb(4 6 12 / 0) 100%);
 }
-.tn-hero-scrim {
-  /* Full width, many stops: a darkening with no edge on any side. */
-  background: linear-gradient(
-    to top,
-    rgb(2 4 11 / 0.8) 0%,
-    rgb(2 4 11 / 0.66) 18%,
-    rgb(2 4 11 / 0.48) 34%,
-    rgb(2 4 11 / 0.3) 50%,
-    rgb(2 4 11 / 0.15) 66%,
-    rgb(2 4 11 / 0.05) 82%,
-    rgb(2 4 11 / 0) 100%
-  );
+
+/* Instruments of the flight: stop marks on the side, the tag on a landmark. */
+.tn-mark {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 0;
+  color: rgb(255 255 255 / 0.6);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.9);
 }
+.tn-mark::after {
+  content: "";
+  width: 14px;
+  height: 1px;
+  background: currentColor;
+  transition: width var(--duration-normal) var(--ease-out-soft), background var(--duration-normal) var(--ease-out-soft);
+}
+.tn-mark > span {
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity var(--duration-normal) var(--ease-out-soft), transform var(--duration-normal) var(--ease-out-soft);
+}
+.tn-mark:hover > span,
+.tn-mark:focus-visible > span,
+.tn-mark[data-active] > span {
+  opacity: 1;
+  transform: none;
+}
+.tn-mark[data-active] {
+  color: #fff;
+}
+.tn-mark[data-active]::after {
+  width: 34px;
+  background: var(--brand-400);
+}
+.tn-tag {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  margin: -0.5em 0 0 -6px;
+  padding-left: 22px;
+  opacity: 0;
+  pointer-events: none;
+  color: #fff;
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.95);
+}
+.tn-tag::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 1px solid var(--brand-400);
+  background: rgb(255 150 80 / 0.45);
+  box-shadow: 0 0 0 5px rgb(255 150 80 / 0.16), 0 0 16px var(--brand-400);
+}
+
+/* The arrival screen's instruments. */
+.tn-sweep {
+  animation: tn-sweep 7s linear infinite;
+  transform-origin: 50% 50%;
+}
+@keyframes tn-sweep {
+  to { transform: rotate(360deg); }
+}
+.tn-blink {
+  animation: tn-blink 1.6s steps(2, jump-none) infinite;
+}
+@keyframes tn-blink {
+  0% { opacity: 1; }
+  100% { opacity: 0.25; }
+}
+.tn-field {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.05);
+  padding: 0.7rem 0.9rem;
+  color: #fff;
+  font-size: 0.9375rem;
+  transition: border-color var(--duration-fast) var(--ease-out-soft), background var(--duration-fast) var(--ease-out-soft);
+}
+.tn-field::placeholder {
+  color: rgb(255 255 255 / 0.35);
+}
+.tn-field:focus-visible {
+  outline: none;
+  border-color: var(--brand-400);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: 0 0 0 3px rgb(255 150 80 / 0.22);
+}
+.tn-cta-brand {
+  background: linear-gradient(180deg, var(--brand-400), var(--brand-600));
+  color: #1a0d05;
+  box-shadow: 0 12px 34px -14px var(--brand-400);
+  transition: filter var(--duration-fast) var(--ease-out-soft), transform var(--duration-fast) var(--ease-out-soft);
+}
+.tn-cta-brand:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.tn-cta-brand:disabled {
+  opacity: 0.55;
+}
+
 .tn-glass {
   border-radius: 24px;
   border: 1px solid rgb(255 255 255 / 0.08);
@@ -574,7 +694,7 @@ html.lenis body {
   right: 50%;
   bottom: 4px;
   height: 1px;
-  background: #67e8f9;
+  background: var(--brand-400);
   transition: left var(--duration-normal) var(--ease-out-soft), right var(--duration-normal) var(--ease-out-soft);
 }
 .tn-nav-link:hover::after {
@@ -616,8 +736,17 @@ html[data-contrast="high"] .tn-cta-ghost {
   background: #000;
   border-color: #fff;
 }
-html[data-contrast="high"] .tn-hero-scrim {
+html[data-contrast="high"] .tn-panel {
+  background: #000;
+  border-color: #fff;
+  backdrop-filter: none;
+}
+html[data-contrast="high"] .tn-hero-shade {
   background: linear-gradient(to top, rgb(0 0 0 / 0.92) 0%, rgb(0 0 0 / 0.8) 45%, rgb(0 0 0 / 0) 100%);
+}
+html[data-contrast="high"] .tn-field {
+  background: #000;
+  border-color: #fff;
 }
 html[data-contrast="high"] .tn-landing header nav {
   background: #000;
