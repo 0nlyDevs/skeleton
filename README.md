@@ -29,6 +29,26 @@ The dev launcher watches only the files that end up *inside* the server bundle,
 so editing a page or a component does not restart the process — Next's own hot
 reload handles those.
 
+## Demo accounts
+
+`npm run db:seed` creates these. All four share the password **`Webcup-2026!jury`**.
+
+| Email | Role | Use it to check |
+|---|---|---|
+| `admin@webcup.demo` | ADMIN | The admin console: users, roles, audit log, feature flags |
+| `moderator@webcup.demo` | MODERATOR | The moderation queue: reports, post removal |
+| `user@webcup.demo` | USER | The member experience: feed, posts, groups, chat, profile |
+| `user2@webcup.demo` | USER | A second member, for anything that depends on two identities |
+
+`user2@` exists so access control can be tested honestly: follow/unfollow,
+direct messages, and post visibility all behave differently when a *different*
+signed-in account is involved. Testing those with a single account gives a false
+pass.
+
+Passwords are deliberately **not** printed on the landing page — the accounts are
+listed there by role and address, but the shared secret stays out of a public
+page.
+
 ## Architecture
 
 - **Framework:** Next.js 16 (App Router) + React 19 + TypeScript (strict)

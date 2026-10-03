@@ -96,11 +96,16 @@ export const fr = {
     "Interface bilingue avec thème clair et sombre, animations sobres et respect de prefers-reduced-motion.",
   "landing.stack.title": "Pile technique",
   "landing.cta.title": "Prêt à être testé",
-  "landing.cta.body":    "Les comptes de démonstration et de jury sont documentés dans le README. Connectez-vous pour tout parcourir.",
+  "landing.cta.body":
+    "Connectez-vous avec l'un des comptes ci-dessous — un seul mot de passe, partagé. La liste complète est dans le README.",
+  // Chrome autour des documents juridiques. Les documents eux-mêmes vivent dans
+  // src/content/legal : une politique est de la prose, pas un jeu d'étiquettes.
+  "legal.toc": "Sommaire",
+  "legal.incomplete": "À compléter",
   "landing.nav_label": "Navigation principale",
   "landing.demo.title": "Comptes de démonstration",
   "landing.demo.body":
-    "Un compte par rôle, avec des données réalistes déjà en place. Les identifiants sont dans le README.",
+    "Quatre comptes pré-remplis, avec des données réalistes déjà en place. Ils partagent un même mot de passe, documenté dans le README.",
   "role.user": "Utilisateur",
   "role.moderator": "Modérateur",
   "role.admin": "Administrateur",
@@ -1104,7 +1109,9 @@ export const fr = {
   // --- Legal ---
   "legal.privacy.title": "Politique de confidentialité",
   "legal.terms.title": "Conditions d'utilisation",
-  "legal.updated": "Dernière mise à jour : septembre 2026",
+  // {date} vient du document lui-même, pour que les deux langues ne puissent pas
+  // diverger sur la date de dernière modification.
+  "legal.updated": "Dernière mise à jour : {date}",
   "footer.rights": "Socle de démonstration — 24H by Webcup",
   "footer.privacy": "Confidentialité",
   "footer.terms": "Conditions",

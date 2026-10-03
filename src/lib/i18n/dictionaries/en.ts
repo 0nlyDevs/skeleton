@@ -95,11 +95,15 @@ export const en: Dictionary = {
   "landing.stack.title": "Stack",
   "landing.cta.title": "Ready to be tested",
   "landing.cta.body":
-    "Demo and jury accounts are documented in the README. Sign in and explore everything.",
+    "Sign in with any of the demo accounts below — one password, shared. The full list is in the README.",
+  // Chrome around the legal documents. The documents themselves live in
+  // src/content/legal, because a policy is prose, not a set of UI labels.
+  "legal.toc": "Contents",
+  "legal.incomplete": "To be completed",
   "landing.nav_label": "Main navigation",
   "landing.demo.title": "Demo accounts",
   "landing.demo.body":
-    "One account per role, with realistic data already in place. Credentials are in the README.",
+    "Four seeded accounts with realistic data already in place. They share one password, documented in the README.",
   "role.user": "User",
   "role.moderator": "Moderator",
   "role.admin": "Administrator",
@@ -1101,7 +1105,9 @@ export const en: Dictionary = {
   // --- Legal ---
   "legal.privacy.title": "Privacy policy",
   "legal.terms.title": "Terms of use",
-  "legal.updated": "Last updated: September 2026",
+  // {date} comes from the document itself, so the two locales cannot drift
+  // apart on when the policy last changed.
+  "legal.updated": "Last updated: {date}",
   "footer.rights": "Demonstration foundation — 24H by Webcup",
   "footer.privacy": "Privacy",
   "footer.terms": "Terms",

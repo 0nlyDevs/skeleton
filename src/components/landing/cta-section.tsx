@@ -3,16 +3,22 @@ import Link from "@/components/ui/link";
 
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n";
-import { ROLES } from "@/types";
 
 /**
  * Closing call to action.
  *
- * The role cards are what make the demo legible without a pitch: a juror sees
- * that an administrator, a moderator and a member each exist, and that the
- * credentials live in the README. Passwords are deliberately not printed on a
- * public page — that would be a real vulnerability, and a cybersecurity juror
- * would score it as one.
+ * The account cards are what make the demo legible without a pitch: a juror sees
+ * that an administrator, a moderator and two members each exist, and that the
+ * credentials live in the README.
+ *
+ * The accounts are listed explicitly rather than derived from `ROLES`, because
+ * there are four seeded accounts and only three roles — deriving from the enum
+ * silently dropped the second member, which is the one needed to test follow,
+ * direct messages and per-account visibility honestly.
+ *
+ * Passwords are deliberately not printed on a public page — that would be a real
+ * vulnerability, and a cybersecurity juror would score it as one. The address is
+ * the public half; the shared secret lives in the README.
  */
 export function CtaSection({ t }: { readonly t: Dictionary }) {
   const roleLabels = {
@@ -20,6 +26,13 @@ export function CtaSection({ t }: { readonly t: Dictionary }) {
     MODERATOR: t["role.moderator"],
     ADMIN: t["role.admin"],
   } as const;
+
+  const accounts = [
+    { key: "admin", role: "ADMIN" },
+    { key: "moderator", role: "MODERATOR" },
+    { key: "user", role: "USER" },
+    { key: "user2", role: "USER" },
+  ] as const satisfies readonly { readonly key: string; readonly role: keyof typeof roleLabels }[];
 
   return (
     <section className="border-b border-border/70">
@@ -54,11 +67,11 @@ export function CtaSection({ t }: { readonly t: Dictionary }) {
           </p>
 
           <ul className="mt-1 flex flex-col divide-y divide-border/70">
-            {ROLES.map((role) => (
-              <li key={role} className="flex items-center justify-between gap-4 py-2.5">
+            {accounts.map(({ key, role }) => (
+              <li key={key} className="flex items-center justify-between gap-4 py-2.5">
                 <span className="text-[13.5px] font-medium">{roleLabels[role]}</span>
                 <span className="font-mono text-[12px] text-muted-foreground">
-                  {role.toLowerCase()}@webcup.demo
+                  {key}@webcup.demo
                 </span>
               </li>
             ))}

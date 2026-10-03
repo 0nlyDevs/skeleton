@@ -30,6 +30,8 @@ const cases: TestCase[] = [
   { name: ".env blocked", path: "/.env", expectedStatus: 404 },
   { name: "backup.sql blocked", path: "/backup.sql", expectedStatus: 404 },
   { name: "login page renders", path: "/login", expectedStatus: 200 },
+  { name: "privacy policy renders", path: "/privacy", expectedStatus: 200 },
+  { name: "terms render", path: "/terms", expectedStatus: 200 },
 ];
 
 /**
@@ -122,6 +124,17 @@ async function main(): Promise<void> {
     for (const [label, ok] of checks) {
       if (ok) pass(`header ${label}`);
       else fail(`header ${label} missing on /login`);
+    }
+
+    // A `wss://0.0.0.0` origin here is the bug this suite exists to catch: the
+    // policy then refuses every real socket and realtime falls back to polling.
+    const socketOrigin = /connect-src[^;]*wss?:\/\/([^;\s]+)/.exec(csp)?.[1] ?? "";
+    if (socketOrigin === "") {
+      pass("CSP carries no socket origin (same-origin only)");
+    } else if (/^(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?$/.test(socketOrigin) && !BASE_URL.includes(socketOrigin.split(":")[0])) {
+      fail(`CSP pins the socket to a bind address (${socketOrigin}), not the public origin — realtime will be refused`);
+    } else {
+      pass(`CSP socket origin (${socketOrigin})`);
     }
   } catch (error) {
     fail(`header checks — ${error instanceof Error ? error.message : "unknown error"}`);
