@@ -172,6 +172,11 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
                 {t("tn.space.edit_profile")}
               </Link>
             </Button>
+            <div className="mt-2 text-center">
+              <Link href="/settings/security" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                {t("tn.space.manage_account")}
+              </Link>
+            </div>
           </section>
 
           {news.data.length > 0 ? (
