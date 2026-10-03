@@ -27,6 +27,7 @@ export const NOTIFICATION_TYPES = [
   "CITY_REQUEST",
   "ANNOUNCEMENT",
   "ALERT",
+  "APPOINTMENT",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

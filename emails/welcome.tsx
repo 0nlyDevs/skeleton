@@ -23,7 +23,7 @@ export const PreviewProps: WelcomeProps = {
  * It used to advertise a scaffold that no longer exists — "create a post from the
  * dashboard", "say hi in the chat room" — and its button pointed at `/dashboard`
  * while every auth flow in the app lands on `/space`. It now lists the three
- * things a Terra Nova resident can actually do, in the order they are useful.
+ * things a Bubble resident can actually do, in the order they are useful.
  */
 export default function Welcome({ name, appUrl, locale }: WelcomeProps) {
   const t = createMailTranslator(locale ?? "fr");

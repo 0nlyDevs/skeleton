@@ -86,7 +86,7 @@ if (!env.emailEnabled && env.isProduction) {
 }
 
 export const auth = betterAuth({
-  appName: "Terra Nova",
+  appName: "Bubble",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [...env.corsAllowedOrigins],
@@ -306,7 +306,7 @@ export const auth = betterAuth({
   plugins: [
     // The issuer is what an authenticator app shows next to the entry, so it has
     // to match the product rather than the scaffold it was copied from.
-    twoFactor({ issuer: "Terra Nova" }),
+    twoFactor({ issuer: "Bubble" }),
     // D02 — sign in without a password: the device's face, fingerprint or PIN
     // unlocks a passkey bound to this site. `userVerification: "required"`
     // means the device must check the person (not just presence), and only the

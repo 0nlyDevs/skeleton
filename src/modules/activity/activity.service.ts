@@ -91,7 +91,13 @@ function toEntry(row: Row, targets: Map<string, { label: string | null; href: st
     (row.targetType === "webcup_request" || row.targetType === "feature_flag" ? row.targetId : null);
   const href =
     known?.href ??
-    (row.targetType === "transport_line" ? "/agent/transports" : row.targetType === "webcup_request" ? "/agent/feed" : null);
+    (row.targetType === "transport_line"
+      ? "/agent/transports"
+      : row.targetType === "webcup_request"
+        ? "/agent/feed"
+        : row.targetType === "appointment" && text(meta.reference)
+          ? `/agent/appointments/${String(meta.reference)}`
+          : null);
   const authorName = text(meta.authorId) ? (targets.get(`user:${String(meta.authorId)}`)?.label ?? null) : null;
   return {
     id: row.id,

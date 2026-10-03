@@ -34,7 +34,7 @@ export async function sendVerificationEmail(input: {
 
   return sendMail({
     to: input.to,
-    subject: t("mail.subject.verify"),
+    subject: `[Bubble] ${t("mail.subject.verify")}`,
     previewUrl: input.url,
     react: (
       <VerifyEmail
@@ -58,7 +58,7 @@ export async function sendPasswordResetEmail(input: {
 
   return sendMail({
     to: input.to,
-    subject: t("mail.subject.reset"),
+    subject: `[Bubble] ${t("mail.subject.reset")}`,
     previewUrl: input.url,
     react: (
       <ResetPassword
@@ -81,7 +81,7 @@ export async function sendWelcomeEmail(input: {
 
   return sendMail({
     to: input.to,
-    subject: t("mail.subject.welcome"),
+    subject: `[Bubble] ${t("mail.subject.welcome")}`,
     react: <Welcome name={input.name} appUrl={env.appUrl} locale={input.locale} />,
   });
 }
@@ -110,7 +110,7 @@ export async function sendNotificationEmail(input: {
 
   return sendMail({
     to: input.to,
-    subject: input.title,
+    subject: `[Bubble] ${input.title}`,
     previewUrl: url,
     react: (
       <NotificationEmail

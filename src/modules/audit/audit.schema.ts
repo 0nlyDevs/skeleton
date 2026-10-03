@@ -58,6 +58,7 @@ export const auditActions = {
   serviceChanged: "service.changed",
   announcementChanged: "announcement.changed",
   cityRequestChanged: "city_request.changed",
+  appointmentChanged: "appointment.changed",
   webcupTriaged: "webcup.triaged",
   transportChanged: "transport.changed",
   pageCreated: "page.created",
@@ -74,6 +75,7 @@ export type AuditAction = (typeof auditActions)[keyof typeof auditActions];
  */
 export const ADMIN_ACTION_CATEGORIES = {
   requests: [auditActions.cityRequestChanged],
+  appointments: [auditActions.appointmentChanged],
   announcements: [auditActions.announcementChanged],
   services: [auditActions.serviceChanged],
   transports: [auditActions.transportChanged],
