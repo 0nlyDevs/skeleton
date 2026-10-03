@@ -593,3 +593,23 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(1.4); opacity: 0; }
 }
+
+/*
+ * F55/F56 — printable documents (request summary, personal data report):
+ * printing such a page prints only the document, not the app around it.
+ */
+@media print {
+  body:has(.print-document) * {
+    visibility: hidden;
+  }
+  body:has(.print-document) .print-document,
+  body:has(.print-document) .print-document * {
+    visibility: visible;
+  }
+  body:has(.print-document) .print-document {
+    position: absolute;
+    inset: 0;
+    color: #000;
+  }
+}
+

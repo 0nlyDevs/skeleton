@@ -47,6 +47,21 @@ export async function exportMyData(actor: AuthUser): Promise<Record<string, unkn
     prisma.notification.findMany({ where: { userId: id }, orderBy: { createdAt: "desc" }, take: 1_000, select: { type: true, title: true, body: true, link: true, read: true, createdAt: true } }),
     prisma.session.findMany({ where: { userId: id }, select: { createdAt: true, expiresAt: true, ipAddress: true, userAgent: true } }),
   ]);
+  // F55 — what the city holds about the resident goes in too: requests and the
+  // public exchanges on them (never agents' internal notes), devices, passkeys.
+  const [cityRequests, devices, passkeys, zone] = await Promise.all([
+    prisma.cityRequest.findMany({
+      where: { citizenId: id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        service: { select: { name: true } },
+        messages: { where: { internal: false }, orderBy: { createdAt: "asc" }, select: { body: true, authorId: true, createdAt: true } },
+      },
+    }),
+    prisma.knownDevice.findMany({ where: { userId: id }, select: { label: true, firstSeenAt: true, lastSeenAt: true } }),
+    prisma.passkey.findMany({ where: { userId: id }, select: { name: true, createdAt: true, backedUp: true } }),
+    prisma.user.findUnique({ where: { id }, select: { cityZone: true } }),
+  ]);
   if (!user) throw new ForbiddenError();
 
   const { birthDateEncrypted, ...profile } = user;
@@ -65,6 +80,24 @@ export async function exportMyData(actor: AuthUser): Promise<Record<string, unkn
     pollVotes: votes,
     notifications: notifications.map((row) => ({ ...row, body: row.body ? decryptField(row.body) : null })),
     sessions,
+    district: zone?.cityZone ?? null,
+    cityRequests: cityRequests.map((row) => ({
+      reference: row.reference,
+      subject: row.subject,
+      service: row.service?.name ?? null,
+      status: row.status,
+      message: decryptField(row.message),
+      location: row.location ? decryptField(row.location) : null,
+      createdAt: row.createdAt,
+      closedAt: row.closedAt,
+      exchanges: row.messages.map((message) => ({
+        from: message.authorId === id ? "you" : "city",
+        body: decryptField(message.body),
+        at: message.createdAt,
+      })),
+    })),
+    devices,
+    passkeys,
   };
 }
 

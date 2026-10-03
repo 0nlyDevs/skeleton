@@ -229,6 +229,7 @@ const FR: Readonly<Record<string, string>> = {
   "You cannot ban your own account.": "Vous ne pouvez pas exclure votre propre compte.",
   "Agents can only manage resident accounts.": "Les agents ne peuvent gérer que les comptes des habitants.",
   "Only city agents can see the history.": "Seuls les agents de la ville peuvent consulter l'historique.",
+  "That device does not exist.": "Cet appareil n'existe pas.",
   "You cannot change your own role.": "Vous ne pouvez pas modifier votre propre rôle.",
   "You cannot follow yourself.": "Vous ne pouvez pas vous suivre vous-même.",
   "You cannot grant a role above your own.": "Vous ne pouvez pas attribuer un rôle supérieur au vôtre.",
