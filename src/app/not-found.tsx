@@ -39,7 +39,7 @@ export default async function NotFound() {
 
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Button asChild>
-              <Link href="/feed">{t["feedback.not_found.cta"]}</Link>
+              <Link href="/">{t["feedback.not_found.cta"]}</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link href="/">{t["common.back"]}</Link>

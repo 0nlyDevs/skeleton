@@ -81,7 +81,7 @@ export function ServerErrorPage({
             {t("feedback.server_error.retry")}
           </Button>
           <Button asChild variant="secondary">
-            <Link href="/feed">
+            <Link href="/">
               <Home />
               {t("feedback.not_found.cta")}
             </Link>

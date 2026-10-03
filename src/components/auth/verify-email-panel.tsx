@@ -63,7 +63,7 @@ export function VerifyEmailPanel({ token }: { readonly token?: string }) {
       try {
         await authClient.sendVerificationEmail({
           email: email.trim(),
-          callbackURL: "/feed",
+          callbackURL: "/espace",
         });
       } catch {
         // Reported as success regardless: the endpoint is deliberately blind to
@@ -96,7 +96,7 @@ export function VerifyEmailPanel({ token }: { readonly token?: string }) {
           {t("auth.verify.success")}
         </p>
         <Button asChild size="lg" className="w-full">
-          <Link href="/feed">{t("nav.feed")}</Link>
+          <Link href="/espace">{t("tn.nav.my_space")}</Link>
         </Button>
       </div>
     );

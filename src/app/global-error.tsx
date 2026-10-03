@@ -22,7 +22,7 @@ export default function GlobalError({ error, reset }: { readonly error: Error & 
                 Réessayer
               </button>
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a full reload is the point: the app shell itself failed */}
-              <a href="/feed" style={{ padding: "10px 16px", borderRadius: 10, background: "#1c2030", color: "#e7e9ee", fontWeight: 600, textDecoration: "none" }}>
+              <a href="/" style={{ padding: "10px 16px", borderRadius: 10, background: "#1c2030", color: "#e7e9ee", fontWeight: 600, textDecoration: "none" }}>
                 Accueil
               </a>
             </div>

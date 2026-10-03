@@ -1,3 +1,5 @@
+import { frTerraNova } from "./terra-nova.fr";
+
 /**
  * French dictionary — the source of truth for message keys.
  *
@@ -9,6 +11,7 @@
  * than four levels of object access, and a typo is caught by TypeScript.
  */
 export const fr = {
+  ...frTerraNova,
   // --- Generic ---
   "app.name": "Webcup Base",
   "app.tagline": "La base de production pour le sprint 24H by Webcup",

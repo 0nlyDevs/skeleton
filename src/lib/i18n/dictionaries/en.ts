@@ -1,4 +1,5 @@
 import type { Dictionary } from "./fr";
+import { enTerraNova } from "./terra-nova.en";
 
 /**
  * English dictionary.
@@ -7,6 +8,7 @@ import type { Dictionary } from "./fr";
  * key or an invented one fails `pnpm typecheck` rather than shipping.
  */
 export const en: Dictionary = {
+  ...enTerraNova,
   // --- Generic ---
   "app.name": "Webcup Base",
   "app.tagline": "The production-grade foundation for the 24H by Webcup sprint",
