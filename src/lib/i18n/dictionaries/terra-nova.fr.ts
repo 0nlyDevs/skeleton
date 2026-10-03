@@ -1155,4 +1155,11 @@ export const frTerraNova = {
   "tn.history.appointment_changed.done": "{actor} a clos le rendez-vous {target} (effectué)",
   "tn.history.appointment_changed.missed": "{actor} a clos le rendez-vous {target} (habitant absent)",
   "tn.history.appointment_changed.update": "{actor} a modifié le rendez-vous {target}",
+  "tn.people.role.label": "Filtrer les personnes par rôle",
+  "tn.people.role.all": "Tout le monde",
+  "tn.people.role.citizens": "Citoyens",
+  "tn.people.role.agents": "Agents municipaux",
+  "tn.people.role.admins": "Administrateurs",
+  "tn.people.role.hint": "Choisissez « Agents municipaux » pour trouver quelqu'un de la mairie, sans connaître son nom.",
+  "tn.people.role.empty": "Personne dans cette catégorie pour l'instant.",
 } as const;

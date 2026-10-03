@@ -2,6 +2,7 @@
 
 import { Lock, Search } from "lucide-react";
 import Link from "@/components/ui/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { GroupAvatar } from "@/components/groups/group-avatar";
@@ -9,22 +10,34 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Card } from "@/components/ui/card";
 import type { SearchResultsDto } from "@/modules/discovery/discovery.service";
+import type { PeopleRole } from "@/modules/follows/follows.schema";
 import type { FeedItemDto } from "@/modules/posts/posts.dto";
 
 import { CommentsDialog } from "./comments-dialog";
+import { RoleBadge, RoleFilterChips } from "./role-filter";
 import { PostCard } from "./post-card";
 
 export function SearchResults({
   q,
+  role,
   results,
   viewer,
 }: {
   readonly q: string;
+  /** Filter on people by platform role. */
+  readonly role: PeopleRole | null;
   readonly results: SearchResultsDto;
   readonly viewer: { id: string; name: string; image: string | null } | null;
 }) {
   const t = useTranslation();
+  const router = useRouter();
   const [posts, setPosts] = useState(results.posts);
+  const setRole = (next: PeopleRole | null) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (next) params.set("role", next);
+    router.push(`/search${params.size ? `?${params.toString()}` : ""}`);
+  };
   const [commentsFor, setCommentsFor] = useState<FeedItemDto | null>(null);
   const empty = results.people.length + results.groups.length + posts.length === 0;
 
@@ -34,8 +47,12 @@ export function SearchResults({
         <Search className="size-5 text-muted-foreground" />
         <h1 className="text-[1.25rem] font-bold tracking-tight">{q ? `${t("search.title")} · « ${q} »` : t("search.title")}</h1>
       </Card>
-      {q.trim().length < 2 ? <p className="text-center text-[0.8438rem] text-muted-foreground">{t("search.hint")}</p> : null}
-      {q.trim().length >= 2 && empty ? <p className="text-center text-[0.8438rem] text-muted-foreground">{t("search.empty", { q })}</p> : null}
+      <div className="flex flex-col gap-1.5 px-1">
+        <RoleFilterChips value={role} onChange={setRole} />
+        <p className="text-[0.75rem] text-muted-foreground">{t("tn.people.role.hint")}</p>
+      </div>
+      {q.trim().length < 2 && !role ? <p className="text-center text-[0.8438rem] text-muted-foreground">{t("search.hint")}</p> : null}
+      {(q.trim().length >= 2 || role) && empty ? <p className="text-center text-[0.8438rem] text-muted-foreground">{q ? t("search.empty", { q }) : t("tn.people.role.empty")}</p> : null}
 
       {results.people.length > 0 ? (
         <Card className="p-4">
@@ -46,7 +63,10 @@ export function SearchResults({
                 <Link href={`/profile/${person.username}`} className="flex items-center gap-3 rounded-xl p-2 hover:bg-surface-muted">
                   <UserAvatar name={person.name} image={person.image} size="md" />
                   <span className="min-w-0">
-                    <span className="block truncate text-[0.875rem] font-semibold">{person.name}</span>
+                    <span className="flex items-center gap-1.5 truncate text-[0.875rem] font-semibold">
+                      {person.name}
+                      <RoleBadge role={person.role} showCitizen={role === "USER"} />
+                    </span>
                     <span className="block truncate text-[0.7812rem] text-muted-foreground">@{person.username}</span>
                   </span>
                 </Link>

@@ -1150,4 +1150,11 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.history.appointment_changed.done": "{actor} closed the appointment {target} (done)",
   "tn.history.appointment_changed.missed": "{actor} closed the appointment {target} (resident missed it)",
   "tn.history.appointment_changed.update": "{actor} updated the appointment {target}",
+  "tn.people.role.label": "Filter people by role",
+  "tn.people.role.all": "Everyone",
+  "tn.people.role.citizens": "Citizens",
+  "tn.people.role.agents": "City agents",
+  "tn.people.role.admins": "Administrators",
+  "tn.people.role.hint": "Choose “City agents” to find someone from the city hall without knowing their name.",
+  "tn.people.role.empty": "Nobody in this category yet.",
 };

@@ -51,7 +51,7 @@ export async function unfollowUser(targetId: string, actor: AuthUser): Promise<v
 }
 
 export async function searchUsers(query: SearchUsersQuery, actor: AuthUser): Promise<SearchUserDto[]> {
-  const rows = await searchActivePublicUsers(query.q, actor.id, query.limit);
+  const rows = await searchActivePublicUsers(query.q, actor.id, query.limit, query.role);
   const followingIds = await findFollowingTargetIds(actor.id, rows.map((row) => row.id));
   const following = new Set(followingIds);
   return rows.map((row) => toSearchUserDto(row, following.has(row.id)));
