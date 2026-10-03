@@ -189,6 +189,19 @@ export async function loadReadablePost(id: string, viewer: AuthUser | null): Pro
  * group, active membership: outsiders may read a public group but not speak
  * in it.
  */
+/** Posts shown to group visitors before they join. */
+const GROUP_PREVIEW_POSTS = 3;
+
+/**
+ * Reacting needs less than commenting: anyone signed in who can read a live
+ * post may react, including posts of public groups they have not joined.
+ */
+export async function loadReactablePost(id: string, viewer: AuthUser): Promise<PostWithAuthor> {
+  const row = await loadReadablePost(id, viewer);
+  if (!row.published || row.deletedAt) throw new BadRequestError("This post is not open for interaction.");
+  return row;
+}
+
 export async function loadInteractivePost(id: string, viewer: AuthUser): Promise<PostWithAuthor> {
   const row = await loadReadablePost(id, viewer);
   if (!row.published || row.deletedAt) {
@@ -271,6 +284,8 @@ export interface FeedPage {
   readonly data: FeedItemDto[];
   /** Pass back as `cursor` for the next page; `null` at the end. */
   readonly nextCursor: string | null;
+  /** A public group seen by a non-member: only a preview, the rest after joining. */
+  readonly preview?: boolean;
 }
 
 /**
@@ -291,11 +306,16 @@ export async function listFeed(
 ): Promise<FeedPage> {
   const conditions: Prisma.PostWhereInput[] = [{ published: true, deletedAt: null }, audienceFilter(viewer), await blockFilter(viewer)];
   const myGroups = viewer ? await findActiveGroupIds(viewer.id) : [];
+  let preview = false;
 
   if (query.groupSlug) {
     const { group, access } = await loadGroup(query.groupSlug, viewer);
     if (!access.canRead) throw new NotFoundError("This group does not exist.");
     conditions.push({ groupId: group.id });
+    // Visitors of a public group see its latest posts, then an invitation to
+    // join; the rest of the history is for members (and platform staff).
+    preview = !access.isMember && !(viewer && isStaff(viewer));
+    if (preview && query.cursor) return { data: [], nextCursor: null, preview: true };
   } else if (query.authorId) {
     conditions.push({ userId: query.authorId });
     conditions.push({
@@ -317,18 +337,20 @@ export async function listFeed(
     conditions.push({ OR: [{ title: { contains: query.q } }, { body: { contains: query.q } }] });
   }
 
+  const limit = preview ? Math.min(query.limit, GROUP_PREVIEW_POSTS) : query.limit;
   const rows = await findFeedPage({
     where: { AND: conditions },
     cursor: decodeCursor(query.cursor),
-    take: query.limit + 1,
+    take: limit + 1,
   });
 
-  const page = rows.slice(0, query.limit);
+  const page = rows.slice(0, limit);
   const last = page[page.length - 1];
 
+  if (preview) return { data: await toFeedItems(page, viewer), nextCursor: null, preview: true };
   return {
     data: await toFeedItems(page, viewer),
-    nextCursor: rows.length > query.limit && last ? encodeCursor(last) : null,
+    nextCursor: rows.length > limit && last ? encodeCursor(last) : null,
   };
 }
 

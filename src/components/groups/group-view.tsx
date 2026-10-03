@@ -203,6 +203,15 @@ export function GroupView({
             composerGroup={{ id: group.id, name: group.name }}
             emptyTitle={t("groups.discussion")}
             emptyBody={t("groups.empty_feed")}
+            previewFooter={
+              <Card className="flex flex-col items-center gap-3 p-6 text-center">
+                <h2 className="text-[16px] font-semibold">{t("groups.preview_title")}</h2>
+                <p className="max-w-sm text-[13.5px] text-muted-foreground">
+                  {t(group.requiresApproval ? "groups.preview_body_request" : "groups.preview_body")}
+                </p>
+                {membershipButton()}
+              </Card>
+            }
           />
         ) : (
           <Card className="flex flex-col items-center gap-2 p-10 text-center">

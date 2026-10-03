@@ -38,6 +38,7 @@ export function FeedView({
   composerGroup = null,
   emptyTitle,
   emptyBody,
+  previewFooter,
 }: {
   readonly initial: FeedPageResponse;
   readonly viewer: FeedViewer | null;
@@ -47,6 +48,8 @@ export function FeedView({
   readonly composerGroup?: { readonly id: string; readonly name: string } | null;
   readonly emptyTitle?: string;
   readonly emptyBody?: string;
+  /** Shown after a group preview (visitor of a public group). */
+  readonly previewFooter?: React.ReactNode;
 }) {
   const t = useTranslation();
   const [scope, setScope] = useState<"all" | "following" | "for_you">(filter.scope ?? (showTabs && viewer ? "for_you" : "all"));
@@ -136,6 +139,8 @@ export function FeedView({
             {t("common.retry")}
           </Button>
         </div>
+      ) : initial.preview ? (
+        previewFooter ?? null
       ) : feed.items.length > 0 && !feed.nextCursor ? (
         <p className="py-4 text-center text-[12.5px] text-muted-foreground">{t("feed.end")}</p>
       ) : null}
