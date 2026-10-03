@@ -1,6 +1,7 @@
 import {
   Bell,
   Bookmark,
+  Briefcase,
   Building2,
   FolderOpen,
   Landmark,
@@ -58,6 +59,7 @@ export const MAIN_NAV: readonly ShellNavItem[] = [
 export const ALL_NAV: readonly ShellNavItem[] = [...CITY_NAV, ...MAIN_NAV];
 
 export const STAFF_NAV: readonly ShellNavItem[] = [
+  { href: "/agent", labelKey: "tn.nav.agent", icon: Briefcase, roles: ["MODERATOR", "ADMIN"] },
   { href: "/admin/moderation", labelKey: "nav.moderation", icon: Gavel, roles: ["MODERATOR", "ADMIN"] },
   { href: "/admin/users", labelKey: "nav.users", icon: Users, roles: ["ADMIN"] },
   { href: "/admin/audit", labelKey: "nav.audit", icon: ScrollText, roles: ["ADMIN"] },
