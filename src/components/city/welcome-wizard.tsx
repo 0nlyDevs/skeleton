@@ -17,6 +17,7 @@ import { patchProfile } from "@/hooks/use-profile-overrides";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { WIZARD_DONE_COOKIE, WELCOME_SERVICE_COOKIE, setWelcomeCookie } from "@/lib/onboarding";
 import { cn, initials } from "@/lib/utils";
+import { CITY_ZONES, cityZoneLabelKey, type CityZoneId } from "@/modules/alerts/city-zones";
 import type { UserProfileDto } from "@/modules/users/users.dto";
 
 const STEPS = ["welcome", "profile", "services", "request"] as const;
@@ -51,6 +52,7 @@ export function WelcomeWizard({
   const [step, setStep] = useState(0);
   const [image, setImage] = useState(initialImage);
   const [bio, setBio] = useState("");
+  const [cityZone, setCityZone] = useState<CityZoneId | "">("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -96,13 +98,14 @@ export function WelcomeWizard({
   };
 
   const saveProfile = async () => {
-    if (!bio.trim()) {
+    const body = { ...(bio.trim() ? { bio: bio.trim() } : {}), ...(cityZone ? { cityZone } : {}) };
+    if (Object.keys(body).length === 0) {
       next();
       return;
     }
     setSaving(true);
     try {
-      await apiFetch("/api/users/me", { method: "PATCH", body: { bio: bio.trim() } });
+      await apiFetch("/api/users/me", { method: "PATCH", body });
       next();
     } catch {
       toast.error(t("feedback.error.body"));
@@ -193,6 +196,29 @@ export function WelcomeWizard({
                 rows={3}
                 maxLength={BIO_MAX}
               />
+            </div>
+            {/* The district decides which local alerts reach this resident. */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="wizard-zone" className="text-sm font-medium">
+                {t("alerts.location.label")}
+              </label>
+              <select
+                id="wizard-zone"
+                value={cityZone}
+                onChange={(event) => setCityZone(event.target.value as CityZoneId | "")}
+                aria-describedby="wizard-zone-hint"
+                className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+              >
+                <option value="">{t("alerts.location.choose")}</option>
+                {CITY_ZONES.map((zone) => (
+                  <option key={zone.id} value={zone.id}>
+                    {t(cityZoneLabelKey(zone.id))}
+                  </option>
+                ))}
+              </select>
+              <p id="wizard-zone-hint" className="text-[0.8125rem] text-muted-foreground">
+                {t("alerts.location.private")}
+              </p>
             </div>
           </div>
         ) : null}

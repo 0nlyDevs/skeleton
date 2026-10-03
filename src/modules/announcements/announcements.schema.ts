@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CITY_ALERT_SCOPES } from "@/modules/alerts/city-zones";
+
 export const ANNOUNCEMENT_CATEGORIES = ["ANNOUNCEMENT", "SERVICE_CHANGE", "PRACTICAL", "EVENT", "ALERT"] as const;
 
 export const announcementInputSchema = z
@@ -8,6 +10,8 @@ export const announcementInputSchema = z
     summary: z.string().trim().min(5, "Write a short summary.").max(300),
     body: z.string().trim().min(10, "Write the announcement.").max(20_000),
     category: z.enum(ANNOUNCEMENT_CATEGORIES).default("ANNOUNCEMENT"),
+    alertScope: z.enum(CITY_ALERT_SCOPES).optional(),
+    alertSeverity: z.enum(["INFORMATION", "WARNING", "CRITICAL"]).optional(),
     pinned: z.boolean().default(false),
     serviceId: z.string().trim().max(40).nullable().optional(),
     coverImage: z.string().trim().max(200).regex(/^\/api\/files\/[A-Za-z0-9_-]+$/, "Upload the image again and retry.").nullable().optional(),

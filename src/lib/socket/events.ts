@@ -82,6 +82,8 @@ export const SOCKET_EVENTS = {
   webcupFeed: "webcup:feed",
   /** Server → citizen and agents: a city request got a message or changed. */
   cityRequestUpdated: "city-request:updated",
+  /** Server -> everyone: public alert data changed; clients refetch their view. */
+  cityAlertUpdated: "city-alert:updated",
 } as const;
 
 export type SocketEventName = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
@@ -98,6 +100,11 @@ export interface FeedPostPayload {
 /** Only the reference: each viewer refetches the request with their own rights. */
 export interface CityRequestUpdatedPayload {
   readonly reference: string;
+}
+
+export interface CityAlertUpdatedPayload {
+  readonly slug: string;
+  readonly action: "published" | "changed" | "resolved" | "removed";
 }
 
 export type PostEngagementPayload = PostEngagementDto;
@@ -267,6 +274,7 @@ export interface ServerToClientEvents {
   [SOCKET_EVENTS.messageAlert]: (payload: MessageAlertPayload) => void;
   [SOCKET_EVENTS.webcupFeed]: (payload: { added: string[] }) => void;
   [SOCKET_EVENTS.cityRequestUpdated]: (payload: CityRequestUpdatedPayload) => void;
+  [SOCKET_EVENTS.cityAlertUpdated]: (payload: CityAlertUpdatedPayload) => void;
   [SOCKET_EVENTS.callIncoming]: (payload: CallIncomingPayload) => void;
   [SOCKET_EVENTS.callAccepted]: (payload: { callId: string }) => void;
   [SOCKET_EVENTS.callEnded]: (payload: CallEndedPayload) => void;

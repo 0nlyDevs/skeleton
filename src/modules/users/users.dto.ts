@@ -20,6 +20,7 @@ function readBirthDate(row: { birthDate: Date | null; birthDateEncrypted: string
   return decryptNullable(row.birthDateEncrypted) || formatBirthDate(row.birthDate);
 }
 import type { Role } from "@/types";
+import type { CityZoneId } from "@/modules/alerts/city-zones";
 
 import type { AdminUserRow, UserProfileRow } from "./users.repository";
 
@@ -34,6 +35,8 @@ export interface UserProfileDto {
   readonly banner: string | null;
   readonly showPresence: boolean;
   readonly autoLocation: boolean;
+  /** Resident-selected broad district; not included in public profile DTOs. */
+  readonly cityZone: CityZoneId | null;
   /** When the handle may change again (`null`: now). */
   readonly usernameChangeAvailableAt: string | null;
   readonly id: string;
@@ -69,6 +72,7 @@ export function toUserProfileDto(row: UserProfileRow): UserProfileDto {
     banner: row.banner,
     showPresence: row.showPresence,
     autoLocation: row.autoLocation,
+    cityZone: row.cityZone,
     usernameChangeAvailableAt:
       row.usernameChangedAt && Date.now() - row.usernameChangedAt.getTime() < 30 * 24 * 60 * 60 * 1000
         ? new Date(row.usernameChangedAt.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -95,6 +99,7 @@ export function toAdminUserDto(row: AdminUserRow): AdminUserDto {
     banner: row.banner,
     showPresence: row.showPresence,
     autoLocation: row.autoLocation,
+    cityZone: row.cityZone,
     usernameChangeAvailableAt: null,
     id: row.id,
     name: row.name,

@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import { EcoToggle } from "./eco-toggle";
+import { ThemeToggle } from "./theme-toggle";
 import { CONTRAST_COOKIE, TEXT_SIZE_COOKIE, TEXT_SIZES, parseTextSize, type TextSize } from "@/lib/display";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +92,16 @@ export function DisplayMenu({ className }: { readonly className?: string }) {
             <span className="text-[0.8125rem] text-muted-foreground">{t("display.contrast_hint")}</span>
           </label>
           <Switch id="display-contrast" checked={contrast} onCheckedChange={toggleContrast} />
+        </div>
+
+        {/* Theme and eco mode live here too, so the top bar keeps one display control. */}
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+          <span className="text-sm font-medium">{t("theme.toggle")}</span>
+          <ThemeToggle />
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm font-medium">{t("eco.label")}</span>
+          <EcoToggle />
         </div>
       </PopoverContent>
     </Popover>

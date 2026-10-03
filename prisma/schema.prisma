@@ -67,6 +67,57 @@ enum NotificationType {
   SECURITY
   CITY_REQUEST
   ANNOUNCEMENT
+  ALERT
+}
+
+/// A resident-selected district. This is intentionally coarser than a street
+/// address or GPS coordinate and is used only for scoped city information.
+enum CityZone {
+  CRYSTAL_REACH
+  VERDANT_BASIN
+  EMBER_WASTES
+  FROSTPEAK
+  SUNKEN_DELTA
+  NOVA_PRIME
+  OBSIDIAN_COAST
+  SKYPORT_ISLES
+}
+
+enum CityRegion {
+  NORTH
+  SOUTH
+  EAST
+  WEST
+  CENTRAL
+}
+
+/// Alert scope can target everyone, a compass region, or one district.
+enum CityAlertScope {
+  ALL
+  NORTH
+  SOUTH
+  EAST
+  WEST
+  CENTRAL
+  CRYSTAL_REACH
+  VERDANT_BASIN
+  EMBER_WASTES
+  FROSTPEAK
+  SUNKEN_DELTA
+  NOVA_PRIME
+  OBSIDIAN_COAST
+  SKYPORT_ISLES
+}
+
+enum CityAlertSeverity {
+  INFORMATION
+  WARNING
+  CRITICAL
+}
+
+enum CityAlertStatus {
+  ACTIVE
+  RESOLVED
 }
 
 /// Who can see a group's posts and member list.
@@ -145,6 +196,8 @@ model User {
   bio                String?   @db.Text
   /// Profile banner: a public upload path (`/api/files/<id>`).
   banner             String?   @db.VarChar(200)
+  /// Chosen district used to target local safety alerts. No precise location is stored.
+  cityZone           CityZone?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -197,6 +250,7 @@ model User {
   @@index([role])
   @@index([banned])
   @@index([createdAt])
+  @@index([cityZone])
   @@map("user")
 }
 
@@ -963,6 +1017,10 @@ model Announcement {
   summary     String               @db.VarChar(300)
   body        String               @db.Text
   category    AnnouncementCategory @default(ANNOUNCEMENT)
+  alertScope    CityAlertScope?
+  alertSeverity CityAlertSeverity?
+  alertStatus   CityAlertStatus?
+  alertResolvedAt DateTime?
   pinned      Boolean              @default(false)
   coverImage  String?              @db.VarChar(200)
   serviceId   String?
@@ -976,6 +1034,8 @@ model Announcement {
 
   @@index([publishedAt, deletedAt])
   @@index([category])
+  @@index([category, alertStatus, publishedAt])
+  @@index([alertScope, alertStatus, publishedAt])
   @@map("announcement")
 }
 
