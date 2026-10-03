@@ -17,6 +17,7 @@ import { encryptField } from "../src/lib/crypto/field-encryption";
 // turn DATABASE_URL into driver pool options.
 import { prisma } from "../src/lib/db/prisma";
 
+import { seedAppointments } from "./seed-appointments";
 import { seedCityAlerts } from "./seed-city-alerts";
 import { seedServiceAvailability } from "./seed-service-availability";
 import { seedServiceLocations } from "./seed-service-locations";
@@ -317,6 +318,7 @@ async function main() {
   await seedCityAlerts(prisma, users);
   await seedServiceLocations(prisma);
   await seedServiceAvailability(prisma);
+  await seedAppointments(prisma);
 
   console.log("\nTest accounts (password: SEED_PASSWORD):");
   for (const account of ACCOUNTS) {

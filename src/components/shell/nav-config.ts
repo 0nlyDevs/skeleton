@@ -3,6 +3,7 @@ import {
   BookOpen,
   Bookmark,
   BusFront,
+  CalendarClock,
   Briefcase,
   Building2,
   FileText,
@@ -52,6 +53,7 @@ export const NAV_GROUPS: readonly ShellNavGroup[] = [
     items: [
       { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
       { href: "/contact", labelKey: "tn.nav.request", icon: Send },
+      { href: "/appointments", labelKey: "tn.appointments.nav", icon: CalendarClock },
     ],
   },
   {

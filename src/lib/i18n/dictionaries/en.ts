@@ -964,6 +964,7 @@ export const en: Dictionary = {
   "notifications.type.SYSTEM": "System",
   "notifications.type.ROLE_CHANGED": "Role changed",
   "notifications.type.ALERT": "City safety alert",
+  "notifications.type.APPOINTMENT": "Appointment with an agent",
   "notifications.alert_view": "View alert",
 
   // --- Assistant ---
