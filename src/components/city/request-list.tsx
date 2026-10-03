@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { CityRequestSummaryDto } from "@/modules/city-requests/city-requests.dto";
 
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
+import { RequestProgress } from "./request-progress";
 
 /**
  * A list of request summaries. `hrefBase` decides which space opens the
@@ -49,6 +50,7 @@ export function RequestList({
                   {agentView && request.needsAction ? <NeedsActionBadge /> : null}
                 </span>
                 <span className="truncate font-medium">{request.subject}</span>
+                {agentView ? null : <RequestProgress status={request.status} assigned={request.assignee !== null} compact />}
                 <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-[0.7812rem] text-muted-foreground">
                   <span>{request.service?.name ?? t("tn.no_service")}</span>
                   {agentView && request.citizen ? <span>{t("tn.agent.inbox.citizen")} : {request.citizen.name}</span> : null}

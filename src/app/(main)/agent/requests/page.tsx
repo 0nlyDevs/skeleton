@@ -5,7 +5,7 @@ import { AgentInbox } from "@/components/agent/agent-inbox";
 
 export const metadata: Metadata = { title: "Demandes des habitants" };
 
-export default async function AgentRequestsPage({ searchParams }: { readonly searchParams: Promise<{ status?: string }> }) {
-  const { status } = await searchParams;
-  return withAgentAccess("/agent/requests", () => <AgentInbox initialStatus={status ?? "OPEN"} />);
+export default async function AgentRequestsPage({ searchParams }: { readonly searchParams: Promise<{ status?: string; scope?: string }> }) {
+  const { status, scope } = await searchParams;
+  return withAgentAccess("/agent/requests", () => <AgentInbox initialStatus={status ?? "OPEN"} initialScope={scope === "unassigned" || scope === "assigned" ? scope : "all"} />);
 }

@@ -1,9 +1,11 @@
-import { ArrowLeft, Clock, Mail, MapPin, Phone, Send } from "lucide-react";
+import { Clock, Mail, MapPin, Phone, Send } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AnnouncementCard } from "@/components/city/announcement-card";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
 import { ServiceIcon } from "@/components/city/service-icon";
+import { MarkServiceSeen } from "@/components/city/welcome-guide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
@@ -41,10 +43,11 @@ export default async function ServicePage({ params }: { readonly params: Promise
 
   return (
     <div className="mx-auto flex w-full max-w-[920px] flex-col gap-5">
-      <Link href="/services" className="inline-flex items-center gap-1.5 px-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" aria-hidden />
-        {t("tn.services.back")}
-      </Link>
+      {viewer ? <MarkServiceSeen /> : null}
+      <Breadcrumbs
+        label={t("tn.breadcrumb.label")}
+        items={[{ label: t("tn.nav.home"), href: "/" }, { label: t("tn.nav.services"), href: "/services" }, { label: service.name }]}
+      />
 
       <header className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-panel sm:flex-row sm:items-start">
         <ServiceIcon name={service.icon} className="size-14 rounded-2xl" />

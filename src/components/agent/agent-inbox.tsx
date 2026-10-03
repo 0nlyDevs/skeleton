@@ -28,14 +28,14 @@ interface Page {
 }
 
 /** F22 — every resident request, its status, and which ones still need action. */
-export function AgentInbox({ initialStatus }: { readonly initialStatus: string }) {
+export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly initialStatus: string; readonly initialScope?: "all" | "assigned" | "unassigned" }) {
   const t = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const [status, setStatus] = useState<StatusTab>(
     (STATUS_TABS as readonly string[]).includes(initialStatus) ? (initialStatus as StatusTab) : "OPEN",
   );
-  const [scope, setScope] = useState<"all" | "assigned">("all");
+  const [scope, setScope] = useState<"all" | "assigned" | "unassigned">(initialScope);
   const [q, setQ] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -99,7 +99,7 @@ export function AgentInbox({ initialStatus }: { readonly initialStatus: string }
           />
         </div>
         <div className="flex gap-1 rounded-full border border-border bg-card p-1" role="group">
-          {(["all", "assigned"] as const).map((value) => (
+          {(["all", "unassigned", "assigned"] as const).map((value) => (
             <button
               key={value}
               type="button"
@@ -113,7 +113,7 @@ export function AgentInbox({ initialStatus }: { readonly initialStatus: string }
                 scope === value ? "bg-primary text-primary-foreground" : "hover:bg-surface-muted",
               )}
             >
-              {value === "all" ? t("tn.agent.inbox.scope_all") : t("tn.agent.inbox.scope_assigned")}
+              {value === "all" ? t("tn.agent.inbox.scope_all") : value === "unassigned" ? t("tn.agent.inbox.scope_unassigned") : t("tn.agent.inbox.scope_assigned")}
             </button>
           ))}
         </div>

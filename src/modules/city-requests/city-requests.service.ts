@@ -119,12 +119,20 @@ export async function listCityRequests(query: ListCityRequestsQuery, actor: Auth
   const agent = isStaff(actor);
   if (query.scope !== "mine" && !agent) throw new ForbiddenError("Only city agents can see every request.");
   const scope =
-    query.scope === "mine" ? { citizenId: actor.id } : query.scope === "assigned" ? { assigneeId: actor.id } : {};
+    query.scope === "mine"
+      ? { citizenId: actor.id }
+      : query.scope === "assigned"
+        ? { assigneeId: actor.id }
+        : query.scope === "unassigned"
+          ? { assigneeId: null }
+          : {};
   const status =
     query.status === "OPEN"
       ? { status: { in: ["NEW", "IN_PROGRESS", "WAITING_CITIZEN"] as ("NEW" | "IN_PROGRESS" | "WAITING_CITIZEN")[] } }
-      : query.status
-        ? { status: query.status }
+      : query.status === "DONE"
+        ? { status: { in: ["RESOLVED", "CLOSED"] as ("RESOLVED" | "CLOSED")[] } }
+        : query.status
+          ? { status: query.status }
         : {};
   const where = {
     ...scope,
@@ -286,6 +294,20 @@ export async function updateCityRequest(reference: string, input: UpdateCityRequ
     }
   }
   return getCityRequest(reference, actor);
+}
+
+/**
+ * D17 — the agents' backlog at a glance: open requests nobody has taken on
+ * yet, and since when the oldest one has been waiting.
+ */
+export async function awaitingPickup(actor: AuthUser): Promise<{ count: number; oldestAt: string | null }> {
+  if (!isStaff(actor)) throw new ForbiddenError("Only city agents can see every request.");
+  const where = { assigneeId: null, status: { in: ["NEW", "IN_PROGRESS", "WAITING_CITIZEN"] as ("NEW" | "IN_PROGRESS" | "WAITING_CITIZEN")[] } };
+  const [count, oldest] = await Promise.all([
+    prisma.cityRequest.count({ where }),
+    prisma.cityRequest.findFirst({ where, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+  ]);
+  return { count, oldestAt: oldest?.createdAt.toISOString() ?? null };
 }
 
 /** Small counters for the citizen space and the agent dashboard. */
