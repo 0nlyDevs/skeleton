@@ -32,7 +32,7 @@ function NavLink({ item, badge }: { readonly item: ShellNavItem; readonly badge:
       <Icon className={cn("size-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")} aria-hidden />
       <span className="flex-1">{t(item.labelKey)}</span>
       {badge > 0 ? (
-        <span className="grid min-w-5 place-items-center rounded-full bg-error px-1.5 text-[0.6875rem] font-bold leading-5 text-white">
+        <span className="grid min-w-5 place-items-center rounded-full bg-error px-1.5 text-[0.6875rem] font-bold leading-5 text-error-foreground">
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}

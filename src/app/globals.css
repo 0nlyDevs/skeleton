@@ -141,6 +141,8 @@
   --success-foreground: var(--neutral-950);
   --warning: var(--amber-500);
   --error: oklch(0.68 0.19 27);
+  /* The lighter dark-theme red needs dark text to stay readable (WCAG AA). */
+  --error-foreground: var(--neutral-950);
 
   --destructive: oklch(0.68 0.19 27);
   --destructive-foreground: var(--neutral-950);

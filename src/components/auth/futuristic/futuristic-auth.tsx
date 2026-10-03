@@ -716,7 +716,7 @@ export function FuturisticAuth({
       </aside>
 
       {/* Main Glass Panel */}
-      <main className="fa-panel" id="panel" ref={panelRef}>
+      <main className="fa-panel" id="content" tabIndex={-1} ref={panelRef}>
         <header className="fa-bar">
           <Link href="/" className="fa-brand" aria-label="Terra Nova">
             <svg viewBox="0 0 32 32" aria-hidden="true">

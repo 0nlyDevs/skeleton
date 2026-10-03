@@ -82,7 +82,7 @@ export function GlobalSearch({ className }: { readonly className?: string }) {
           }}
           placeholder={t("nav.search_placeholder")}
           aria-label={t("nav.search_placeholder")}
-          aria-controls={listId}
+          aria-controls={open && term.length >= 2 && results ? listId : undefined}
           data-global-search
           aria-keyshortcuts="/"
           className="h-10 w-full rounded-full border border-transparent bg-surface-muted pl-10 pr-10 text-[0.875rem] outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:bg-surface"

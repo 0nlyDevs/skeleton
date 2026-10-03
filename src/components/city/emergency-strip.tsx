@@ -50,7 +50,7 @@ export function EmergencyStrip({
             {entry.phone ? (
               <a
                 href={`tel:${entry.phone.replace(/\s+/g, "")}`}
-                className="flex shrink-0 items-center gap-1 rounded-full bg-error px-3 py-1.5 text-[0.75rem] font-semibold text-white"
+                className="flex shrink-0 items-center gap-1 rounded-full bg-error px-3 py-1.5 text-[0.75rem] font-semibold text-error-foreground"
                 aria-label={`${labels.call} ${entry.name}`}
               >
                 <Phone className="size-3.5" aria-hidden />
