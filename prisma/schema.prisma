@@ -65,6 +65,8 @@ enum NotificationType {
   GROUP_ACTIVITY
   POST_SHARE
   SECURITY
+  CITY_REQUEST
+  ANNOUNCEMENT
 }
 
 /// Who can see a group's posts and member list.
@@ -147,29 +149,34 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions         Session[]
-  accounts         Account[]
-  twoFactors       TwoFactor[]
-  posts            Post[]
-  comments         Comment[]
-  reactions        PostReaction[]
-  bookmarks        PostBookmark[]
-  messages         Message[]
-  notifications    Notification[]
-  preferences      NotificationPreference?
-  auditLogs        AuditLog[]
-  uploads          Upload[]
-  reportsMade      Report[]                @relation("ReportReporter")
-  reportsHandled   Report[]                @relation("ReportResolver")
-  roomMembers      RoomMember[]
-  followers        Follow[]                @relation("UserFollowers")
-  following        Follow[]                @relation("UserFollowing")
-  groupsOwned      Group[]                 @relation("GroupOwner")
-  groupMemberships GroupMember[]
-  mentionsReceived Mention[]               @relation("MentionTarget")
-  mentionsMade     Mention[]               @relation("MentionAuthor")
-  hiddenMessages   MessageHide[]
-  knownDevices     KnownDevice[]
+  sessions            Session[]
+  accounts            Account[]
+  twoFactors          TwoFactor[]
+  posts               Post[]
+  cityRequests        CityRequest[]           @relation("CityRequestCitizen")
+  assignedRequests    CityRequest[]           @relation("CityRequestAssignee")
+  cityRequestMessages CityRequestMessage[]
+  cityRequestEvents   CityRequestEvent[]
+  announcements       Announcement[]
+  comments            Comment[]
+  reactions           PostReaction[]
+  bookmarks           PostBookmark[]
+  messages            Message[]
+  notifications       Notification[]
+  preferences         NotificationPreference?
+  auditLogs           AuditLog[]
+  uploads             Upload[]
+  reportsMade         Report[]                @relation("ReportReporter")
+  reportsHandled      Report[]                @relation("ReportResolver")
+  roomMembers         RoomMember[]
+  followers           Follow[]                @relation("UserFollowers")
+  following           Follow[]                @relation("UserFollowing")
+  groupsOwned         Group[]                 @relation("GroupOwner")
+  groupMemberships    GroupMember[]
+  mentionsReceived    Mention[]               @relation("MentionTarget")
+  mentionsMade        Mention[]               @relation("MentionAuthor")
+  hiddenMessages      MessageHide[]
+  knownDevices        KnownDevice[]
 
   /// Presence: written when the last socket of the user disconnects.
   lastSeenAt        DateTime?
@@ -879,4 +886,200 @@ model FeatureFlag {
   updatedAt   DateTime @updatedAt
 
   @@map("featureFlag")
+}
+
+// --- Terra Nova -------------------------------------------------------------
+
+/// A municipal service of Terra Nova (énergie, transports, état civil…).
+model MunicipalService {
+  id          String   @id @default(cuid())
+  slug        String   @unique @db.VarChar(80)
+  name        String   @db.VarChar(120)
+  category    String   @db.VarChar(60)
+  /// One-line summary for cards.
+  summary     String   @db.VarChar(240)
+  description String   @db.Text
+  /// Steps or practical information, one per line.
+  howTo       String?  @db.Text
+  email       String?  @db.VarChar(160)
+  phone       String?  @db.VarChar(40)
+  hours       String?  @db.VarChar(160)
+  address     String?  @db.VarChar(200)
+  latitude    Float?
+  longitude   Float?
+  /// lucide icon name, from an allow-list.
+  icon        String   @default("building") @db.VarChar(40)
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requests      CityRequest[]
+  announcements Announcement[]
+
+  @@index([active, sortOrder])
+  @@map("municipalService")
+}
+
+enum AnnouncementCategory {
+  ANNOUNCEMENT
+  SERVICE_CHANGE
+  PRACTICAL
+  EVENT
+  ALERT
+}
+
+/// A publication of the city, written by agents or administrators.
+model Announcement {
+  id          String               @id @default(cuid())
+  slug        String               @unique @db.VarChar(100)
+  title       String               @db.VarChar(160)
+  summary     String               @db.VarChar(300)
+  body        String               @db.Text
+  category    AnnouncementCategory @default(ANNOUNCEMENT)
+  pinned      Boolean              @default(false)
+  coverImage  String?              @db.VarChar(200)
+  serviceId   String?
+  service     MunicipalService?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  authorId    String
+  author      User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  deletedAt   DateTime?
+
+  @@index([publishedAt, deletedAt])
+  @@index([category])
+  @@map("announcement")
+}
+
+enum CityRequestStatus {
+  NEW
+  IN_PROGRESS
+  WAITING_CITIZEN
+  RESOLVED
+  CLOSED
+}
+
+enum CityRequestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+/// A citizen's request to the city ("démarche"), followed by agents.
+model CityRequest {
+  id         String              @id @default(cuid())
+  /// Human reference shown to the citizen, e.g. TN-000123.
+  reference  String              @unique @db.VarChar(20)
+  citizenId  String
+  citizen    User                @relation("CityRequestCitizen", fields: [citizenId], references: [id], onDelete: Cascade)
+  serviceId  String?
+  service    MunicipalService?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  subject    String              @db.VarChar(160)
+  /// Encrypted at rest (may hold personal details).
+  message    String              @db.Text
+  status     CityRequestStatus   @default(NEW)
+  priority   CityRequestPriority @default(NORMAL)
+  assigneeId String?
+  assignee   User?               @relation("CityRequestAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  closedAt   DateTime?
+
+  messages CityRequestMessage[]
+  events   CityRequestEvent[]
+
+  @@index([citizenId, createdAt])
+  @@index([status, createdAt])
+  @@index([assigneeId, status])
+  @@map("cityRequest")
+}
+
+/// Thread between the citizen and the agents. Internal notes stay agent-only.
+model CityRequestMessage {
+  id        String      @id @default(cuid())
+  requestId String
+  request   CityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  /// Encrypted at rest.
+  body      String      @db.Text
+  internal  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  @@index([requestId, createdAt])
+  @@map("cityRequestMessage")
+}
+
+/// Status, priority and assignment history of a request.
+model CityRequestEvent {
+  id        String      @id @default(cuid())
+  requestId String
+  request   CityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  kind      String      @db.VarChar(30)
+  fromValue String?     @db.VarChar(60)
+  toValue   String?     @db.VarChar(60)
+  createdAt DateTime    @default(now())
+
+  @@index([requestId, createdAt])
+  @@map("cityRequestEvent")
+}
+
+enum WebcupTriage {
+  TODO
+  IN_PROGRESS
+  DONE
+  SKIPPED
+}
+
+/// A request of the official Terra Nova API (Haut Conseil feed), mirrored by
+/// `request_code` so refreshes never duplicate it.
+model WebcupRequest {
+  id              String       @id @default(cuid())
+  code            String       @unique @db.VarChar(40)
+  externalId      Int?
+  requesterName   String?      @db.VarChar(160)
+  requesterType   String?      @db.VarChar(80)
+  message         String       @db.Text
+  difficulty      String?      @db.VarChar(40)
+  difficultyLevel Int?
+  xpBase          Int          @default(0)
+  xpTimeBonus     Int          @default(0)
+  xpTotal         Int          @default(0)
+  xpAvailable     Int          @default(0)
+  isInitial       Boolean      @default(false)
+  wave            Int?
+  arrivalType     String?      @db.VarChar(40)
+  arrivalTime     String?      @db.VarChar(20)
+  groupName       String?      @db.VarChar(120)
+  isAiRelated     Boolean      @default(false)
+  sortOrder       Int?
+  /// Full payload as received, so new API fields are never lost.
+  raw             Json
+  firstSeenAt     DateTime     @default(now())
+  lastSeenAt      DateTime     @default(now())
+  /// Present in the latest successful fetch.
+  visible         Boolean      @default(true)
+  triage          WebcupTriage @default(TODO)
+  note            String?      @db.Text
+  updatedAt       DateTime     @updatedAt
+
+  @@index([visible, wave])
+  @@map("webcupRequest")
+}
+
+/// Latest state of the API feed (single row, key "current").
+model WebcupFeedState {
+  key           String    @id @db.VarChar(20)
+  session       Json?
+  lastFetchAt   DateTime?
+  lastSuccessAt DateTime?
+  lastError     String?   @db.VarChar(300)
+  updatedAt     DateTime  @updatedAt
+
+  @@map("webcupFeedState")
 }
