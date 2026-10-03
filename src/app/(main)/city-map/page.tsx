@@ -32,6 +32,7 @@ export default async function CityMapPage({ searchParams }: { readonly searchPar
           x: service.location.x,
           y: service.location.y,
           zone: service.location.zone,
+          availability: service.availability,
         }]
       : [],
   );

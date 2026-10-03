@@ -26,8 +26,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
+import { ServiceAvailabilityBadge } from "@/components/city/service-availability-notice";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
+import type { ServiceAvailabilityDto } from "@/modules/city-services/service-availability";
 import Link from "@/components/ui/link";
 import { useSocket } from "@/hooks/use-socket";
 import { apiFetch } from "@/lib/api/client";
@@ -65,6 +67,8 @@ export interface MapService {
   readonly x: number;
   readonly y: number;
   readonly zone: CityZoneId;
+  /** F38 — stopped or about to be; said on the card before "Faire une demande". */
+  readonly availability: ServiceAvailabilityDto;
 }
 
 const STATUS_COLORS = { SAFE: "#2fae7a", WATCH: "#3f8fd9", WARNING: "#f29d2a", DANGER: "#e5484d" } as const;
@@ -683,6 +687,12 @@ function InfoCard({
 
       {service ? (
         <div className="flex flex-col gap-1.5 text-[0.8125rem]">
+          {service.availability.state !== "AVAILABLE" ? (
+            <div className="flex flex-col gap-1">
+              <ServiceAvailabilityBadge availability={service.availability} />
+              {service.availability.note ? <p className="text-[#3c4043]">{service.availability.note}</p> : null}
+            </div>
+          ) : null}
           {service.hours ? <p><span className="text-[#5f6368]">{t("tn.services.hours")} · </span>{service.hours}</p> : null}
           {service.address ? <p><span className="text-[#5f6368]">{t("tn.services.address")} · </span>{service.address}</p> : null}
           <div className="mt-1 flex flex-wrap gap-2">

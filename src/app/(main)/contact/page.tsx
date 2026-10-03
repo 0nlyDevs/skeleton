@@ -29,7 +29,7 @@ export default async function ContactPage({ searchParams }: { readonly searchPar
       </header>
       <ContextTip id="contact">{t("tn.tip.contact")}</ContextTip>
       <ContactForm
-        services={services.filter((item) => item.active).map(({ id, name }) => ({ id, name }))}
+        services={services.filter((item) => item.active).map(({ id, name, availability }) => ({ id, name, availability }))}
         initialServiceId={initial}
         initialKind={type === "issue" ? "issue" : "question"}
         initialSubject={topic === "accessibility" ? t("tn.a11y.report.subject") : ""}
