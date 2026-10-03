@@ -8,6 +8,7 @@ import { randomInt } from "node:crypto";
 import { isAdmin, isStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { Prisma } from "@/generated/prisma/client";
 import type { Locale } from "@/lib/i18n/config";
 import { matchesSearch } from "@/lib/search";
 import { slugify } from "@/lib/utils";
@@ -18,6 +19,7 @@ import { changedFields } from "../audit/audit.diff";
 import { recordAudit } from "../audit/audit.service";
 import { zoneAt, type CityZoneId } from "../alerts/city-zones";
 import { TRANSLATABLE_SERVICE_FIELDS, type ServiceInput, type ServiceTranslations } from "./city-services.schema";
+import { openStateAt, parseOpeningHours, type OpenStateDto, type OpeningHours } from "./opening-hours";
 import { availabilityOf, type ServiceAvailabilityDto } from "./service-availability";
 
 export interface ServiceDto {
@@ -47,6 +49,11 @@ export interface ServiceDto {
   readonly contentLocale: Locale;
   /** F38 — usable now, announced interruption, or stopped (and until when). */
   readonly availability: ServiceAvailabilityDto;
+  /** F74 — run by a partner association rather than by the city. */
+  readonly partner: boolean;
+  /** F74 — weekly hours, and whether the place is open at the time of the request. */
+  readonly openingHours: OpeningHours | null;
+  readonly openState: OpenStateDto | null;
 }
 
 /** Every read brings the alternative service along, for "go there instead". */
@@ -77,6 +84,7 @@ export function toDto(row: ServiceRow, locale: Locale = "fr"): ServiceDto {
   const translations = parseTranslations(row.translations);
   const copy = locale === "fr" ? undefined : translations[locale];
   const pick = (field: (typeof TRANSLATABLE_SERVICE_FIELDS)[number], base: string | null) => copy?.[field] ?? base;
+  const openingHours = parseOpeningHours(row.openingHours);
   return {
     id: row.id,
     slug: row.slug,
@@ -100,6 +108,9 @@ export function toDto(row: ServiceRow, locale: Locale = "fr"): ServiceDto {
     translations,
     contentLocale: copy ? locale : "fr",
     availability: availabilityOf(row, alternativeOf(row, locale)),
+    partner: row.partner,
+    openingHours,
+    openState: openingHours ? openStateAt(openingHours, new Date()) : null,
   };
 }
 
@@ -166,7 +177,9 @@ async function uniqueSlug(name: string, ignoreId?: string): Promise<string> {
 
 /** Writable columns; the district always comes from the map position, never from the client. */
 function fieldsOf(input: ServiceInput) {
-  const { translations: _translations, ...fields } = input;
+  const { translations: _translations, openingHours, ...rest } = input;
+  // `undefined` leaves the stored hours alone; `null` clears them.
+  const fields = { ...rest, ...(openingHours === undefined ? {} : { openingHours: openingHours ?? Prisma.DbNull }) };
   if (input.mapX == null || input.mapY == null) return { ...fields, mapX: null, mapY: null, zone: null };
   const zone = zoneAt(input.mapX, input.mapY);
   if (!zone) throw new BadRequestError("Place the service inside the city, on land.");
@@ -198,7 +211,7 @@ export async function updateService(slug: string, input: ServiceInput, actor: Au
     include: serviceInclude,
   });
   const changed = changedFields(existing as Record<string, unknown>, row as Record<string, unknown>, [
-    "name", "category", "summary", "description", "howTo", "email", "phone", "hours", "address", "latitude", "longitude", "icon", "sortOrder", "active", "featured", "translations",
+    "name", "category", "summary", "description", "howTo", "email", "phone", "hours", "address", "latitude", "longitude", "icon", "sortOrder", "active", "featured", "partner", "openingHours", "translations",
   ]);
   // Opening, closing or highlighting a service reads as its own action in the history.
   const op = changed.includes("active") ? (row.active ? "reopen" : "close") : "update";

@@ -43,6 +43,8 @@ export interface CityRequestDto extends CityRequestSummaryDto {
   readonly messages: CityRequestMessageDto[];
   readonly events: CityRequestEventDto[];
   readonly closedAt: string | null;
+  /** F76 — the resident's comment on how this request went, once left. */
+  readonly feedback: { readonly reference: string } | null;
 }
 
 interface SummaryRow {
