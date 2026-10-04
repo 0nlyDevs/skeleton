@@ -1,6 +1,6 @@
 "use client";
 
-import { Type } from "lucide-react";
+import { Accessibility } from "lucide-react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,7 +21,7 @@ export function DisplayMenu({ className }: { readonly className?: string }) {
         title={t("display.label")}
         className={cn("grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground", className)}
       >
-        <Type className="size-[1.125rem]" aria-hidden />
+        <Accessibility className="size-[1.25rem]" aria-hidden />
       </PopoverTrigger>
       <PopoverContent align="end" className="flex w-72 flex-col gap-3">
         <p className="font-semibold">{t("display.label")}</p>
