@@ -147,6 +147,9 @@ export function LandingSections({ data, onRegister }: { readonly data: LandingDa
             <span className="flex items-center gap-2"><BubbleMark className="h-7" /><BubbleWordmark className="h-4" /></span>
             <span>{t("tn.landing.footer")}</span>
             <span className="flex gap-5">
+              <Link href="/essentials" className="tn-link font-normal">
+                {t("tn.essentials.title")}
+              </Link>
               <Link href="/privacy" className="tn-link font-normal">
                 {t("footer.privacy")}
               </Link>

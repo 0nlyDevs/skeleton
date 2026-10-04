@@ -11,6 +11,7 @@ import {
   Globe2,
   Home,
   Leaf,
+  LifeBuoy,
   Megaphone,
   MessageCircle,
   MessageSquareHeart,
@@ -103,6 +104,7 @@ export const PLACES: readonly Place[] = [
 /** Help pages, listed in the account menu. */
 export const HELP_NAV: readonly ShellNavItem[] = [
   { href: "/assistant", labelKey: "nav.assistant", icon: Sparkles, member: true },
+  { href: "/essentials", labelKey: "tn.essentials.title", icon: LifeBuoy },
   { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
   { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
   { href: "/eco", labelKey: "tn.eco.nav", icon: Leaf },

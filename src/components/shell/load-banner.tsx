@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
+import Link from "@/components/ui/link";
 import { apiFetch } from "@/lib/api/client";
 
 /**
@@ -22,7 +23,7 @@ export function LoadBanner() {
         .catch(() => undefined);
     };
     check();
-    const timer = window.setInterval(check, 30_000);
+    const timer = window.setInterval(check, document.documentElement.hasAttribute("data-eco") ? 120_000 : 60_000);
     return () => {
       stopped = true;
       window.clearInterval(timer);
@@ -32,7 +33,8 @@ export function LoadBanner() {
   if (!essential) return null;
   return (
     <p role="status" className="mb-5 rounded-full border border-warning/50 bg-warning/10 px-4 py-2 text-[0.875rem]">
-      <span className="font-semibold">{t("tn.load.title")}</span> {t("tn.load.body")}
+      <span className="font-semibold">{t("tn.load.title")}</span> {t("tn.load.body")}{" "}
+      <Link href="/essentials" className="font-medium text-primary">{t("tn.essentials.open")}</Link>
     </p>
   );
 }
