@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useSocket } from "@/hooks/use-socket";
-import { apiFetch, toQueryString } from "@/lib/api/client";
+import { ApiRequestError, apiFetch, toQueryString } from "@/lib/api/client";
 import {
   SOCKET_EVENTS,
   type MessageHiddenPayload,
@@ -242,7 +242,7 @@ export function useThread(roomId: string | null, viewer: { id: string; name: str
         const response = await apiFetch<MessagePayload | { data: MessagePayload }>("/api/messages", { method: "POST", body: payload });
         settle("data" in response ? response.data : response);
       } catch (caught) {
-        settle(null, caught instanceof Error ? caught.message : "error");
+        settle(null, caught instanceof ApiRequestError ? `api:${caught.status}:${caught.code}:${caught.message}` : "error");
       }
     },
     [roomId, socket, viewer.id, viewer.name, viewer.image],

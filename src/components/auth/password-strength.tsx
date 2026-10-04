@@ -118,7 +118,7 @@ export function PasswordRequirements({
           >
             {rule.ok ? <Check className="size-3.5 shrink-0" aria-hidden /> : <X className="size-3.5 shrink-0 opacity-60" aria-hidden />}
             <span>{t(RULE_KEYS[rule.id], { min: PASSWORD_MIN_LENGTH })}</span>
-            <span className="sr-only">{rule.ok ? "✓" : "✗"}</span>
+            <span className="sr-only">{rule.ok ? "ok" : "non"}</span>
           </li>
         ))}
       </ul>

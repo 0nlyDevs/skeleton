@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import type { PostEngagementDto } from "@/modules/posts/posts.dto";
 import { REACTION_TYPES, type ReactionCounts, type ReactionType } from "@/types";
 
-import { REACTION_EMOJI, REACTION_LABEL, applyReactionChange, topReactions } from "./reactions";
+import { ReactionIcon, REACTION_LABEL, applyReactionChange, topReactions } from "./reactions";
 import { ReactorsDialog, type Reactor } from "./reactors-dialog";
 
 export interface ReactionState {
@@ -22,14 +22,13 @@ export interface ReactionState {
   readonly viewerReaction: ReactionType | null;
 }
 
-/** "👍❤️ 12" — the compact summary shown above a post's action bar. */
 /** Compact summary; a click lists who reacted with what. */
 export function ReactionSummary({ state, postId }: { readonly state: ReactionState; readonly postId: string }) {
   const t = useTranslation();
   const [open, setOpen] = useState(false);
   const load = useCallback(async () => {
     const response = await apiFetch<{ data: { type: ReactionType; user: Reactor["user"] }[] }>(`/api/posts/${encodeURIComponent(postId)}/reactions`);
-    return response.data.map((row) => ({ emoji: REACTION_EMOJI[row.type], user: row.user }));
+    return response.data.map((row) => ({ type: row.type, user: row.user }));
   }, [postId]);
   if (state.reactionCount === 0) return <span />;
   return (
@@ -46,7 +45,7 @@ export function ReactionSummary({ state, postId }: { readonly state: ReactionSta
       <span aria-hidden className="flex -space-x-1 text-[0.9375rem]">
         {topReactions(state.reactions).map((type) => (
           <span key={type} className="grid size-5 place-items-center rounded-full bg-surface ring-2 ring-card">
-            {REACTION_EMOJI[type]}
+            <ReactionIcon type={type} className="size-3" />
           </span>
         ))}
       </span>
@@ -147,7 +146,7 @@ export function ReactionButton({
             }
           }}
         >
-          {mine ? <span aria-hidden className="text-[1.125rem] leading-none">{REACTION_EMOJI[mine]}</span> : <ThumbsUp className="size-[18px]" aria-hidden />}
+          {mine ? <ReactionIcon type={mine} className="size-[18px]" /> : <ThumbsUp className="size-[18px]" aria-hidden />}
           {label}
         </button>
       </PopoverTrigger>
@@ -166,7 +165,7 @@ export function ReactionButton({
                 type === mine && "bg-primary/15",
               )}
             >
-              {REACTION_EMOJI[type]}
+              <ReactionIcon type={type} className="size-5" />
             </button>
           ))}
         </div>

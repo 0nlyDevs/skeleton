@@ -16,10 +16,12 @@ export default async function SearchPage({
   const q = typeof params.q === "string" ? params.q.slice(0, 80) : "";
   const viewer = context?.user ?? null;
   const role = viewer ? PEOPLE_ROLES.find((value) => value === params.role) : undefined;
-  const results = await searchEverything(q, viewer, role);
+  const everyone = viewer !== null && params.all === "1" && !role;
+  const page = Math.max(1, Number.parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1);
+  const results = await searchEverything(q, viewer, { role, everyone, page });
   return (
     <div className="mx-auto w-full max-w-[720px]">
-      <SearchResults q={q} role={role ?? null} results={results} viewer={viewer ? { id: viewer.id, name: viewer.name, image: viewer.image } : null} />
+      <SearchResults q={q} role={role ?? null} everyone={everyone} results={results} viewer={viewer ? { id: viewer.id, name: viewer.name, image: viewer.image } : null} />
     </div>
   );
 }

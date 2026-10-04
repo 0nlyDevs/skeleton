@@ -11,8 +11,8 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
-import { IMAGE_INPUT_ACCEPT, uploadImage } from "@/components/social/use-image-uploads";
-import { imagesFromClipboard, UnsupportedImageError } from "@/lib/images/prepare-image";
+import { IMAGE_INPUT_ACCEPT, describeImageError, uploadImage } from "@/components/social/use-image-uploads";
+import { imagesFromClipboard } from "@/lib/images/prepare-image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -177,7 +177,7 @@ export function ConversationThread({
     setUploading(true);
     upload
       .catch((error: unknown) => {
-        toast.error(error instanceof UnsupportedImageError ? t("composer.image_type") : describeApiError(error, t));
+        toast.error(describeImageError(error, t));
         setAttachment((current) => (current?.upload === upload ? { ...current, failed: true } : current));
       })
       .finally(() => setUploading(false));
@@ -425,7 +425,7 @@ export function ConversationThread({
           <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border-l-2 border-primary bg-accent px-3 py-1.5 text-[0.7812rem] text-accent-foreground">
             <span className="min-w-0">
               <span className="block font-semibold">{t("messages.replying_to", { name: replyingTo.senderName })}</span>
-              <span className="block truncate opacity-80">{replyingTo.preview || (replyingTo.hasImage ? `📷 ${t("messages.photo")}` : "")}</span>
+              <span className="block truncate opacity-80">{replyingTo.preview || (replyingTo.hasImage ? t("messages.photo") : "")}</span>
             </span>
             <button type="button" onClick={() => setReplyingTo(null)} aria-label={t("comments.cancel_reply")}>
               <X className="size-3.5" />

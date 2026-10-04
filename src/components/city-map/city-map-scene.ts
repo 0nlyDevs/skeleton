@@ -1,51 +1,39 @@
 import gsap from "gsap";
 import {
   ACESFilmicToneMapping,
-  BoxGeometry,
+  BufferAttribute,
   BufferGeometry,
-  CanvasTexture,
   Color,
-  ConeGeometry,
-  CylinderGeometry,
-  DirectionalLight,
-  type DataTexture,
-  DodecahedronGeometry,
   Float32BufferAttribute,
-  Fog,
-  HemisphereLight,
-  IcosahedronGeometry,
-  InstancedMesh,
+  HalfFloatType,
   LineBasicMaterial,
   LineSegments,
   Mesh,
-  MeshStandardMaterial,
-  Object3D,
-  PCFShadowMap,
   PerspectiveCamera,
-  PlaneGeometry,
-  PMREMGenerator,
   Raycaster,
   Scene,
   ShaderMaterial,
   SRGBColorSpace,
   Vector2,
   Vector3,
-  Vector4,
+  WebGLRenderTarget,
   WebGLRenderer,
-  type BufferAttribute,
-  type WebGLProgramParametersWithUniforms,
 } from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 
 import { CITY_PLACES, type PlaceKind } from "@/modules/alerts/city-map-data";
 import { CITY_ZONES, CITY_ZONE_IDS, CITY_ZONE_VERTICES, zoneAt, zoneCentroid, type CityZoneId, type ZoneStatusId } from "@/modules/alerts/city-zones";
 
-import { buildDowntownGrid, buildRoadNetwork, distanceToRoads, type RoadSegment } from "./city-map-roads";
-import { buildTerrain, toMap, toWorld } from "./city-map-terrain";
-import { waterFragment, waterVertex } from "./city-map-water";
+import { Atmosphere } from "@/components/cinematic/stage/atmosphere";
+import { createNoise } from "@/components/cinematic/stage/noise";
+import { buildCity, type WorldCity } from "@/components/cinematic/stage/world-city";
+import { buildSky, type WorldSky } from "@/components/cinematic/stage/world-sky";
+import { buildWorldTerrain, toMap, toWorld, type WorldTerrain } from "@/components/cinematic/stage/world-terrain";
+import { buildWater, type WorldWater } from "@/components/cinematic/stage/world-water";
 
 /**
  * Terra Nova in 3D, in daylight: relief, sea, roads, towns, forests and
@@ -78,39 +66,23 @@ export interface MapServicePoint {
 /** Which services show: every one, only emergency facilities, or none. */
 export type ServiceLayer = "all" | "emergency" | "none";
 
-const SKY_TOP = new Color("#7fa9dc");
-const HAZE = new Color("#dfe8ef");
-
-function skyTexture(): CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = 4;
-  canvas.height = 256;
-  const context = canvas.getContext("2d");
-  if (context) {
-    const gradient = context.createLinearGradient(0, 0, 0, 256);
-    gradient.addColorStop(0, `#${SKY_TOP.getHexString()}`);
-    gradient.addColorStop(0.62, "#c4d7ea");
-    gradient.addColorStop(1, `#${HAZE.getHexString()}`);
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, 4, 256);
-  }
-  const texture = new CanvasTexture(canvas);
-  texture.colorSpace = SRGBColorSpace;
-  return texture;
-}
-
 export class CityMapScene {
   private readonly renderer: WebGLRenderer;
   private readonly labels = new CSS2DRenderer();
   private readonly scene = new Scene();
-  private readonly camera = new PerspectiveCamera(36, 1, 0.1, 220);
+  private readonly camera = new PerspectiveCamera(36, 1, 0.05, 900);
   private readonly controls: OrbitControls;
-  private readonly terrain: Mesh<BufferGeometry, MeshStandardMaterial>;
+  private readonly terrain: Mesh;
+  private readonly world: WorldTerrain;
+  private readonly water: WorldWater;
+  private readonly sky: WorldSky;
+  private readonly city: WorldCity;
+  private readonly atmosphere: Atmosphere;
+  private tintMaterial!: ShaderMaterial;
+  private composer!: EffectComposer;
+  /** Time of day on the landing's scale: 0.42 is noon, 0.83 dusk with the city lit. */
+  private sol = 0.42;
   private readonly heightAt: (x: number, y: number) => number;
-  private readonly heightTexture: DataTexture;
-  private readonly heightBounds: { readonly minX: number; readonly minZ: number; readonly width: number; readonly depth: number };
-  private readonly roads: RoadSegment[] = buildRoadNetwork();
-  private readonly streets: RoadSegment[] = buildDowntownGrid((x, y) => zoneAt(x, y) === "NOVA_PRIME");
   private readonly time = { value: 0 };
   private readonly raycaster = new Raycaster();
   private readonly pointer = new Vector2();
@@ -139,45 +111,31 @@ export class CityMapScene {
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = PCFShadowMap;
     this.renderer.domElement.className = "block size-full touch-none";
     container.appendChild(this.renderer.domElement);
     // Its own stacking context: CSS2D gives each label a z-index, which must not climb over the map controls.
     this.labels.domElement.className = "pointer-events-none absolute inset-0 isolate z-0 overflow-hidden";
     container.appendChild(this.labels.domElement);
 
-    this.scene.background = skyTexture();
-    this.scene.fog = new Fog(HAZE, 30, 75);
-    const pmrem = new PMREMGenerator(this.renderer);
-    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmrem.dispose();
+    // The same island as the landing: one atmosphere, ground, sea, sky and city.
+    const noise = createNoise();
+    this.atmosphere = new Atmosphere(noise.texture);
+    this.atmosphere.update(this.sol, 0);
+    const world = buildWorldTerrain(this.atmosphere, 360, 252);
+    this.world = world;
+    this.water = buildWater(this.atmosphere, world);
+    this.sky = buildSky(this.atmosphere);
+    this.city = buildCity(world, this.atmosphere, noise);
+    this.heightAt = world.heightAt;
+    this.terrain = world.mesh;
+    this.scene.add(this.sky.group, world.mesh, this.water.mesh, this.city.group, this.atmosphere.sun, this.atmosphere.sun.target, this.atmosphere.hemisphere);
+    this.addTintOverlay();
+    // Sky and sea shaders write linear light: draw into a float target, then tone-map once, as the landing does.
+    this.composer = new EffectComposer(this.renderer, new WebGLRenderTarget(2, 2, { type: HalfFloatType }));
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.composer.addPass(new OutputPass());
 
-    const sun = new DirectionalLight("#fff3df", 3.1);
-    sun.position.set(-16, 22, 12);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 11, bottom: -11, near: 1, far: 70 });
-    sun.shadow.bias = -0.0005;
-    sun.shadow.normalBias = 0.02;
-    this.scene.add(sun, new HemisphereLight("#d6e6ff", "#6e5c46", 0.95));
-
-    const { geometry, heightAt, heightTexture, bounds } = buildTerrain(420, 294);
-    this.heightAt = heightAt;
-    this.heightTexture = heightTexture;
-    this.heightBounds = bounds;
-    const material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
-    this.patchTerrain(material);
-    this.terrain = new Mesh(geometry, material);
-    this.terrain.receiveShadow = true;
-    this.terrain.castShadow = true;
-    this.scene.add(this.terrain);
-
-    this.addWater(sun.position);
-    this.addRoads();
     this.addBorders();
-    this.addTowns();
-    this.addVegetation();
     this.addPlaceLabels();
     this.addZoneLabels();
 
@@ -219,126 +177,6 @@ export class CityMapScene {
     this.start();
   }
 
-  /** Ground detail (grain, rock on slopes) plus the per-district tint. */
-  private patchTerrain(material: MeshStandardMaterial): void {
-    material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms) => {
-      shader.uniforms.uTime = this.time;
-      shader.vertexShader = shader.vertexShader
-        .replace("#include <common>", "#include <common>\nattribute vec4 aTint;\nvarying vec4 vTint;\nvarying vec3 vWorld;\nvarying vec3 vUp;")
-        .replace(
-          "#include <worldpos_vertex>",
-          "#include <worldpos_vertex>\nvWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvUp = normalize(mat3(modelMatrix) * objectNormal);\nvTint = aTint;",
-        );
-      shader.fragmentShader = shader.fragmentShader
-        .replace(
-          "#include <common>",
-          `#include <common>
-          uniform float uTime;
-          varying vec4 vTint;
-          varying vec3 vWorld;
-          varying vec3 vUp;
-          float tnHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-          float tnNoise(vec2 p) {
-            vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
-            return mix(mix(tnHash(i), tnHash(i + vec2(1, 0)), f.x), mix(tnHash(i + vec2(0, 1)), tnHash(i + vec2(1, 1)), f.x), f.y);
-          }`,
-        )
-        .replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          // Fine ground texture at two scales, so close-ups never look flat.
-          float tnGrain = tnNoise(vWorld.xz * 9.0) * 0.6 + tnNoise(vWorld.xz * 37.0) * 0.4;
-          diffuseColor.rgb *= 0.86 + 0.24 * tnGrain;
-          // Steep slopes show bare rock.
-          float tnSlope = 1.0 - clamp(vUp.y, 0.0, 1.0);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.40, 0.38) * (0.85 + 0.3 * tnGrain), smoothstep(0.28, 0.6, tnSlope));
-          // District state: a tint, breathing when the alpha marks danger.
-          float tnPulse = vTint.a > 0.5 ? 0.7 + 0.3 * sin(uTime * 2.6) : 1.0;
-          float tnStrength = vTint.a > 0.5 ? (vTint.a - 0.5) * 2.0 : vTint.a;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vTint.rgb, tnStrength * tnPulse);`,
-        );
-    };
-    material.customProgramCacheKey = () => "tn-city-terrain-v2";
-  }
-
-  private addWater(sunPosition: Vector3): void {
-    const geometry = new PlaneGeometry(90, 66);
-    geometry.rotateX(-Math.PI / 2);
-    const bounds = this.heightBounds;
-    const water = new Mesh(
-      geometry,
-      new ShaderMaterial({
-        vertexShader: waterVertex,
-        fragmentShader: waterFragment,
-        uniforms: {
-          uTime: this.time,
-          uSun: { value: sunPosition.clone().normalize() },
-          uDeep: { value: new Color("#0a3b57") },
-          uMid: { value: new Color("#14698a") },
-          uShallow: { value: new Color("#4fb3b5") },
-          uSky: { value: new Color("#cfe0f0") },
-          uHeight: { value: this.heightTexture },
-          uBounds: { value: new Vector4(bounds.minX, bounds.minZ, bounds.width, bounds.depth) },
-          fogColor: { value: HAZE },
-          fogNear: { value: 30 },
-          fogFar: { value: 75 },
-        },
-        fog: true,
-        transparent: true,
-        depthWrite: false,
-      }),
-    );
-    water.position.y = 0;
-    water.renderOrder = 1;
-    this.scene.add(water);
-  }
-
-  /** Asphalt ribbons draped on the relief; arterials are wider and have a light centre line. */
-  private addRoads(): void {
-    const asphalt: number[] = [];
-    const markings: number[] = [];
-    const addRibbon = (target: number[], ax: number, ay: number, bx: number, by: number, width: number, lift: number) => {
-      const length = Math.hypot(bx - ax, by - ay);
-      const steps = Math.max(1, Math.ceil(length / 3));
-      const nx = -(by - ay) / length;
-      const ny = (bx - ax) / length;
-      const half = width / 2;
-      const point = (t: number, side: number) => {
-        const x = ax + (bx - ax) * t + nx * half * side;
-        const y = ay + (by - ay) * t + ny * half * side;
-        const world = toWorld(x, y);
-        // Over water the road becomes a bridge deck.
-        const ground = this.heightAt(x, y);
-        return [world.x, (ground < 0.03 ? 0.075 : ground) + lift, world.z];
-      };
-      for (let s = 0; s < steps; s += 1) {
-        const t0 = s / steps;
-        const t1 = (s + 1) / steps;
-        const a = point(t0, -1);
-        const b = point(t0, 1);
-        const c = point(t1, -1);
-        const d = point(t1, 1);
-        target.push(...a, ...c, ...b, ...b, ...c, ...d);
-      }
-    };
-    for (const street of this.streets) addRibbon(asphalt, street.a[0], street.a[1], street.b[0], street.b[1], 2.6, 0.016);
-    for (const road of this.roads) {
-      addRibbon(asphalt, road.a[0], road.a[1], road.b[0], road.b[1], road.major ? 6.5 : 3.6, 0.018);
-      if (road.major) addRibbon(markings, road.a[0], road.a[1], road.b[0], road.b[1], 0.45, 0.022);
-    }
-    const build = (points: number[], color: string, roughness: number) => {
-      const geometry = new BufferGeometry();
-      geometry.setAttribute("position", new Float32BufferAttribute(points, 3));
-      geometry.computeVertexNormals();
-      const mesh = new Mesh(geometry, new MeshStandardMaterial({ color, roughness, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2 }));
-      mesh.receiveShadow = true;
-      this.scene.add(mesh);
-    };
-    build(asphalt, "#4a4d52", 0.88);
-    build(markings, "#e9e3cf", 0.6);
-  }
-
-  /** District borders: soft white lines on the ground. */
   private addBorders(): void {
     const points: number[] = [];
     const seen = new Set<string>();
@@ -364,175 +202,6 @@ export class CityMapScene {
     const geometry = new BufferGeometry();
     geometry.setAttribute("position", new Float32BufferAttribute(points, 3));
     this.scene.add(new LineSegments(geometry, new LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.55 })));
-  }
-
-  /** Facades with windows drawn by the shader, from the world position: no textures to load. */
-  private buildingMaterial(): MeshStandardMaterial {
-    const material = new MeshStandardMaterial({ color: "#ffffff", roughness: 0.6, metalness: 0.1, envMapIntensity: 0.6 });
-    material.onBeforeCompile = (shader) => {
-      shader.vertexShader = shader.vertexShader
-        .replace("#include <common>", "#include <common>\nvarying vec3 vBWorld;\nvarying vec3 vBNormal;")
-        .replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nvBWorld = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;\nvBNormal = normalize(mat3(modelMatrix * instanceMatrix) * objectNormal);");
-      shader.fragmentShader = shader.fragmentShader
-        .replace("#include <common>", "#include <common>\nvarying vec3 vBWorld;\nvarying vec3 vBNormal;")
-        .replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          if (vBNormal.y < 0.5) {
-            float tnAlong = abs(vBNormal.x) > abs(vBNormal.z) ? vBWorld.z : vBWorld.x;
-            vec2 tnCell = fract(vec2(tnAlong * 55.0, vBWorld.y * 70.0));
-            float tnWindow = step(0.22, tnCell.x) * step(tnCell.x, 0.78) * step(0.25, tnCell.y) * step(tnCell.y, 0.75);
-            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.22, 0.3), tnWindow * 0.65);
-          } else {
-            diffuseColor.rgb *= 0.82;
-          }`,
-        );
-    };
-    material.customProgramCacheKey = () => "tn-city-buildings";
-    return material;
-  }
-
-  /** Houses around every landmark, downtown towers in Nova Prime, hangars at the spaceport. */
-  private addTowns(): void {
-    const box = new BoxGeometry(1, 1, 1);
-    box.translate(0, 0.5, 0);
-    const maxCount = 2600;
-    const buildings = new InstancedMesh(box, this.buildingMaterial(), maxCount);
-    buildings.castShadow = true;
-    buildings.receiveShadow = true;
-    const dummy = new Object3D();
-    const facades = ["#d9d2c5", "#c8c1b4", "#a9b0b8", "#8f9aa5", "#b8a58b", "#9fa6ad", "#cfc6b6", "#7d8894"].map((value) => new Color(value));
-    let count = 0;
-    const roofs: { x: number; y: number; width: number; depth: number; wall: number; angle: number }[] = [];
-    const place = (x: number, y: number, width: number, depth: number, height: number, angle: number) => {
-      if (count >= maxCount) return;
-      const ground = this.heightAt(x, y);
-      if (ground < 0.02) return;
-      const world = toWorld(x, y);
-      dummy.position.set(world.x, ground - 0.01, world.z);
-      dummy.scale.set(width, height, depth);
-      dummy.rotation.set(0, angle, 0);
-      dummy.updateMatrix();
-      buildings.setMatrixAt(count, dummy.matrix);
-      buildings.setColorAt(count, facades[Math.floor(Math.random() * facades.length)] ?? facades[0]!);
-      count += 1;
-    };
-
-    // Downtown: each block between the streets is filled with a few buildings,
-    // tallest around the centre of Nova Prime, with a little setback from the street.
-    const capital = CITY_ZONES.find((zone) => zone.id === "NOVA_PRIME");
-    if (capital) {
-      const [cx, cy] = zoneCentroid(capital);
-      for (let by = 228; by < 410; by += 24) {
-        for (let bx = 324; bx < 780; bx += 24) {
-          const mx = bx + 12;
-          const my = by + 12;
-          if (zoneAt(mx, my) !== "NOVA_PRIME" || distanceToRoads(this.roads, mx, my) < 9) continue;
-          const core = Math.max(0, 1 - Math.hypot(mx - cx, (my - cy) * 1.4) / 190);
-          const lots = core > 0.5 ? 1 + Math.floor(Math.random() * 2) : 2 + Math.floor(Math.random() * 3);
-          for (let lot = 0; lot < lots; lot += 1) {
-            const ox = (lots === 1 ? 0 : (lot % 2 === 0 ? -1 : 1) * 4.5) + (Math.random() - 0.5) * 1.5;
-            const oy = (lots <= 2 ? 0 : (lot < 2 ? -1 : 1) * 4.5) + (Math.random() - 0.5) * 1.5;
-            const size = lots === 1 ? 0.27 : 0.14;
-            const height = 0.08 + Math.pow(Math.random(), 1.5) * 1.5 * core * core + 0.1 * core;
-            place(mx + ox, my + oy, size * (0.8 + Math.random() * 0.25), size * (0.8 + Math.random() * 0.25), height, 0);
-          }
-        }
-      }
-    }
-    // Neighbourhoods: low houses clustered around each landmark, off the roads.
-    for (const landmark of CITY_PLACES) {
-      const cluster = landmark.zone === "NOVA_PRIME" ? 0 : 38;
-      for (let i = 0; i < cluster; i += 1) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 6 + Math.pow(Math.random(), 0.7) * 26;
-        const x = landmark.x + Math.cos(angle) * radius;
-        const y = landmark.y + Math.sin(angle) * radius;
-        if (distanceToRoads(this.roads, x, y) < 3.5 || zoneAt(x, y) !== landmark.zone) continue;
-        const tall = landmark.kind === "STAY" && i < 3;
-        const width = 0.06 + Math.random() * 0.05;
-        const depth = 0.06 + Math.random() * 0.05;
-        const wall = tall ? 0.2 + Math.random() * 0.2 : 0.035 + Math.random() * 0.03;
-        const facing = Math.random() * Math.PI;
-        place(x, y, width, depth, wall, facing);
-        if (!tall) roofs.push({ x, y, width, depth, wall, angle: facing });
-      }
-    }
-    // Spaceport hangars.
-    for (const [x, y] of [[790, 400], [770, 420], [805, 372]] as const) place(x, y, 0.42, 0.26, 0.12, 0.4);
-    buildings.count = count;
-    buildings.instanceMatrix.needsUpdate = true;
-    if (buildings.instanceColor) buildings.instanceColor.needsUpdate = true;
-    this.scene.add(buildings);
-
-    // Pitched roofs on the houses: a four-sided pyramid per house, terracotta or slate.
-    const pyramid = new ConeGeometry(0.72, 1, 4);
-    pyramid.rotateY(Math.PI / 4);
-    pyramid.translate(0, 0.5, 0);
-    const roofMesh = new InstancedMesh(pyramid, new MeshStandardMaterial({ color: "#ffffff", roughness: 0.8, flatShading: true }), roofs.length);
-    roofMesh.castShadow = true;
-    const roofColors = ["#9c4f36", "#8a4632", "#5d6066", "#6e4a3a", "#a35b3c"].map((value) => new Color(value));
-    roofs.forEach((roof, index) => {
-      const world = toWorld(roof.x, roof.y);
-      dummy.position.set(world.x, this.heightAt(roof.x, roof.y) - 0.01 + roof.wall, world.z);
-      dummy.scale.set(roof.width, roof.wall * 0.8 + 0.02, roof.depth);
-      dummy.rotation.set(0, roof.angle, 0);
-      dummy.updateMatrix();
-      roofMesh.setMatrixAt(index, dummy.matrix);
-      roofMesh.setColorAt(index, roofColors[index % roofColors.length] ?? roofColors[0]!);
-    });
-    this.scene.add(roofMesh);
-
-    // A launch tower at the spaceport, the city's landmark on the skyline.
-    const tower = new Mesh(new CylinderGeometry(0.03, 0.05, 1.1, 12), new MeshStandardMaterial({ color: "#d9dde2", metalness: 0.6, roughness: 0.3 }));
-    const towerWorld = toWorld(822, 392);
-    tower.position.set(towerWorld.x, this.heightAt(822, 392) + 0.55, towerWorld.z);
-    tower.castShadow = true;
-    this.scene.add(tower);
-  }
-
-  /** Forests, mangroves, rocks and snowfields, scattered by district. */
-  private addVegetation(): void {
-    const crown = mergeGeometries([new ConeGeometry(0.5, 1.3, 7).translate(0, 1.15, 0), new CylinderGeometry(0.09, 0.12, 0.6, 5).translate(0, 0.3, 0)]);
-    const round = new IcosahedronGeometry(0.55, 0);
-    round.translate(0, 0.75, 0);
-    const rock = new DodecahedronGeometry(0.5, 0);
-    const greens = ["#24452a", "#2c5130", "#365c33", "#1f3d24", "#3f6438"].map((value) => new Color(value));
-    const dummy = new Object3D();
-
-    const scatter = (geometry: BufferGeometry, color: string, count: number, zones: readonly CityZoneId[], size: [number, number], colors?: Color[]) => {
-      const mesh = new InstancedMesh(geometry, new MeshStandardMaterial({ color, roughness: 0.9, flatShading: true }), count);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      let placed = 0;
-      let guard = 0;
-      while (placed < count && guard < count * 30) {
-        guard += 1;
-        const x = 60 + Math.random() * 880;
-        const y = 80 + Math.random() * 480;
-        const zone = zoneAt(x, y);
-        if (!zone || !zones.includes(zone)) continue;
-        const ground = this.heightAt(x, y);
-        if (ground < 0.04 || distanceToRoads(this.roads, x, y) < 4) continue;
-        if (CITY_PLACES.some((landmark) => Math.hypot(landmark.x - x, landmark.y - y) < 14)) continue;
-        const world = toWorld(x, y);
-        const scale = size[0] + Math.random() * (size[1] - size[0]);
-        dummy.position.set(world.x, ground - 0.01, world.z);
-        dummy.scale.setScalar(scale);
-        dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
-        dummy.updateMatrix();
-        mesh.setMatrixAt(placed, dummy.matrix);
-        if (colors) mesh.setColorAt(placed, colors[Math.floor(Math.random() * colors.length)] ?? colors[0]!);
-        placed += 1;
-      }
-      mesh.count = placed;
-      this.scene.add(mesh);
-    };
-
-    scatter(crown, "#ffffff", 2200, ["VERDANT_BASIN", "CRYSTAL_REACH"], [0.05, 0.1], greens);
-    scatter(round, "#ffffff", 1200, ["SUNKEN_DELTA", "VERDANT_BASIN", "SKYPORT_ISLES"], [0.05, 0.09], greens);
-    scatter(rock, "#4b3a33", 420, ["EMBER_WASTES", "OBSIDIAN_COAST"], [0.04, 0.1]);
-    scatter(rock, "#8c949a", 300, ["FROSTPEAK", "CRYSTAL_REACH"], [0.05, 0.12]);
   }
 
   private addPlaceLabels(): void {
@@ -696,6 +365,58 @@ export class CityMapScene {
     gsap.to(this.camera.position, { x: t.x, y: t.y + y, z: t.z + z, duration: 0.9, ease: "power2.inOut" });
   }
 
+  /**
+   * District state as a veil draped over the landing's ground: the same mesh,
+   * lifted a hair, drawn with each vertex's tint (a dangerous district breathes).
+   */
+  private addTintOverlay(): void {
+    const geometry = this.terrain.geometry;
+    const position = geometry.getAttribute("position") as BufferAttribute;
+    const zones = new Float32Array(position.count);
+    for (let i = 0; i < position.count; i += 1) {
+      const { x, y } = toMap(position.getX(i), position.getZ(i));
+      const zone = zoneAt(x, y);
+      zones[i] = zone ? CITY_ZONE_IDS.indexOf(zone) : -1;
+    }
+    geometry.setAttribute("aZone", new BufferAttribute(zones, 1));
+    geometry.setAttribute("aTint", new BufferAttribute(new Float32Array(position.count * 4), 4));
+    this.tintMaterial = new ShaderMaterial({
+      uniforms: { uTime: this.time },
+      vertexShader: `
+        attribute vec4 aTint;
+        varying vec4 vTint;
+        void main() {
+          vTint = aTint;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position + normal * 0.012, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        varying vec4 vTint;
+        void main() {
+          float pulse = vTint.a > 0.5 ? 0.7 + 0.3 * sin(uTime * 2.6) : 1.0;
+          float strength = vTint.a > 0.5 ? (vTint.a - 0.5) * 2.0 : vTint.a;
+          gl_FragColor = vec4(vTint.rgb, strength * pulse * 0.85);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+    });
+    const veil = new Mesh(geometry, this.tintMaterial);
+    veil.renderOrder = 2;
+    this.scene.add(veil);
+  }
+
+  /** Day for the light theme, dusk with the city lit for the dark one. */
+  setDaylight(dark: boolean): void {
+    this.sol = dark ? 0.83 : 0.42;
+  }
+
   private paintTints(): void {
     const geometry = this.terrain.geometry;
     const zones = geometry.getAttribute("aZone") as BufferAttribute;
@@ -772,7 +493,11 @@ export class CityMapScene {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
+    this.composer.setPixelRatio(this.renderer.getPixelRatio());
+    this.composer.setSize(width, height);
     this.labels.setSize(width, height);
+    // Lamps are drawn in screen pixels: they need the size of the drawing in real pixels.
+    this.city.setPixels((height * this.renderer.getPixelRatio()) / (2 * Math.tan((this.camera.fov * Math.PI) / 360)));
   }
 
   private start(): void {
@@ -781,7 +506,11 @@ export class CityMapScene {
       this.frame = requestAnimationFrame(loop);
       this.time.value = now / 1000;
       this.controls.update();
-      this.renderer.render(this.scene, this.camera);
+      this.atmosphere.update(this.sol, now / 1000);
+      this.renderer.toneMappingExposure = this.atmosphere.exposure;
+      this.sky.follow(this.camera);
+      this.city.update(now / 1000);
+      this.composer.render();
       this.labels.render(this.scene, this.camera);
     };
     this.frame = requestAnimationFrame(loop);
@@ -803,9 +532,12 @@ export class CityMapScene {
       const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       for (const material of materials) material?.dispose();
     });
-    (this.scene.background as CanvasTexture | null)?.dispose();
-    this.heightTexture.dispose();
-    this.scene.environment?.dispose();
+    this.world.dispose();
+    this.water.dispose();
+    this.sky.dispose();
+    this.city.dispose();
+    this.tintMaterial.dispose();
+    this.composer.dispose();
     this.renderer.dispose();
     canvas.remove();
     this.labels.domElement.remove();

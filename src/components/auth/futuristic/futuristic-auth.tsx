@@ -1,5 +1,6 @@
 "use client";
 
+import { CITY_ZONE_IDS, cityZoneLabelKey } from "@/modules/alerts/city-zones";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
@@ -98,6 +99,7 @@ export function FuturisticAuth({
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [cityZone, setCityZone] = useState("");
   const [step1Err, setStep1Err] = useState<Record<string, string>>({});
 
   // Form states - Sign Up Step 2
@@ -552,6 +554,7 @@ export function FuturisticAuth({
     if (personNameViolation(lastName)) errs.lastName = "Veuillez entrer votre nom valide.";
     if (usernameViolation(username)) errs.username = "3 à 20 caractères : lettres, chiffres ou tirets.";
     if (birthDateViolation(birthDate)) errs.birthDate = "Date de naissance invalide (au moins 13 ans requis).";
+    if (!cityZone) errs.cityZone = t("auth.register.zone_required");
 
     setStep1Err(errs);
     const badKeys = Object.keys(errs);
@@ -593,6 +596,7 @@ export function FuturisticAuth({
         lastName: lastName.trim(),
         username: username.trim(),
         birthDate,
+        cityZone,
         email,
         password: signupPass,
         callbackURL: redirectTo,
@@ -1023,6 +1027,28 @@ export function FuturisticAuth({
                     }}
                   />
                   <p className="fa-msg">{step1Err.birthDate}</p>
+                </div>
+
+                <div className={`fa-field fa-anim ${step1Err.cityZone ? "err" : ""}`} id="fa-step1-cityZone">
+                  <svg className="fa-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 1 1 13 0C18.5 15.4 12 21 12 21z" />
+                    <circle cx="12" cy="10.5" r="2.3" />
+                  </svg>
+                  <select
+                    required
+                    aria-label={t("auth.register.zone")}
+                    value={cityZone}
+                    onChange={(e) => {
+                      setCityZone(e.target.value);
+                      setStep1Err((prev) => ({ ...prev, cityZone: "" }));
+                    }}
+                  >
+                    <option value="">{t("auth.register.zone")}</option>
+                    {CITY_ZONE_IDS.map((id) => (
+                      <option key={id} value={id}>{t(cityZoneLabelKey(id))}</option>
+                    ))}
+                  </select>
+                  <p className="fa-msg">{step1Err.cityZone}</p>
                 </div>
 
                 <button className="fa-btn fa-anim" type="submit">

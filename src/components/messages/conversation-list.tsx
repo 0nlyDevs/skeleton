@@ -101,7 +101,7 @@ export function ConversationList({
                       MEMBER_LEFT: t("messages.system.member_left", { name: last.senderName }),
                       MEMBER_REMOVED: t("messages.system.member_removed", { name: last.senderName }),
                     }[last.systemKind] ?? last.content
-                  : `${mine ? `${t("messages.you")}: ` : room.type === "GROUP" ? `${last.senderName.split(" ")[0]}: ` : ""}${last.content || (last.hasImage ? `📷 ${t("messages.photo")}` : "")}`;
+                  : `${mine ? `${t("messages.you")}: ` : room.type === "GROUP" ? `${last.senderName.split(" ")[0]}: ` : ""}${last.content || (last.hasImage ? t("messages.photo") : "")}`;
             const peer = room.targetUser;
             return (
               <li key={room.id}>

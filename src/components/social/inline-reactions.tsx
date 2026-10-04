@@ -10,7 +10,7 @@ import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import { REACTION_TYPES, type ReactionType } from "@/types";
 
-import { REACTION_EMOJI, REACTION_LABEL } from "./reactions";
+import { ReactionIcon, REACTION_LABEL } from "./reactions";
 import { ReactorsDialog } from "./reactors-dialog";
 
 export interface InlineReaction {
@@ -51,7 +51,7 @@ export function InlineReactions<T extends { reactions: readonly InlineReaction[]
 
   const load = useCallback(async () => {
     const response = await apiFetch<{ data: { type: ReactionType; user: { id: string; name: string; username: string | null; image: string | null } }[] }>(endpoint);
-    return response.data.map((row) => ({ emoji: REACTION_EMOJI[row.type], user: row.user }));
+    return response.data.map((row) => ({ type: row.type, user: row.user }));
   }, [endpoint]);
 
   return (
@@ -75,7 +75,7 @@ export function InlineReactions<T extends { reactions: readonly InlineReaction[]
               }}
               onPointerEnter={(event) => event.pointerType === "mouse" && setOpen(true)}
             >
-              {mine ? `${REACTION_EMOJI[mine]} ${t(REACTION_LABEL[mine])}` : t("reactions.LIKE")}
+              {mine ? <span className="inline-flex items-center gap-1.5"><ReactionIcon type={mine} className="size-4" />{t(REACTION_LABEL[mine])}</span> : t("reactions.LIKE")}
             </button>
           </PopoverTrigger>
           <PopoverContent side="top" align="start" className="flex w-auto gap-0.5 rounded-full p-1" onPointerLeave={() => setOpen(false)}>
@@ -88,7 +88,7 @@ export function InlineReactions<T extends { reactions: readonly InlineReaction[]
                 onClick={() => void react(mine === type ? null : type)}
                 className={cn("grid size-8 place-items-center rounded-full text-[1.125rem] transition-transform hover:scale-125", mine === type && "bg-primary/15")}
               >
-                {REACTION_EMOJI[type]}
+                <ReactionIcon type={type} className="size-[1.125rem]" />
               </button>
             ))}
           </PopoverContent>
@@ -96,7 +96,7 @@ export function InlineReactions<T extends { reactions: readonly InlineReaction[]
       ) : null}
       {total > 0 ? (
         <button type="button" onClick={() => setListOpen(true)} className="inline-flex items-center gap-0.5 rounded-full bg-card px-1.5 py-0.5 shadow-sm hover:bg-surface-muted" aria-label={t("reactors.open", { count: total })}>
-          <span aria-hidden>{reactions.slice(0, 3).map((entry) => REACTION_EMOJI[entry.type]).join("")}</span>
+          <span aria-hidden className="flex -space-x-1">{reactions.slice(0, 3).map((entry) => <ReactionIcon key={entry.type} type={entry.type} className="size-3.5" />)}</span>
           <span className="tabular-nums">{total}</span>
         </button>
       ) : null}

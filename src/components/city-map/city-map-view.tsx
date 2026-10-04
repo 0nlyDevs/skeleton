@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 import { ServiceAvailabilityBadge } from "@/components/city/service-availability-notice";
@@ -131,6 +132,7 @@ export function CityMapView({
   readonly focus: { readonly service?: string; readonly layer?: "emergency" };
 }) {
   const t = useTranslation();
+  const { resolvedTheme } = useTheme();
   const { socket } = useSocket();
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CityMapScene | null>(null);
@@ -222,6 +224,7 @@ export function CityMapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [want3d]);
 
+  useEffect(() => sceneRef.current?.setDaylight(resolvedTheme === "dark"), [resolvedTheme, mode]);
   useEffect(() => sceneRef.current?.setStatuses(new Map(statuses.map((entry) => [entry.zone, entry.status]))), [statuses, mode]);
   useEffect(() => sceneRef.current?.setHome(home), [home, mode]);
   useEffect(() => sceneRef.current?.setCategories(kinds), [kinds, mode]);
@@ -297,14 +300,14 @@ export function CityMapView({
     .filter((entry) => !region || entry.region === region)
     .sort((a, b) => STATUS_RANK(b.status) - STATUS_RANK(a.status) || a.score - b.score);
 
-  const control = "grid size-10 place-items-center bg-white text-[#3c4043] transition-colors hover:bg-[#f1f3f4] focus-visible:outline-2";
+  const control = "grid size-10 place-items-center bg-card text-foreground transition-colors hover:bg-accent focus-visible:outline-2";
 
   return (
-    <div className="relative h-[calc(100dvh-7.5rem)] min-h-[520px] overflow-hidden rounded-3xl border border-border/70 bg-[#dfe8ef] shadow-panel">
+    <div className="relative h-[calc(100dvh-7.5rem)] min-h-[520px] overflow-hidden rounded-3xl border border-border/70 bg-background shadow-panel">
       <h1 className="sr-only">{t("alerts.map.title")}</h1>
       <div ref={containerRef} className="absolute inset-0 isolate z-0" role="img" aria-label={t("alerts.map.subtitle")} />
       {mode === "loading" ? (
-        <div className="absolute inset-0 grid place-items-center text-[#3c4043]">
+        <div className="absolute inset-0 grid place-items-center text-foreground">
           <Loader2 className="size-6 animate-spin" aria-hidden />
         </div>
       ) : null}
@@ -323,7 +326,7 @@ export function CityMapView({
         <button
           type="button"
           onClick={() => setWant3d(true)}
-          className="absolute right-3 top-28 z-10 rounded-full bg-white px-4 py-2 text-[0.8125rem] font-medium text-[#1a73e8] shadow-md hover:bg-[#f1f3f4]"
+          className="absolute right-3 top-28 z-10 rounded-full bg-card px-4 py-2 text-[0.8125rem] font-medium text-foreground shadow-md hover:bg-accent"
         >
           {t("tn.eco.map_3d")}
         </button>
@@ -382,23 +385,23 @@ export function CityMapView({
       {/* Search and categories, top left. */}
       <div className="absolute left-3 top-3 flex w-[min(380px,calc(100%-1.5rem))] flex-col gap-2">
         <div className="relative">
-          <div className="flex items-center rounded-full bg-white pl-4 pr-1.5 shadow-[0_2px_6px_rgb(0_0_0/0.28)]">
-            <Search className="size-4 shrink-0 text-[#5f6368]" aria-hidden />
+          <div className="flex items-center rounded-full bg-card pl-4 pr-1.5 shadow-[0_2px_6px_rgb(0_0_0/0.28)]">
+            <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("alerts.map.search")}
               aria-label={t("alerts.map.search")}
-              className="h-11 min-w-0 flex-1 bg-transparent px-3 text-[0.9375rem] text-[#202124] outline-none placeholder:text-[#5f6368]"
+              className="h-11 min-w-0 flex-1 bg-transparent px-3 text-[0.9375rem] text-foreground outline-none placeholder:text-muted-foreground"
             />
             {query ? (
-              <button type="button" onClick={() => setQuery("")} aria-label={t("common.close")} className="grid size-9 place-items-center rounded-full text-[#5f6368] hover:bg-[#f1f3f4]">
+              <button type="button" onClick={() => setQuery("")} aria-label={t("common.close")} className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-accent">
                 <X className="size-4" aria-hidden />
               </button>
             ) : null}
           </div>
           {results.length > 0 ? (
-            <ul className="absolute inset-x-0 top-full z-10 mt-1.5 overflow-hidden rounded-2xl bg-white py-1 text-[#202124] shadow-[0_2px_8px_rgb(0_0_0/0.3)]">
+            <ul className="absolute inset-x-0 top-full z-10 mt-1.5 overflow-hidden rounded-2xl bg-card py-1 text-foreground shadow-[0_2px_8px_rgb(0_0_0/0.3)]">
               {results.map((result) => {
                 const service = result.type === "service" ? serviceBySlug.get(result.slug) : undefined;
                 const label = result.type === "zone" ? zoneName(result.zone) : result.type === "service" ? service?.name : CITY_PLACES[result.index]?.name;
@@ -417,12 +420,12 @@ export function CityMapView({
                         setSelection(result);
                         setQuery("");
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[#f1f3f4]"
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-accent"
                     >
-                      <Icon className="size-4 shrink-0 text-[#5f6368]" aria-hidden />
+                      <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                       <span className="min-w-0">
                         <span className="block truncate text-[0.875rem] font-medium">{label}</span>
-                        <span className="block truncate text-[0.75rem] text-[#5f6368]">{detail}</span>
+                        <span className="block truncate text-[0.75rem] text-muted-foreground">{detail}</span>
                       </span>
                     </button>
                   </li>
@@ -438,7 +441,7 @@ export function CityMapView({
             onClick={() => setServiceLayer((layer) => (layer === "emergency" ? "all" : "emergency"))}
             className={cn(
               "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.8125rem] font-semibold shadow-[0_1px_4px_rgb(0_0_0/0.25)] transition-colors",
-              serviceLayer === "emergency" ? "bg-[#d93025] text-white" : "bg-white text-[#d93025] hover:bg-[#fce8e6]",
+              serviceLayer === "emergency" ? "bg-error text-error-foreground" : "bg-card text-error hover:bg-error/10",
             )}
           >
             <Ambulance className="size-3.5" aria-hidden />
@@ -450,7 +453,7 @@ export function CityMapView({
             onClick={() => setServiceLayer((layer) => (layer === "none" ? "all" : "none"))}
             className={cn(
               "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium shadow-[0_1px_4px_rgb(0_0_0/0.25)] transition-colors",
-              serviceLayer !== "none" ? "bg-[#e8f0fe] text-[#1967d2]" : "bg-white text-[#3c4043] hover:bg-[#f1f3f4]",
+              serviceLayer !== "none" ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-accent",
             )}
           >
             <Building2 className="size-3.5" aria-hidden />
@@ -467,7 +470,7 @@ export function CityMapView({
                 onClick={() => toggleKind(kind)}
                 className={cn(
                   "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.8125rem] font-medium shadow-[0_1px_4px_rgb(0_0_0/0.25)] transition-colors",
-                  active ? "bg-[#e8f0fe] text-[#1967d2]" : "bg-white text-[#3c4043] hover:bg-[#f1f3f4]",
+                  active ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-accent",
                 )}
               >
                 <Icon className="size-3.5" style={{ color: active ? undefined : KIND_COLOR[kind] }} aria-hidden />
@@ -484,14 +487,14 @@ export function CityMapView({
           type="button"
           onClick={() => setListOpen((open) => !open)}
           aria-expanded={listOpen}
-          className="flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[0.8125rem] font-semibold text-[#202124] shadow-[0_2px_6px_rgb(0_0_0/0.28)] hover:bg-[#f8f9fa]"
+          className="flex items-center gap-2 rounded-full bg-card px-3.5 py-2 text-[0.8125rem] font-semibold text-foreground shadow-[0_2px_6px_rgb(0_0_0/0.28)] hover:bg-accent"
         >
           <span className="size-2.5 rounded-full" style={{ background: alerted.length ? STATUS_COLORS[alerted.sort((a, b) => STATUS_RANK(b.status) - STATUS_RANK(a.status))[0]?.status ?? "SAFE"] : STATUS_COLORS.SAFE }} aria-hidden />
           {alerted.length ? t("alerts.map.zones_count", { count: alerted.length }) : t("alerts.map.all_clear")}
-          <List className="size-4 text-[#5f6368]" aria-hidden />
+          <List className="size-4 text-muted-foreground" aria-hidden />
         </button>
         {listOpen ? (
-          <section className="w-[min(320px,calc(100vw-2rem))] rounded-2xl bg-white p-2 text-[#202124] shadow-[0_2px_10px_rgb(0_0_0/0.3)]" aria-label={t("alerts.map.select")}>
+          <section className="w-[min(320px,calc(100vw-2rem))] rounded-2xl bg-card p-2 text-foreground shadow-[0_2px_10px_rgb(0_0_0/0.3)]" aria-label={t("alerts.map.select")}>
             <div className="flex flex-wrap gap-1 p-1" role="group" aria-label={t("alerts.map.region_filter")}>
               {[null, ...CITY_REGION_IDS].map((value) => (
                 <button
@@ -499,7 +502,7 @@ export function CityMapView({
                   type="button"
                   aria-pressed={region === value}
                   onClick={() => setRegion(value)}
-                  className={cn("rounded-full px-2.5 py-1 text-[0.75rem] font-medium", region === value ? "bg-[#e8f0fe] text-[#1967d2]" : "hover:bg-[#f1f3f4]")}
+                  className={cn("rounded-full px-2.5 py-1 text-[0.75rem] font-medium", region === value ? "bg-foreground text-background" : "hover:bg-accent")}
                 >
                   {value ? t(cityRegionLabelKey(value)) : t("alerts.map.all_regions")}
                 </button>
@@ -511,17 +514,17 @@ export function CityMapView({
                   <button
                     type="button"
                     onClick={() => setSelection({ type: "zone", zone: entry.zone })}
-                    className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-[#f1f3f4]"
+                    className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-accent"
                   >
                     <span className="size-2.5 shrink-0 rounded-full" style={{ background: STATUS_COLORS[entry.status] }} aria-hidden />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5 text-[0.875rem] font-medium">
                         {zoneName(entry.zone)}
-                        {entry.zone === home ? <Home className="size-3.5 text-[#1a73e8]" aria-label={t("alerts.map.home_here")} /> : null}
+                        {entry.zone === home ? <Home className="size-3.5 text-foreground" aria-label={t("alerts.map.home_here")} /> : null}
                       </span>
-                      <span className="text-[0.75rem] text-[#5f6368]">{t(cityRegionLabelKey(entry.region))} · {statusLabel(entry.status)}</span>
+                      <span className="text-[0.75rem] text-muted-foreground">{t(cityRegionLabelKey(entry.region))} · {statusLabel(entry.status)}</span>
                     </span>
-                    <span className="text-[0.8125rem] font-semibold tabular-nums text-[#5f6368]">{entry.score}</span>
+                    <span className="text-[0.8125rem] font-semibold tabular-nums text-muted-foreground">{entry.score}</span>
                   </button>
                 </li>
               ))}
@@ -533,6 +536,7 @@ export function CityMapView({
       {/* Map controls, bottom right. */}
       <div className="absolute bottom-6 right-3 flex flex-col gap-2">
         {home ? (
+<<<<<<< HEAD
           <Tooltip>
             <TooltipTrigger asChild>
               <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")}>
@@ -541,6 +545,11 @@ export function CityMapView({
             </TooltipTrigger>
             <TooltipContent>{t("alerts.map.home_here")}</TooltipContent>
           </Tooltip>
+=======
+          <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")} title={t("alerts.map.home_here")}>
+            <LocateFixed className="size-5 text-foreground" aria-hidden />
+          </button>
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
         ) : null}
         {/* Camera controls only exist for the 3D view. */}
         {mode === "3d" ? (
@@ -569,7 +578,7 @@ export function CityMapView({
               <button type="button" className={control} onClick={() => sceneRef.current?.zoom(0.7)} aria-label={t("alerts.map.zoom_in")}>
                 <Plus className="size-5" aria-hidden />
               </button>
-              <span className="h-px bg-[#e8eaed]" />
+              <span className="h-px bg-border" />
               <button type="button" className={control} onClick={() => sceneRef.current?.zoom(1.4)} aria-label={t("alerts.map.zoom_out")}>
                 <Minus className="size-5" aria-hidden />
               </button>
@@ -579,25 +588,25 @@ export function CityMapView({
       </div>
 
       {serviceLayer === "emergency" && !selection ? (
-        <section className="absolute bottom-3 left-3 right-16 max-w-[380px] rounded-2xl bg-white p-4 text-[#202124] shadow-[0_2px_10px_rgb(0_0_0/0.3)]" aria-label={t("alerts.map.emergency")}>
-          <h2 className="flex items-center gap-2 font-semibold text-[#d93025]">
+        <section className="absolute bottom-3 left-3 right-16 max-w-[380px] rounded-2xl bg-card p-4 text-foreground shadow-[0_2px_10px_rgb(0_0_0/0.3)]" aria-label={t("alerts.map.emergency")}>
+          <h2 className="flex items-center gap-2 font-semibold text-error">
             <Ambulance className="size-5" aria-hidden />
             {t("alerts.map.emergency_title")}
           </h2>
-          <p className="mt-1 text-[0.8125rem] text-[#5f6368]">{home ? t("alerts.map.emergency_near", { zone: zoneName(home) }) : t("alerts.map.emergency_body")}</p>
+          <p className="mt-1 text-[0.8125rem] text-muted-foreground">{home ? t("alerts.map.emergency_near", { zone: zoneName(home) }) : t("alerts.map.emergency_body")}</p>
           <ul className="mt-3 flex flex-col gap-2">
             {emergencies.map(({ service }, index) => (
-              <li key={service.slug} className={cn("flex items-center gap-3 rounded-xl border px-3 py-2", index === 0 ? "border-[#d93025]/40 bg-[#fce8e6]" : "border-[#e8eaed]")}>
+              <li key={service.slug} className={cn("flex items-center gap-3 rounded-xl border px-3 py-2", index === 0 ? "border-error/40 bg-error/10" : "border-border")}>
                 <button type="button" onClick={() => setSelection({ type: "service", slug: service.slug })} className="min-w-0 flex-1 text-left">
                   <span className="block truncate text-[0.875rem] font-semibold">{service.name}</span>
-                  <span className="block truncate text-[0.75rem] text-[#5f6368]">
+                  <span className="block truncate text-[0.75rem] text-muted-foreground">
                     {index === 0 && home ? `${t("alerts.map.nearest")} · ` : ""}
                     {zoneName(service.zone)}
                     {service.hours ? ` · ${service.hours}` : ""}
                   </span>
                 </button>
                 {service.phone ? (
-                  <a href={`tel:${service.phone.replace(/\s+/g, "")}`} className="flex shrink-0 items-center gap-1 rounded-full bg-[#d93025] px-3 py-1.5 text-[0.75rem] font-semibold text-white" aria-label={`${t("alerts.map.call")} ${service.name}`}>
+                  <a href={`tel:${service.phone.replace(/\s+/g, "")}`} className="flex shrink-0 items-center gap-1 rounded-full bg-error px-3 py-1.5 text-[0.75rem] font-semibold text-error-foreground" aria-label={`${t("alerts.map.call")} ${service.name}`}>
                     <Phone className="size-3.5" aria-hidden />
                     {t("alerts.map.call")}
                   </a>
@@ -625,7 +634,7 @@ export function CityMapView({
           />
         </div>
       ) : serviceLayer === "emergency" ? null : (
-        <p className="pointer-events-none absolute bottom-3 left-3 hidden max-w-[300px] rounded-xl bg-white/90 px-3 py-2 text-[0.75rem] text-[#3c4043] shadow-[0_1px_4px_rgb(0_0_0/0.2)] sm:block">
+        <p className="pointer-events-none absolute bottom-3 left-3 hidden max-w-[300px] rounded-xl bg-card/90 px-3 py-2 text-[0.75rem] text-foreground shadow-[0_1px_4px_rgb(0_0_0/0.2)] sm:block">
           {t(mode === "3d" ? "alerts.map.hint" : "tn.eco.map_hint_flat")}
         </p>
       )}
@@ -661,16 +670,16 @@ function InfoCard({
   const place = selection.type === "place" ? CITY_PLACES[selection.index] : undefined;
   const PlaceIcon = place ? KIND_ICON[place.kind] : null;
   return (
-    <section className="flex max-h-[52svh] flex-col gap-3 overflow-y-auto rounded-2xl bg-white p-4 text-[#202124] shadow-[0_2px_10px_rgb(0_0_0/0.3)]" aria-live="polite">
+    <section className="flex max-h-[52svh] flex-col gap-3 overflow-y-auto rounded-2xl bg-card p-4 text-foreground shadow-[0_2px_10px_rgb(0_0_0/0.3)]" aria-live="polite">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           {service ? (
             <>
               <div className="flex items-start gap-2.5">
-                <ServiceIcon name={service.icon} className={cn("size-9 rounded-lg", service.emergency && "bg-[#fce8e6] text-[#d93025]")} />
+                <ServiceIcon name={service.icon} className={cn("size-9 rounded-lg", service.emergency && "bg-[#fce8e6] text-error")} />
                 <div className="min-w-0">
                   <h2 className="text-[1.0625rem] font-semibold leading-tight">{service.name}</h2>
-                  <p className="mt-0.5 text-[0.8125rem] text-[#5f6368]">
+                  <p className="mt-0.5 text-[0.8125rem] text-muted-foreground">
                     {service.category} · {zoneName(service.zone)}
                   </p>
                 </div>
@@ -679,19 +688,19 @@ function InfoCard({
           ) : place && PlaceIcon ? (
             <>
               <h2 className="text-[1.125rem] font-semibold leading-tight">{place.name}</h2>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[0.8125rem] text-[#5f6368]">
+              <p className="mt-0.5 flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
                 <PlaceIcon className="size-3.5" style={{ color: KIND_COLOR[place.kind] }} aria-hidden />
                 {t(`alerts.place.${place.kind}` as MessageKey)} · {zoneName(place.zone)}
               </p>
             </>
           ) : (
             <>
-              <p className="text-[0.75rem] uppercase tracking-wide text-[#5f6368]">{t(cityRegionLabelKey(entry.region))}</p>
+              <p className="text-[0.75rem] uppercase tracking-wide text-muted-foreground">{t(cityRegionLabelKey(entry.region))}</p>
               <h2 className="text-[1.125rem] font-semibold leading-tight">{zoneName(entry.zone)}</h2>
             </>
           )}
         </div>
-        <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid size-8 shrink-0 place-items-center rounded-full text-[#5f6368] hover:bg-[#f1f3f4]">
+        <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-accent">
           <X className="size-4" aria-hidden />
         </button>
       </div>
@@ -701,23 +710,23 @@ function InfoCard({
           {service.availability.state !== "AVAILABLE" ? (
             <div className="flex flex-col gap-1">
               <ServiceAvailabilityBadge availability={service.availability} />
-              {service.availability.note ? <p className="text-[#3c4043]">{service.availability.note}</p> : null}
+              {service.availability.note ? <p className="text-foreground">{service.availability.note}</p> : null}
             </div>
           ) : null}
-          {service.hours ? <p><span className="text-[#5f6368]">{t("tn.services.hours")} · </span>{service.hours}</p> : null}
-          {service.address ? <p><span className="text-[#5f6368]">{t("tn.services.address")} · </span>{service.address}</p> : null}
+          {service.hours ? <p><span className="text-muted-foreground">{t("tn.services.hours")} · </span>{service.hours}</p> : null}
+          {service.address ? <p><span className="text-muted-foreground">{t("tn.services.address")} · </span>{service.address}</p> : null}
           <div className="mt-1 flex flex-wrap gap-2">
             {service.phone ? (
-              <a href={`tel:${service.phone.replace(/\s+/g, "")}`} className={cn("flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold text-white", service.emergency ? "bg-[#d93025]" : "bg-[#1a73e8]")}>
+              <a href={`tel:${service.phone.replace(/\s+/g, "")}`} className={cn("flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold text-error-foreground", service.emergency ? "bg-error" : "bg-[#1a73e8]")}>
                 <Phone className="size-4" aria-hidden />
                 {t("alerts.map.call")} {service.phone}
               </a>
             ) : null}
-            <Link href={`/services/${service.slug}`} className="rounded-full border border-[#dadce0] px-3.5 py-2 text-[0.8125rem] font-medium hover:bg-[#f8f9fa]">
+            <Link href={`/services/${service.slug}`} className="rounded-full border border-[#dadce0] px-3.5 py-2 text-[0.8125rem] font-medium hover:bg-accent">
               {t("alerts.map.service_page")}
             </Link>
             {!service.emergency ? (
-              <Link href={`/contact?service=${encodeURIComponent(service.slug)}`} className="rounded-full border border-[#dadce0] px-3.5 py-2 text-[0.8125rem] font-medium hover:bg-[#f8f9fa]">
+              <Link href={`/contact?service=${encodeURIComponent(service.slug)}`} className="rounded-full border border-[#dadce0] px-3.5 py-2 text-[0.8125rem] font-medium hover:bg-accent">
                 {t("tn.services.ask")}
               </Link>
             ) : null}
@@ -729,33 +738,33 @@ function InfoCard({
         <p className="flex items-center gap-2 text-[0.875rem] font-semibold" style={{ color }}>
           <span className="size-2 rounded-full" style={{ background: color }} aria-hidden />
           {statusLabel(entry.status)}
-          <span className="ml-auto text-[0.75rem] font-medium text-[#5f6368]">
+          <span className="ml-auto text-[0.75rem] font-medium text-muted-foreground">
             {t("alerts.map.health")} {entry.score}/100
           </span>
         </p>
-        <p className="mt-0.5 text-[0.8125rem] text-[#3c4043]">{t(`alerts.zone_status_body.${entry.status}` as MessageKey)}</p>
+        <p className="mt-0.5 text-[0.8125rem] text-foreground">{t(`alerts.zone_status_body.${entry.status}` as MessageKey)}</p>
       </div>
 
       {entry.alerts.length > 0 ? (
         <ul className="flex flex-col gap-1.5">
           {entry.alerts.map((alert) => (
             <li key={alert.slug}>
-              <Link href={`/alerts/${encodeURIComponent(alert.slug)}`} className="block rounded-xl border border-[#e8eaed] px-3 py-2 text-[0.8125rem] hover:bg-[#f8f9fa]">
+              <Link href={`/alerts/${encodeURIComponent(alert.slug)}`} className="block rounded-xl border border-border px-3 py-2 text-[0.8125rem] hover:bg-accent">
                 <span className="block font-medium">{alert.title}</span>
-                <span className="text-[0.75rem] text-[#5f6368]">{t(`alerts.severity.${alert.severity}` as MessageKey)} · {t("alerts.open")}</span>
+                <span className="text-[0.75rem] text-muted-foreground">{t(`alerts.severity.${alert.severity}` as MessageKey)} · {t("alerts.open")}</span>
               </Link>
             </li>
           ))}
         </ul>
       ) : null}
 
-      <p className="flex items-center gap-2 text-[0.8125rem] text-[#5f6368]">
+      <p className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
         <Users className="size-4" aria-hidden />
         {t("alerts.map.residents", { count: entry.residents })}
       </p>
 
       {isHome ? (
-        <p className="flex items-center gap-2 rounded-xl bg-[#e8f0fe] px-3 py-2 text-[0.8125rem] font-medium text-[#1967d2]">
+        <p className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-[0.8125rem] font-medium text-[#1967d2]">
           <Home className="size-4" aria-hidden />
           {t("alerts.map.home_here")}
         </p>
