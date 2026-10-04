@@ -1,4 +1,4 @@
-import { AdditiveBlending, CylinderGeometry, DoubleSide, Mesh, PerspectiveCamera, Scene, ShaderMaterial, TorusGeometry, Vector3 } from "three";
+import { PerspectiveCamera, Scene, Vector3 } from "three";
 
 import { Atmosphere } from "./atmosphere";
 import { CameraRail, TOUR_STOPS } from "./camera-rail";
@@ -33,30 +33,6 @@ const HALL: readonly [number, number] = [430, 290];
 /** The hour the city hall is shown at: dusk, with every window lit. */
 const HALL_SOL = 0.83;
 
-/* A column of light on the landmark a panel talks about, and a ring on the ground around it. */
-const BEAM_VERTEX = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-const BEAM_FRAGMENT = /* glsl */ `
-  uniform float uPower;
-  uniform float uTime;
-  varying vec2 vUv;
-  void main() {
-    float rise = fract(vUv.y * 3.0 - uTime * 0.6);
-    // Clamped: a value a hair below zero would make pow() return no number at all, and the bloom would spread it over the whole picture.
-    float a = pow(clamp(1.0 - vUv.y, 0.0, 1.0), 1.6) * (0.55 + 0.45 * smoothstep(0.0, 0.15, rise) * smoothstep(1.0, 0.4, rise));
-    gl_FragColor = vec4(vec3(1.0, 0.56, 0.24) * a * uPower * 1.1, 1.0);
-  }
-`;
-
-/**
- * The island as one scene: ground, sea, sky, city and the camera that flies
- * over it. `update` places everything for one frame from a tour position.
- */
 export class WorldScene {
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(BASE_FOV, 1, 0.03, 900);
@@ -74,10 +50,6 @@ export class WorldScene {
   private readonly back = new Vector3();
   private readonly focus = new Vector3();
   private readonly hall = new Vector3();
-  private readonly beam: Mesh;
-  private readonly halo: Mesh;
-  private readonly beamPower = { value: 0 };
-  private readonly beamTime = { value: 0 };
   private readonly shadowKey = new Vector3(1e9, 0, 0);
   private readonly shadowLight = new Vector3();
   private shadowReach = 0;
@@ -127,20 +99,7 @@ export class WorldScene {
     const hall = toWorld(HALL[0], HALL[1]);
     this.hall.set(hall.x, terrain.heightAt(HALL[0], HALL[1]), hall.z);
 
-    const beamMaterial = new ShaderMaterial({
-      vertexShader: BEAM_VERTEX,
-      fragmentShader: BEAM_FRAGMENT,
-      uniforms: { uPower: this.beamPower, uTime: this.beamTime },
-      blending: AdditiveBlending,
-      transparent: true,
-      depthWrite: false,
-      side: DoubleSide,
-    });
-    this.beam = new Mesh(new CylinderGeometry(0.012, 0.012, 1, 16, 1, true).translate(0, 0.5, 0), beamMaterial);
-    this.halo = new Mesh(new TorusGeometry(1, 0.035, 6, 48).rotateX(Math.PI / 2), beamMaterial);
-    this.beam.visible = false;
-    this.halo.visible = false;
-    this.scene.add(sky.group, terrain.mesh, water.mesh, city.group, sun, sun.target, atmosphere.hemisphere, this.beam, this.halo);
+    this.scene.add(sky.group, terrain.mesh, water.mesh, city.group, sun, sun.target, atmosphere.hemisphere);
   }
 
   resize(width: number, height: number): void {
@@ -202,7 +161,7 @@ export class WorldScene {
     this.roll += (bank - this.roll) * Math.min(1, dt * 2.5);
     camera.rotateZ(this.roll + Math.sin(time * 0.19) * 0.004);
 
-    this.projectAnchor(view.tour, view.registry, time);
+    this.projectAnchor(view.tour, view.registry);
     const sol = this.rail.sol(view.tour);
     this.atmosphere.update(sol + (HALL_SOL - sol) * view.registry, time);
     this.sky.follow(camera);
@@ -210,30 +169,14 @@ export class WorldScene {
     this.updateShadows();
   }
 
-  private projectAnchor(tour: number, registry: number, time: number): void {
+  private projectAnchor(tour: number, registry: number): void {
     const nearest = Math.round(tour);
     const pose = TOUR_STOPS[nearest]?.anchor;
-    const settled = Math.max(0, 1 - Math.abs(tour - nearest) / 0.4) * (1 - registry);
     this.anchor.visible = false;
-    this.beam.visible = false;
-    this.halo.visible = false;
-    if (!pose || settled <= 0) return;
+    if (!pose || registry > 0.01 || Math.abs(tour - nearest) > 0.4) return;
     const at = toWorld(pose[0], pose[1]);
-    const ground = Math.max(0, this.terrain.heightAt(pose[0], pose[1]));
-
-    // In the scene: a column of light and a ring that breathes, on the landmark itself.
-    this.beamPower.value = settled;
-    this.beamTime.value = time;
-    this.beam.visible = true;
-    this.halo.visible = true;
-    this.beam.position.set(at.x, ground + pose[2], at.z);
-    this.beam.scale.set(0.7, 0.8, 0.7);
-    this.halo.position.set(at.x, ground + 0.012, at.z);
-    this.halo.scale.setScalar(0.09 + ((time * 0.5) % 1) * 0.1);
-
-    // On screen: where the panel's line must end.
     this.camera.updateMatrixWorld();
-    this.focus.set(at.x, ground + pose[2], at.z).project(this.camera);
+    this.focus.set(at.x, Math.max(0, this.terrain.heightAt(pose[0], pose[1])) + pose[2], at.z).project(this.camera);
     this.anchor.x = this.focus.x * 0.5 + 0.5;
     this.anchor.y = 0.5 - this.focus.y * 0.5;
     this.anchor.visible = this.focus.z < 1 && this.anchor.x > 0.04 && this.anchor.x < 0.96 && this.anchor.y > 0.08 && this.anchor.y < 0.92;
@@ -271,9 +214,6 @@ export class WorldScene {
     this.sky.dispose();
     this.city.dispose();
     this.atmosphere.sun.shadow.map?.dispose();
-    this.beam.geometry.dispose();
-    this.halo.geometry.dispose();
-    (this.beam.material as ShaderMaterial).dispose();
     this.scene.clear();
   }
 }

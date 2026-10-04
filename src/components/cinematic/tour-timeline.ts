@@ -6,12 +6,6 @@ import type { LandingStage } from "./stage/landing-stage";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Dawn is 06:10 on the island, night falls at 22:40. */
-function clock(sol: number): string {
-  const minutes = Math.round(370 + sol * 990);
-  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
-}
-
 export interface Tour {
   /** Freezes the scroll (the registry is open) or frees it again. */
   setPaused(paused: boolean): void;
@@ -28,9 +22,8 @@ export interface TourEvents {
 /**
  * Everything the scroll drives once the visitor is over the island: smooth
  * inertia (Lenis), the camera's place on its flight (one stop per section),
- * the reveal of each panel, the counters, and the instruments: the route on
- * the left with its ship, the hour, and the pointer from a panel to its
- * landmark.
+ * the reveal of each card, the counters, and two instruments: the ship going
+ * down the route on the left, and the pointer from a card to its landmark.
  */
 export function createTour(root: HTMLElement, stage: LandingStage | null, smooth: boolean, events: TourEvents = {}): Tour {
   const lenis = smooth ? new Lenis({ duration: 1.25, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) }) : null;
@@ -44,16 +37,13 @@ export function createTour(root: HTMLElement, stage: LandingStage | null, smooth
   const chapters = gsap.utils.toArray<HTMLElement>("[data-chapter]", root);
   const marks = gsap.utils.toArray<HTMLElement>("[data-hud='mark']", root);
   const rail = root.querySelector<HTMLElement>("[data-hud='rail']");
-  const clockLabel = root.querySelector<HTMLElement>("[data-hud='clock']");
-  const countLabel = root.querySelector<HTMLElement>("[data-hud='count']");
+  const stopName = root.querySelector<HTMLElement>("[data-hud='stop-name']");
   const tag = root.querySelector<HTMLElement>("[data-hud='tag']");
-  const tagName = root.querySelector<HTMLElement>("[data-hud='tag-name']");
   const pointer = root.querySelector<SVGGElement>("[data-hud='pointer']");
   const lines = root.querySelectorAll<SVGPathElement>("[data-hud='line']");
-  const reticle = root.querySelector<SVGGElement>("[data-hud='reticle']");
+  const target = root.querySelector<SVGCircleElement>("[data-hud='target']");
   let centres: number[] = [];
   let active = -1;
-  let lastClock = "";
 
   const measure = () => {
     centres = chapters.map((chapter) => {
@@ -80,40 +70,34 @@ export function createTour(root: HTMLElement, stage: LandingStage | null, smooth
       active = nearest;
       marks.forEach((mark, i) => mark.toggleAttribute("data-active", i === nearest));
       chapters.forEach((chapter, i) => chapter.toggleAttribute("data-current", i === nearest));
-      if (countLabel) countLabel.textContent = String(nearest + 1).padStart(2, "0");
-    }
-    if (clockLabel && stage) {
-      const text = clock(stage.sol);
-      if (text !== lastClock) {
-        lastClock = text;
-        clockLabel.textContent = text;
-      }
+      if (stopName) stopName.textContent = marks[nearest]?.textContent ?? "";
     }
 
     // The pointer from the current panel to its landmark in the scene.
     const anchor = stage?.anchor;
     const panel = chapters[nearest]?.querySelector<HTMLElement>("[data-panel]");
-    if (!tag || !pointer || !reticle || !anchor?.visible || !panel) {
+    if (!tag || !pointer || !target || !anchor?.visible || !panel) {
       if (tag) tag.style.opacity = "0";
       if (pointer) pointer.style.opacity = "0";
       return;
     }
     const rect = panel.getBoundingClientRect();
-    const x = anchor.x * window.innerWidth;
-    const y = anchor.y * window.innerHeight;
+    const x = Math.round(anchor.x * window.innerWidth);
+    const y = Math.round(anchor.y * window.innerHeight);
     const settled = 1 - Math.min(1, Math.abs(tour - nearest) / 0.4);
     const clear = x < rect.left - 40 || x > rect.right + 40 ? 1 : 0;
-    const startX = x < rect.left ? rect.left : rect.right;
-    const startY = Math.min(window.innerHeight - 60, Math.max(60, rect.top + Math.min(rect.height * 0.5, 140)));
-    // A curve that leaves the panel level and arrives on the target from above.
-    const bend = (x - startX) * 0.55;
-    const path = `M${startX.toFixed(1)} ${startY.toFixed(1)} C${(startX + bend).toFixed(1)} ${startY.toFixed(1)} ${x.toFixed(1)} ${(y + (startY - y) * 0.55).toFixed(1)} ${x.toFixed(1)} ${(y + (startY > y ? 22 : -22)).toFixed(1)}`;
+    const startX = Math.round(x < rect.left ? rect.left : rect.right);
+    const startY = Math.round(Math.min(window.innerHeight - 60, Math.max(80, rect.top + 40)));
+    // Two straight strokes: level out of the card, then straight onto the landmark.
+    const path = `M${startX} ${startY}H${x}V${y + (startY > y ? 7 : -7)}`;
     lines.forEach((line) => line.setAttribute("d", path));
-    reticle.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+    target.setAttribute("cx", String(x));
+    target.setAttribute("cy", String(y));
     pointer.style.opacity = String(settled * clear);
     tag.style.opacity = String(settled * clear);
-    tag.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-    if (tagName && tagName.textContent !== (panel.dataset.place ?? "")) tagName.textContent = panel.dataset.place ?? "";
+    tag.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    const place = panel.dataset.place ?? "";
+    if (tag.textContent !== place) tag.textContent = place;
   };
 
   const ctx = gsap.context(() => {
@@ -149,12 +133,11 @@ export function createTour(root: HTMLElement, stage: LandingStage | null, smooth
         { opacity: 1, y: 0, duration: 0.7, stagger: 0.1, ease: "power3.out", scrollTrigger: { trigger: parent, ...defaults } },
       );
     });
-    // A panel arrives like a drop of glass: it swells into place.
     gsap.utils.toArray<HTMLElement>("[data-panel]").forEach((panel) => {
       gsap.fromTo(
         panel,
-        { opacity: 0, scale: 0.92, y: 60 },
-        { opacity: 1, scale: 1, y: 0, duration: 1.1, ease: "power3.out", scrollTrigger: { trigger: panel, start: "top 90%", toggleActions: "play none none reverse", onEnter: () => events.onPanel?.() } },
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: panel, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => events.onPanel?.() } },
       );
     });
 
