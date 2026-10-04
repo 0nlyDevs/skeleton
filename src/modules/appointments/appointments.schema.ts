@@ -50,3 +50,28 @@ export const freeSlotsQuerySchema = z.object({
 
 export const appointmentReferenceParamSchema = z.object({ reference: z.string().trim().toUpperCase().regex(/^RDV-\d{6}$/) });
 export const slotIdParamSchema = z.object({ id: z.string().trim().min(1).max(40) });
+
+/** A resident asks for an appointment at a time of their choice. */
+export const appointmentRequestInputSchema = z
+  .object({
+    startsAt: z.string().datetime({ offset: true }),
+    duration: z.coerce.number().refine((value) => (SLOT_DURATIONS as readonly number[]).includes(value), "Choose a slot length."),
+    mode: z.enum(APPOINTMENT_MODES).default("IN_PERSON"),
+    serviceSlug: z.string().trim().toLowerCase().max(80).optional().nullable().transform((value) => value || null),
+    reason: z.string().trim().min(10, "Say in a sentence what the appointment is about.").max(1000),
+  })
+  .strict();
+export type AppointmentRequestInput = z.infer<typeof appointmentRequestInputSchema>;
+
+/** An agent accepts, at the asked time or at another one. */
+export const appointmentRequestAcceptSchema = z
+  .object({
+    startsAt: z.string().datetime({ offset: true }).optional().nullable().transform((value) => value || null),
+    location: z.string().trim().max(200).optional().nullable().transform((value) => value || null),
+    note: z.string().trim().max(300).optional().nullable().transform((value) => value || null),
+  })
+  .strict();
+export type AppointmentRequestAcceptInput = z.infer<typeof appointmentRequestAcceptSchema>;
+
+export const appointmentRequestDeclineSchema = z.object({ reason: z.string().trim().min(5, "Give the resident a reason.").max(300) }).strict();
+export const appointmentRequestRefParamSchema = z.object({ reference: z.string().trim().toUpperCase().regex(/^DEM-\d{6}$/, "Invalid reference.") });

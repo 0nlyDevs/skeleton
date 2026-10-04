@@ -211,46 +211,48 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions            Session[]
-  accounts            Account[]
-  twoFactors          TwoFactor[]
-  passkeys            Passkey[]
-  posts               Post[]
-  cityRequests        CityRequest[]           @relation("CityRequestCitizen")
-  assignedRequests    CityRequest[]           @relation("CityRequestAssignee")
-  agentSlots          AgentSlot[]
-  appointments        Appointment[]           @relation("AppointmentCitizen")
-  agentAppointments   Appointment[]           @relation("AppointmentAgent")
-  cityRequestMessages CityRequestMessage[]
-  cityRequestEvents   CityRequestEvent[]
-  requestSupports     CityRequestSupport[]
-  announcements       Announcement[]
-  comments            Comment[]
-  reactions           PostReaction[]
-  bookmarks           PostBookmark[]
-  messages            Message[]
-  notifications       Notification[]
-  preferences         NotificationPreference?
-  auditLogs           AuditLog[]
-  uploads             Upload[]
-  reportsMade         Report[]                @relation("ReportReporter")
-  reportsHandled      Report[]                @relation("ReportResolver")
-  roomMembers         RoomMember[]
-  followers           Follow[]                @relation("UserFollowers")
-  following           Follow[]                @relation("UserFollowing")
-  groupsOwned         Group[]                 @relation("GroupOwner")
-  groupMemberships    GroupMember[]
-  mentionsReceived    Mention[]               @relation("MentionTarget")
-  mentionsMade        Mention[]               @relation("MentionAuthor")
-  hiddenMessages      MessageHide[]
-  knownDevices        KnownDevice[]
-  officialMessages    OfficialMessage[]
-  serviceFeedback     ServiceFeedback[]       @relation("ServiceFeedbackAuthor")
-  projectOpinions     ProjectOpinion[]
-  decisionBallots     DecisionBallot[]
-  ideas               Idea[]                  @relation("IdeaAuthor")
-  ideaSupports        IdeaSupport[]
-  feedbackReplies     ServiceFeedback[]       @relation("ServiceFeedbackReplier")
+  sessions             Session[]
+  accounts             Account[]
+  twoFactors           TwoFactor[]
+  passkeys             Passkey[]
+  posts                Post[]
+  cityRequests         CityRequest[]           @relation("CityRequestCitizen")
+  assignedRequests     CityRequest[]           @relation("CityRequestAssignee")
+  agentSlots           AgentSlot[]
+  appointments         Appointment[]           @relation("AppointmentCitizen")
+  agentAppointments    Appointment[]           @relation("AppointmentAgent")
+  cityRequestMessages  CityRequestMessage[]
+  cityRequestEvents    CityRequestEvent[]
+  requestSupports      CityRequestSupport[]
+  announcements        Announcement[]
+  comments             Comment[]
+  reactions            PostReaction[]
+  bookmarks            PostBookmark[]
+  messages             Message[]
+  notifications        Notification[]
+  preferences          NotificationPreference?
+  auditLogs            AuditLog[]
+  uploads              Upload[]
+  reportsMade          Report[]                @relation("ReportReporter")
+  reportsHandled       Report[]                @relation("ReportResolver")
+  roomMembers          RoomMember[]
+  followers            Follow[]                @relation("UserFollowers")
+  following            Follow[]                @relation("UserFollowing")
+  groupsOwned          Group[]                 @relation("GroupOwner")
+  groupMemberships     GroupMember[]
+  mentionsReceived     Mention[]               @relation("MentionTarget")
+  mentionsMade         Mention[]               @relation("MentionAuthor")
+  hiddenMessages       MessageHide[]
+  knownDevices         KnownDevice[]
+  officialMessages     OfficialMessage[]
+  serviceFeedback      ServiceFeedback[]       @relation("ServiceFeedbackAuthor")
+  projectOpinions      ProjectOpinion[]
+  decisionBallots      DecisionBallot[]
+  ideas                Idea[]                  @relation("IdeaAuthor")
+  ideaSupports         IdeaSupport[]
+  appointmentRequests  AppointmentRequest[]    @relation("AppointmentRequestCitizen")
+  appointmentDecisions AppointmentRequest[]    @relation("AppointmentRequestDecider")
+  feedbackReplies      ServiceFeedback[]       @relation("ServiceFeedbackReplier")
 
   /// Presence: written when the last socket of the user disconnects.
   lastSeenAt            DateTime?
@@ -1062,11 +1064,12 @@ model MunicipalService {
   alternativeService   MunicipalService?   @relation("ServiceAlternative", fields: [alternativeServiceId], references: [id], onDelete: SetNull)
   alternativeFor       MunicipalService[]  @relation("ServiceAlternative")
 
-  requests      CityRequest[]
-  announcements Announcement[]
-  agentSlots    AgentSlot[]
-  appointments  Appointment[]
-  feedback      ServiceFeedback[]
+  requests            CityRequest[]
+  announcements       Announcement[]
+  agentSlots          AgentSlot[]
+  appointments        Appointment[]
+  appointmentRequests AppointmentRequest[]
+  feedback            ServiceFeedback[]
 
   @@index([active, sortOrder])
   @@index([emergency])
@@ -1583,4 +1586,45 @@ model IdeaSupport {
   @@unique([ideaId, userId])
   @@index([userId])
   @@map("ideaSupport")
+}
+
+enum AppointmentRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+/// A resident asks for an appointment at a time of their choice, even when no
+/// agent opened a slot then. Every agent is notified; one accepts (which
+/// creates the appointment) or declines with a reason.
+model AppointmentRequest {
+  id              String                   @id @default(cuid())
+  /// Shown to both sides, e.g. DEM-482913.
+  reference       String                   @unique @db.VarChar(20)
+  citizenId       String
+  citizen         User                     @relation("AppointmentRequestCitizen", fields: [citizenId], references: [id], onDelete: Cascade)
+  serviceId       String?
+  service         MunicipalService?        @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  preferredStart  DateTime
+  durationMinutes Int                      @db.SmallInt
+  mode            AppointmentMode
+  /// What the resident wants to discuss; encrypted at rest.
+  reasonEncrypted String                   @db.Text
+  status          AppointmentRequestStatus @default(PENDING)
+  /// The agent's reason when declining, or a word when accepting.
+  answer          String?                  @db.VarChar(300)
+  decidedById     String?
+  decidedBy       User?                    @relation("AppointmentRequestDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt       DateTime?
+  /// The appointment created on acceptance.
+  appointmentRef  String?                  @db.VarChar(20)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([status, preferredStart])
+  @@index([citizenId, createdAt])
+  @@index([serviceId])
+  @@index([decidedById])
+  @@map("appointmentRequest")
 }

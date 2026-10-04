@@ -10,6 +10,13 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Choose a time at least half an hour from now.": "Choisissez une heure au moins une demi-heure à l'avance.",
+  "Appointments can be requested at most 90 days ahead.": "Un rendez-vous se demande au plus 90 jours à l'avance.",
+  "You already have five requests waiting. Wait for an answer or withdraw one.": "Vous avez déjà cinq demandes en attente. Attendez une réponse ou retirez-en une.",
+  "This request was already answered.": "Cette demande a déjà reçu une réponse.",
+  "This time has already passed. Propose another time.": "Cet horaire est déjà passé. Proposez-en un autre.",
+  "You or the resident already have an appointment at that time.": "Vous ou l'habitant avez déjà un rendez-vous à ce moment-là.",
+  "Give the resident a reason.": "Donnez une raison à l'habitant.",
   "The file is too large.": "Le fichier est trop volumineux.",
   "The upload was refused.": "L'envoi a été refusé.",
   "Choose the district where you live.": "Choisissez le quartier où vous habitez.",
