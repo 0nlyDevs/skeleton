@@ -52,11 +52,12 @@ export function OfficialMessageBand() {
 
   useEffect(() => {
     void load(false);
+    // With the live connection up, a published message arrives by itself: no polling at all.
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") void load(false);
-    }, POLL_MS);
+      if (document.visibilityState === "visible" && !socket?.connected) void load(false);
+    }, document.documentElement.hasAttribute("data-eco") ? POLL_MS * 3 : POLL_MS);
     return () => window.clearInterval(timer);
-  }, [load]);
+  }, [load, socket]);
 
   useEffect(() => {
     if (!socket) return;

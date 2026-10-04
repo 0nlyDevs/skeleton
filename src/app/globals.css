@@ -828,3 +828,22 @@ a .text-primary {
   left: 100%;
   --at: 100%;
 }
+
+/*
+ * F95/F96 — a lighter page on a phone: the decoration goes (background rings,
+ * big shadows, entrance animations), the content and every action stay.
+ */
+@media (max-width: 640px) {
+  body::before {
+    display: none;
+  }
+  .shadow-panel,
+  .shadow-float {
+    box-shadow: none;
+  }
+}
+@media (prefers-reduced-data: reduce) {
+  body::before {
+    display: none;
+  }
+}
