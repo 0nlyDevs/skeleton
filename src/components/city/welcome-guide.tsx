@@ -6,6 +6,7 @@ import { useEffect } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "@/components/ui/link";
 import type { MessageKey } from "@/lib/i18n";
 import { WELCOME_HIDDEN_COOKIE, WELCOME_SERVICE_COOKIE, setWelcomeCookie } from "@/lib/onboarding";
@@ -42,9 +43,14 @@ export function WelcomeGuide({ name, steps }: { readonly name: string; readonly 
           <p className="text-sm text-muted-foreground">{t("tn.welcome.subtitle")}</p>
           <p className="text-[0.8125rem] font-medium">{t("tn.welcome.progress", { done, total: STEPS.length })}</p>
         </div>
-        <Button type="button" variant="ghost" size="icon" onClick={hide} aria-label={t("tn.welcome.hide")} title={t("tn.welcome.hide")}>
-          <X aria-hidden />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" onClick={hide} aria-label={t("tn.welcome.hide")}>
+              <X aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t("tn.welcome.hide")}</TooltipContent>
+        </Tooltip>
       </div>
       <ol className="grid gap-3 md:grid-cols-3">
         {STEPS.map((step, index) => {

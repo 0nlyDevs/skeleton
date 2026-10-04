@@ -12,6 +12,7 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { ReportDialog } from "@/components/social/report-dialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
@@ -84,12 +85,22 @@ export function PageView({ page: initial, viewerId }: { readonly page: PageDto; 
             <Heart className={cn(page.viewerLiked && "fill-rose-500 text-rose-500")} />
             {page.likeCount}
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => void share()} aria-label={t("pages.share")} title={t("pages.share")}>
-            <Share2 />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setQr(true)} aria-label={t("pages.qr")} title={t("pages.qr")}>
-            <QrCode />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => void share()} aria-label={t("pages.share")}>
+                <Share2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("pages.share")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => setQr(true)} aria-label={t("pages.qr")}>
+                <QrCode />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("pages.qr")}</TooltipContent>
+          </Tooltip>
           {page.viewerIsOwner ? (
             <Button asChild size="sm">
               <Link href={`/pages/${encodeURIComponent(page.slug)}/edit`}>
@@ -98,14 +109,24 @@ export function PageView({ page: initial, viewerId }: { readonly page: PageDto; 
               </Link>
             </Button>
           ) : viewerId ? (
-            <Button variant="ghost" size="icon" onClick={() => setReporting(true)} aria-label={t("post.report")} title={t("post.report")}>
-              <Flag />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setReporting(true)} aria-label={t("post.report")}>
+                  <Flag />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t("post.report")}</TooltipContent>
+            </Tooltip>
           ) : null}
           {page.viewerCanModerate && !page.viewerIsOwner ? (
-            <Button variant="ghost" size="icon" onClick={() => setConfirm(true)} aria-label={t("post.remove")} title={t("post.remove")}>
-              <Trash2 />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setConfirm(true)} aria-label={t("post.remove")}>
+                  <Trash2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t("post.remove")}</TooltipContent>
+            </Tooltip>
           ) : null}
         </span>
       </nav>
