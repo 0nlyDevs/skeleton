@@ -742,32 +742,6 @@ export function FuturisticAuth({
           </Link>
 
           <div className="fa-controls">
-            <div className="fa-tabs" role="tablist" aria-label="Account">
-              <button
-                className="fa-tab"
-                role="tab"
-                id="tab-login"
-                ref={tabLoginRef}
-                aria-selected={!isSignup(mode)}
-                type="button"
-                onClick={() => goTo("login")}
-              >
-                {t("nav.sign_in")}
-              </button>
-              <button
-                className="fa-tab"
-                role="tab"
-                id="tab-signup"
-                ref={tabSignupRef}
-                aria-selected={isSignup(mode)}
-                type="button"
-                onClick={() => goTo("s1")}
-              >
-                {t("auth.login.create")}
-              </button>
-              <span className="fa-tab-ink" ref={tabInkRef} />
-            </div>
-
             <LocaleToggle />
             <ThemeToggle />
           </div>
