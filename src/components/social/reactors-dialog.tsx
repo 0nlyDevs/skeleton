@@ -9,14 +9,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Skeleton } from "@/components/ui/skeleton";
 import { describeApiError } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
+import type { ReactionType } from "@/types";
+
+import { ReactionIcon } from "./reactions";
 
 export interface Reactor {
-  readonly emoji: string;
+  readonly type: ReactionType;
   readonly user: { readonly id: string; readonly name: string; readonly username: string | null; readonly image: string | null };
 }
 
 /**
- * "Who reacted": tabs per emoji (with counts) and the people behind them.
+ * "Who reacted": tabs per reaction (with counts) and the people behind them.
  * Shared by posts and chat messages; the caller decides how to load the list,
  * and the server decides who may see it.
  */
@@ -50,10 +53,10 @@ export function ReactorsDialog({
 
   const groups = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const reactor of reactors ?? []) counts.set(reactor.emoji, (counts.get(reactor.emoji) ?? 0) + 1);
+    for (const reactor of reactors ?? []) counts.set(reactor.type, (counts.get(reactor.type) ?? 0) + 1);
     return [...counts].sort((left, right) => right[1] - left[1]);
   }, [reactors]);
-  const shown = (reactors ?? []).filter((reactor) => tab === "all" || reactor.emoji === tab);
+  const shown = (reactors ?? []).filter((reactor) => tab === "all" || reactor.type === tab);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,7 +79,7 @@ export function ReactorsDialog({
                   tab === key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
-                {key === "all" ? t("reactors.all") : <span aria-hidden>{key}</span>}
+                {key === "all" ? t("reactors.all") : <ReactionIcon type={key as ReactionType} className="size-4" />}
                 <span className="tabular-nums">{count}</span>
               </button>
             ))}
@@ -96,7 +99,7 @@ export function ReactorsDialog({
           ) : (
             <ul className="flex flex-col">
               {shown.map((reactor) => (
-                <li key={`${reactor.user.id}:${reactor.emoji}`}>
+                <li key={`${reactor.user.id}:${reactor.type}`}>
                   <Link
                     href={reactor.user.username ? `/profile/${encodeURIComponent(reactor.user.username)}` : "#"}
                     className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-surface-muted"
@@ -104,7 +107,7 @@ export function ReactorsDialog({
                     <span className="relative">
                       <UserAvatar userId={reactor.user.id} name={reactor.user.name} image={reactor.user.image} size="sm" />
                       <span aria-hidden className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full bg-card text-[0.75rem] ring-2 ring-card">
-                        {reactor.emoji}
+                        <ReactionIcon type={reactor.type} className="size-3" />
                       </span>
                     </span>
                     <span className="min-w-0">

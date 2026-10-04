@@ -5,6 +5,7 @@ import {
   BufferGeometry,
   Color,
   Float32BufferAttribute,
+  HalfFloatType,
   LineBasicMaterial,
   LineSegments,
   Mesh,
@@ -15,8 +16,12 @@ import {
   SRGBColorSpace,
   Vector2,
   Vector3,
+  WebGLRenderTarget,
   WebGLRenderer,
 } from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 
@@ -74,6 +79,7 @@ export class CityMapScene {
   private readonly city: WorldCity;
   private readonly atmosphere: Atmosphere;
   private tintMaterial!: ShaderMaterial;
+  private composer!: EffectComposer;
   /** Time of day on the landing's scale: 0.42 is noon, 0.83 dusk with the city lit. */
   private sol = 0.42;
   private readonly heightAt: (x: number, y: number) => number;
@@ -124,6 +130,10 @@ export class CityMapScene {
     this.terrain = world.mesh;
     this.scene.add(this.sky.group, world.mesh, this.water.mesh, this.city.group, this.atmosphere.sun, this.atmosphere.sun.target, this.atmosphere.hemisphere);
     this.addTintOverlay();
+    // Sky and sea shaders write linear light: draw into a float target, then tone-map once, as the landing does.
+    this.composer = new EffectComposer(this.renderer, new WebGLRenderTarget(2, 2, { type: HalfFloatType }));
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.composer.addPass(new OutputPass());
 
     this.addBorders();
     this.addPlaceLabels();
@@ -483,6 +493,8 @@ export class CityMapScene {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
+    this.composer.setPixelRatio(this.renderer.getPixelRatio());
+    this.composer.setSize(width, height);
     this.labels.setSize(width, height);
     // Lamps are drawn in screen pixels: they need the size of the drawing in real pixels.
     this.city.setPixels((height * this.renderer.getPixelRatio()) / (2 * Math.tan((this.camera.fov * Math.PI) / 360)));
@@ -498,7 +510,7 @@ export class CityMapScene {
       this.renderer.toneMappingExposure = this.atmosphere.exposure;
       this.sky.follow(this.camera);
       this.city.update(now / 1000);
-      this.renderer.render(this.scene, this.camera);
+      this.composer.render();
       this.labels.render(this.scene, this.camera);
     };
     this.frame = requestAnimationFrame(loop);
@@ -525,6 +537,7 @@ export class CityMapScene {
     this.sky.dispose();
     this.city.dispose();
     this.tintMaterial.dispose();
+    this.composer.dispose();
     this.renderer.dispose();
     canvas.remove();
     this.labels.domElement.remove();

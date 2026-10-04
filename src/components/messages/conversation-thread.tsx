@@ -425,7 +425,7 @@ export function ConversationThread({
           <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border-l-2 border-primary bg-accent px-3 py-1.5 text-[0.7812rem] text-accent-foreground">
             <span className="min-w-0">
               <span className="block font-semibold">{t("messages.replying_to", { name: replyingTo.senderName })}</span>
-              <span className="block truncate opacity-80">{replyingTo.preview || (replyingTo.hasImage ? `📷 ${t("messages.photo")}` : "")}</span>
+              <span className="block truncate opacity-80">{replyingTo.preview || (replyingTo.hasImage ? t("messages.photo") : "")}</span>
             </span>
             <button type="button" onClick={() => setReplyingTo(null)} aria-label={t("comments.cancel_reply")}>
               <X className="size-3.5" />
