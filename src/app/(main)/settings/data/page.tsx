@@ -2,6 +2,8 @@ import { Download, FileText, FolderOpen, KeyRound, MessagesSquare, UserRound } f
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { DataConcernForm } from "@/components/settings/data-concern";
+import { RequestList } from "@/components/city/request-list";
 import { PrintButton } from "@/components/city/print-button";
 import { Button } from "@/components/ui/button";
 import Link from "@/components/ui/link";
@@ -10,6 +12,8 @@ import { formatDateTime, formatLongDate } from "@/lib/format";
 import type { MessageKey } from "@/lib/i18n";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { buildDataReport } from "@/modules/account/account.report";
+import { listCityRequests } from "@/modules/city-requests/city-requests.service";
+import { prisma } from "@/lib/db/prisma";
 
 export const metadata: Metadata = { title: "Mes données" };
 
@@ -56,7 +60,11 @@ function Section({ icon, title, children, purpose, access, retention, labels }: 
 export default async function MyDataPage() {
   const { user } = await requirePageAuth("/settings/data");
   const { t, locale } = await getServerDictionary();
-  const report = await buildDataReport(user);
+  const [report, concernService, concerns] = await Promise.all([
+    buildDataReport(user),
+    prisma.municipalService.findUnique({ where: { slug: "donnees-personnelles" }, select: { id: true } }),
+    listCityRequests({ scope: "mine", service: "donnees-personnelles", sort: "recent", page: 1, limit: 10 }, user),
+  ]);
   const dash = "—";
   const date = (iso: string | null) => (iso ? formatLongDate(iso, locale) : dash);
   const labels = { why: t("tn.data.why"), who: t("tn.data.who"), howLong: t("tn.data.how_long") };
@@ -172,6 +180,15 @@ export default async function MyDataPage() {
 
         <p className="px-1 text-[0.8125rem] text-muted-foreground">{t("tn.data.rights")}</p>
       </article>
+
+      {/* F51 — a concern about how data is used: a request with a reference and a visible trail. */}
+      {concernService ? <DataConcernForm serviceId={concernService.id} /> : null}
+      {concerns.data.length > 0 ? (
+        <section aria-labelledby="my-concerns" className="flex flex-col gap-3 print:hidden">
+          <h2 id="my-concerns" className="px-1 font-semibold">{t("tn.concern.mine")}</h2>
+          <RequestList requests={concerns.data} hrefBase="/space/requests" />
+        </section>
+      ) : null}
     </div>
   );
 }

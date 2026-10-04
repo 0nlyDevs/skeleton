@@ -15,8 +15,8 @@ export default async function DataSafetyPage() {
       return (
         <div className="flex flex-col gap-4">
           <header className="flex flex-col gap-1 px-1">
-            <h1 className="text-xl font-semibold tracking-tight">{t("tn.data.title")}</h1>
-            <p className="text-sm text-muted-foreground">{t("tn.data.subtitle")}</p>
+            <h1 className="text-xl font-semibold tracking-tight">{t("tn.datasafe.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("tn.datasafe.subtitle")}</p>
           </header>
           <DataSafetyPanel />
         </div>

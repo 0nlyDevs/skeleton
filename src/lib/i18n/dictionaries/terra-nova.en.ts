@@ -1849,4 +1849,13 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.history.appointment_changed.accept_request": "{actor} accepted request {target}",
   "tn.history.appointment_changed.decline_request": "{actor} declined request {target}",
   "tn.history.appointment_changed.cancel_request": "{actor} withdrew request {target}",
+  "tn.datasafe.title": "Data: coherence and backup",
+  "tn.datasafe.subtitle": "Platform load, data coherence and a checked backup, to run at any time.",
+  "tn.concern.title": "Report a concern about my data",
+  "tn.concern.hint": "Something about your data surprises you, you do not know who sees it? Say so. You get a reference, a written answer and see each step here.",
+  "tn.concern.subject": "In a few words",
+  "tn.concern.subject_hint": "For example: who sees my date of birth?",
+  "tn.concern.message": "What worries you",
+  "tn.concern.send": "Send to the data protection service",
+  "tn.concern.mine": "My concerns and their answers",
 };
