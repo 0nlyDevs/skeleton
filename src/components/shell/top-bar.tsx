@@ -82,6 +82,7 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
                   </Link>
                 );
               })}
+              <DisplayMenu />
               <NotificationBell />
               <AccountPanel viewer={viewer} zone={zone} />
             </>
