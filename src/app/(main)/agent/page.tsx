@@ -23,7 +23,7 @@ export default async function AgentDashboardPage() {
     const [pickup, stats, open, feed, recent] = await Promise.all([
       awaitingPickup(user),
       cityRequestStats(user, "all"),
-      listCityRequests({ scope: "all", status: "OPEN", page: 1, limit: 8 }, user),
+      listCityRequests({ scope: "all", status: "OPEN", sort: "recent", page: 1, limit: 8 }, user),
       getWebcupFeed(user),
       listActivity({ page: 1, limit: 6, category: "all", period: "all" }, user),
     ]);

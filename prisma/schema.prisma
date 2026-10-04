@@ -223,6 +223,7 @@ model User {
   agentAppointments   Appointment[]           @relation("AppointmentAgent")
   cityRequestMessages CityRequestMessage[]
   cityRequestEvents   CityRequestEvent[]
+  requestSupports     CityRequestSupport[]
   announcements       Announcement[]
   comments            Comment[]
   reactions           PostReaction[]
@@ -1145,42 +1146,61 @@ enum CityRequestPriority {
 
 /// A citizen's request to the city ("démarche"), followed by agents.
 model CityRequest {
-  id         String              @id @default(cuid())
+  id           String              @id @default(cuid())
   /// Human reference shown to the citizen, e.g. TN-000123.
-  reference  String              @unique @db.VarChar(20)
-  citizenId  String
-  citizen    User                @relation("CityRequestCitizen", fields: [citizenId], references: [id], onDelete: Cascade)
-  serviceId  String?
-  service    MunicipalService?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  subject    String              @db.VarChar(160)
+  reference    String              @unique @db.VarChar(20)
+  citizenId    String
+  citizen      User                @relation("CityRequestCitizen", fields: [citizenId], references: [id], onDelete: Cascade)
+  serviceId    String?
+  service      MunicipalService?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  subject      String              @db.VarChar(160)
   /// Encrypted at rest (may hold personal details).
-  message    String              @db.Text
-  status     CityRequestStatus   @default(NEW)
-  priority   CityRequestPriority @default(NORMAL)
+  message      String              @db.Text
+  status       CityRequestStatus   @default(NEW)
+  priority     CityRequestPriority @default(NORMAL)
+  /// F52 — how many residents back this report ("Je suis aussi concerné").
+  supportCount Int                 @default(0)
   /// F25 — set when the request reports a problem in the city (`lighting`, `roads`…).
-  issueType  String?             @db.VarChar(40)
+  issueType    String?             @db.VarChar(40)
   /// Where the problem is: a free-text place (encrypted at rest) and, optionally, a point on the city map.
-  location   String?             @db.Text
-  latitude   Float?
-  longitude  Float?
+  location     String?             @db.Text
+  latitude     Float?
+  longitude    Float?
   /// Terra Nova position of the reported problem (city map plane, 1000 × 640).
-  mapX       Int?
-  mapY       Int?
-  zone       String?             @db.VarChar(40)
-  assigneeId String?
-  assignee   User?               @relation("CityRequestAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
-  closedAt   DateTime?
+  mapX         Int?
+  mapY         Int?
+  zone         String?             @db.VarChar(40)
+  assigneeId   String?
+  assignee     User?               @relation("CityRequestAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  closedAt     DateTime?
 
   messages CityRequestMessage[]
   events   CityRequestEvent[]
   feedback ServiceFeedback[]
+  supports CityRequestSupport[]
 
   @@index([citizenId, createdAt])
   @@index([status, createdAt])
   @@index([assigneeId, status])
+  @@index([issueType, zone, status])
   @@map("cityRequest")
+}
+
+/// F52 — a resident backs an already-reported problem ("Je suis aussi concerné").
+model CityRequestSupport {
+  id        String      @id @default(cuid())
+  requestId String
+  request   CityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([requestId, userId])
+  @@index([requestId])
+  @@index([userId])
+  @@map("cityRequestSupport")
 }
 
 /// Thread between the citizen and the agents. Internal notes stay agent-only.
