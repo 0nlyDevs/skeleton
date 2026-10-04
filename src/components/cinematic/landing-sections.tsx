@@ -58,6 +58,16 @@ function More({ href, children }: { readonly href: string; readonly children: st
 }
 
 /** Everything below the first view: one district, one idea, one way further. */
+/** The contest's partners, shown in black and white in the footer. */
+const SPONSORS = [
+  { file: "yas", name: "Yas" },
+  { file: "moneco", name: "Moneco" },
+  { file: "hubera", name: "Hubera" },
+  { file: "goticom", name: "GOTI.COM" },
+  { file: "hodi", name: "HODi, Host in Africa" },
+  { file: "softwell", name: "Softwell" },
+] as const;
+
 export function LandingSections({ data, onRegister }: { readonly data: LandingData; readonly onRegister: () => void }) {
   const t = useTranslation();
   const latest = data.news[0];
@@ -143,7 +153,19 @@ export function LandingSections({ data, onRegister }: { readonly data: LandingDa
               {t("tn.home.cta_services")}
             </Link>
           </div>
-          <footer className="mx-auto mt-[16svh] flex max-w-[1240px] flex-wrap items-center justify-between gap-x-8 gap-y-3 border-t border-white/15 pt-6 text-[0.8125rem] text-white/60">
+          <div className="mx-auto mt-[16svh] flex max-w-[1240px] flex-col gap-4">
+            <p className="tn-label text-white/60">{t("tn.landing.sponsors")}</p>
+            <ul className="flex flex-wrap items-center gap-3">
+              {SPONSORS.map((sponsor) => (
+                <li key={sponsor.file} className="grid h-16 place-items-center rounded-2xl bg-white px-4">
+                  {/* Black and white, as the partners' charter asks. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/sponsors/${sponsor.file}.png`} alt={sponsor.name} loading="lazy" decoding="async" className="h-11 w-auto object-contain mix-blend-multiply grayscale" />
+                </li>
+              ))}
+            </ul>
+          </div>
+          <footer className="mx-auto mt-8 flex max-w-[1240px] flex-wrap items-center justify-between gap-x-8 gap-y-3 border-t border-white/15 pt-6 text-[0.8125rem] text-white/60">
             <span className="flex items-center gap-2"><BubbleMark className="h-7" /><BubbleWordmark className="h-4" /></span>
             <span>{t("tn.landing.footer")}</span>
             <span className="flex gap-5">
