@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import type { BackupFileDto, BackupReportDto } from "@/modules/backups/backups.service";
 import type { IntegrityReportDto } from "@/modules/integrity/integrity.service";
 
+import { LoadPanel } from "./load-panel";
+
 function size(bytes: number): string {
   return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} ko` : `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
 }
@@ -81,6 +83,7 @@ export function DataSafetyPanel() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
+      <LoadPanel />
       <section aria-labelledby="integrity-title" className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-5 shadow-panel">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

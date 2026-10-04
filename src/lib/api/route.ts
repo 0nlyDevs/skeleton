@@ -23,7 +23,13 @@ import type { z } from "zod";
 
 import { getAuthContext } from "@/lib/auth/session";
 import { roleIn } from "@/lib/auth/roles";
-import { ForbiddenError, RateLimitedError, UnauthenticatedError } from "@/lib/errors";
+import {
+  ForbiddenError,
+  RateLimitedError,
+  UnauthenticatedError,
+  ServiceUnavailableError,
+} from "@/lib/errors";
+import { enterRequest } from "@/lib/load/monitor";
 import { assertTrustedOrigin } from "@/lib/http/origin";
 import { resolveClientIp, UNKNOWN_IP } from "@/lib/http/client-ip";
 import { env } from "@/lib/env";
@@ -112,7 +118,12 @@ async function run<TBody, TQuery, TParams>(
     path: pathname,
   });
 
+  // F77/F78 — under load, what can wait is refused at once so the essential keeps answering.
+  const load = await enterRequest(pathname);
   try {
+    if (load.shed) {
+      throw new ServiceUnavailableError("Many residents are connected right now. This part is paused for a moment; your requests, alerts and services still work. Try again in a minute.");
+    }
     const ip = resolveClientIp(request.headers, env.trustProxy);
 
     if (!options.skipBurstLimit) {
@@ -186,7 +197,11 @@ async function run<TBody, TQuery, TParams>(
 
     return response;
   } catch (error) {
-    return errorResponse(error, log, requestId, requestLocale(request));
+    const response = errorResponse(error, log, requestId, requestLocale(request));
+    if (load.shed) response.headers.set("Retry-After", "60");
+    return response;
+  } finally {
+    load.leave();
   }
 }
 

@@ -6,6 +6,7 @@ import { AlertWatcher } from "@/components/alerts/alert-watcher";
 import type { CityZoneId } from "@/modules/alerts/city-zones";
 
 import { KeyboardShortcuts } from "./keyboard-shortcuts";
+import { LoadBanner } from "./load-banner";
 import { MobileNav } from "./mobile-nav";
 import { PlaceNav } from "./place-nav";
 import { SecretSetupGuard } from "./secret-setup-guard";
@@ -34,6 +35,7 @@ export function AppShell({
       <div className="mx-auto w-full max-w-[1180px] px-4 pb-28 pt-5 md:pb-12 lg:px-6">
         <PlaceNav signedIn={viewer !== null} />
         <main id="content" className="min-w-0">
+          <LoadBanner />
           {viewer ? <AlertWatcher /> : null}
           {children}
         </main>
