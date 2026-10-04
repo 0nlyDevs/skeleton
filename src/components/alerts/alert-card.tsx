@@ -10,9 +10,9 @@ import type { CityAlertDto } from "@/modules/alerts/alerts.service";
 import { alertTargetsZone, cityAlertScopeLabelKey, type CityZoneId } from "@/modules/alerts/city-zones";
 
 const severityPresentation = {
-  INFORMATION: { Icon: Info, color: "text-blue-700 dark:text-blue-300", border: "border-blue-500/25", fill: "bg-blue-500/10" },
-  WARNING: { Icon: TriangleAlert, color: "text-amber-800 dark:text-amber-300", border: "border-amber-500/30", fill: "bg-amber-500/10" },
-  CRITICAL: { Icon: ShieldAlert, color: "text-red-800 dark:text-red-300", border: "border-red-500/35", fill: "bg-red-500/10" },
+  INFORMATION: { Icon: Info, color: "text-blue-700 dark:text-blue-300", border: "border-blue-500/60 bg-blue-500/[0.06]", fill: "bg-blue-500/15" },
+  WARNING: { Icon: TriangleAlert, color: "text-amber-800 dark:text-amber-300", border: "border-amber-500/80 bg-amber-500/[0.09]", fill: "bg-amber-500 text-black" },
+  CRITICAL: { Icon: ShieldAlert, color: "text-red-800 dark:text-red-300", border: "border-red-500/90 bg-red-500/[0.12]", fill: "bg-red-600 text-white" },
 } as const;
 
 export function AlertCard({
@@ -29,15 +29,15 @@ export function AlertCard({
   const Icon = alert.alert.status === "RESOLVED" ? Check : presentation.Icon;
 
   return (
-    <article className={cn("rounded-2xl border bg-card shadow-panel", presentation.border, alert.alert.status === "RESOLVED" && "opacity-80")}>
+    <article className={cn("alert-card rounded-2xl border border-l-[7px] bg-card shadow-panel", presentation.border, alert.alert.status === "RESOLVED" && "opacity-80")}>
       <Link href={`/alerts/${encodeURIComponent(alert.slug)}`} className="group block rounded-2xl p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
         <div className="flex items-start gap-3">
-          <span className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl", presentation.fill, presentation.color)}>
+          <span className={cn("mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full", presentation.color, presentation.fill)}>
             <Icon className="size-[18px]" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className={cn("text-[0.6875rem] font-semibold", presentation.color)}>
+              <span className={cn("text-[0.75rem] font-bold uppercase tracking-[0.06em]", presentation.color)}>
                 {t(`alerts.severity.${alert.alert.severity}` as MessageKey)}
               </span>
               {viewerZone ? (

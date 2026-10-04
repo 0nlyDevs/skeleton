@@ -80,7 +80,7 @@ export function OfficialMessageBand() {
   };
 
   return (
-    <div className="relative z-[70] flex justify-center border-b-4 border-bead bg-card px-3">
+    <div className="relative z-[70] flex justify-center official-band border-b-4 border-bead px-3">
       <section
         role={fresh ? "alert" : "status"}
         aria-labelledby="official-title"

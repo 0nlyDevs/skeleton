@@ -91,21 +91,21 @@ export function AlertWatcher() {
         <div
           role="alert"
           className={cn(
-            "mb-5 flex items-center gap-3 rounded-full border-2 py-2.5 pl-3 pr-2.5 text-[0.9375rem] shadow-float",
-            urgent.severity === "CRITICAL" ? "border-error bg-card" : "border-warning bg-card",
+            "alert-live mb-5 flex items-center gap-3 rounded-full py-2.5 pl-3 pr-2.5 text-[0.9375rem] font-medium shadow-float",
+            urgent.severity === "CRITICAL" ? "bg-error text-error-foreground" : "bg-warning text-warning-foreground",
           )}
         >
-          <span className={cn("grid size-9 shrink-0 place-items-center rounded-full", urgent.severity === "CRITICAL" ? "bg-error text-error-foreground" : "bg-warning text-warning-foreground")}>{urgent.severity === "CRITICAL" ? <ShieldAlert className="size-5" aria-hidden /> : <TriangleAlert className="size-5" aria-hidden />}</span>
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-black/20">{urgent.severity === "CRITICAL" ? <ShieldAlert className="size-5" aria-hidden /> : <TriangleAlert className="size-5" aria-hidden />}</span>
           <div className="min-w-0 flex-1">
             <p className="truncate">
               <span className="font-semibold">{urgent.title}</span>
-              <span className="hidden text-muted-foreground sm:inline"> · {urgent.summary}</span>
+              <span className="hidden font-normal opacity-90 sm:inline"> · {urgent.summary}</span>
             </p>
           </div>
-          <Button asChild size="sm" variant={urgent.severity === "CRITICAL" ? "destructive" : "secondary"}>
+          <Button asChild size="sm" className="bg-background text-foreground hover:bg-background/90">
             <Link href={`/alerts/${encodeURIComponent(urgent.slug)}`}>{t("alerts.open")}</Link>
           </Button>
-          <button type="button" onClick={() => setBannerHidden(true)} aria-label={t("common.close")} className="grid size-8 place-items-center rounded-full hover:bg-black/5">
+          <button type="button" onClick={() => setBannerHidden(true)} aria-label={t("common.close")} className="grid size-8 place-items-center rounded-full hover:bg-black/15">
             <X className="size-4" aria-hidden />
           </button>
         </div>
