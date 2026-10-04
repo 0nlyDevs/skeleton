@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { useRealtime } from "@/components/providers/realtime-provider";
+import { useFormatters } from "@/hooks/use-formatters";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,6 +29,7 @@ import type { MessageKey } from "@/lib/i18n";
  */
 export function NotificationBell({ className }: { readonly className?: string }) {
   const t = useTranslation();
+  const fmt = useFormatters();
   const router = useRouter();
   const { notifications, unreadCount, loading, markRead, markAllRead } = useRealtime();
 
@@ -94,10 +96,7 @@ export function NotificationBell({ className }: { readonly className?: string })
                   <>
                     <div className="flex items-center gap-2">
                       {!item.read ? (
-                        <span
-                          aria-hidden
-                          className="size-1.5 shrink-0 rounded-full bg-primary"
-                        />
+                        <span aria-hidden className="state-bubble shrink-0 text-bead" data-fill="full" />
                       ) : null}
                       <span
                         className={cn(
@@ -114,7 +113,7 @@ export function NotificationBell({ className }: { readonly className?: string })
                       </p>
                     ) : null}
                     <span className="mt-1 block pl-3.5 text-[0.6875rem] uppercase tracking-wide text-muted-foreground/70">
-                      {t(typeKey)}
+                      {t(typeKey)} · <time dateTime={item.createdAt} className="normal-case tracking-normal">{fmt.relative(item.createdAt)}</time>
                     </span>
                   </>
                 );

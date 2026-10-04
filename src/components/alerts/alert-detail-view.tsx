@@ -30,7 +30,7 @@ export function AlertDetailView({
   const t = useTranslation();
   const fmt = useFormatters();
   const severity = t(`alerts.severity.${alert.alert.severity}` as MessageKey);
-  const mapHref = alert.alert.scope === "ALL" ? "/map" : `/map?zone=${encodeURIComponent(alert.alert.scope)}`;
+  const mapHref = alert.alert.scope === "ALL" ? "/city-map" : `/city-map?zone=${encodeURIComponent(alert.alert.scope)}`;
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col gap-5">

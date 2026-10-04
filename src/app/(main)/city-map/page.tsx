@@ -4,6 +4,7 @@ import { CityMapView, type MapService } from "@/components/city-map/city-map-vie
 import { getAuthContext } from "@/lib/auth/session";
 import { getLocale } from "@/lib/i18n/server";
 import { getZoneStatuses, viewerZone } from "@/modules/alerts/alerts.service";
+import { CITY_ZONE_IDS, type CityZoneId } from "@/modules/alerts/city-zones";
 import { listServices } from "@/modules/city-services/city-services.service";
 
 export const metadata: Metadata = { title: "Carte de la cité" };
@@ -13,7 +14,7 @@ export const metadata: Metadata = { title: "Carte de la cité" };
  * home, and every service that receives people (emergency first). Public;
  * `?service=<slug>` opens one service, `?layer=emergency` the emergency view.
  */
-export default async function CityMapPage({ searchParams }: { readonly searchParams: Promise<{ service?: string; layer?: string }> }) {
+export default async function CityMapPage({ searchParams }: { readonly searchParams: Promise<{ service?: string; layer?: string; zone?: string }> }) {
   const context = await getAuthContext();
   const viewer = context?.user ?? null;
   const locale = await getLocale();
@@ -39,6 +40,7 @@ export default async function CityMapPage({ searchParams }: { readonly searchPar
   const focus = {
     ...(params.service && services.some((service) => service.slug === params.service) ? { service: params.service } : {}),
     ...(params.layer === "emergency" ? { layer: "emergency" as const } : {}),
+    ...(params.zone && (CITY_ZONE_IDS as readonly string[]).includes(params.zone) ? { zone: params.zone as CityZoneId } : {}),
   };
   return (
     <div className="mx-auto w-full max-w-[1240px]">

@@ -1,3 +1,5 @@
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { getServerDictionary } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -14,8 +16,10 @@ export default async function EditPage({ params }: Props) {
   const { user } = await requirePageAuth(`/pages/${slug}/edit`);
   const page = await getPageForEditing(slug.toLowerCase(), user).catch(() => null);
   if (!page) notFound();
+  const { t } = await getServerDictionary();
   return (
-    <div className="mx-auto w-full max-w-[1200px]">
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-4">
+      <Breadcrumbs label={t("tn.breadcrumb.label")} items={[{ label: t("tn.place.community"), href: "/feed" }, { label: t("nav.pages"), href: "/pages" }, { label: t("tn.breadcrumb.edit") }]} />
       <PageEditor initial={page} />
     </div>
   );
