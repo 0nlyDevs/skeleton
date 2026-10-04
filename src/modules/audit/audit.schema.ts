@@ -66,6 +66,8 @@ export const auditActions = {
   appointmentChanged: "appointment.changed",
   webcupTriaged: "webcup.triaged",
   transportChanged: "transport.changed",
+  backupVerified: "backup.verified",
+  trackingExported: "export.created",
   pageCreated: "page.created",
   pageUpdated: "page.updated",
   pageDeleted: "page.deleted",
@@ -87,7 +89,7 @@ export const ADMIN_ACTION_CATEGORIES = {
   accounts: [auditActions.assistedAccountCreated, auditActions.userBanned, auditActions.userUnbanned, auditActions.userRoleChanged, auditActions.userSessionsRevoked, auditActions.userDeleted],
   moderation: [auditActions.reportResolved, auditActions.reportDismissed, auditActions.postModerated, auditActions.commentDeleted],
   feed: [auditActions.webcupTriaged],
-  settings: [auditActions.featureFlagToggled],
+  settings: [auditActions.featureFlagToggled, auditActions.backupVerified, auditActions.trackingExported],
 } as const satisfies Record<string, readonly AuditAction[]>;
 
 export type AdminActionCategory = keyof typeof ADMIN_ACTION_CATEGORIES;

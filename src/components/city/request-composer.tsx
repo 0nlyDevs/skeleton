@@ -47,6 +47,22 @@ export function RequestComposer({
 
   return (
     <div className={cn("flex flex-col gap-2 rounded-2xl border bg-card p-3 shadow-panel", internal ? "border-warning/60" : "border-border/70")}>
+      {/* F84 — ready-made answers: one tap fills the reply, the agent adjusts and sends. */}
+      {allowInternal && !internal ? (
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t("tn.quick.label")}>
+          <span className="text-[0.75rem] font-medium text-muted-foreground">{t("tn.quick.label")}</span>
+          {(["received", "need_info", "planned", "done"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setBody(t(`tn.quick.${key}.text`))}
+              className="rounded-full border border-border bg-surface px-2.5 py-1 text-[0.75rem] font-medium hover:bg-surface-muted"
+            >
+              {t(`tn.quick.${key}.label`)}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <label htmlFor="request-reply" className="sr-only">{t("tn.request.reply")}</label>
       <Textarea
         id="request-reply"

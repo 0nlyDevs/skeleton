@@ -32,6 +32,8 @@ export const createCityRequestSchema = z
     /** Position on the Terra Nova map (1000 × 640); the district is derived server-side. */
     mapX: z.number().int().min(0).max(1000).nullable().optional(),
     mapY: z.number().int().min(0).max(640).nullable().optional(),
+    /** F81 — the form's token and its hidden trap field (see lib/security/form-guard). */
+    guard: z.object({ token: z.string().max(200).nullable().optional(), trap: z.string().max(200).optional() }).strict().optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -43,6 +45,11 @@ export const createCityRequestSchema = z
     }
   });
 export type CreateCityRequestInput = z.infer<typeof createCityRequestSchema>;
+
+export const receiptCheckQuerySchema = z.object({
+  reference: z.string().trim().toUpperCase().regex(/^TN-\d{6}$/, "Invalid reference."),
+  code: z.string().trim().min(4).max(12),
+});
 
 export const cityRequestRefParamSchema = z.object({
   reference: z.string().trim().toUpperCase().regex(/^TN-\d{6}$/, "Invalid reference."),
