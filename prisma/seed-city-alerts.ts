@@ -1,6 +1,7 @@
 /**
  * Districts for the test accounts and the city alerts of the demo: a general
- * message to everyone, rising water in the south and a heat wave in the north.
+ * message to everyone, rising water in the south, a heat wave and a power
+ * cut in the north.
  *
  * Idempotent: a district is only set on an account that has none, and each
  * alert is created once (by slug).
@@ -50,6 +51,17 @@ const ALERTS = [
     scope: "NORTH",
     severity: "CRITICAL",
     hoursAgo: 0.5,
+  },
+  {
+    // F101 — the newest alert: it leads the banner, the home and the map for the north.
+    slug: "panne-electrique-secteur-nord",
+    title: "Panne électrique dans le secteur nord",
+    summary: "Le courant est coupé à Verdant Basin et Ember Wastes. Les équipes sont sur place ; retour prévu dans la soirée.",
+    body:
+      "Une panne du réseau électrique touche le secteur nord (Verdant Basin et Ember Wastes). Les équipes de l'énergie sont sur place.\n\n• Gardez une lampe à portée de main et économisez la batterie de votre téléphone.\n• N'ouvrez pas le réfrigérateur sans nécessité : il garde le froid plusieurs heures porte fermée.\n• Débranchez les appareils sensibles pour éviter une surtension au retour du courant.\n• Si vous dépendez d'un appareil médical électrique, rendez-vous au centre de santé ou appelez la protection civile.\n• N'utilisez pas les ascenseurs. Prenez des nouvelles de vos voisins âgés ou isolés.\n• Les abris de quartier restent alimentés et ouverts pour recharger un téléphone.",
+    scope: "NORTH",
+    severity: "CRITICAL",
+    hoursAgo: 0.05,
   },
 ] as const;
 
