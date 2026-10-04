@@ -1,3 +1,4 @@
+import { PlainExplain } from "@/components/city/plain-explain";
 import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -79,6 +80,7 @@ export default async function AnnouncementPage({ params }: { readonly params: Pr
 
       <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-panel">
         <p className="prose-body text-[0.9375rem]">{announcement.body}</p>
+        <PlainExplain text={announcement.body} className="mt-3" />
       </div>
     </article>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ServiceFinder } from "@/components/city/service-finder";
 import { EmergencyStrip } from "@/components/city/emergency-strip";
 import { ContextTip } from "@/components/feedback/context-tip";
 import { DisruptedServices } from "@/components/city/disrupted-services";
@@ -24,6 +25,8 @@ export default async function ServicesPage({ searchParams }: { readonly searchPa
         <h1 className="text-2xl font-semibold tracking-tight">{t("tn.services.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("tn.services.subtitle")}</p>
       </header>
+      <ServiceFinder />
+
       <ContextTip id="services">{t("tn.tip.services")}</ContextTip>
 
       <EmergencyStrip
