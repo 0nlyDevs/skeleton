@@ -1,4 +1,4 @@
-import { apiRoute } from "@/lib/api/route";
+import { apiRoute, publicRoute } from "@/lib/api/route";
 import { jsonOk } from "@/lib/api/response";
 
 import {
@@ -6,8 +6,11 @@ import {
   cityRequestRefParamSchema,
   createCityRequestSchema,
   listCityRequestsQuerySchema,
+  listReportsQuerySchema,
+  similarReportsQuerySchema,
   updateCityRequestSchema,
 } from "./city-requests.schema";
+import { listReports, similarReports, supportReport, withdrawReportSupport } from "./city-requests.reports";
 import { addCityRequestMessage, createCityRequest, getCityRequest, listCityRequests, updateCityRequest } from "./city-requests.service";
 
 export const listCityRequestsRoute = apiRoute({
@@ -36,4 +39,27 @@ export const addCityRequestMessageRoute = apiRoute({
   params: cityRequestRefParamSchema,
   body: cityRequestMessageSchema,
   handler: async ({ params, body, auth, ip }) => jsonOk({ data: await addCityRequestMessage(params.reference, body, auth.user, ip) }),
+});
+
+/** F52 — the public board of reported problems (no name, no message). */
+export const listReportsRoute = publicRoute({
+  query: listReportsQuerySchema,
+  handler: async ({ query, auth }) => jsonOk(await listReports(query, auth?.user ?? null)),
+});
+
+/** F52 — open reports near a new one, to offer support instead of a duplicate. */
+export const similarReportsRoute = publicRoute({
+  query: similarReportsQuerySchema,
+  handler: async ({ query, auth }) => jsonOk({ data: await similarReports(query, auth?.user ?? null) }),
+});
+
+/** F52 — "Je suis aussi concerné": back a report, once per resident. */
+export const supportReportRoute = apiRoute({
+  params: cityRequestRefParamSchema,
+  handler: async ({ params, auth, ip }) => jsonOk({ data: await supportReport(params.reference, auth.user, ip) }),
+});
+
+export const withdrawReportSupportRoute = apiRoute({
+  params: cityRequestRefParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await withdrawReportSupport(params.reference, auth.user) }),
 });
