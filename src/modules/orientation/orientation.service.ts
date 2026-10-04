@@ -96,7 +96,10 @@ export async function orient(rawText: string, locale: Locale, allowModel = false
   const scored = scoreServices(text, pool);
   const urgent = looksUrgent(text);
   const top = scored.slice(0, 3);
-  const confident = top.length > 0 && (top[0]?.score ?? 0) >= 2.2;
+  // One clear leader is enough, even for a short sentence with a typing mistake.
+  const best = top[0]?.score ?? 0;
+  const second = top[1]?.score ?? 0;
+  const confident = top.length > 0 && (best >= 2.2 || (best >= 1.3 && best >= second * 1.4));
 
   const ai = confident ? await askModel(allowModel, text, top.map((entry) => services.find((service) => service.slug === entry.slug)).filter((service): service is NonNullable<typeof service> => Boolean(service)), locale) : null;
   // The model's pick goes first when it is among the candidates.

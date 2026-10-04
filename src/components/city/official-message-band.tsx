@@ -84,7 +84,7 @@ export function OfficialMessageBand() {
       <section
         role={fresh ? "alert" : "status"}
         aria-labelledby="official-title"
-        className="flex w-full max-w-[1180px] flex-col gap-2 px-1 pb-3 pt-3 sm:px-3"
+        className="flex w-full max-w-[1480px] flex-col gap-2 px-1 pb-3 pt-3 sm:px-3"
       >
         <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.75rem] font-semibold text-primary">
           <Landmark className="size-3.5" aria-hidden />

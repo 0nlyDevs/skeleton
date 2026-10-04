@@ -487,7 +487,8 @@ export class FuturisticAuthScene {
       earth.rotation.z = 0.41;
       this.realEarthMesh = earth;
       this.realNovaMesh = nova;
-      nova.visible = false;
+      nova.visible = this.state.mirror >= 0.5;
+      earth.visible = this.state.mirror < 0.5;
 
       // Swap out the procedural sphere
       const procedural = this.bigPlanetGroup.getObjectByName("proceduralGlobe");
@@ -524,6 +525,12 @@ export class FuturisticAuthScene {
     }
 
     const s = 1 - 2 * this.state.mirror;
+    // Signing in looks at Earth; joining looks at Terra Nova, the orange planet: they swap as the scene turns.
+    if (this.realEarthMesh && this.realNovaMesh) {
+      const joining = this.state.mirror >= 0.5;
+      this.realEarthMesh.visible = !joining;
+      this.realNovaMesh.visible = joining;
+    }
     this.camera.fov = BASE_FOV + this.state.warp * 42;
     this.camera.updateProjectionMatrix();
     this.keyLight.position.set(4 * s, 4, 5);

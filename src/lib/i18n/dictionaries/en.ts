@@ -981,7 +981,7 @@ export const en: Dictionary = {
 
   // --- Assistant ---
   "ai.title": "AI assistant",
-  "ai.subtitle": "Server-side proxy: the API key never leaves the server",
+  "ai.subtitle": "Ask about the city's services, your procedures or life in the city.",
   "ai.placeholder": "Ask your question…",
   "ai.send": "Send",
   "ai.thinking": "The assistant is thinking…",

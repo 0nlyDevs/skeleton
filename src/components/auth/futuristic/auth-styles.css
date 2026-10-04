@@ -763,3 +763,16 @@
   background: #e65100;
   color: #fff7f0;
 }
+
+/* The district list opens in the theme's own colours, never white on a dark page. */
+.fa-field select {
+  color-scheme: light;
+}
+.dark .fa-field select {
+  color-scheme: dark;
+  color: var(--fa-ink);
+}
+.fa-field select option {
+  background: var(--fa-ground-b);
+  color: var(--fa-ink);
+}
