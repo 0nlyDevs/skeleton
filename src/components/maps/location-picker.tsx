@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -95,9 +96,14 @@ export function LocationPicker({
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={q} onChange={(event) => setQ(event.target.value)} placeholder={t("place.search")} className="pl-9" autoFocus />
           </label>
-          <Button variant="secondary" onClick={locate} disabled={busy} title={t("place.my_position")} aria-label={t("place.my_position")}>
-            <Crosshair />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="secondary" onClick={locate} disabled={busy} aria-label={t("place.my_position")}>
+                <Crosshair />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("place.my_position")}</TooltipContent>
+          </Tooltip>
         </div>
         {error ? <p role="alert" className="text-[0.7812rem] text-error">{error}</p> : null}
         {results.length > 0 ? (

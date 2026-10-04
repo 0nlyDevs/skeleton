@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { ServiceAvailabilityBadge } from "@/components/city/service-availability-notice";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ServiceAvailabilityDto } from "@/modules/city-services/service-availability";
 import Link from "@/components/ui/link";
 import { useSocket } from "@/hooks/use-socket";
@@ -532,9 +533,14 @@ export function CityMapView({
       {/* Map controls, bottom right. */}
       <div className="absolute bottom-6 right-3 flex flex-col gap-2">
         {home ? (
-          <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")} title={t("alerts.map.home_here")}>
-            <LocateFixed className="size-5 text-[#1a73e8]" aria-hidden />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")}>
+                <LocateFixed className="size-5 text-[#1a73e8]" aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t("alerts.map.home_here")}</TooltipContent>
+          </Tooltip>
         ) : null}
         {/* Camera controls only exist for the 3D view. */}
         {mode === "3d" ? (
@@ -551,9 +557,14 @@ export function CityMapView({
             >
               {flat ? "3D" : "2D"}
             </button>
-            <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => sceneRef.current?.resetNorth()} aria-label={t("alerts.map.north")} title={t("alerts.map.north")}>
-              <Compass className="size-5" aria-hidden />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => sceneRef.current?.resetNorth()} aria-label={t("alerts.map.north")}>
+                  <Compass className="size-5" aria-hidden />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{t("alerts.map.north")}</TooltipContent>
+            </Tooltip>
             <div className="flex flex-col overflow-hidden rounded-xl shadow-[0_1px_4px_rgb(0_0_0/0.3)]">
               <button type="button" className={control} onClick={() => sceneRef.current?.zoom(0.7)} aria-label={t("alerts.map.zoom_in")}>
                 <Plus className="size-5" aria-hidden />

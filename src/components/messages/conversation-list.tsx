@@ -8,6 +8,7 @@ import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePresence } from "@/hooks/use-presence";
 import { matchesSearch } from "@/lib/search";
@@ -45,12 +46,22 @@ export function ConversationList({
       <div className="flex items-center justify-between gap-2 px-4 pt-4">
         <h1 className="text-[1.25rem] font-bold tracking-tight">{t("messages.title")}</h1>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={onNewGroup} aria-label={t("messages.new_group")} title={t("messages.new_group")}>
-            <UsersRound />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onNew} aria-label={t("messages.new")} title={t("messages.new")}>
-            <PenSquare />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={onNewGroup} aria-label={t("messages.new_group")}>
+                <UsersRound />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("messages.new_group")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={onNew} aria-label={t("messages.new")}>
+                <PenSquare />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("messages.new")}</TooltipContent>
+          </Tooltip>
         </div>
       </div>
       <label className="relative mx-4 mt-3 block">
