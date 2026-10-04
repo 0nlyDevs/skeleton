@@ -10,6 +10,8 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Describe what you need in a few words.": "Décrivez votre besoin en quelques mots.",
+  "There is nothing to explain.": "Il n'y a rien à expliquer.",
   "Only city agents can see the activity dashboard.": "Seuls les agents de la ville peuvent voir le tableau d'activité.",
   "Only city agents can see grouped requests.": "Seuls les agents de la ville peuvent voir les demandes regroupées.",
   "Only administrators can publish city projects.": "Seuls les administrateurs peuvent publier un projet de la ville.",

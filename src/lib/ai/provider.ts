@@ -27,6 +27,17 @@ import { AI_SYSTEM_PROMPT, type ChatMessage, type ToolCall, type ToolDefinition 
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
+/**
+ * Reasoning models (the Poolside "laguna" family, for one) spend their whole
+ * token budget thinking and answer with an empty message, in 30 seconds or
+ * more. A portal assistant needs the short answer, so thinking is switched
+ * off for them with the provider's own switch; other providers never see it.
+ */
+function thinkingOff(): Record<string, unknown> {
+  const base = env.AI_BASE_URL ?? "";
+  return base.includes("poolside") || process.env.AI_DISABLE_THINKING === "1" ? { chat_template_kwargs: { enable_thinking: false } } : {};
+}
+
 export interface CompletionRequest {
   readonly messages: readonly ChatMessage[];
   /** Server-defined, read-only tools the model may ask the server to run. */
@@ -127,6 +138,7 @@ async function callModel(
       messages: request.messages,
       max_tokens: request.maxTokens ?? 600,
       temperature: request.temperature ?? 0.4,
+      ...thinkingOff(),
       ...(request.tools && request.tools.length > 0 ? { tools: request.tools, tool_choice: "auto" } : {}),
     }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -175,7 +187,8 @@ export async function complete(request: CompletionRequest): Promise<CompletionRe
   }
 
   const primary = env.AI_MODEL;
-  const fallback = env.AI_FALLBACK_MODEL;
+  // A smaller sibling of the primary model answers when the primary is down.
+  const fallback = env.AI_FALLBACK_MODEL || (primary === "poolside/laguna-s-2.1" ? "poolside/laguna-xs-2.1" : "");
 
   try {
     return await callModel(primary, request);

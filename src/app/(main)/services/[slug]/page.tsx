@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AnnouncementCard } from "@/components/city/announcement-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotFoundPanel } from "@/components/feedback/not-found-panel";
+import { PlainExplain } from "@/components/city/plain-explain";
 import { OpenStateLine, WeekHours } from "@/components/city/opening-hours";
 import { ServiceFeedbackSection } from "@/components/city/service-feedback-section";
 import { ServiceIcon } from "@/components/city/service-icon";
@@ -110,11 +111,13 @@ export default async function ServicePage({ params }: { readonly params: Promise
         <div lang={service.contentLocale} className="flex flex-col gap-5">
           <section className="rounded-2xl border border-border/70 bg-card p-5">
             <p className="prose-body text-[0.9375rem]">{service.description}</p>
+            <PlainExplain text={service.description} className="mt-3" />
           </section>
           {service.howTo ? (
             <section className="rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="how-to">
               <h2 id="how-to" className="mb-2 font-semibold">{t("tn.services.how_to")}</h2>
               <p className="prose-body text-[0.9375rem]">{service.howTo}</p>
+              <PlainExplain text={service.howTo} className="mt-3" />
             </section>
           ) : null}
           {/* F76 — say how it went, and see what happened to what you said. */}
