@@ -24,6 +24,7 @@ import { recordAudit } from "../audit/audit.service";
 import { createNotification, notifyInBackground } from "../notifications/notifications.service";
 import { statusNotice } from "./city-requests.status-notice";
 import { decryptBody, toSummaryDto, type CityRequestDto, type CityRequestSummaryDto } from "./city-requests.dto";
+import { reportSupporters } from "./city-requests.reports";
 import { ISSUE_SERVICE, type CreateCityRequestInput, type ListCityRequestsQuery, type UpdateCityRequestInput } from "./city-requests.schema";
 
 const summaryInclude = {
@@ -153,13 +154,28 @@ export async function listCityRequests(query: ListCityRequestsQuery, actor: Auth
     ...scope,
     ...status,
     ...(query.service ? { service: { slug: query.service } } : {}),
+    ...(query.zone ? { zone: query.zone } : {}),
+    ...(query.issueType ? { issueType: query.issueType } : {}),
     ...(query.q ? { OR: [{ subject: { contains: query.q } }, { reference: { contains: query.q.toUpperCase() } }] } : {}),
   };
+  // F79/F80 — residents sort by date; agents can also sort by support or by
+  // the city's own ranking (open first, urgent first, oldest waiting first).
+  const agentOrder =
+    query.sort === "recent"
+      ? [{ createdAt: "desc" as const }]
+      : query.sort === "supported"
+        ? [{ supportCount: "desc" as const }, { createdAt: "desc" as const }]
+        : [{ status: "asc" as const }, { priority: "desc" as const }, { createdAt: "asc" as const }];
   const [rows, total, grouped] = await Promise.all([
     prisma.cityRequest.findMany({
       where,
       include: summaryInclude,
-      orderBy: query.scope === "mine" ? [{ updatedAt: "desc" }] : [{ status: "asc" }, { priority: "desc" }, { createdAt: "asc" }],
+      orderBy:
+        query.scope === "mine"
+          ? query.sort === "supported"
+            ? [{ supportCount: "desc" as const }, { updatedAt: "desc" as const }]
+            : [{ updatedAt: "desc" as const }]
+          : agentOrder,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
     }),
@@ -342,6 +358,20 @@ export async function updateCityRequest(reference: string, input: UpdateCityRequ
         }),
         { cityRequestId: row.id },
       );
+      // F52 — a resident who backed the report hears about the change too.
+      for (const userId of await reportSupporters(row.id)) {
+        if (userId === row.citizenId) continue;
+        notifyInBackground(
+          createNotification({
+            userId,
+            type: "CITY_REQUEST",
+            title: notice.title,
+            body: notice.body,
+            link: "/reports",
+          }),
+          { cityRequestId: row.id },
+        );
+      }
     }
   }
   return getCityRequest(reference, actor);

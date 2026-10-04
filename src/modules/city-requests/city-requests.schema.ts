@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CITY_ZONE_IDS } from "@/modules/alerts/city-zones";
+
 export const CITY_REQUEST_STATUSES = ["NEW", "IN_PROGRESS", "WAITING_CITIZEN", "RESOLVED", "CLOSED"] as const;
 export const CITY_REQUEST_PRIORITIES = ["LOW", "NORMAL", "HIGH", "URGENT"] as const;
 
@@ -50,11 +52,34 @@ export const listCityRequestsQuerySchema = z.object({
   scope: z.enum(["mine", "all", "assigned", "unassigned"]).default("mine"),
   status: z.enum([...CITY_REQUEST_STATUSES, "OPEN", "DONE"]).optional(),
   service: z.string().trim().max(80).optional(),
+  /** F79 — filter by district and by kind of reported problem. */
+  zone: z.enum(CITY_ZONE_IDS).optional(),
+  issueType: z.enum(ISSUE_TYPES).optional(),
+  /** F79/F80 — newest first, most supported, or the agents' own ranking. */
+  sort: z.enum(["recent", "supported", "priority"]).default("recent"),
   q: z.string().trim().max(80).optional(),
   page: z.coerce.number().int().min(1).max(500).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 export type ListCityRequestsQuery = z.infer<typeof listCityRequestsQuerySchema>;
+
+/** F52/F79 — the public board of reported problems. */
+export const listReportsQuerySchema = z.object({
+  issueType: z.enum(ISSUE_TYPES).optional(),
+  zone: z.enum(CITY_ZONE_IDS).optional(),
+  status: z.enum(["OPEN", "DONE"]).optional(),
+  sort: z.enum(["recent", "supported"]).default("supported"),
+  page: z.coerce.number().int().min(1).max(500).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type ListReportsQuery = z.infer<typeof listReportsQuerySchema>;
+
+/** F52 — reports already open near a new one, offered for support instead. */
+export const similarReportsQuerySchema = z.object({
+  issueType: z.enum(ISSUE_TYPES).optional(),
+  zone: z.enum(CITY_ZONE_IDS).optional(),
+});
+export type SimilarReportsQuery = z.infer<typeof similarReportsQuerySchema>;
 
 export const updateCityRequestSchema = z
   .object({
