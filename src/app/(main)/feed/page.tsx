@@ -22,7 +22,8 @@ export default async function FeedPage() {
 
   return (
     <div className="mx-auto w-full max-w-[680px]">
-      <div className="mb-4 empty:hidden">
+      {/* On a wide screen the right column already lists the alerts. */}
+      <div className="mb-4 empty:hidden xl:hidden">
         <AlertFeedHighlights initial={alerts.data} viewerZone={zone} />
       </div>
       <FeedView

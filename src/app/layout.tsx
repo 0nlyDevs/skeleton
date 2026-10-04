@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 
-import { SpaceBackdrop } from "@/components/layout/space-backdrop";
 import { OfficialMessageBand } from "@/components/city/official-message-band";
 import { AppProviders } from "@/components/providers/app-providers";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -99,7 +98,6 @@ export default async function RootLayout({
           {...(nonce ? { nonce } : {})}
         >
           {/* F73 — the High Council's official message reaches every screen. */}
-          <SpaceBackdrop />
           <OfficialMessageBand />
           {children}
         </AppProviders>

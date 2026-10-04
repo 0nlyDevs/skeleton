@@ -6,6 +6,8 @@ import { Suspense } from "react";
 
 import { Brand } from "@/components/layout/brand";
 import { DisplayMenu } from "@/components/layout/display-menu";
+import { EcoToggle } from "@/components/layout/eco-toggle";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -82,6 +84,8 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
                   </Link>
                 );
               })}
+              <ThemeToggle className="hidden sm:grid" />
+              <EcoToggle className="hidden sm:grid" />
               <DisplayMenu />
               <NotificationBell />
               <AccountPanel viewer={viewer} zone={zone} />
@@ -89,6 +93,8 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
           ) : (
             <>
               <LocaleToggle className="hidden sm:inline-flex" />
+              <ThemeToggle />
+              <EcoToggle className="hidden sm:grid" />
               <DisplayMenu />
               <Button asChild variant="ghost" size="sm">
                 <Link href="/login">{t("nav.sign_in")}</Link>
