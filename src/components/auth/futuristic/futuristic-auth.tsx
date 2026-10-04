@@ -1340,7 +1340,7 @@ export function FuturisticAuth({
                   </div>
 
                   <button className="fa-btn fa-anim" type="submit" disabled={forgotSubmitting}>
-                    <span>{forgotSubmitting ? <Spinner className="size-4" /> : "Envoyer le lien"}</span>
+                    <span>{forgotSubmitting ? <Spinner className="size-4" /> : t("auth.forgot.submit")}</span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M5 12h14M13 6l6 6-6 6" />
                     </svg>
@@ -1478,7 +1478,7 @@ export function FuturisticAuth({
                 </div>
 
                 <button className="fa-btn fa-anim" type="submit" disabled={totpSubmitting || totpCode.length < 6}>
-                  <span>{totpSubmitting ? <Spinner className="size-4" /> : "Valider"}</span>
+                  <span>{totpSubmitting ? <Spinner className="size-4" /> : t("auth.twofa.submit")}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
