@@ -98,6 +98,16 @@ export function TransportsBoard({ lines }: { readonly lines: readonly TransportL
   }, [lines, query, favorites]);
   const favoriteCodes = lines.filter((line) => favorites.includes(line.id)).map((line) => line.code);
 
+  const favoriteLines = matching.filter((line) => favorites.includes(line.id));
+  const otherLines = matching.filter((line) => !favorites.includes(line.id));
+  const lineCard = (line: (typeof lines)[number]) => (
+    <Card key={line.id}><CardContent className="flex flex-col gap-4 p-5">
+          <div className="flex flex-wrap items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-primary text-lg font-bold text-primary-foreground"><BusFront aria-hidden /></span><div className="min-w-0 flex-1"><h2 className="font-semibold">{line.code} · {line.name}</h2>{line.description ? <p className="text-sm text-muted-foreground">{line.description}</p> : null}<p className="text-sm text-muted-foreground">{line.stops.join("  ·  ")}</p></div><button type="button" onClick={() => toggleFavorite(line.id)} aria-pressed={favorites.includes(line.id)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-surface-muted" aria-label={favorites.includes(line.id) ? t("tn.transports.favorite_remove_line", { code: line.code }) : t("tn.transports.favorite_add_line", { code: line.code })}><Heart className={`size-4 ${favorites.includes(line.id) ? "fill-current text-error" : ""}`} aria-hidden /><span className="hidden sm:inline">{t("tn.transports.favorite_short")}</span></button></div>
+          <div className="grid gap-3 rounded-xl bg-surface-muted/50 p-4 sm:grid-cols-[1fr_auto] sm:items-center"><div><p className="mb-2 flex items-center gap-2 text-sm font-medium"><Clock3 className="size-4" aria-hidden />{t("tn.transports.next_departures")}</p><div className="flex flex-wrap gap-2">{current === null ? <span className="text-sm text-muted-foreground">{t("tn.transports.loading_times")}</span> : nextTimes(line, current).length === 0 ? <span className="text-sm text-muted-foreground">{t("tn.transports.no_more_departures")}</span> : nextTimes(line, current).map((time, index) => <Badge key={time} variant={index === 0 ? "primary" : "neutral"}>{time}</Badge>)}</div></div><p className="text-sm text-muted-foreground">{t("tn.transports.frequency_interval", { min: line.headwayMinutes })}<br />{t("tn.transports.hours", { first: line.firstDeparture, last: line.lastDeparture })}<br />{line.serviceDays}</p></div>
+          {line.alert ? <p className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm"><Siren className="size-4 shrink-0" aria-hidden />{line.alert}</p> : null}
+        </CardContent></Card>
+  );
+
   // A plain wrapper: the app shell already provides the page's single <main>.
   return <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
     <header className="flex flex-col gap-1"><p className="text-sm font-medium text-primary">{t("tn.transports.status.title")}</p><h1 className="text-3xl font-semibold tracking-tight">{t("tn.transports.title")}</h1><p className="max-w-2xl text-sm text-muted-foreground">{t("tn.transports.subtitle")}</p></header>
@@ -117,11 +127,14 @@ export function TransportsBoard({ lines }: { readonly lines: readonly TransportL
       <label className="relative block"><span className="sr-only">{t("tn.transports.search_label")}</span><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden /><Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("tn.transports.search_stop")} className="h-12 pl-10" /></label>
       {favoriteCodes.length > 0 ? <p className="text-sm text-muted-foreground">{t("tn.transports.favorite_lines", { lines: favoriteCodes.join(", ") })}</p> : null}
       <section aria-label={t("tn.transports.next_departures")} className="grid gap-4">
-        {matching.map((line) => <Card key={line.id}><CardContent className="flex flex-col gap-4 p-5">
-          <div className="flex flex-wrap items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-primary text-lg font-bold text-primary-foreground"><BusFront aria-hidden /></span><div className="min-w-0 flex-1"><h2 className="font-semibold">{line.code} · {line.name}</h2>{line.description ? <p className="text-sm text-muted-foreground">{line.description}</p> : null}<p className="text-sm text-muted-foreground">{line.stops.join("  ·  ")}</p></div><button type="button" onClick={() => toggleFavorite(line.id)} aria-pressed={favorites.includes(line.id)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-surface-muted" aria-label={favorites.includes(line.id) ? t("tn.transports.favorite_remove_line", { code: line.code }) : t("tn.transports.favorite_add_line", { code: line.code })}><Heart className={`size-4 ${favorites.includes(line.id) ? "fill-current text-error" : ""}`} aria-hidden /><span className="hidden sm:inline">{t("tn.transports.favorite_short")}</span></button></div>
-          <div className="grid gap-3 rounded-xl bg-surface-muted/50 p-4 sm:grid-cols-[1fr_auto] sm:items-center"><div><p className="mb-2 flex items-center gap-2 text-sm font-medium"><Clock3 className="size-4" aria-hidden />{t("tn.transports.next_departures")}</p><div className="flex flex-wrap gap-2">{current === null ? <span className="text-sm text-muted-foreground">{t("tn.transports.loading_times")}</span> : nextTimes(line, current).length === 0 ? <span className="text-sm text-muted-foreground">{t("tn.transports.no_more_departures")}</span> : nextTimes(line, current).map((time, index) => <Badge key={time} variant={index === 0 ? "primary" : "neutral"}>{time}</Badge>)}</div></div><p className="text-sm text-muted-foreground">{t("tn.transports.frequency_interval", { min: line.headwayMinutes })}<br />{t("tn.transports.hours", { first: line.firstDeparture, last: line.lastDeparture })}<br />{line.serviceDays}</p></div>
-          {line.alert ? <p className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm"><Siren className="size-4 shrink-0" aria-hidden />{line.alert}</p> : null}
-        </CardContent></Card>)}
+        {favoriteLines.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            <h2 className="flex items-center gap-2 px-1 text-lg font-semibold"><Heart className="size-4 fill-current text-error" aria-hidden />{t("tn.transports.favorites_title")}</h2>
+            {favoriteLines.map(lineCard)}
+            {otherLines.length > 0 ? <h2 className="px-1 pt-2 text-lg font-semibold">{t("tn.transports.all_lines")}</h2> : null}
+          </div>
+        ) : null}
+        {otherLines.map(lineCard)}
         {matching.length === 0 ? <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{t("tn.transports.no_results")}</p> : null}
       </section>
     </>}

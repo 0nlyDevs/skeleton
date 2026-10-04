@@ -1,3 +1,5 @@
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { getServerDictionary } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -20,11 +22,14 @@ export default async function ProfilePage({ params }: PageProps) {
   const viewer = context?.user ?? null;
   const profile = await getPublicProfile(decodeURIComponent(username), viewer).catch(() => null);
   if (!profile) notFound();
+  const { t } = await getServerDictionary();
 
   const initial = await listFeed({ authorId: profile.id, limit: 10, scope: "all" }, viewer);
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col gap-4">
+      {/* The way back to where the profile was reached from. */}
+      <Breadcrumbs label={t("tn.breadcrumb.label")} items={[{ label: t("tn.place.community"), href: "/feed" }, { label: t("nav.feed"), href: "/feed" }, { label: profile.name }]} />
       <ProfileHeader profile={profile} signedIn={viewer !== null} />
       <FeedView
         initial={initial}
