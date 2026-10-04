@@ -8,6 +8,7 @@
   },
   "scripts": {
     "eco:audit": "node scripts/eco-audit.mjs",
+    "load:test": "node scripts/load-test.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:next": "next dev",
     "build": "node scripts/migrate-on-build.mjs && prisma generate && NODE_OPTIONS=--max-old-space-size=1024 next build --webpack && npm run build:server && node scripts/publish-server.mjs",

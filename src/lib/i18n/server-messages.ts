@@ -10,6 +10,7 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Many residents are connected right now. This part is paused for a moment; your requests, alerts and services still work. Try again in a minute.": "Beaucoup d'habitants sont connectés en ce moment. Cette partie est en pause un instant ; vos demandes, les alertes et les services fonctionnent toujours. Réessayez dans une minute.",
   "That was very fast. Wait a few seconds, then send again.": "C'était très rapide. Attendez quelques secondes, puis envoyez à nouveau.",
   "This form stayed open too long. Reload the page, then send again.": "Ce formulaire est resté ouvert trop longtemps. Rechargez la page, puis envoyez à nouveau.",
   "We could not check this form. Reload the page, then send again.": "Nous n'avons pas pu vérifier ce formulaire. Rechargez la page, puis envoyez à nouveau.",
