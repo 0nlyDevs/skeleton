@@ -150,26 +150,37 @@ export async function acceptAppointmentRequest(reference: string, input: Appoint
   });
   if (clash) throw new ConflictError("You or the resident already have an appointment at that time.");
 
+  // Claim the request first, in one atomic step: of two agents accepting at the same moment, only one wins.
+  const claimed = await prisma.appointmentRequest.updateMany({ where: { id: request.id, status: "PENDING" }, data: { status: "ACCEPTED", decidedById: actor.id, decidedAt: now, answer: input.note ?? null } });
+  if (claimed.count === 0) throw new ConflictError("This request was already answered.");
+
+  let appointment: Awaited<ReturnType<typeof prisma.appointment.create<{ data: never; include: typeof appointmentInclude }>>>;
   let appointmentRef = "";
-  for (let attempt = 0; attempt < 10 && !appointmentRef; attempt += 1) {
-    const candidate = `RDV-${String(randomInt(0, 1_000_000)).padStart(6, "0")}`;
-    if (!(await prisma.appointment.findUnique({ where: { reference: candidate }, select: { id: true } }))) appointmentRef = candidate;
+  try {
+    for (let attempt = 0; attempt < 10 && !appointmentRef; attempt += 1) {
+      const candidate = `RDV-${String(randomInt(0, 1_000_000)).padStart(6, "0")}`;
+      if (!(await prisma.appointment.findUnique({ where: { reference: candidate }, select: { id: true } }))) appointmentRef = candidate;
+    }
+    appointment = await prisma.appointment.create({
+      data: {
+        reference: appointmentRef,
+        slotId: null,
+        citizenId: request.citizenId,
+        agentId: actor.id,
+        serviceId: request.serviceId,
+        startsAt: start,
+        endsAt: end,
+        mode: request.mode,
+        location: request.mode === "PHONE" ? null : input.location,
+        reasonEncrypted: request.reasonEncrypted,
+      },
+      include: appointmentInclude,
+    });
+  } catch (error) {
+    // Nothing was created: put the request back in the queue.
+    await prisma.appointmentRequest.updateMany({ where: { id: request.id, status: "ACCEPTED" }, data: { status: "PENDING", decidedById: null, decidedAt: null, answer: null } });
+    throw error;
   }
-  const appointment = await prisma.appointment.create({
-    data: {
-      reference: appointmentRef,
-      slotId: null,
-      citizenId: request.citizenId,
-      agentId: actor.id,
-      serviceId: request.serviceId,
-      startsAt: start,
-      endsAt: end,
-      mode: request.mode,
-      location: request.mode === "PHONE" ? null : input.location,
-      reasonEncrypted: request.reasonEncrypted,
-    },
-    include: appointmentInclude,
-  });
   try {
     const name = `${appointment.reference} · ${appointment.service?.name ?? "Rendez-vous"} · ${formatSlot(start, end)}`.slice(0, 190);
     const room = await createGroupRoom(name, appointment.citizenId, [appointment.agentId]);
@@ -179,11 +190,7 @@ export async function acceptAppointmentRequest(reference: string, input: Appoint
   } catch {
     // The appointment stands without its conversation; both can still write from the message page.
   }
-  const row = await prisma.appointmentRequest.update({
-    where: { id: request.id },
-    data: { status: "ACCEPTED", decidedById: actor.id, decidedAt: now, appointmentRef, answer: input.note ?? null },
-    include,
-  });
+  const row = await prisma.appointmentRequest.update({ where: { id: request.id }, data: { appointmentRef }, include });
   await recordAudit({ actorId: actor.id, action: auditActions.appointmentChanged, targetType: "appointment_request", targetId: row.id, metadata: { op: "accept_request", reference: row.reference, title: row.reference }, ip });
   notifyBooked(appointment);
   return toDto(row, true);
@@ -192,7 +199,9 @@ export async function acceptAppointmentRequest(reference: string, input: Appoint
 export async function declineAppointmentRequest(reference: string, reason: string, actor: AuthUser, ip: string | null, now: Date = new Date()): Promise<AppointmentRequestDto> {
   if (!isStaff(actor)) throw new NotFoundError("This request does not exist.");
   const request = await loadPending(reference);
-  const row = await prisma.appointmentRequest.update({ where: { id: request.id }, data: { status: "DECLINED", decidedById: actor.id, decidedAt: now, answer: reason }, include });
+  const claimed = await prisma.appointmentRequest.updateMany({ where: { id: request.id, status: "PENDING" }, data: { status: "DECLINED", decidedById: actor.id, decidedAt: now, answer: reason } });
+  if (claimed.count === 0) throw new ConflictError("This request was already answered.");
+  const row = await prisma.appointmentRequest.findUniqueOrThrow({ where: { id: request.id }, include });
   await recordAudit({ actorId: actor.id, action: auditActions.appointmentChanged, targetType: "appointment_request", targetId: row.id, metadata: { op: "decline_request", reference: row.reference, title: row.reference }, ip });
   notifyInBackground(
     createNotification({
@@ -213,7 +222,9 @@ export async function cancelAppointmentRequest(reference: string, actor: AuthUse
   // Someone else's request reads as "does not exist".
   if (!row || row.citizenId !== actor.id) throw new NotFoundError("This request does not exist.");
   if (row.status !== "PENDING") throw new ConflictError("This request was already answered.");
-  const updated = await prisma.appointmentRequest.update({ where: { id: row.id }, data: { status: "CANCELLED" }, include });
+  const claimed = await prisma.appointmentRequest.updateMany({ where: { id: row.id, status: "PENDING" }, data: { status: "CANCELLED" } });
+  if (claimed.count === 0) throw new ConflictError("This request was already answered.");
+  const updated = await prisma.appointmentRequest.findUniqueOrThrow({ where: { id: row.id }, include });
   await recordAudit({ actorId: actor.id, action: auditActions.appointmentChanged, targetType: "appointment_request", targetId: row.id, metadata: { op: "cancel_request", reference: row.reference, title: row.reference }, ip });
   return toDto(updated, false);
 }
