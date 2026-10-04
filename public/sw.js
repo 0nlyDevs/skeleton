@@ -14,15 +14,21 @@
  * Writes (POST/PUT/PATCH/DELETE) and the realtime relay are never touched.
  */
 
-const STATIC_CACHE = "skeleton-static-v1";
+const STATIC_CACHE = "bubble-static-v1";
+/* F93: a copy of "L'essentiel" (alerts, emergency numbers, contacts) that opens with no network at all. */
+const ESSENTIALS_CACHE = "bubble-essentials-v1";
+const ESSENTIALS_URL = "/essentials";
 const MAX_ATTEMPTS = 3;
 
-self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(ESSENTIALS_CACHE).then((cache) => cache.add(ESSENTIALS_URL)).catch(() => undefined));
+  self.skipWaiting();
+});
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      for (const key of await caches.keys()) if (key !== STATIC_CACHE) await caches.delete(key);
+      for (const key of await caches.keys()) if (key !== STATIC_CACHE && key !== ESSENTIALS_CACHE) await caches.delete(key);
       await self.clients.claim();
     })(),
   );
@@ -101,6 +107,48 @@ self.addEventListener("fetch", (event) => {
         const response = await resilientFetch(request, url);
         if (response.ok) await cache.put(request, response.clone()).catch(() => undefined);
         return response;
+      })(),
+    );
+    return;
+  }
+
+  // The essentials page: always the freshest copy when the network answers, the saved one when it does not.
+  if (url.pathname === ESSENTIALS_URL) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(ESSENTIALS_CACHE);
+        try {
+          const response = await resilientFetch(request, url);
+          if (response.ok) await cache.put(ESSENTIALS_URL, response.clone()).catch(() => undefined);
+          else {
+            const saved = await cache.match(ESSENTIALS_URL);
+            if (saved) return saved;
+          }
+          return response;
+        } catch (error) {
+          const saved = await cache.match(ESSENTIALS_URL);
+          if (saved) return saved;
+          throw error;
+        }
+      })(),
+    );
+    return;
+  }
+
+  // Any page that cannot be reached falls back to the saved essentials, then keeps the copy fresh.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      (async () => {
+        try {
+          const response = await resilientFetch(request, url);
+          if (response.status < 500) return response;
+          const saved = await (await caches.open(ESSENTIALS_CACHE)).match(ESSENTIALS_URL);
+          return saved ?? response;
+        } catch (error) {
+          const saved = await (await caches.open(ESSENTIALS_CACHE)).match(ESSENTIALS_URL);
+          if (saved) return saved;
+          throw error;
+        }
       })(),
     );
     return;

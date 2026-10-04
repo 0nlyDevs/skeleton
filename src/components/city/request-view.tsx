@@ -74,10 +74,11 @@ export function RequestView({
   // Safety net when the realtime channel is down or a push was missed.
   useEffect(() => {
     const timer = setInterval(() => {
-      if (document.visibilityState === "visible") void reload();
+      // The live connection already pushes every change: poll only when it is down.
+      if (document.visibilityState === "visible" && !socket?.connected) void reload();
     }, 20_000);
     return () => clearInterval(timer);
-  }, [reload]);
+  }, [reload, socket]);
   const closed = request.status === "CLOSED";
 
   return (
