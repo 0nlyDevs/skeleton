@@ -42,6 +42,7 @@ export function RequestStatusGuide({ status }: { readonly status: string }) {
           <span className="font-normal text-muted-foreground">{t("tn.request.guide.todo")} </span>
           {t(`tn.request.guide.${guide.key}.todo`)}
         </p>
+        <PlainExplain text={`${t(`tn.request.guide.${guide.key}.means`)} ${t(`tn.request.guide.${guide.key}.todo`)}`} />
         {waiting || status === "RESOLVED" ? (
           <Button asChild size="sm" variant={waiting ? "primary" : "secondary"} className="mt-1 w-fit">
             <a href="#reply">{t(waiting ? "tn.request.guide.reply_now" : "tn.request.guide.reopen")}</a>
