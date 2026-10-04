@@ -10,6 +10,8 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "The file is too large.": "Le fichier est trop volumineux.",
+  "The upload was refused.": "L'envoi a été refusé.",
   "Choose the district where you live.": "Choisissez le quartier où vous habitez.",
   "Describe what you need in a few words.": "Décrivez votre besoin en quelques mots.",
   "There is nothing to explain.": "Il n'y a rien à expliquer.",

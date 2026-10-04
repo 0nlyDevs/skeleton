@@ -12,6 +12,7 @@ import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
 import { IMAGE_INPUT_ACCEPT, describeImageError, uploadImage } from "@/components/social/use-image-uploads";
+import { imagesFromClipboard } from "@/lib/images/prepare-image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
