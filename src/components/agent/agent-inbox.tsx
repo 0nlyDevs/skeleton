@@ -4,7 +4,9 @@ import { Inbox, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { SimilarGroups } from "./similar-groups";
 import { RequestList } from "@/components/city/request-list";
+import { PriorityPanel } from "./priority-panel";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { TableSkeleton } from "@/components/feedback/loading-skeleton";
@@ -30,7 +32,17 @@ interface Page {
 }
 
 /** F22 — every resident request, its status, and which ones still need action. */
-export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly initialStatus: string; readonly initialScope?: "all" | "assigned" | "unassigned" }) {
+type SortTab = "recent" | "priority" | "supported";
+
+export function AgentInbox({
+  initialStatus,
+  initialScope = "all",
+  initialSort = "priority",
+}: {
+  readonly initialStatus: string;
+  readonly initialScope?: "all" | "assigned" | "unassigned";
+  readonly initialSort?: SortTab;
+}) {
   const t = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -39,6 +51,7 @@ export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly i
     (STATUS_TABS as readonly string[]).includes(initialStatus) ? (initialStatus as StatusTab) : "OPEN",
   );
   const [scope, setScope] = useState<"all" | "assigned" | "unassigned">(initialScope);
+  const [sort, setSort] = useState<SortTab>(initialSort);
   const [q, setQ] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -52,7 +65,7 @@ export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly i
 
   const load = useCallback(async () => {
     setFailed(false);
-    const params = new URLSearchParams({ scope, page: String(page), limit: "20" });
+    const params = new URLSearchParams({ scope, sort, page: String(page), limit: "20" });
     if (status !== "ALL") params.set("status", status);
     if (query) params.set("q", query);
     try {
@@ -60,7 +73,7 @@ export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly i
     } catch {
       setFailed(true);
     }
-  }, [scope, status, query, page]);
+  }, [scope, status, sort, query, page]);
 
   useEffect(() => {
     void load();
@@ -98,6 +111,9 @@ export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly i
         <p className="text-sm text-muted-foreground">{t("tn.agent.inbox.subtitle")}</p>
       </header>
 
+      <SimilarGroups />
+      <PriorityPanel />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -112,6 +128,25 @@ export function AgentInbox({ initialStatus, initialScope = "all" }: { readonly i
             className="pl-9"
             maxLength={80}
           />
+        </div>
+        <div className="flex gap-1 rounded-full border border-border bg-card p-1" role="group" aria-label={t("tn.agent.inbox.sort")}>
+          {(["priority", "recent", "supported"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={sort === value}
+              onClick={() => {
+                setSort(value);
+                setPage(1);
+              }}
+              className={cn(
+                "rounded-full px-3 py-1 text-[0.8125rem] font-medium",
+                sort === value ? "bg-primary text-primary-foreground" : "hover:bg-surface-muted",
+              )}
+            >
+              {t(`tn.agent.inbox.sort.${value}` as MessageKey)}
+            </button>
+          ))}
         </div>
         <div className="flex gap-1 rounded-full border border-border bg-card p-1" role="group">
           {(["all", "unassigned", "assigned"] as const).map((value) => (

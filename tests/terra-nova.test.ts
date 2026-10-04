@@ -10,6 +10,7 @@ import {
   updateCityRequestSchema,
 } from "@/modules/city-requests/city-requests.schema";
 import { toSummaryDto } from "@/modules/city-requests/city-requests.dto";
+import { suggestPriority } from "@/modules/city-requests/city-requests.priority";
 import { statusChangeAllowed } from "@/modules/city-requests/city-requests.service";
 import { serviceInputSchema } from "@/modules/city-services/city-services.schema";
 import { minutesUntil, nextWaveAt } from "@/modules/webcup/webcup.schedule";
@@ -88,6 +89,34 @@ describe("city requests", () => {
   it("hides the citizen's identity outside the agent view", () => {
     expect(toSummaryDto(row, false).citizen).toBeNull();
     expect(toSummaryDto(row, true).citizen).toEqual({ id: "c1", name: "Citizen" });
+  });
+});
+
+describe("request priority suggestion (F80)", () => {
+  const now = Date.parse("2026-10-04T12:00:00Z");
+
+  it("raises a request that waits without an agent and is backed by residents", () => {
+    const suggestion = suggestPriority({ createdAt: "2026-10-01T12:00:00Z", assigneeId: null, issueType: "roads", subject: "Nid-de-poule", supportCount: 8 }, now);
+    expect(suggestion.reasons).toContain("waiting");
+    expect(suggestion.reasons).toContain("supports");
+    expect(suggestion.priority).toBe("HIGH");
+  });
+
+  it("treats a safety or water problem as serious even when it is new", () => {
+    const suggestion = suggestPriority({ createdAt: "2026-10-04T11:00:00Z", assigneeId: "a1", issueType: "water", subject: "Problème au parc", supportCount: 0 }, now);
+    expect(suggestion.reasons).toContain("safety");
+    expect(suggestion.priority).toBe("NORMAL");
+  });
+
+  it("reads urgent words in the subject", () => {
+    const suggestion = suggestPriority({ createdAt: "2026-10-04T11:00:00Z", assigneeId: "a1", issueType: "roads", subject: "Fuite de gaz urgente", supportCount: 0 }, now);
+    expect(suggestion.reasons).toContain("urgent");
+  });
+
+  it("leaves a fresh, ordinary, taken request low and unexplained", () => {
+    const suggestion = suggestPriority({ createdAt: "2026-10-04T11:30:00Z", assigneeId: "a1", issueType: "cleanliness", subject: "Poubelle renversée", supportCount: 0 }, now);
+    expect(suggestion.priority).toBe("LOW");
+    expect(suggestion.reasons).toEqual([]);
   });
 });
 

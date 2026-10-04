@@ -6,6 +6,8 @@ export interface CityRequestSummaryDto {
   readonly subject: string;
   readonly status: string;
   readonly priority: string;
+  /** F52/F80 — how many residents back this report. */
+  readonly supportCount: number;
   readonly service: { slug: string; name: string } | null;
   /** F25 — set when the request reports a problem in the city. */
   readonly issueType: string | null;
@@ -59,6 +61,7 @@ interface SummaryRow {
   subject: string;
   status: string;
   priority: string;
+  supportCount?: number;
   issueType?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -75,6 +78,7 @@ export function toSummaryDto(row: SummaryRow, forAgent: boolean): CityRequestSum
     subject: row.subject,
     status: row.status,
     priority: row.priority,
+    supportCount: row.supportCount ?? 0,
     service: row.service,
     issueType: row.issueType ?? null,
     citizen: forAgent ? row.citizen : null,
