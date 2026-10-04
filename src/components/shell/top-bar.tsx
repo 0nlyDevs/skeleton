@@ -16,7 +16,7 @@ import type { CityZoneId } from "@/modules/alerts/city-zones";
 
 import { AccountPanel } from "./account-panel";
 import { GlobalSearch } from "./global-search";
-import { PLACES, placeFor } from "./nav-config";
+import { PLACES, STAFF_NAV, isActive, placeFor } from "./nav-config";
 import type { ShellViewer } from "./shell-types";
 
 /**
@@ -62,6 +62,26 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
           </Link>
           {viewer ? (
             <>
+              {/* Staff reach their workspace in one tap, from any page and any screen size. */}
+              {STAFF_NAV.filter((item) => item.roles?.includes(viewer.role)).map((item) => {
+                const on = isActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={on ? "page" : undefined}
+                    aria-label={t(item.labelKey)}
+                    title={t(item.labelKey)}
+                    className={cn(
+                      "inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-colors xl:px-3.5",
+                      on ? "bg-foreground text-background" : "bg-surface-muted text-foreground hover:bg-accent",
+                    )}
+                  >
+                    <item.icon className="size-4 shrink-0" aria-hidden />
+                    <span className="hidden xl:inline">{t(item.labelKey)}</span>
+                  </Link>
+                );
+              })}
               <NotificationBell />
               <AccountPanel viewer={viewer} zone={zone} />
             </>
