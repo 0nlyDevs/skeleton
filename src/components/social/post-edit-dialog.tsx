@@ -106,6 +106,7 @@ export function PostEditDialog({
         <input
           ref={fileInput}
           type="file"
+          aria-label={t("tn.a11y.choose_file")}
           accept={ACCEPTED_IMAGE_TYPES.join(",")}
           multiple
           hidden
