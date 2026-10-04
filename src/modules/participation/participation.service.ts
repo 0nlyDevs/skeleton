@@ -19,7 +19,7 @@ import type { AuthUser } from "@/types";
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { createNotification, notifyInBackground } from "../notifications/notifications.service";
-import type { DecisionInput, IdeaAnswerInput, IdeaInput, OpinionInput, ProjectInput } from "./participation.schema";
+import type { IDEA_STATUSES, DecisionInput, IdeaAnswerInput, IdeaInput, OpinionInput, ProjectInput } from "./participation.schema";
 
 const day = (value: string | null | undefined): Date | null => (value ? new Date(`${value}T00:00:00Z`) : null);
 
@@ -243,7 +243,7 @@ export interface IdeaDto {
   readonly title: string;
   readonly body: string;
   readonly zone: string | null;
-  readonly status: (typeof import("./participation.schema").IDEA_STATUSES)[number];
+  readonly status: (typeof IDEA_STATUSES)[number];
   readonly answer: string | null;
   readonly supports: number;
   readonly supportedByMe: boolean;
