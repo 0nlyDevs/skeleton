@@ -152,7 +152,7 @@ export function AgentNav({
               href="/agent"
               aria-current={onDashboard ? "page" : undefined}
               className={cn(
-                "flex h-full items-center gap-2.5 rounded-2xl px-4 py-3 text-[0.9375rem] font-semibold transition-colors",
+                "flex h-full items-center gap-2.5 rounded-2xl px-4 py-3 text-[0.9375rem] font-semibold transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)]",
                 onDashboard ? "bg-foreground text-background" : "bg-surface-muted hover:bg-accent",
               )}
             >
@@ -169,7 +169,7 @@ export function AgentNav({
                   <DropdownMenuTrigger
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex h-full w-full items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left text-[0.9375rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                      "flex h-full w-full items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left text-[0.9375rem] font-semibold transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                       active ? "bg-foreground text-background" : "bg-surface-muted hover:bg-accent",
                     )}
                   >
@@ -210,7 +210,7 @@ export function AgentNav({
                     href={item.href}
                     aria-current={on ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2 rounded-full px-4 py-2 text-[0.9375rem] font-medium transition-colors",
+                      "flex items-center gap-2 rounded-full px-4 py-2 text-[0.9375rem] font-medium transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)]",
                       on ? "bg-accent text-foreground ring-2 ring-foreground/70" : "bg-surface-muted hover:bg-accent",
                     )}
                   >

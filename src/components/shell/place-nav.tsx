@@ -35,7 +35,7 @@ export function PlaceNav({ signedIn }: { readonly signedIn: boolean }) {
             href={link.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9062rem] font-medium transition-colors",
+              "flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9062rem] font-medium transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)]",
               active ? "bg-foreground text-background" : "bg-card text-foreground/80 hover:bg-accent",
             )}
           >

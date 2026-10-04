@@ -19,7 +19,7 @@ export function DisplayMenu({ className }: { readonly className?: string }) {
       <PopoverTrigger
         aria-label={t("display.label")}
         title={t("display.label")}
-        className={cn("grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground", className)}
+        className={cn("grid size-9 place-items-center rounded-full text-muted-foreground transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out-soft)] hover:bg-surface-muted hover:text-foreground", className)}
       >
         <Type className="size-[1.125rem]" aria-hidden />
       </PopoverTrigger>
