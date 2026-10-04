@@ -1876,4 +1876,5 @@ export const frTerraNova = {
   "notifications.type.ANNOUNCEMENT": "Annonce de la ville",
   "tn.transports.favorites_title": "Mes lignes favorites",
   "tn.transports.all_lines": "Toutes les lignes",
+  "tn.side.label": "Toutes les rubriques",
 } as const;

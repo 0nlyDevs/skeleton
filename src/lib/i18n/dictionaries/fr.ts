@@ -985,7 +985,7 @@ export const fr = {
 
   // --- Assistant ---
   "ai.title": "Assistant IA",
-  "ai.subtitle": "Proxy serveur : la clé d'API ne quitte jamais le serveur",
+  "ai.subtitle": "Posez vos questions sur les services de la ville, vos démarches ou la vie de la cité.",
   "ai.placeholder": "Posez votre question…",
   "ai.send": "Envoyer",
   "ai.thinking": "L'assistant réfléchit…",

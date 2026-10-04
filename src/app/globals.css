@@ -872,3 +872,56 @@ html[data-eco] .space-backdrop {
 .dark #content > div > h1 {
   text-shadow: 0 1px 14px rgb(8 10 16 / 0.9), 0 0 2px rgb(8 10 16 / 0.8);
 }
+
+/*
+ * Light theme ground: daylight over the colony. A warm glow where the sun
+ * is, a cool one opposite, on the calm paper tone. No image, no canvas.
+ */
+html:not(.dark):not([data-contrast="high"]) body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  /* Its own layer: scrolling never repaints it. */
+  transform: translateZ(0);
+  background:
+    radial-gradient(1200px 700px at 88% -8%, rgb(255 190 140 / 0.32), transparent 62%),
+    radial-gradient(1000px 760px at -6% 108%, rgb(150 180 220 / 0.3), transparent 60%),
+    radial-gradient(900px 600px at 50% 50%, rgb(255 255 255 / 0.35), transparent 70%);
+}
+/* The sky is painted once and kept on its own layer, so scrolling over it never flashes. */
+.space-backdrop {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  background: #0b0d13;
+}
+html.dark {
+  background: #0b0d13;
+}
+
+/*
+ * One look per kind of block, so a page reads at a glance:
+ * a section title carries the orange bead; the page title is large.
+ */
+#content h1 {
+  font-size: clamp(1.6rem, 2.4vw, 2.1rem);
+  font-weight: 700;
+}
+#content h2:not(:has(svg))::before {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.55em;
+  border-radius: 999px;
+  background: var(--bead);
+  vertical-align: 0.12em;
+}
+/* Wide screens: pages use the room instead of a narrow centred column. */
+@media (min-width: 1024px) {
+  #content > .mx-auto {
+    max-width: min(100%, 1180px);
+  }
+}

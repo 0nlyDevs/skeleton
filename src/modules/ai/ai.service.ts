@@ -61,8 +61,8 @@ function assertConfigured(): void {
  */
 function skeletonSystemPrompt(actor: AuthUser): string {
   return [
-    "You are the Terra Nova assistant, built into the residents' portal of Terra Nova, the first",
-    "human city on another planet. Residents use the portal to find city services (/services),",
+    "You are the Bubble assistant, built into Bubble, the central platform of Terra Nova, the first",
+    "human city on another planet. Residents use Bubble to find city services (/services),",
     "read city announcements (/announcements), send requests to the city (/contact) and follow them in",
     "their personal space (/space); a community space lets them post, comment and join groups.",
     "Point residents to the right page when they ask how to do something with the city.",

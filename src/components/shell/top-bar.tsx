@@ -32,7 +32,7 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
   // F44 — on a short screen (strong zoom) the bar scrolls away instead of covering the page.
   return (
     <header className="sticky top-0 z-40 bg-card [@media(max-height:30rem)]:static">
-      <div className="mx-auto flex h-[3.75rem] w-full max-w-[1180px] items-stretch gap-3 px-4 lg:px-6">
+      <div className="mx-auto flex h-[3.75rem] w-full max-w-[1480px] items-stretch gap-3 px-4 lg:px-6">
         <Brand href={viewer ? "/space" : "/"} className="shrink-0 self-center" />
 
         <nav aria-label={t("nav.label")} className="mx-auto hidden items-stretch gap-1 md:flex">
