@@ -1992,4 +1992,8 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.usage.down": "-{change}%",
   "tn.usage.detail": "{requests} request(s) · {appointments} appointment(s) · {opinions} opinion(s)",
   "tn.usage.rating": "average rating {rating}/5",
+  "tn.space.map_hero.eyebrow": "Terra Nova in 3D",
+  "tn.space.map_hero.title": "Explore the city map",
+  "tn.space.map_hero.body": "Fly over the island, find your district, the services near you and the current alerts.",
+  "tn.space.map_hero.cta": "Open the map",
 };

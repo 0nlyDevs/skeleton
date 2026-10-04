@@ -20,7 +20,7 @@ function Row({ item, active, badge, label }: { readonly item: ShellNavItem; read
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-center gap-2.5 rounded-full px-3 py-2 text-[0.875rem] font-medium transition-colors",
-        active ? "bg-foreground text-background" : "text-foreground/85 hover:bg-accent",
+        active ? "bg-[var(--place)] font-semibold text-[var(--place-ink)]" : "text-foreground/85 hover:bg-accent",
       )}
     >
       <Icon className="size-4 shrink-0" aria-hidden />
@@ -72,7 +72,7 @@ export function SideNav({ viewer }: { readonly viewer: ShellViewer | null }) {
                 onPlace ? "text-foreground" : "text-foreground/85",
               )}
             >
-              <PlaceIcon className="size-4 shrink-0" aria-hidden />
+              <PlaceIcon className={cn("size-4 shrink-0", onPlace && "text-[var(--place)]")} aria-hidden />
               <span className="min-w-0 flex-1 truncate">{t(place.labelKey)}</span>
               {unread > 0 ? <span className="grid min-w-5 place-items-center rounded-full bg-bead px-1.5 text-[0.6875rem] font-bold leading-5 text-bead-foreground">{unread > 99 ? "99+" : unread}</span> : null}
               {onPlace && !open ? <span aria-hidden className="size-1.5 rounded-full bg-bead" /> : null}

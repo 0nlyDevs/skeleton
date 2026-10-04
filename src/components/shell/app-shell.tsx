@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { AlertWatcher } from "@/components/alerts/alert-watcher";
@@ -9,6 +10,7 @@ import { KeyboardShortcuts } from "./keyboard-shortcuts";
 import { LoadBanner } from "./load-banner";
 import { OfflineNotice } from "./offline-notice";
 import { MobileNav } from "./mobile-nav";
+import { placeFor } from "./nav-config";
 import { PlaceNav } from "./place-nav";
 import { SideNav } from "./side-nav";
 import { SecretSetupGuard } from "./secret-setup-guard";
@@ -31,8 +33,11 @@ export function AppShell({
   readonly zone: CityZoneId | null;
   readonly children: ReactNode;
 }) {
+  const pathname = usePathname();
+  // Each place has its own colour, carried by titles, the menu and the tab.
+  const place = pathname.startsWith("/agent") || pathname.startsWith("/admin") ? "staff" : (placeFor(pathname)?.id ?? "home");
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh" data-place={place}>
       <TopBar viewer={viewer} zone={zone} />
       <div className="mx-auto grid w-full max-w-[1480px] gap-6 px-4 pb-28 pt-5 md:pb-12 lg:grid-cols-[236px_minmax(0,1fr)] lg:px-6">
         {/* Wide screens: every destination in view. Narrow ones: the row of the current place. */}

@@ -952,3 +952,189 @@ select optgroup {
 select option:checked {
   background-color: var(--accent);
 }
+
+/* ---------------------------------------------------------------------------
+ * Colour and depth, in step with the landing: the galaxy shows through glass
+ * panels, actions are orange, each place has its own colour, and what is
+ * urgent is a solid colour block, never a grey card.
+ * ------------------------------------------------------------------------- */
+:root {
+  --primary: var(--orange-deep);
+  --primary-foreground: #ffffff;
+  --place: var(--orange-deep);
+  --place-ink: #ffffff;
+}
+.dark {
+  --primary: var(--orange);
+  --primary-foreground: #1a0b02;
+  --place: var(--orange);
+  --place-ink: #0b0d12;
+}
+[data-place="procedures"] { --place: #0369a1; }
+[data-place="city"] { --place: #047857; }
+[data-place="community"] { --place: #6d28d9; }
+[data-place="staff"] { --place: #92400e; }
+.dark [data-place="procedures"] { --place: #5cc8ff; }
+.dark [data-place="city"] { --place: #4fe0a6; }
+.dark [data-place="community"] { --place: #b79bff; }
+.dark [data-place="staff"] { --place: #ffc857; }
+
+/* The sky is behind everything: the page itself is see-through in the dark theme. */
+html.dark:not([data-eco]):not([data-contrast="high"]) body {
+  background-color: transparent;
+}
+html.dark:not([data-eco]):not([data-contrast="high"]) {
+  --panel: rgb(27 31 43 / 0.7);
+  --well: rgb(13 16 24 / 0.55);
+  --field: rgb(10 12 19 / 0.6);
+  --accent: rgb(92 104 136 / 0.34);
+  --line: rgb(150 162 196 / 0.2);
+  --popover: rgb(24 28 39 / 0.92);
+}
+html.dark:not([data-eco]):not([data-contrast="high"]) :is(.bg-card, .bg-card\/90, .bg-popover) {
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  backdrop-filter: blur(18px) saturate(1.35);
+}
+html.dark:not([data-eco]):not([data-contrast="high"]) .shadow-panel {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 22px 44px -28px rgb(0 0 0 / 0.8);
+}
+.dark select option,
+.dark select optgroup {
+  background-color: #1c202b;
+}
+
+/* Titles carry the colour of the place. */
+#content h1::after {
+  content: "";
+  display: block;
+  width: 2.75rem;
+  height: 4px;
+  margin-top: 0.55rem;
+  border-radius: 999px;
+  background: var(--place);
+}
+#content h2:not(:has(svg))::before {
+  background: var(--place);
+}
+.place-tab-on {
+  box-shadow: inset 0 3px 0 var(--place);
+}
+
+/* Urgent: a solid block with a slow halo, impossible to miss, still one line. */
+.alert-live {
+  animation: alert-halo 2.4s ease-out infinite;
+}
+@keyframes alert-halo {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, var(--warning) 55%); }
+  70% { box-shadow: 0 0 0 12px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.alert-live.bg-error {
+  animation-name: alert-halo-error;
+}
+@keyframes alert-halo-error {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--error) 60%, transparent); }
+  70% { box-shadow: 0 0 0 14px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alert-live { animation: none; }
+}
+#content .alert-card h2::before {
+  display: none;
+}
+
+/* The High Council's word: its own warm band, not a grey panel. */
+.official-band {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--orange) 16%, var(--panel)) 0%, var(--panel) 62%);
+}
+.dark .official-band {
+  background: linear-gradient(100deg, #4a1f08 0%, #1d1410 46%, #12141b 100%);
+}
+
+/* What the assistant offers stands out from ordinary panels. */
+.ai-spot {
+  position: relative;
+  border: 1.5px solid color-mix(in srgb, var(--orange) 70%, transparent);
+  background:
+    radial-gradient(520px 200px at 0% 0%, color-mix(in srgb, var(--orange) 22%, transparent), transparent 70%),
+    radial-gradient(420px 220px at 100% 100%, rgb(150 110 255 / 0.16), transparent 70%),
+    var(--panel);
+  box-shadow: 0 18px 50px -26px color-mix(in srgb, var(--orange) 80%, transparent);
+}
+#content .ai-spot h2::before {
+  display: none;
+}
+
+/* The city map, centrepiece of the home: the island seen from orbit. */
+.map-hero {
+  background:
+    radial-gradient(120% 140% at 100% 0%, #1b3a5c 0%, transparent 55%),
+    radial-gradient(90% 120% at 0% 100%, #5a2408 0%, transparent 60%),
+    linear-gradient(135deg, #070a14, #0e1424 60%, #131a2e);
+  isolation: isolate;
+}
+.map-hero-island {
+  position: absolute;
+  right: -3rem;
+  top: 50%;
+  width: 22rem;
+  height: 22rem;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, rgb(255 255 255 / 0.5) 0 2%, transparent 16%),
+    radial-gradient(circle at 42% 44%, #6fd3a0 0 10%, transparent 24%),
+    radial-gradient(circle at 60% 58%, #e8a15a 0 8%, transparent 22%),
+    radial-gradient(circle at 36% 66%, #9fd8f5 0 7%, transparent 20%),
+    radial-gradient(circle at 50% 50%, #1e5f8f 0%, #0c2c4a 58%, #071726 100%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1),
+    0 0 80px 10px rgb(90 170 255 / 0.28),
+    inset -34px -26px 70px rgb(0 0 0 / 0.7);
+  transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  z-index: -1;
+}
+.map-hero:hover .map-hero-island {
+  transform: rotate(8deg) scale(1.05);
+}
+.map-hero-island::after {
+  content: "";
+  position: absolute;
+  inset: -2.4rem;
+  border-radius: 50%;
+  border: 1px dashed rgb(255 255 255 / 0.22);
+}
+@media (max-width: 640px) {
+  .map-hero-island { opacity: 0.55; right: -9rem; }
+}
+
+/* Scrollbars follow the theme: thin, rounded, and quiet until used. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 30%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--orange);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
