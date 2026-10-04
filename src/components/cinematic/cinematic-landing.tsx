@@ -57,14 +57,6 @@ function pickMode(): Mode {
   return "cinematic";
 }
 
-function readSeen(): boolean {
-  try {
-    return window.sessionStorage.getItem(SEEN_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
 /**
  * The landing page. A small star spins while the scene loads, then shoots
  * across the screen and cuts it open on the planet; the ship is thrown at the
@@ -248,8 +240,8 @@ export function CinematicLanding({
 
       const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
       cleanups.push(() => timeline.kill());
-      // A visitor who has already landed in this tab, or who was sent here to sign in, lands at once.
-      if (readSeen() || requestRef.current) {
+      // Every arrival plays the planet and the star; only a visitor sent here to sign in lands at once.
+      if (requestRef.current) {
         state.phase = "world";
         state.flash = 1;
         state.entry = 0.4;

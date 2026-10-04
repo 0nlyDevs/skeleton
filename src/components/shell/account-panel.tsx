@@ -4,7 +4,6 @@ import { Compass, LogOut, MapPin, Settings } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-import { DisplayControls } from "@/components/layout/display-controls";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import Link from "@/components/ui/link";
@@ -121,7 +120,6 @@ export function AccountPanel({ viewer, zone }: { readonly viewer: ShellViewer; r
             <span className="text-sm font-medium">{t("tn.account.language")}</span>
             <LocaleToggle />
           </div>
-          <DisplayControls idPrefix="account" />
         </section>
 
         <button type="button" disabled={busy} onClick={handleSignOut} className={`${ROW} mt-2 text-error disabled:opacity-60`}>

@@ -321,6 +321,8 @@ export class LandingStage {
     this.settle = 30;
     this.span = 0;
     this.frames = 0;
+    // Resizing empties the canvas: draw at once, or one black frame shows.
+    if (this.frame) this.render(0);
   }
 
   dispose(): void {

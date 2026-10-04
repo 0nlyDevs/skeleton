@@ -46,11 +46,12 @@ export function AlertGuidance({
   };
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/[0.035] p-4 sm:p-5">
+    <section className="ai-spot flex flex-col gap-3 rounded-2xl p-4 sm:p-5">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Sparkles aria-hidden /></span>
+        <span className="mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Sparkles aria-hidden /></span>
         <div>
-          <h2 className="font-semibold">{t("alerts.guidance.title")}</h2>
+          <p className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-primary">{t("nav.assistant")}</p>
+          <h2 className="text-lg font-semibold">{t("alerts.guidance.title")}</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("alerts.guidance.body")}</p>
         </div>
       </div>
@@ -66,7 +67,7 @@ export function AlertGuidance({
               <p className="whitespace-pre-line text-sm leading-relaxed">{guidance.text}</p>
             </div>
           ) : (
-            <Button className="self-start" variant="secondary" onClick={() => void generate()} disabled={busy}>
+            <Button className="self-start" size="lg" onClick={() => void generate()} disabled={busy}>
               {busy ? <Loader2 className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
               {busy ? t("alerts.guidance.loading") : t("alerts.guidance.generate")}
             </Button>

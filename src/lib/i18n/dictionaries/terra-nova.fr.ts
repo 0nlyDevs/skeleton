@@ -1997,4 +1997,8 @@ export const frTerraNova = {
   "tn.usage.down": "-{change} %",
   "tn.usage.detail": "{requests} demande(s) · {appointments} rendez-vous · {opinions} avis",
   "tn.usage.rating": "note moyenne {rating}/5",
+  "tn.space.map_hero.eyebrow": "Terra Nova en 3D",
+  "tn.space.map_hero.title": "Explorez la carte de la ville",
+  "tn.space.map_hero.body": "Survolez l'île, trouvez votre quartier, les services près de chez vous et les alertes en cours.",
+  "tn.space.map_hero.cta": "Ouvrir la carte",
 } as const;
