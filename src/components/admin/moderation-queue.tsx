@@ -114,7 +114,7 @@ export function ModerationQueue() {
                   {report.targetSummary ? <p className="line-clamp-2 text-[0.75rem] text-foreground/80">{report.targetSummary}</p> : null}
                   <p className="text-[0.75rem] text-muted-foreground">{t("admin.moderation.reason")}: {report.reason}</p>
                   <span className="text-[0.75rem] text-muted-foreground">
-                    {t("admin.moderation.reporter")}: {report.reporter?.name ?? "—"} ·{" "}
+                    {t("admin.moderation.reporter")}: {report.reporter?.name ?? "-"} ·{" "}
                     {fmt.relative(report.createdAt)}
                   </span>
                 </div>

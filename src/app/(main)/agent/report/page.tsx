@@ -24,9 +24,9 @@ export default async function AgentReportPage({ searchParams }: { readonly searc
       { label: t("tn.report.fig.received"), value: report.requests.received },
       { label: t("tn.report.fig.closed"), value: report.requests.closed },
       { label: t("tn.report.fig.open"), value: report.requests.openNow },
-      { label: t("tn.report.fig.delay"), value: report.requests.hoursToClose === null ? "—" : t("tn.report.hours", { count: report.requests.hoursToClose }) },
+      { label: t("tn.report.fig.delay"), value: report.requests.hoursToClose === null ? "-" : t("tn.report.hours", { count: report.requests.hoursToClose }) },
       { label: t("tn.report.fig.appointments"), value: report.appointments.booked + report.appointments.asked },
-      { label: t("tn.report.fig.rating"), value: report.opinions.average === null ? "—" : `${report.opinions.average}/5` },
+      { label: t("tn.report.fig.rating"), value: report.opinions.average === null ? "-" : `${report.opinions.average}/5` },
       { label: t("tn.report.fig.alerts"), value: report.city.alerts },
       { label: t("tn.report.fig.accounts"), value: report.city.newAccounts },
     ];

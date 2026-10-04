@@ -10,7 +10,7 @@ import Link from "@/components/ui/link";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { listServices } from "@/modules/city-services/city-services.service";
 
-export const metadata: Metadata = { title: "Services — administration" };
+export const metadata: Metadata = { title: "Services, administration" };
 
 /** Admin only: the list of services, closed ones included. */
 export default async function AgentServicesPage() {

@@ -18,7 +18,7 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.appUrl),
   title: {
-    default: "Bubble — la plateforme de Terra Nova",
+    default: "Bubble, la plateforme de Terra Nova",
     template: "%s · Bubble",
   },
   description: DESCRIPTION,
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Bubble",
-    title: "Bubble — la plateforme de Terra Nova",
+    title: "Bubble, la plateforme de Terra Nova",
     description: DESCRIPTION,
     url: "/",
     locale: "fr_FR",
     alternateLocale: ["en_US"],
   },
-  twitter: { card: "summary_large_image", title: "Bubble — la plateforme de Terra Nova", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "Bubble, la plateforme de Terra Nova", description: DESCRIPTION },
   appleWebApp: { capable: true, title: "Bubble", statusBarStyle: "black-translucent" },
   // Phone numbers on service pages are real links already; no automatic guessing.
   formatDetection: { telephone: false, email: false, address: false },

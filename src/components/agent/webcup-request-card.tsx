@@ -84,7 +84,7 @@ export function WebcupRequestCard({
 
       {request.requesterName || request.requesterType ? (
         <p className="text-[0.7812rem] text-muted-foreground">
-          {t("tn.agent.feed.from", { name: request.requesterName ?? "—", type: request.requesterType ?? "—" })}
+          {t("tn.agent.feed.from", { name: request.requesterName ?? "-", type: request.requesterType ?? "-" })}
         </p>
       ) : null}
       <p className="whitespace-pre-line text-[0.9062rem] leading-relaxed">{request.message}</p>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { AgentDashboardDto } from "@/modules/stats/agent-dashboard";
 
 function hours(value: number | null, t: Translator): string {
-  if (value === null) return "—";
+  if (value === null) return "-";
   return value < 48 ? t("tn.dash.hours", { count: String(value).replace(".", ",") }) : t("tn.dash.days", { count: String(Math.round(value / 24)) });
 }
 

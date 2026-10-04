@@ -37,7 +37,7 @@ export async function SiteFooter() {
         </div>
 
         <p className="text-[0.75rem] text-muted-foreground/70">
-          © {new Date().getFullYear()} — {t["footer.rights"]}
+          © {new Date().getFullYear()}, {t["footer.rights"]}
         </p>
       </div>
     </footer>

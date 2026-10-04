@@ -48,9 +48,9 @@ if (SEED_PASSWORD.length < 10) {
 
 const ACCOUNTS = [
   { email: "cocobrowniees@gmail.com", username: "coco.admin", firstName: "Coco", lastName: "Brownies", birthDate: "1998-03-14", role: "ADMIN" as const, bio: "Administration de la plateforme Terra Nova." },
-  { email: "hei.colombe@gmail.com", username: "colombe.mod", firstName: "Colombe", lastName: "Hei", birthDate: "2001-07-09", role: "AGENT" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
-  { email: "hei.tafita.2@gmail.com", username: "tafita", firstName: "Tafita", lastName: "Hei", birthDate: "2002-11-02", role: "AGENT" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
-  { email: "hei.harena.2@gmail.com", username: "harena", firstName: "Harena", lastName: "Hei", birthDate: "2003-05-27", role: "AGENT" as const, bio: "Équipe municipale — demandes des habitants et annonces." },
+  { email: "hei.colombe@gmail.com", username: "colombe.mod", firstName: "Colombe", lastName: "Hei", birthDate: "2001-07-09", role: "AGENT" as const, bio: "Équipe municipale, demandes des habitants et annonces." },
+  { email: "hei.tafita.2@gmail.com", username: "tafita", firstName: "Tafita", lastName: "Hei", birthDate: "2002-11-02", role: "AGENT" as const, bio: "Équipe municipale, demandes des habitants et annonces." },
+  { email: "hei.harena.2@gmail.com", username: "harena", firstName: "Harena", lastName: "Hei", birthDate: "2003-05-27", role: "AGENT" as const, bio: "Équipe municipale, demandes des habitants et annonces." },
   { email: "colomberakotonjanahary@gmail.com", username: "colombe.rakoto", firstName: "Colombe", lastName: "Rakotonjanahary", birthDate: "2000-02-18", role: "USER" as const, bio: "Module B-12, secteur B." },
   { email: "hei.jonathan.3@gmail.com", username: "jonathan.admin", firstName: "Jonathan", lastName: "Hei", birthDate: "2001-09-30", role: "ADMIN" as const, bio: "Administration de la plateforme Terra Nova." },
 ].map((account) => ({ ...account, name: `${account.firstName} ${account.lastName}` }));
@@ -130,7 +130,7 @@ const POSTS: ReadonlyArray<{
 
 const MESSAGES: ReadonlyArray<{ author: number; content: string }> = [
   { author: 0, content: "Bienvenue dans la messagerie du socle Webcup ! Les messages sont persistés en base." },
-  { author: 2, content: "Bonjour — l'indicateur temps réel est vert, le socket est bien connecté." },
+  { author: 2, content: "Bonjour \u2014 l'indicateur temps réel est vert, le socket est bien connecté." },
   { author: 3, content: "Testons aussi le mode dégradé : coupez le réseau et rechargez, le polling prend le relais." },
 ];
 

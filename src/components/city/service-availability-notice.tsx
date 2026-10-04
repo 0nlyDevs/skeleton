@@ -55,7 +55,7 @@ export function ServiceAvailabilityNotice({
   }
 
   return (
-    <section role="status" aria-label={serviceName ? `${title} — ${serviceName}` : title} className={cn("flex gap-3 rounded-2xl border p-4", tone.box, className)}>
+    <section role="status" aria-label={serviceName ? `${title}, ${serviceName}` : title} className={cn("flex gap-3 rounded-2xl border p-4", tone.box, className)}>
       <tone.Icon className={cn("mt-0.5 size-5 shrink-0", tone.icon)} aria-hidden />
       <div className="flex min-w-0 flex-col gap-1.5 text-[0.9062rem]">
         <p className="font-semibold">

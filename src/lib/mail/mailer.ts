@@ -192,7 +192,7 @@ async function recordUndelivered(
 ): Promise<void> {
   const outboxFile = await writeToOutbox(message);
 
-  logger.warn("email not delivered — the action link is below", {
+  logger.warn("email not delivered, the action link is below", {
     to: message.to,
     subject: message.subject,
     reason,

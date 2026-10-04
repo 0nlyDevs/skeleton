@@ -45,7 +45,7 @@ export function ReportDialog({
       const label = t(`report.reason.${reason}` as MessageKey);
       await apiFetch("/api/reports", {
         method: "POST",
-        body: { targetType, targetId, reason: details.trim() ? `${label} — ${details.trim()}` : label },
+        body: { targetType, targetId, reason: details.trim() ? `${label}, ${details.trim()}` : label },
       });
       toast.success(t("report.sent"));
       onOpenChange(false);

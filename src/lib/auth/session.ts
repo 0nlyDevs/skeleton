@@ -56,7 +56,7 @@ function resolveRole(raw: string | null | undefined): Role {
   if (!warnedAboutMissingRole) {
     warnedAboutMissingRole = true;
     logger.warn(
-      "session user has no usable role; defaulting to USER. Every staff route will answer 403 — " +
+      "session user has no usable role; defaulting to USER. Every staff route will answer 403, " +
         "check that `role` is declared in `user.additionalFields` in lib/auth/auth.ts.",
       { receivedRole: raw ?? null },
     );

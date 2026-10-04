@@ -68,7 +68,7 @@ export async function recordSignIn(input: {
     await createNotification({
       userId: input.userId,
       type: "SECURITY",
-      title: "Nouvelle connexion à votre compte — est-ce bien vous ?",
+      title: "Nouvelle connexion à votre compte, est-ce bien vous ?",
       body: `${browser} sur ${os}${input.ip ? ` · IP ${input.ip}` : ""} · ${when} (UTC). Si ce n'était pas vous, déconnectez les autres appareils et changez votre mot de passe.`,
       // F54 — the alert opens on this very device, with "it was me / it was not me".
       link: `/settings/security?alert=new-device&device=${created.id}`,

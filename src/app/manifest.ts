@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 /** Installable app (home-screen icon, standalone window) on phones and desktops. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Bubble — la plateforme de Terra Nova",
+    name: "Bubble, la plateforme de Terra Nova",
     short_name: "Bubble",
     description: "La plateforme centrale des habitants de Terra Nova : services de la ville, démarches, alertes, carte, transports et vie de quartier.",
     start_url: "/",

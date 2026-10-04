@@ -120,7 +120,7 @@ export function CreateAccountPanel({ onCreated }: { readonly onCreated: () => vo
               {t("tn.admin.create.zone")} <span className="font-normal text-muted-foreground">· {t("tn.admin.create.email_optional")}</span>
             </Label>
             <select id="create-zone" name="cityZone" defaultValue="" className={FIELD}>
-              <option value="">—</option>
+              <option value="">-</option>
               {CITY_ZONE_IDS.map((id) => (
                 <option key={id} value={id}>{t(cityZoneLabelKey(id))}</option>
               ))}

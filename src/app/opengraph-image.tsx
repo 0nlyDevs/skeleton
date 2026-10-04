@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Bubble — la plateforme centrale des habitants de Terra Nova";
+export const alt = "Bubble, la plateforme centrale des habitants de Terra Nova";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

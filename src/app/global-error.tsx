@@ -15,7 +15,7 @@ export default function GlobalError({ error, reset }: { readonly error: Error & 
             <h1 style={{ fontSize: 26, margin: "8px 0" }}>Le service est momentanément indisponible</h1>
             <p style={{ opacity: 0.75, lineHeight: 1.5 }}>
               Réessayez dans un instant. <br />
-              <span lang="en">The service is temporarily unavailable — please try again.</span>
+              <span lang="en">The service is temporarily unavailable, please try again.</span>
             </p>
             <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 20 }}>
               <button type="button" onClick={reset} style={{ padding: "10px 16px", borderRadius: 10, border: 0, background: "#7c5cff", color: "#fff", fontWeight: 600, cursor: "pointer" }}>

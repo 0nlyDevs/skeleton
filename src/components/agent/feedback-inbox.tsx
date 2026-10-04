@@ -120,7 +120,7 @@ export function FeedbackInbox({ services }: { readonly services: readonly { slug
                 <p className="font-mono text-[0.8125rem] text-muted-foreground">{item.reference}</p>
               </div>
               <p className="text-[0.8125rem] text-muted-foreground">
-                {item.author?.name ?? "—"}
+                {item.author?.name ?? "-"}
                 {item.request ? (
                   <>
                     {" · "}

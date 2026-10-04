@@ -10,7 +10,7 @@ export function RequestTimeline({ events }: { readonly events: readonly CityRequ
   const t = useTranslation();
   const fmt = useFormatters();
   const label = (kind: "status" | "priority", value: string | null) =>
-    value ? t(`tn.${kind}.${value}` as MessageKey) : "—";
+    value ? t(`tn.${kind}.${value}` as MessageKey) : "-";
 
   const describe = (event: CityRequestEventDto): string => {
     if (event.kind === "created") return t("tn.request.event.created");

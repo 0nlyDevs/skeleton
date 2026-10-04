@@ -108,7 +108,7 @@ function Block({ block, images, themeName }: { block: PageBlock; images: Readonl
       return (
         <blockquote className={cn("rounded-2xl px-6 py-5", theme.card)}>
           <p className="text-pretty text-xl font-medium italic leading-relaxed">« {block.text} »</p>
-          {block.author ? <footer className="mt-2 text-sm opacity-75">— {block.author}</footer> : null}
+          {block.author ? <footer className="mt-2 text-sm opacity-75">- {block.author}</footer> : null}
         </blockquote>
       );
     case "link":

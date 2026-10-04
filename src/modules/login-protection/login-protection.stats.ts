@@ -24,10 +24,10 @@ export type ProtectionStatus = "NORMAL" | "ELEVATED" | "ATTACK";
 
 /** Keep enough of an address to recognise a source, not to locate a person. */
 export function maskIp(ip: string | null): string {
-  if (!ip) return "—";
+  if (!ip) return "-";
   if (isIP(ip) === 4) return `${ip.split(".").slice(0, 3).join(".")}.x`;
   if (isIP(ip) === 6) return `${ip.split(":").filter(Boolean).slice(0, 3).join(":")}::x`;
-  return "—";
+  return "-";
 }
 
 function readFlag(metadata: unknown, key: string): boolean {

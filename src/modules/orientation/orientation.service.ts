@@ -59,7 +59,7 @@ async function askModel(allowModel: boolean, text: string, top: readonly { slug:
   try {
     return await getOrSet(key, 60 * 60_000, async () => {
       if (!takeAiBudget()) return null;
-      const list = top.map((entry, index) => `${index + 1}. ${entry.slug} — ${entry.name}: ${entry.summary}`).join("\n");
+      const list = top.map((entry, index) => `${index + 1}. ${entry.slug}, ${entry.name}: ${entry.summary}`).join("\n");
       const result = await Promise.race([
         complete({
           messages: [

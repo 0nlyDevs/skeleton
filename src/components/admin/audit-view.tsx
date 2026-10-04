@@ -134,7 +134,7 @@ export function AuditView() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">—</SelectItem>
+            <SelectItem value="all">-</SelectItem>
             {actions.map((entry) => (
               <SelectItem key={entry} value={entry}>
                 {entry}
@@ -173,9 +173,9 @@ export function AuditView() {
                         {row.action}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 font-medium">{row.actor?.name ?? "—"}</td>
+                    <td className="px-4 py-3 font-medium">{row.actor?.name ?? "-"}</td>
                     <td className="px-4 py-3 text-[0.7812rem] text-muted-foreground">
-                      {row.targetType ? `${row.targetType} · ${row.targetId?.slice(0, 8)}` : "—"}
+                      {row.targetType ? `${row.targetType} · ${row.targetId?.slice(0, 8)}` : "-"}
                     </td>
                     <td className="px-4 py-3 text-right text-[0.7812rem] tabular-nums text-muted-foreground">
                       {fmt.dateTime(row.createdAt)}
