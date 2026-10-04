@@ -12,6 +12,7 @@
 import { createHash } from "node:crypto";
 
 import { cacheKey, getOrSet } from "@/lib/cache";
+import { takeAiBudget } from "@/lib/ai/budget";
 import { complete, isAiConfigured } from "@/lib/ai/provider";
 import type { Locale } from "@/lib/i18n/config";
 import { logger } from "@/lib/logger";
@@ -65,11 +66,16 @@ function keepsFacts(original: string, simple: string): boolean {
   return facts.every((fact) => flat.includes(fact.replace(/\s+/g, "")));
 }
 
-export async function simplify(rawText: string, locale: Locale): Promise<PlainDto> {
+/**
+ * `allowModel` is true only for signed-in residents: the model never runs on
+ * text typed by an anonymous visitor, so the endpoint is not a free text
+ * rewriter. Everyone gets the local rewrite.
+ */
+export async function simplify(rawText: string, locale: Locale, allowModel = false): Promise<PlainDto> {
   const text = rawText.replace(/\r/g, "").trim().slice(0, 4_000);
   const key = cacheKey("plain", createHash("sha1").update(`${locale}:${text}`).digest("hex"));
   return getOrSet(key, 24 * 60 * 60_000, async () => {
-    if (isAiConfigured()) {
+    if (allowModel && isAiConfigured() && takeAiBudget()) {
       try {
         const result = await Promise.race([
           complete({

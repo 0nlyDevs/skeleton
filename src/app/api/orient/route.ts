@@ -10,5 +10,5 @@ export const POST = publicRoute({
   body: z.object({ text: z.string().trim().min(2, "Describe what you need in a few words.").max(400) }).strict(),
   rateLimit: { limit: 30, windowMs: 60_000 },
   rateLimitScope: "orient",
-  handler: async ({ body, request }) => jsonOk({ data: await orient(body.text, requestLocale(request)) }),
+  handler: async ({ body, request, auth }) => jsonOk({ data: await orient(body.text, requestLocale(request), auth !== null) }),
 });

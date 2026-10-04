@@ -13,6 +13,7 @@
 import { createHash } from "node:crypto";
 
 import { cacheKey, getOrSet } from "@/lib/cache";
+import { takeAiBudget } from "@/lib/ai/budget";
 import { complete, isAiConfigured } from "@/lib/ai/provider";
 import type { Locale } from "@/lib/i18n/config";
 import { logger } from "@/lib/logger";
@@ -52,11 +53,12 @@ async function candidates(locale: Locale) {
   return services.filter((service) => service.active);
 }
 
-async function askModel(text: string, top: readonly { slug: string; name: string; summary: string }[], locale: Locale): Promise<{ slug: string; sentence: string } | null> {
-  if (!isAiConfigured() || top.length === 0) return null;
+async function askModel(allowModel: boolean, text: string, top: readonly { slug: string; name: string; summary: string }[], locale: Locale): Promise<{ slug: string; sentence: string } | null> {
+  if (!allowModel || !isAiConfigured() || top.length === 0) return null;
   const key = cacheKey("orient", createHash("sha1").update(`${locale}:${text.toLowerCase()}:${top.map((entry) => entry.slug).join(",")}`).digest("hex"));
   try {
     return await getOrSet(key, 60 * 60_000, async () => {
+      if (!takeAiBudget()) return null;
       const list = top.map((entry, index) => `${index + 1}. ${entry.slug} — ${entry.name}: ${entry.summary}`).join("\n");
       const result = await Promise.race([
         complete({
@@ -87,7 +89,7 @@ async function askModel(text: string, top: readonly { slug: string; name: string
   }
 }
 
-export async function orient(rawText: string, locale: Locale): Promise<OrientationDto> {
+export async function orient(rawText: string, locale: Locale, allowModel = false): Promise<OrientationDto> {
   const text = rawText.trim().slice(0, MAX_TEXT);
   const services = await candidates(locale);
   const pool: ServiceCandidate[] = services.map(({ slug, name, category, summary, description, howTo, emergency }) => ({ slug, name, category, summary, description, howTo, emergency }));
@@ -96,7 +98,7 @@ export async function orient(rawText: string, locale: Locale): Promise<Orientati
   const top = scored.slice(0, 3);
   const confident = top.length > 0 && (top[0]?.score ?? 0) >= 2.2;
 
-  const ai = confident ? await askModel(text, top.map((entry) => services.find((service) => service.slug === entry.slug)).filter((service): service is NonNullable<typeof service> => Boolean(service)), locale) : null;
+  const ai = confident ? await askModel(allowModel, text, top.map((entry) => services.find((service) => service.slug === entry.slug)).filter((service): service is NonNullable<typeof service> => Boolean(service)), locale) : null;
   // The model's pick goes first when it is among the candidates.
   const ordered = ai ? [...top].sort((a, b) => Number(b.slug === ai.slug) - Number(a.slug === ai.slug)) : top;
 
