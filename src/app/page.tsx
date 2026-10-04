@@ -11,7 +11,7 @@ import { listAnnouncements } from "@/modules/announcements/announcements.service
 import { cityRequestStats, countHandledCityRequests } from "@/modules/city-requests/city-requests.service";
 import { listServices } from "@/modules/city-services/city-services.service";
 
-export const metadata: Metadata = { title: { absolute: "Terra Nova — portail des habitants" } };
+export const metadata: Metadata = { title: { absolute: "Bubble — la plateforme centrale de Terra Nova" } };
 
 /** Why a visitor was sent back to the registry, as the auth server or a provider words it. */
 const REDIRECT_ERROR_KEYS: Readonly<Record<string, MessageKey>> = {
