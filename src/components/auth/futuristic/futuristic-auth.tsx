@@ -496,6 +496,30 @@ export function FuturisticAuth({
   };
 
   // Submit Login
+
+  /** D02 — passwordless sign-in with a passkey saved on this device. */
+  const handlePasskey = async () => {
+    if (loginSubmitting) return;
+    if (typeof window === "undefined" || !window.PublicKeyCredential) {
+      setLoginErr(t("auth.passkey.unsupported"));
+      return;
+    }
+    setLoginErr(null);
+    setLoginSubmitting(true);
+    try {
+      const result = await authClient.signIn.passkey();
+      if (result?.error) {
+        setLoginErr(t("auth.passkey.failed"));
+        setLoginSubmitting(false);
+        return;
+      }
+      router.replace(redirectTo);
+      router.refresh();
+    } catch {
+      setLoginErr(t("auth.passkey.failed"));
+      setLoginSubmitting(false);
+    }
+  };
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loginSubmitting || loginProtection.paused) return;
@@ -855,6 +879,15 @@ export function FuturisticAuth({
                 </button>
                 <ProtectedSignInNote />
               </form>
+
+              {/* D02 — sign in without a password: face, fingerprint or device PIN. */}
+              <div className="fa-or fa-anim">{t("auth.passkey.or")}</div>
+              <button className="fa-soc fa-anim" style={{ width: "100%" }} type="button" onClick={() => void handlePasskey()} disabled={loginSubmitting} title={t("auth.passkey.sign_in_hint")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4M14 13.12c0 2.38 0 6.38-1 8.88M17.29 21.02c.12-.6.43-2.3.5-3.02M2 12a10 10 0 0 1 18-6M2 16h.01M21.8 16c.2-2 .131-5.354 0-6M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2M8.65 22c.21-.66.45-1.32.57-2M9 6.8a6 6 0 0 1 9 5.2v2" />
+                </svg>
+                {t("auth.passkey.sign_in")}
+              </button>
 
               {/* Social buttons */}
               {oauth.google || oauth.github ? (
