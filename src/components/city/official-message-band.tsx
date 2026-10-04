@@ -92,7 +92,11 @@ export function OfficialMessageBand() {
         role={fresh ? "alert" : "status"}
         aria-labelledby="official-title"
         className="flex w-full max-w-[1180px] flex-col gap-2 px-1 pb-3 pt-3 sm:px-3"
+<<<<<<< HEAD
 >>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
+=======
+>>>>>>> c7515a0 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
+>>>>>>> 763c828 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
       >
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground max-lg:hidden">
           <Landmark className="size-4" aria-hidden />

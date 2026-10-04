@@ -539,6 +539,7 @@ export function CityMapView({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 7e43114 (refactor: replace button title attributes with shadcn/ui tooltips)
           <Tooltip>
@@ -558,10 +559,14 @@ export function CityMapView({
 =======
 >>>>>>> 7e43114 (refactor: replace button title attributes with shadcn/ui tooltips)
 =======
+=======
+>>>>>>> 763c828 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
           <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")} title={t("alerts.map.home_here")}>
             <LocateFixed className="size-5 text-foreground" aria-hidden />
           </button>
 =======
+=======
+>>>>>>> c7515a0 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
           <Tooltip>
             <TooltipTrigger asChild>
               <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")}>
@@ -570,8 +575,19 @@ export function CityMapView({
             </TooltipTrigger>
             <TooltipContent>{t("alerts.map.home_here")}</TooltipContent>
           </Tooltip>
+<<<<<<< HEAD
 >>>>>>> 8536026 (refactor: replace button title attributes with shadcn/ui tooltips)
+<<<<<<< HEAD
 >>>>>>> 9205809 (refactor: replace button title attributes with shadcn/ui tooltips)
+=======
+=======
+=======
+          <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")} title={t("alerts.map.home_here")}>
+            <LocateFixed className="size-5 text-foreground" aria-hidden />
+          </button>
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
+>>>>>>> c7515a0 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
+>>>>>>> 763c828 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
         ) : null}
         {/* Camera controls only exist for the 3D view. */}
         {mode === "3d" ? (

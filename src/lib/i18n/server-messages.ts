@@ -33,7 +33,11 @@ const FR: Readonly<Record<string, string>> = {
   "You or the resident already have an appointment at that time.": "Vous ou l'habitant avez déjà un rendez-vous à ce moment-là.",
   "Give the resident a reason.": "Donnez une raison à l'habitant.",
 =======
+<<<<<<< HEAD
 >>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
+=======
+>>>>>>> c7515a0 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
+>>>>>>> 763c828 (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
   "The file is too large.": "Le fichier est trop volumineux.",
   "The upload was refused.": "L'envoi a été refusé.",
   "Choose the district where you live.": "Choisissez le quartier où vous habitez.",
