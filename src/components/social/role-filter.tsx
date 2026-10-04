@@ -11,7 +11,7 @@ const BADGE_LABEL = { USER: "role.user", AGENT: "role.agent", ADMIN: "role.admin
  * "Everyone / Citizens / Agents / Administrators": find a city agent (or tell
  * a fellow resident from staff) without knowing their name.
  */
-export function RoleFilterChips({ value, onChange }: { readonly value: PeopleRole | null; readonly onChange: (role: PeopleRole | null) => void }) {
+export function RoleFilterChips({ value, onChange, everyoneActive = true }: { readonly value: PeopleRole | null; readonly onChange: (role: PeopleRole | null) => void; /** The "everyone" chip is the selected one (false while nothing is chosen yet). */ readonly everyoneActive?: boolean }) {
   const t = useTranslation();
   const options: readonly (PeopleRole | null)[] = [null, ...PEOPLE_ROLES];
   return (
@@ -21,11 +21,11 @@ export function RoleFilterChips({ value, onChange }: { readonly value: PeopleRol
           key={option ?? "all"}
           type="button"
           role="radio"
-          aria-checked={value === option}
+          aria-checked={option === null ? everyoneActive && value === null : value === option}
           onClick={() => onChange(option)}
           className={cn(
             "rounded-full border px-3 py-1 text-[0.8125rem] font-medium transition-colors",
-            value === option ? "border-primary bg-accent text-accent-foreground" : "border-border text-muted-foreground hover:bg-surface-muted",
+            (option === null ? everyoneActive && value === null : value === option) ? "border-foreground bg-foreground text-background" : "border-border text-muted-foreground hover:bg-surface-muted",
           )}
         >
           {option ? t(ROLE_LABEL[option]) : t("tn.people.role.all")}

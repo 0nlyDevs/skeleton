@@ -1791,4 +1791,8 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.plain.note": "Automatic explanation to help you understand. The official text is the one above.",
   "auth.register.zone": "Your district in Terra Nova",
   "auth.register.zone_required": "Choose the district where you live.",
+  "tn.search.placeholder": "A name, a service, a topic… even misspelled",
+  "tn.search.go": "Search",
+  "tn.search.services": "City services",
+  "tn.search.total": "{count} people",
 };
