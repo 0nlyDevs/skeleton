@@ -2,6 +2,7 @@ import { Ambulance, ArrowRight, Building2, FileText, Globe2, Hourglass, MapPin, 
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
+import { ServiceFinder } from "@/components/city/service-finder";
 import { AnnouncementCard } from "@/components/city/announcement-card";
 import { RequestList } from "@/components/city/request-list";
 import { WelcomeGuide } from "@/components/city/welcome-guide";
@@ -97,6 +98,8 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
 
       {showWelcome ? <WelcomeGuide name={user.name.split(" ")[0] ?? user.name} steps={welcome} /> : null}
       {showWizard ? <WelcomeWizard name={user.name.split(" ")[0] ?? user.name} image={user.image} services={wizardServices} /> : null}
+
+      <ServiceFinder />
 
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label={t("tn.space.question")}>
         {actions.map((action) => (
