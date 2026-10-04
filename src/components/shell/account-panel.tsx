@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, LogOut, MapPin, MessageCircle, Settings } from "lucide-react";
+import { Compass, LogOut, MapPin, Settings } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -12,18 +12,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Spinner } from "@/components/ui/spinner";
 import { signOut } from "@/lib/auth/client";
 import type { MessageKey } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { cityZoneLabelKey, type CityZoneId } from "@/modules/alerts/city-zones";
 
-import { HELP_NAV, PROFILE_ICON, STAFF_NAV, type ShellNavItem } from "./nav-config";
+import { HELP_NAV, PROFILE_ICON, type ShellNavItem } from "./nav-config";
 import type { ShellViewer } from "./shell-types";
 import { UserAvatar } from "./user-avatar";
 
 const ROW = "flex items-center gap-2.5 rounded-full px-3 py-2 text-[0.875rem] font-medium hover:bg-surface-muted";
 
-function Row({ item, label }: { readonly item: ShellNavItem; readonly label: string }) {
+function Row({ item, label, className }: { readonly item: ShellNavItem; readonly label: string; readonly className?: string }) {
   const Icon = item.icon;
   return (
-    <Link href={item.href} className={ROW}>
+    <Link href={item.href} className={cn(ROW, className)}>
       <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       {label}
     </Link>
@@ -32,8 +33,8 @@ function Row({ item, label }: { readonly item: ShellNavItem; readonly label: str
 
 /**
  * Everything personal behind the avatar: who I am and where I live, my
- * account, the staff workspaces, help pages, reading comfort and language,
- * and the way out. It replaces a twelve-entry side menu.
+ * account, help pages, reading comfort and language, and the way out.
+ * Places are in the side menu and staff workspaces in the top bar.
  */
 export function AccountPanel({ viewer, zone }: { readonly viewer: ShellViewer; readonly zone: CityZoneId | null }) {
   const t = useTranslation();
@@ -61,7 +62,6 @@ export function AccountPanel({ viewer, zone }: { readonly viewer: ShellViewer; r
 
   const busy = signingOut || pending;
   const profileHref = viewer.username ? `/profile/${encodeURIComponent(viewer.username)}` : "/settings/profile";
-  const staff = STAFF_NAV.filter((item) => !item.roles || item.roles.includes(viewer.role));
   const ProfileIcon = PROFILE_ICON;
 
   return (
@@ -100,10 +100,6 @@ export function AccountPanel({ viewer, zone }: { readonly viewer: ShellViewer; r
             <ProfileIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             {t("nav.my_profile")}
           </Link>
-          <Link href="/messages" className={ROW}>
-            <MessageCircle className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            {t("nav.messages")}
-          </Link>
           <Link href="/settings/profile" className={ROW}>
             <Settings className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             {t("nav.settings")}
@@ -113,13 +109,10 @@ export function AccountPanel({ viewer, zone }: { readonly viewer: ShellViewer; r
             <Compass className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             {t("tn.wizard.replay")}
           </Link>
-          {staff.length > 0 ? <p className="px-3 pb-1 pt-3 text-[0.75rem] font-semibold text-muted-foreground">{t("tn.nav.staff")}</p> : null}
-          {staff.map((item) => (
-            <Row key={item.href} item={item} label={t(item.labelKey)} />
-          ))}
           <p className="px-3 pb-1 pt-3 text-[0.75rem] font-semibold text-muted-foreground">{t("tn.account.help")}</p>
           {HELP_NAV.map((item) => (
-            <Row key={item.href} item={item} label={t(item.labelKey)} />
+            // The assistant already sits in the side menu on a wide screen.
+            <Row key={item.href} item={item} label={t(item.labelKey)} className={item.href === "/assistant" ? "lg:hidden" : undefined} />
           ))}
         </nav>
 
