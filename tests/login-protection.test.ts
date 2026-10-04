@@ -51,8 +51,8 @@ describe("maskIp", () => {
   });
 
   it("never echoes something that is not an address", () => {
-    expect(maskIp(null)).toBe("—");
-    expect(maskIp("unknown")).toBe("—");
+    expect(maskIp(null)).toBe("-");
+    expect(maskIp("unknown")).toBe("-");
   });
 });
 
