@@ -12,17 +12,17 @@
 import { randomInt, randomUUID } from "node:crypto";
 
 import { placeholderEmail } from "@/lib/accounts/no-email";
-import { isStaff } from "@/lib/auth/guards";
+import { isAdmin, isStaff } from "@/lib/auth/guards";
 import { hashPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db/prisma";
-import { ForbiddenError } from "@/lib/errors";
+import { ConflictError, ForbiddenError } from "@/lib/errors";
 import { composeDisplayName, usernameViolation } from "@/lib/validation/profile";
 import type { AuthUser } from "@/types";
 
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { baseUsername, newAccessCode } from "./assisted-accounts.codes";
-import type { CreateAssistedAccountsInput } from "./assisted-accounts.schema";
+import type { AdminCreateAccountInput, CreateAssistedAccountsInput } from "./assisted-accounts.schema";
 
 export interface AssistedAccountDto {
   readonly id: string;
@@ -32,7 +32,7 @@ export interface AssistedAccountDto {
   readonly accessCode: string;
 }
 
-async function uniqueUsername(firstName: string, lastName: string): Promise<string> {
+export async function uniqueUsername(firstName: string, lastName: string): Promise<string> {
   const base = baseUsername(firstName, lastName);
   for (let attempt = 0; attempt < 12; attempt += 1) {
     const candidate = attempt === 0 ? base : `${base}${randomInt(10, 9999)}`;
@@ -98,4 +98,49 @@ export async function createAssistedAccounts(
 /** The resident chose their own password or passkey: the printed code is no longer the way in. */
 export async function clearMustSetSecret(userId: string): Promise<void> {
   await prisma.user.updateMany({ where: { id: userId, mustSetSecret: true }, data: { mustSetSecret: false } });
+}
+
+export interface AdminCreatedAccountDto extends AssistedAccountDto {
+  readonly role: "USER" | "AGENT" | "ADMIN";
+  readonly email: string | null;
+}
+
+/**
+ * An administrator creates an account of any role (resident, agent,
+ * administrator), with or without an e-mail address. The person gets a
+ * username and a one-time access code, and must choose their own password or
+ * passkey at first sign-in. The role is set here on the server, never by the
+ * person themselves.
+ */
+export async function createAccountAsAdmin(input: AdminCreateAccountInput, actor: AuthUser, ip: string | null): Promise<AdminCreatedAccountDto> {
+  if (!isAdmin(actor)) throw new ForbiddenError("Only administrators can create accounts with a role.");
+  const email = input.email ?? null;
+  if (email && (await prisma.user.findUnique({ where: { email }, select: { id: true } }))) {
+    throw new ConflictError("An account already uses this e-mail address.");
+  }
+  const username = await uniqueUsername(input.firstName, input.lastName);
+  const accessCode = newAccessCode();
+  const id = randomUUID();
+  const name = composeDisplayName(input.firstName, input.lastName);
+  await prisma.user.create({
+    data: {
+      id,
+      name,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: email ?? placeholderEmail(username),
+      // Created by an administrator who knows the person: nothing left to verify.
+      emailVerified: true,
+      username,
+      displayUsername: username,
+      role: input.role,
+      noEmail: email === null,
+      mustSetSecret: true,
+      preferredLocale: input.locale,
+      ...(input.cityZone ? { cityZone: input.cityZone } : {}),
+      accounts: { create: { id: randomUUID(), accountId: id, providerId: "credential", password: await hashPassword(accessCode) } },
+    },
+  });
+  await recordAudit({ actorId: actor.id, action: auditActions.userCreatedByAdmin, targetType: "user", targetId: id, metadata: { op: "create", name, username, role: input.role, withEmail: email !== null }, ip });
+  return { id, name, username, accessCode, role: input.role, email };
 }

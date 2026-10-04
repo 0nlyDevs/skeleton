@@ -779,7 +779,7 @@ export function FuturisticAuth({
             aria-labelledby="h-login"
           >
             <div className="fa-inner">
-              <span className="fa-eyebrow fa-anim">Welcome back</span>
+              <span className="fa-eyebrow fa-anim">Bubble · Terra Nova</span>
               <h1 className="fa-h1 fa-anim" id="h-login">
                 {t("auth.login.title")}
               </h1>

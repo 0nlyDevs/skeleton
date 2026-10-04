@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { UsersTable } from "@/components/admin/users-table";
+import { AdminUsers } from "@/components/admin/admin-users";
 import { requireAdmin } from "@/lib/auth/guards";
 
 export const metadata: Metadata = { title: "Utilisateurs" };
@@ -11,5 +11,5 @@ export default async function AdminUsersPage() {
   const context = await requireAdmin().catch(() => null);
   if (!context) redirect("/admin");
 
-  return <UsersTable currentUserId={context.user.id} />;
+  return <AdminUsers currentUserId={context.user.id} />;
 }

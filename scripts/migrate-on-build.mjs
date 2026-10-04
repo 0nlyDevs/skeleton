@@ -29,6 +29,17 @@ function databaseUrl() {
   return match?.[1] ?? null;
 }
 
+/**
+ * Which seed runs: `npm run build:prod` / `build:preprod` say it with
+ * SEED_TARGET. A plain `npm run build` falls back on the git branch being
+ * built (`prod` seeds production), and on `preprod` when that is unknown.
+ */
+function seedTarget() {
+  if (process.env.SEED_TARGET === "prod" || process.env.SEED_TARGET === "preprod") return process.env.SEED_TARGET;
+  const branch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd: ROOT, encoding: "utf8" });
+  return branch.status === 0 && branch.stdout.trim() === "prod" ? "prod" : "preprod";
+}
+
 if (process.env.SKIP_MIGRATIONS === "1") {
   console.log("[webcup] SKIP_MIGRATIONS=1 - not applying database migrations");
   process.exit(0);
@@ -52,8 +63,9 @@ if (result.status !== 0) {
  * the deployed app. A failing seed warns but never blocks a release.
  */
 if (process.env.SEED_PASSWORD) {
-  console.log("[webcup] seeding test accounts");
-  const seeded = spawnSync("npx", ["prisma", "db", "seed"], { cwd: ROOT, stdio: "inherit", env: process.env });
+  const target = seedTarget();
+  console.log(`[webcup] seeding (${target})`);
+  const seeded = spawnSync("npx", ["prisma", "db", "seed"], { cwd: ROOT, stdio: "inherit", env: { ...process.env, SEED_TARGET: target } });
   if (seeded.status !== 0) console.warn("[webcup] seed failed - continuing the build");
 }
 

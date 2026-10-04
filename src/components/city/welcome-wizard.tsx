@@ -179,6 +179,7 @@ export function WelcomeWizard({
                 <input
                   ref={fileRef}
                   type="file"
+          aria-label={t("tn.a11y.choose_file")}
                   accept={IMAGE_INPUT_ACCEPT}
                   className="sr-only"
                   tabIndex={-1}
