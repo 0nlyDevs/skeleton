@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
 import { isActive, placeFor } from "./nav-config";
 
 /**
- * The pages of the current place, in one row under the top bar. On a phone
- * the row scrolls sideways inside itself; the page never does.
+ * The pages of the current place, under the top bar. They wrap onto a second
+ * line on a phone: nothing scrolls sideways.
  */
 export function PlaceNav({ signedIn }: { readonly signedIn: boolean }) {
   const t = useTranslation();
@@ -25,7 +25,7 @@ export function PlaceNav({ signedIn }: { readonly signedIn: boolean }) {
   const current = links.filter((link) => isActive(pathname, link.href)).sort((a, b) => b.href.length - a.href.length)[0];
 
   return (
-    <nav aria-label={t(place.labelKey)} className="-mx-4 mb-5 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:px-0">
+    <nav aria-label={t(place.labelKey)} className="mb-5 flex flex-wrap gap-2">
       {links.map((link) => {
         const active = current?.href === link.href;
         const badge = link.badge === "messages" ? messageUnreadTotal : 0;
@@ -35,7 +35,7 @@ export function PlaceNav({ signedIn }: { readonly signedIn: boolean }) {
             href={link.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[0.8438rem] font-medium transition-colors",
+              "flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9062rem] font-medium transition-colors",
               active ? "bg-foreground text-background" : "bg-card text-foreground/80 hover:bg-accent",
             )}
           >
