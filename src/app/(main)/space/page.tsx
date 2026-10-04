@@ -96,6 +96,17 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
         <p className="text-sm text-muted-foreground">{t("tn.space.question")}</p>
       </header>
 
+      <Link href="/city-map" className="map-hero group relative flex min-h-[11.5rem] flex-col justify-end gap-2 overflow-hidden rounded-2xl p-6 text-white shadow-float">
+        <span aria-hidden className="map-hero-island" />
+        <span className="relative text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-white/80">{t("tn.space.map_hero.eyebrow")}</span>
+        <span className="relative max-w-xl text-2xl font-semibold leading-tight [font-family:var(--font-display)]">{t("tn.space.map_hero.title")}</span>
+        <span className="relative max-w-xl text-sm text-white/85">{t("tn.space.map_hero.body")}</span>
+        <span className="relative mt-1 inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0b0d12] transition-transform group-hover:translate-x-1">
+          <Globe2 className="size-4" aria-hidden />
+          {t("tn.space.map_hero.cta")}
+        </span>
+      </Link>
+
       {showWelcome ? <WelcomeGuide name={user.name.split(" ")[0] ?? user.name} steps={welcome} /> : null}
       {showWizard ? <WelcomeWizard name={user.name.split(" ")[0] ?? user.name} image={user.image} services={wizardServices} /> : null}
 
