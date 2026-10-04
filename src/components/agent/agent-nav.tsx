@@ -5,6 +5,7 @@ import {
   Building2,
   BusFront,
   CalendarClock,
+  ChevronDown,
   Construction,
   DatabaseBackup,
   FileDown,
@@ -23,6 +24,7 @@ import { usePathname } from "next/navigation";
 
 import { Breadcrumbs, type Crumb } from "@/components/layout/breadcrumbs";
 import { useTranslation } from "@/components/providers/i18n-provider";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "@/components/ui/link";
 import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -160,25 +162,39 @@ export function AgentNav({
           </li>
           {groups.map((group) => {
             const active = current?.id === group.id;
-            const first = group.items[0];
             return (
               <li key={group.id}>
-                <Link
-                  href={first?.href ?? "/agent"}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex h-full items-center justify-between gap-2 rounded-2xl px-4 py-3 text-[0.9375rem] font-semibold transition-colors",
-                    active ? "bg-foreground text-background" : "bg-surface-muted hover:bg-accent",
-                  )}
-                >
-                  {t(group.labelKey)}
-                  {group.id === "requests" && awaitingPickup > 0 ? (
-                    <span className="grid min-w-6 place-items-center rounded-full bg-bead px-1.5 text-[0.75rem] font-bold leading-6 text-bead-foreground">
-                      <span aria-hidden>{awaitingPickup}</span>
-                      <span className="sr-only">{t("tn.agent.pickup.badge", { count: awaitingPickup })}</span>
+                {/* The group opens on its pages: nothing to guess, one tap to the right one. */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex h-full w-full items-center justify-between gap-2 rounded-2xl px-4 py-3 text-left text-[0.9375rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                      active ? "bg-foreground text-background" : "bg-surface-muted hover:bg-accent",
+                    )}
+                  >
+                    <span className="min-w-0 truncate">{t(group.labelKey)}</span>
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      {group.id === "requests" && awaitingPickup > 0 ? (
+                        <span className="grid min-w-6 place-items-center rounded-full bg-bead px-1.5 text-[0.75rem] font-bold leading-6 text-bead-foreground">
+                          <span aria-hidden>{awaitingPickup}</span>
+                          <span className="sr-only">{t("tn.agent.pickup.badge", { count: awaitingPickup })}</span>
+                        </span>
+                      ) : null}
+                      <ChevronDown className="size-4" aria-hidden />
                     </span>
-                  ) : null}
-                </Link>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-60 rounded-2xl p-1.5">
+                    {group.items.map((item) => (
+                      <DropdownMenuItem key={item.href} asChild className={cn("rounded-full px-3 py-2.5 text-[0.9375rem]", isOn(pathname, item.href) && "bg-accent font-semibold")}>
+                        <Link href={item.href} aria-current={isOn(pathname, item.href) ? "page" : undefined}>
+                          <item.icon className="size-4" aria-hidden />
+                          {t(item.labelKey)}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </li>
             );
           })}

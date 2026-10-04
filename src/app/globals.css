@@ -925,3 +925,30 @@ html.dark {
     max-width: min(100%, 1180px);
   }
 }
+
+/*
+ * Every list to choose from follows the theme: the closed control is the
+ * app's filled field with its own arrow, and the open list takes the panel
+ * colours instead of the system's white.
+ */
+.dark {
+  color-scheme: dark;
+}
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  color: var(--foreground);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8c93' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1rem;
+}
+select option,
+select optgroup {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}
+select option:checked {
+  background-color: var(--accent);
+}
