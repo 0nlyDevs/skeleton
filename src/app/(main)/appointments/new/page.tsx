@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { AppointmentRequestForm } from "@/components/appointments/appointment-request-form";
 import { AppointmentBooking } from "@/components/appointments/appointment-booking";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { requirePageAuth } from "@/lib/auth/page-guards";
@@ -23,6 +24,7 @@ export default async function NewAppointmentPage({ searchParams }: { readonly se
         <p className="text-sm text-muted-foreground">{t("tn.appointments.new_subtitle")}</p>
       </header>
       <AppointmentBooking services={services.map(({ slug, name }) => ({ slug, name }))} initialService={initial} />
+      <AppointmentRequestForm services={services.map(({ slug, name }) => ({ slug, name }))} initialService={initial} />
     </div>
   );
 }
