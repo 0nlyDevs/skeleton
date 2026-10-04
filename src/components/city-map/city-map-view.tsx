@@ -538,6 +538,7 @@ export function CityMapView({
         {home ? (
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 7e43114 (refactor: replace button title attributes with shadcn/ui tooltips)
           <Tooltip>
@@ -556,6 +557,21 @@ export function CityMapView({
 >>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
 =======
 >>>>>>> 7e43114 (refactor: replace button title attributes with shadcn/ui tooltips)
+=======
+          <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")} title={t("alerts.map.home_here")}>
+            <LocateFixed className="size-5 text-foreground" aria-hidden />
+          </button>
+=======
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")}>
+                <LocateFixed className="size-5 text-[#1a73e8]" aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t("alerts.map.home_here")}</TooltipContent>
+          </Tooltip>
+>>>>>>> 8536026 (refactor: replace button title attributes with shadcn/ui tooltips)
+>>>>>>> 9205809 (refactor: replace button title attributes with shadcn/ui tooltips)
         ) : null}
         {/* Camera controls only exist for the 3D view. */}
         {mode === "3d" ? (
