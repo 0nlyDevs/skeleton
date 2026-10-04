@@ -1640,4 +1640,5 @@ export const frTerraNova = {
   "tn.agent.group.inform": "Informer",
   "tn.agent.group.services": "Services",
   "tn.agent.group.follow": "Suivi et données",
+  "tn.space.follow": "À suivre",
 } as const;

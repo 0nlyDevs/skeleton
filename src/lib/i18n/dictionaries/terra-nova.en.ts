@@ -1635,4 +1635,5 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.agent.group.inform": "Inform",
   "tn.agent.group.services": "Services",
   "tn.agent.group.follow": "Follow-up and data",
+  "tn.space.follow": "To follow",
 };
