@@ -4,6 +4,8 @@
  */
 export const TEXT_SIZE_COOKIE = "skeleton_text_size";
 export const CONTRAST_COOKIE = "skeleton_contrast";
+/** F43 — `cb` swaps red/green state colours for a colour-blind-safe set. */
+export const VISION_COOKIE = "skeleton_vision";
 
 /** Root font sizes; every rem-based size, spacing included, follows them. */
 export const TEXT_SIZES = ["normal", "large", "larger", "largest"] as const;

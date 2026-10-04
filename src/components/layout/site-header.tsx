@@ -9,7 +9,7 @@ import { LocaleToggle } from "./locale-toggle";
 import { DisplayMenu } from "./display-menu";
 import { EcoToggle } from "./eco-toggle";
 import { ThemeToggle } from "./theme-toggle";
-import { UserMenu } from "./user-menu";
+import { UserAvatar } from "@/components/shell/user-avatar";
 
 /**
  * Public header for the landing and legal pages.
@@ -70,7 +70,7 @@ export async function SiteHeader() {
           <EcoToggle />
           <ThemeToggle />
           {user ? (
-            <UserMenu id={user.id} username={user.username ?? null} name={user.name} email={user.email} image={user.image ?? null} role={user.role} />
+            <Link href="/space" aria-label={user.name} className="inline-flex rounded-full p-0.5 hover:bg-surface-muted"><UserAvatar userId={user.id} name={user.name} image={user.image ?? null} size="xs" className="size-8" /></Link>
           ) : (
             <>
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
