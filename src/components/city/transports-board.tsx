@@ -3,6 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { BusFront, Clock3, Heart, Search, Siren, Route } from "lucide-react";
 
+import { InterruptedLines, ReplacementRoute } from "@/components/city/replacement-routes";
 import { ContextTip } from "@/components/feedback/context-tip";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +89,8 @@ export function TransportsBoard({ lines }: { readonly lines: readonly TransportL
   const hasAlerts = lines.some((line) => Boolean(line.alert));
   const itinerary = useMemo(() => lines.flatMap((line) => {
     const from = line.stops.indexOf(origin); const to = line.stops.indexOf(destination);
-    return origin && destination && from >= 0 && to > from ? [{ line, from, to }] : [];
+    // F97 — an interrupted line is never proposed: the replacement route takes over.
+    return origin && destination && !line.alert && from >= 0 && to > from ? [{ line, from, to }] : [];
   }), [lines, origin, destination]);
   const matching = useMemo(() => {
     const value = query.trim().toLocaleLowerCase();
@@ -114,14 +116,15 @@ export function TransportsBoard({ lines }: { readonly lines: readonly TransportL
     <div role="status" className={`flex items-center gap-3 rounded-xl border p-4 text-sm ${hasAlerts ? "border-warning/30 bg-warning/5" : "border-success/30 bg-success/5"}`}><span className={`size-2.5 rounded-full ${hasAlerts ? "bg-warning" : "bg-success"}`} aria-hidden /><span className="font-medium">{t(hasAlerts ? "tn.transports.status.disrupted" : "tn.transports.status.all_good")}</span><span className="ml-auto hidden text-muted-foreground sm:inline">{t("tn.transports.schedule_note")}</span></div>
 
     {lines.length === 0 ? <Card><CardContent className="p-6 text-sm text-muted-foreground">{t("tn.transports.no_published_lines")}</CardContent></Card> : <>
+      <InterruptedLines lines={lines} />
       <ContextTip id="transports">{t("tn.tip.transports")}</ContextTip>
       <Card><CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <div className="flex flex-col gap-1.5 text-sm font-medium"><span id="transport-origin-label">{t("tn.transports.origin")}</span><Select value={origin} onValueChange={setOrigin}><SelectTrigger aria-labelledby="transport-origin-label"><SelectValue placeholder={t("tn.transports.choose_stop")} /></SelectTrigger><SelectContent>{stops.map((stop) => <SelectItem key={stop} value={stop}>{stop}</SelectItem>)}</SelectContent></Select></div>
         <div className="flex flex-col gap-1.5 text-sm font-medium"><span id="transport-destination-label">{t("tn.transports.destination")}</span><Select value={destination} onValueChange={setDestination}><SelectTrigger aria-labelledby="transport-destination-label"><SelectValue placeholder={t("tn.transports.choose_stop")} /></SelectTrigger><SelectContent>{stops.filter((stop) => stop !== origin).map((stop) => <SelectItem key={stop} value={stop}>{stop}</SelectItem>)}</SelectContent></Select></div>
-        <span className="pb-2 text-xs text-muted-foreground">{t("tn.transports.direct_routes_only")}</span>
+        <span className="pb-2 text-xs text-muted-foreground">{t("tn.replacement.hint")}</span>
       </CardContent></Card>
       {origin && destination ? <section aria-label={t("tn.transports.itinerary")} className="flex flex-col gap-2">
-        {itinerary.length ? itinerary.map(({ line, from, to }) => <Card key={line.id}><CardContent className="flex flex-wrap items-center gap-3 p-4"><Route className="size-5 text-primary" aria-hidden /><span className="grid size-8 place-items-center rounded-lg bg-accent font-bold">{line.code}</span><span className="min-w-0 flex-1"><span className="block font-medium">{line.name}</span><span className="block text-sm text-muted-foreground">{line.stops.slice(from, to + 1).join(" → ")}</span></span><Badge variant="primary">{current === null ? "…" : (nextTimes(line, current)[0] ?? t("tn.transports.no_more_departures"))}</Badge></CardContent></Card>) : <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">{t("tn.transports.no_direct_route")}</p>}
+        {itinerary.length ? itinerary.map(({ line, from, to }) => <Card key={line.id}><CardContent className="flex flex-wrap items-center gap-3 p-4"><Route className="size-5 text-primary" aria-hidden /><span className="grid size-8 place-items-center rounded-lg bg-accent font-bold">{line.code}</span><span className="min-w-0 flex-1"><span className="block font-medium">{line.name}</span><span className="block text-sm text-muted-foreground">{line.stops.slice(from, to + 1).join(" → ")}</span></span><Badge variant="primary">{current === null ? "…" : (nextTimes(line, current)[0] ?? t("tn.transports.no_more_departures"))}</Badge></CardContent></Card>) : <ReplacementRoute lines={lines} origin={origin} destination={destination} />}
       </section> : null}
 
       <label className="relative block"><span className="sr-only">{t("tn.transports.search_label")}</span><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden /><Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("tn.transports.search_stop")} className="h-12 pl-10" /></label>

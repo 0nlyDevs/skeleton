@@ -6,6 +6,9 @@ import {
   BusFront,
   CalendarClock,
   ChevronDown,
+  BarChart3,
+  Handshake,
+  ShieldAlert,
   Construction,
   DatabaseBackup,
   FileDown,
@@ -75,6 +78,7 @@ const GROUPS: readonly Group[] = [
       { href: "/agent/service-status", labelKey: "tn.availability.nav", icon: Construction },
       { href: "/agent/services", labelKey: "tn.agent.nav.services", icon: Building2, adminOnly: true },
       { href: "/agent/transports", labelKey: "tn.agent.nav.transports", icon: BusFront },
+      { href: "/agent/partners", labelKey: "tn.partners.admin.nav", icon: Handshake },
     ],
   },
   {
@@ -83,6 +87,8 @@ const GROUPS: readonly Group[] = [
     items: [
       { href: "/agent/feed", labelKey: "tn.agent.nav.feed", icon: Radio },
       { href: "/agent/history", labelKey: "tn.agent.nav.history", icon: History },
+      { href: "/agent/usage", labelKey: "tn.usage.nav", icon: BarChart3 },
+      { href: "/agent/security", labelKey: "tn.security.nav", icon: ShieldAlert },
       { href: "/agent/exports", labelKey: "tn.export.nav", icon: FileDown },
       { href: "/agent/data", labelKey: "tn.data.nav", icon: DatabaseBackup, adminOnly: true },
     ],
