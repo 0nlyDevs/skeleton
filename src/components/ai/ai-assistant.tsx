@@ -1,5 +1,6 @@
 "use client";
 
+import { ReplyText } from "@/components/ai/reply-text";
 import { MessageCircle, Send, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -158,7 +159,7 @@ export function AiAssistant({ available }: { readonly available: boolean }) {
                         : "rounded-bl-md bg-surface-muted text-foreground",
                     )}
                   >
-                    {turn.content}
+                    {turn.role === "user" ? turn.content : <ReplyText text={turn.content} />}
                   </div>
                   {turn.cached ? (
                     <span className="px-1 text-[0.6562rem] uppercase tracking-wide text-muted-foreground/60">
