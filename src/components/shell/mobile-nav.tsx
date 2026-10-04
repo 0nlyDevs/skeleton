@@ -34,8 +34,8 @@ export function MobileNav({ signedIn }: { readonly signedIn: boolean }) {
                 className={cn("relative flex h-[3.75rem] flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium", active ? "text-foreground" : "text-muted-foreground")}
               >
                 {/* The current place carries the bead; `aria-current` says it too. */}
-                <span aria-hidden className={cn("absolute top-1.5 size-1.5 rounded-full", active ? "bg-bead" : "bg-transparent")} />
-                <Icon className="size-5" aria-hidden />
+                <span aria-hidden className={cn("absolute top-1.5 size-1.5 rounded-full transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)]", active ? "bg-bead" : "bg-transparent")} />
+                <Icon className="size-5 shrink-0 text-muted-foreground transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)]" aria-hidden />
                 {t(place.labelKey)}
                 {badge > 0 ? (
                   <span className="absolute left-1/2 top-2 ml-2.5 grid min-w-4 place-items-center rounded-full bg-bead px-1 text-[0.625rem] font-bold leading-4 text-bead-foreground">

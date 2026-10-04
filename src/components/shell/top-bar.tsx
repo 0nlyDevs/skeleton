@@ -56,7 +56,7 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
           <Link
             href="/search"
             aria-label={t("common.search")}
-            className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-surface-muted hover:text-foreground lg:hidden"
+            className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-surface-muted hover:text-foreground transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)] lg:hidden"
           >
             <Search className="size-[1.125rem]" aria-hidden />
           </Link>
@@ -73,7 +73,7 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
                     aria-label={t(item.labelKey)}
                     title={t(item.labelKey)}
                     className={cn(
-                      "inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-colors xl:px-3.5",
+                      "inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)] xl:px-3.5",
                       on ? "bg-foreground text-background" : "bg-surface-muted text-foreground hover:bg-accent",
                     )}
                   >

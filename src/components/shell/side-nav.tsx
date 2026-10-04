@@ -68,7 +68,7 @@ export function SideNav({ viewer }: { readonly viewer: ShellViewer | null }) {
               aria-expanded={open}
               onClick={() => setPicked(open ? "none" : place.id)}
               className={cn(
-                "flex items-center gap-2.5 rounded-full px-3 py-2 text-left text-[0.875rem] font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                "flex items-center gap-2.5 rounded-full px-3 py-2 text-left text-[0.875rem] font-semibold transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                 onPlace ? "text-foreground" : "text-foreground/85",
               )}
             >

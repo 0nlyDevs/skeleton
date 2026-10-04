@@ -70,7 +70,7 @@ export function LandingNav({
             onClick={onSound}
             aria-pressed={soundOn}
             aria-label={soundOn ? t("tn.sound.mute") : t("tn.sound.unmute")}
-            className="grid size-9 place-items-center rounded-full text-white/75 hover:bg-white/10 hover:text-white"
+            className="grid size-9 place-items-center rounded-full text-white/75 hover:bg-white/10 hover:text-white transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)]"
           >
             {soundOn ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
           </button>
@@ -86,7 +86,7 @@ export function LandingNav({
               {t("nav.sign_in")}
             </button>
           )}
-          <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={t("tn.landing.menu")} className="ml-1 grid size-9 place-items-center rounded-full hover:bg-white/10 md:hidden">
+          <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={t("tn.landing.menu")} className="ml-1 grid size-9 place-items-center rounded-full hover:bg-white/10 transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)] md:hidden">
             {open ? <X className="size-4" aria-hidden /> : <Menu className="size-4" aria-hidden />}
           </button>
         </div>
