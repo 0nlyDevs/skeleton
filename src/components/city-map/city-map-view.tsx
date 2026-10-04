@@ -537,6 +537,9 @@ export function CityMapView({
       <div className="absolute bottom-6 right-3 flex flex-col gap-2">
         {home ? (
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7e43114 (refactor: replace button title attributes with shadcn/ui tooltips)
           <Tooltip>
             <TooltipTrigger asChild>
               <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")}>
@@ -545,11 +548,14 @@ export function CityMapView({
             </TooltipTrigger>
             <TooltipContent>{t("alerts.map.home_here")}</TooltipContent>
           </Tooltip>
+<<<<<<< HEAD
 =======
           <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")} title={t("alerts.map.home_here")}>
             <LocateFixed className="size-5 text-foreground" aria-hidden />
           </button>
 >>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
+=======
+>>>>>>> 7e43114 (refactor: replace button title attributes with shadcn/ui tooltips)
         ) : null}
         {/* Camera controls only exist for the 3D view. */}
         {mode === "3d" ? (
