@@ -11,8 +11,7 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { useFormatters } from "@/hooks/use-formatters";
 import { useRealtime } from "@/components/providers/realtime-provider";
 import { UserAvatar } from "@/components/shell/user-avatar";
-import { IMAGE_INPUT_ACCEPT, uploadImage } from "@/components/social/use-image-uploads";
-import { imagesFromClipboard, UnsupportedImageError } from "@/lib/images/prepare-image";
+import { IMAGE_INPUT_ACCEPT, describeImageError, uploadImage } from "@/components/social/use-image-uploads";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -177,7 +176,7 @@ export function ConversationThread({
     setUploading(true);
     upload
       .catch((error: unknown) => {
-        toast.error(error instanceof UnsupportedImageError ? t("composer.image_type") : describeApiError(error, t));
+        toast.error(describeImageError(error, t));
         setAttachment((current) => (current?.upload === upload ? { ...current, failed: true } : current));
       })
       .finally(() => setUploading(false));

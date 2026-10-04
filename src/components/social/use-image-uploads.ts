@@ -6,6 +6,7 @@ import { useTranslation } from "@/components/providers/i18n-provider";
 import { apiFetch } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import { prepareImage, UnsupportedImageError } from "@/lib/images/prepare-image";
+import type { Translator } from "@/lib/i18n";
 
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -18,12 +19,22 @@ export const IMAGE_INPUT_ACCEPT = "image/*";
  */
 export async function uploadImage(file: File, visibility: "PRIVATE" | "PUBLIC" = "PRIVATE"): Promise<{ id: string; url: string }> {
   const prepared = await prepareImage(file);
-  if (prepared.size > MAX_IMAGE_BYTES) throw new UnsupportedImageError("too-large");
+  if (prepared.size > MAX_IMAGE_BYTES) throw new ImageTooLargeError();
   const form = new FormData();
   form.append("file", prepared);
   form.append("visibility", visibility);
   const response = await apiFetch<{ data: { id: string; url: string } }>("/api/upload", { method: "POST", body: form });
   return response.data;
+}
+
+/** A picture that is still over the limit after being scaled down in the browser. */
+export class ImageTooLargeError extends Error {}
+
+/** The real reason an image could not be sent: its type, its weight, or the server's answer. */
+export function describeImageError(error: unknown, t: Translator): string {
+  if (error instanceof ImageTooLargeError) return t("errors.too_large");
+  if (error instanceof UnsupportedImageError) return t("composer.image_type");
+  return describeApiError(error, t);
 }
 
 export interface PendingImage {
@@ -78,7 +89,7 @@ export function useImageUploads(max: number, initial: ReadonlyArray<{ id: string
             setImages((current) =>
               current.map((image) =>
                 image.key === key
-                  ? { ...image, status: "error", error: error instanceof UnsupportedImageError ? t("composer.image_type") : describeApiError(error, t) }
+                  ? { ...image, status: "error", error: describeImageError(error, t) }
                   : image,
               ),
             ),

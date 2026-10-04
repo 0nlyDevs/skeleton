@@ -1,5 +1,6 @@
 "use client";
 
+import { UPLOAD_LIMIT_BYTES } from "@/lib/upload-limit";
 import type { ApiErrorBody } from "@/types";
 
 /**
@@ -62,6 +63,16 @@ export async function apiFetch<T>(
 
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
+  // A file over the limit is refused here, with its real reason: sent anyway, the
+  // server would close the connection half-way and the page would say "offline".
+  if (isFormData) {
+    for (const value of (body as FormData).values()) {
+      if (typeof File !== "undefined" && value instanceof File && value.size > UPLOAD_LIMIT_BYTES) {
+        throw new ApiRequestError({ code: "PAYLOAD_TOO_LARGE", message: "The file is too large.", status: 413 });
+      }
+    }
+  }
+
   let response: Response;
   try {
     response = await fetch(path, {
@@ -80,6 +91,11 @@ export async function apiFetch<T>(
             : JSON.stringify(body),
     });
   } catch {
+    // An upload cut off while the browser still reports being online was refused on the way
+    // (a size limit of a proxy, a type): say that, not "no connection".
+    if (isFormData && typeof navigator !== "undefined" && navigator.onLine) {
+      throw new ApiRequestError({ code: "UPLOAD_FAILED", message: "The upload was refused.", status: 0 });
+    }
     // A dead network is not a server error; label it so the UI can say
     // "check your connection" instead of "something went wrong".
     throw new ApiRequestError({

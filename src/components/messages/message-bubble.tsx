@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ReactorsDialog } from "@/components/social/reactors-dialog";
 import { ReactionIcon, REACTION_LABEL } from "@/components/social/reactions";
 import { apiFetch } from "@/lib/api/client";
-import { describeApiError } from "@/lib/api/error-message";
+import { describeApiError, describeFailure } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import type { MessageDto } from "@/modules/messages/messages.dto";
 import { REACTION_TYPES, type ReactionType } from "@/types";
@@ -263,7 +263,7 @@ const editable = mine && !message.deleted && !message.pending && !message.failed
         {message.failed ? (
           <button type="button" onClick={onDiscard} className="inline-flex items-center gap-1 text-error hover:underline">
             <AlertCircle className="size-3" />
-            {message.failed === "timeout" || message.failed === "error" ? t("errors.network") : message.failed}
+            {describeFailure(message.failed, t)}
           </button>
         ) : null}
         {message.editedAt && !message.deleted ? <span>{t("messages.edited")}</span> : null}
