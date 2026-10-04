@@ -53,6 +53,17 @@ const ALERTS = [
     hoursAgo: 0.5,
   },
   {
+    // F104 — for everyone: what to do before and during the solar storm.
+    slug: "tempete-solaire-communications-perturbees",
+    title: "Tempête solaire : communications perturbées dans les prochaines minutes",
+    summary: "Le réseau et les téléphones peuvent se couper pendant une à deux heures. Lisez les consignes maintenant, tant que la connexion fonctionne.",
+    body:
+      "Une tempête solaire atteint Terra Nova. Les communications (réseau, téléphone, navettes guidées) peuvent être coupées pendant une à deux heures.\n\nMaintenant, tant que la connexion fonctionne :\n• Ouvrez la page « L'essentiel » de Bubble : elle reste lisible même sans connexion, avec les numéros d'urgence.\n• Prévenez vos proches de l'endroit où vous êtes, par un seul message court.\n• Chargez votre téléphone et notez sur papier les numéros importants.\n\nPendant la tempête :\n• Restez à l'intérieur ou rejoignez l'abri de votre quartier ; évitez les sorties en surface.\n• N'appelez que pour une urgence, pour laisser les lignes aux secours.\n• Si le réseau est coupé, les abris de quartier diffusent les consignes par haut-parleur et radio locale.\n• Ne prenez pas les navettes guidées : elles s'arrêtent à la première station.\n\nAprès : attendez le message de fin d'alerte de la ville avant de reprendre vos déplacements.",
+    scope: "ALL",
+    severity: "CRITICAL",
+    hoursAgo: 0.02,
+  },
+  {
     // F101 — the newest alert: it leads the banner, the home and the map for the north.
     slug: "panne-electrique-secteur-nord",
     title: "Panne électrique dans le secteur nord",
