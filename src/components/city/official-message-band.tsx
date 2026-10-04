@@ -84,41 +84,46 @@ export function OfficialMessageBand() {
       <section
         role={fresh ? "alert" : "status"}
         aria-labelledby="official-title"
-        className="flex w-full max-w-[1480px] flex-col gap-2 px-1 pb-3 pt-3 sm:px-3"
+        className="flex w-full max-w-[1480px] flex-col gap-x-4 gap-y-2 px-1 py-2.5 sm:px-3 lg:flex-row lg:items-center"
       >
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.75rem] font-semibold text-primary">
-          <Landmark className="size-3.5" aria-hidden />
-          {t("tn.official.label")}
-          <span className="font-normal text-muted-foreground">· {formatRelative(message.publishedAt, locale)}</span>
-        </p>
-        <h2 id="official-title" className="text-[1.25rem] font-semibold leading-snug">
-          {message.title}
-        </h2>
-        <p className="text-[0.9062rem] leading-relaxed">{message.body}</p>
-        {message.action ? (
-          <p className="rounded-xl bg-surface-muted px-3 py-2 text-[0.9062rem]">
-            <span className="font-semibold">{t("tn.official.todo")} </span>
-            {message.action}
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground max-lg:hidden">
+          <Landmark className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-x-2 text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-primary">
+            {t("tn.official.label")}
+            <span className="font-normal normal-case tracking-normal text-muted-foreground">
+              · {formatRelative(message.publishedAt, locale)} · {message.expiresAt ? t("tn.official.until", { date: formatDateTime(message.expiresAt, locale) }) : t("tn.official.until_withdrawn")}
+            </span>
           </p>
-        ) : null}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <p className="text-[0.75rem] text-muted-foreground">
-            {message.expiresAt ? t("tn.official.until", { date: formatDateTime(message.expiresAt, locale) }) : t("tn.official.until_withdrawn")}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            {message.linkHref ? (
-              <Button asChild size="sm" variant="secondary" onClick={confirm}>
-                <Link href={message.linkHref}>
-                  {t(`tn.official.link.${message.linkHref.slice(1)}` as MessageKey)}
-                  <ArrowRight aria-hidden />
-                </Link>
-              </Button>
+          <h2 id="official-title" className="text-[1rem] font-semibold leading-snug">
+            {message.title}
+          </h2>
+          <p className="text-[0.875rem] leading-snug">
+            {message.body}
+            {message.action ? (
+              <>
+                {" "}
+                <span className="font-semibold">
+                  {t("tn.official.todo")} {message.action}
+                </span>
+              </>
             ) : null}
-            <Button size="sm" onClick={confirm}>
-              <Check aria-hidden />
-              {t("tn.official.read")}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {message.linkHref ? (
+            <Button asChild size="sm" variant="secondary" onClick={confirm}>
+              <Link href={message.linkHref}>
+                {t(`tn.official.link.${message.linkHref.slice(1)}` as MessageKey)}
+                <ArrowRight aria-hidden />
+              </Link>
             </Button>
-          </div>
+          ) : null}
+          <Button size="sm" onClick={confirm}>
+            <Check aria-hidden />
+            {t("tn.official.read")}
+          </Button>
         </div>
       </section>
     </div>
