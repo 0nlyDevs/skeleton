@@ -3,7 +3,7 @@
  *
  * Light mode decides how many bytes a resident on a slow connection pays, so
  * its rules are pinned here: an explicit choice always wins, slow-network
- * signals switch it on, and resized images stay inside the upload naming
+ * signals only offer it, and resized images stay inside the upload naming
  * rules (no path tricks through `?w=`).
  */
 
@@ -21,10 +21,10 @@ describe("resolveEcoMode", () => {
     expect(resolveEcoMode(NONE)).toEqual({ on: false, auto: false });
   });
 
-  it("switches on automatically for data saving or a slow link", () => {
-    expect(resolveEcoMode({ ...NONE, saveData: "on" })).toEqual({ on: true, auto: true });
-    expect(resolveEcoMode({ ...NONE, ect: "3g" })).toEqual({ on: true, auto: true });
-    expect(resolveEcoMode({ ...NONE, autoCookie: "1" })).toEqual({ on: true, auto: true });
+  it("offers light mode on data saving or a slow link, without switching by itself", () => {
+    expect(resolveEcoMode({ ...NONE, saveData: "on" })).toEqual({ on: false, auto: true });
+    expect(resolveEcoMode({ ...NONE, ect: "3g" })).toEqual({ on: false, auto: true });
+    expect(resolveEcoMode({ ...NONE, autoCookie: "1" })).toEqual({ on: false, auto: true });
   });
 
   it("lets an explicit choice win over the connection", () => {
