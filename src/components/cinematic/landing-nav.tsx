@@ -18,14 +18,6 @@ const LINKS: readonly { href: string; key: MessageKey }[] = [
 ];
 
 /** The four-pointed star of the loader, as the brand's mark. */
-function StarMark() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path fill="currentColor" d="M12 0c.6 6.2 5.2 10.9 12 12-6.8 1.1-11.4 5.8-12 12-.6-6.2-5.2-10.9-12-12 6.8-1.1 11.4-5.8 12-12Z" />
-    </svg>
-  );
-}
-
 /**
  * The landing's top bar: the brand, four destinations, then sound, language,
  * display and the way in. It sits on the scene with no background until the
