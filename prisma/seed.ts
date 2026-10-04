@@ -20,6 +20,7 @@ import { prisma } from "../src/lib/db/prisma";
 import { seedAppointments } from "./seed-appointments";
 import { seedCityAlerts } from "./seed-city-alerts";
 import { seedServiceAvailability } from "./seed-service-availability";
+import { seedParticipation } from "./seed-participation";
 import { seedPartners } from "./seed-partners";
 import { seedServiceLocations } from "./seed-service-locations";
 import { seedTerraNova } from "./seed-terra-nova";
@@ -320,6 +321,7 @@ async function main() {
   await seedServiceLocations(prisma);
   await seedServiceAvailability(prisma);
   await seedPartners(prisma);
+  await seedParticipation(prisma);
   await seedAppointments(prisma);
 
   console.log("\nTest accounts (password: SEED_PASSWORD):");

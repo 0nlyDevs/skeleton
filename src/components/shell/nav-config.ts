@@ -16,6 +16,7 @@ import {
   MessageSquareHeart,
   Newspaper,
   Search,
+  Vote,
   Send,
   ShieldCheck,
   Siren,
@@ -80,6 +81,7 @@ export const PLACES: readonly Place[] = [
       { href: "/alerts", labelKey: "tn.nav.alerts", icon: Siren },
       { href: "/transports", labelKey: "tn.nav.transports", icon: BusFront },
       { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
+      { href: "/participate", labelKey: "tn.participate.nav", icon: Vote },
     ],
   },
   {
