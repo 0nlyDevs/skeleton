@@ -17,16 +17,12 @@ export const generalSans = localFont({
 });
 
 /**
- * Display serif for the TERRA NOVA wordmark (Fontshare, ITF Free Font License).
- * Not preloaded: only the landing and sign-in pages use it, so every other
- * page skips the download entirely.
+ * Display typeface for titles and the city's name (Fontshare, ITF Free Font
+ * License): one variable file, one voice. Text stays in General Sans.
  */
-export const boska = localFont({
-  src: [
-    { path: "./fonts/boska-700.woff2", weight: "700", style: "normal" },
-    { path: "./fonts/boska-900.woff2", weight: "900", style: "normal" },
-  ],
-  variable: "--font-boska",
+export const cabinetGrotesk = localFont({
+  src: "./fonts/cabinet-grotesk-variable.woff2",
+  weight: "100 900",
+  variable: "--font-cabinet",
   display: "swap",
-  preload: false,
 });

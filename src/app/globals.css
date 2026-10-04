@@ -20,89 +20,81 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* --- primitives: brand hue (Terra Nova — Martian orange) --- */
-  --brand-50: oklch(0.97 0.02 50);
-  --brand-200: oklch(0.87 0.08 48);
-  --brand-400: oklch(0.72 0.16 45);
-  --brand-500: oklch(0.62 0.18 42);
-  --brand-600: oklch(0.54 0.18 40);
-  --brand-700: oklch(0.46 0.16 38);
+  /*
+   * Bubble palette. Calm warm greys: nothing is pure white or pure black.
+   * The logo's orange is the only bright colour and it is used rarely
+   * (the bead on a main button, the focus ring, a link's underline, a count).
+   */
+  --orange: #e65100;
+  --orange-deep: #b84300;
 
-  /* --- primitives: neutral --- */
-  --neutral-50: oklch(0.985 0.002 250);
-  --neutral-100: oklch(0.968 0.003 250);
-  --neutral-200: oklch(0.922 0.004 250);
-  --neutral-300: oklch(0.87 0.005 250);
-  --neutral-400: oklch(0.705 0.006 250);
-  --neutral-500: oklch(0.552 0.007 250);
-  --neutral-600: oklch(0.44 0.008 250);
-  --neutral-700: oklch(0.35 0.008 250);
-  --neutral-800: oklch(0.26 0.008 250);
-  --neutral-900: oklch(0.19 0.009 250);
-  --neutral-950: oklch(0.13 0.009 250);
-
-  /* --- primitives: status --- */
-  --red-500: oklch(0.58 0.22 27);
-  --red-600: oklch(0.51 0.21 27);
-  --amber-500: oklch(0.75 0.16 75);
-  --amber-600: oklch(0.66 0.15 65);
-  --emerald-500: oklch(0.66 0.15 160);
-  --emerald-600: oklch(0.58 0.14 160);
+  --ground: #e8e5e0;
+  --panel: #f3f1ed;
+  --panel-raised: #f8f6f3;
+  --well: #e1ddd6;
+  --ink: #23262e;
+  --ink-soft: #5c5f68;
+  --line: #d3cfc8;
 
   /* --- semantic (light) --- */
-  /* A warm sand canvas so white cards read as surfaces. */
-  --background: oklch(0.965 0.008 60);
-  --foreground: var(--neutral-900);
+  --background: var(--ground);
+  --foreground: var(--ink);
 
-  --surface: oklch(1 0 0);
-  --surface-muted: var(--neutral-100);
-  --surface-raised: oklch(1 0 0);
+  --surface: var(--panel);
+  --surface-muted: var(--well);
+  --surface-raised: var(--panel-raised);
 
-  --muted: var(--neutral-100);
-  /* F23: secondary text reaches 4.5:1 on the sand canvas and on muted surfaces. */
-  --muted-foreground: oklch(0.5 0.007 250);
+  --muted: var(--well);
+  /* F23: secondary text reaches 4.5:1 on the ground and on panels. */
+  --muted-foreground: var(--ink-soft);
 
-  --card: oklch(1 0 0);
-  --card-foreground: var(--neutral-900);
+  --card: var(--panel);
+  --card-foreground: var(--ink);
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: var(--neutral-900);
+  --popover: var(--panel-raised);
+  --popover-foreground: var(--ink);
 
-  --primary: var(--brand-600);
-  --primary-foreground: oklch(0.99 0.005 60);
-  --primary-hover: var(--brand-700);
+  /* Main actions are ink, not orange: the orange stays an accent. */
+  --primary: var(--ink);
+  --primary-foreground: var(--panel);
+  --primary-hover: #33373f;
 
-  --secondary: var(--neutral-100);
-  --secondary-foreground: var(--neutral-800);
+  --secondary: var(--well);
+  --secondary-foreground: var(--ink);
 
-  --accent: var(--brand-50);
-  --accent-foreground: var(--brand-700);
+  --accent: #dfdad2;
+  --accent-foreground: var(--ink);
 
-  /* Dark enough to be read as text on white, and to carry white text. */
-  --success: oklch(0.5 0.13 160);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: var(--amber-500);
-  --warning-foreground: var(--neutral-900);
-  --error: var(--red-600);
-  --error-foreground: oklch(0.99 0 0);
+  /* The one bright colour: beads, counts, focus, link underlines. */
+  --bead: var(--orange);
+  --bead-foreground: #fff7f0;
 
-  --destructive: var(--red-600);
-  --destructive-foreground: oklch(0.99 0 0);
+  /* Dark enough to be read as text on a panel, and to carry light text. */
+  --success: #41694b;
+  --success-foreground: #f3f1ed;
+  --warning: #856515;
+  --warning-foreground: #f3f1ed;
+  --error: #a94135;
+  --error-foreground: #f8f1ee;
 
-  --border: var(--neutral-200);
-  /* Form fields need a 3:1 outline to be found (WCAG 1.4.11). */
-  --input: oklch(0.62 0.006 250);
-  --ring: var(--brand-500);
+  --destructive: #a94135;
+  --destructive-foreground: #f8f1ee;
+
+  --border: var(--line);
+  /* Form fields are filled shapes with a line under them (WCAG 1.4.11). */
+  --input: #8d8f97;
+  --field: #e4e0d9;
+  --ring: var(--orange);
 
   /* --- component knobs --- */
-  --radius: 0.7rem;
-  --radius-card: 1rem;
+  --radius: 0.875rem;
+  --radius-card: 1.375rem;
   --radius-control: var(--radius);
+  /* The logo's bubble: round, with one tight corner. */
+  --shape-bubble: 1.375rem 1.375rem 1.375rem 0.375rem;
 
-  --shadow-panel: 0 1px 2px 0 oklch(0.19 0.009 250 / 0.04),
-    0 8px 24px -12px oklch(0.19 0.009 250 / 0.12);
-  --shadow-float: 0 2px 4px -2px oklch(0.19 0.009 250 / 0.08),
-    0 16px 32px -16px oklch(0.19 0.009 250 / 0.18);
+  --shadow-panel: 0 1px 1px 0 rgb(35 38 46 / 0.03), 0 10px 24px -18px rgb(35 38 46 / 0.22);
+  --shadow-float: 0 2px 6px -2px rgb(35 38 46 / 0.1), 0 22px 40px -22px rgb(35 38 46 / 0.32);
 
   /* --- motion: one place to make the whole app quieter --- */
   --duration-fast: 130ms;
@@ -111,48 +103,53 @@
 }
 
 .dark {
-  --background: var(--neutral-950);
-  --foreground: var(--neutral-100);
+  --orange: #f26a1b;
+  --orange-deep: #f58a4b;
 
-  --surface: var(--neutral-900);
-  --surface-muted: var(--neutral-900);
-  --surface-raised: var(--neutral-800);
+  --ground: #1c1f27;
+  --panel: #272b35;
+  --panel-raised: #2e333e;
+  --well: #21252e;
+  --ink: #e7e4de;
+  --ink-soft: #9b9ea8;
+  --line: #373c48;
 
-  --muted: var(--neutral-800);
-  --muted-foreground: var(--neutral-400);
+  --primary-hover: #f6f4f0;
+  --accent: #323743;
+  --bead-foreground: #1c1f27;
 
-  --card: var(--neutral-900);
-  --card-foreground: var(--neutral-100);
+  --success: #7fae8a;
+  --success-foreground: #1c1f27;
+  --warning: #d2aa57;
+  --warning-foreground: #1c1f27;
+  --error: #de7a6c;
+  --error-foreground: #1c1f27;
+  --destructive: #de7a6c;
+  --destructive-foreground: #1c1f27;
 
-  --popover: var(--neutral-900);
-  --popover-foreground: var(--neutral-100);
+  --input: #7d818c;
+  --field: #20242c;
 
-  --primary: var(--brand-400);
-  --primary-foreground: var(--neutral-950);
-  --primary-hover: var(--brand-200);
+  --shadow-panel: 0 1px 1px 0 rgb(0 0 0 / 0.25), 0 10px 24px -18px rgb(0 0 0 / 0.7);
+  --shadow-float: 0 2px 6px -2px rgb(0 0 0 / 0.4), 0 22px 40px -22px rgb(0 0 0 / 0.8);
+}
 
-  --secondary: var(--neutral-800);
-  --secondary-foreground: var(--neutral-100);
-
-  --accent: var(--neutral-800);
-  --accent-foreground: var(--brand-200);
-
-  --success: var(--emerald-500);
-  --success-foreground: var(--neutral-950);
-  --warning: var(--amber-500);
-  --error: oklch(0.68 0.19 27);
-  /* The lighter dark-theme red needs dark text to stay readable (WCAG AA). */
-  --error-foreground: var(--neutral-950);
-
-  --destructive: oklch(0.68 0.19 27);
-  --destructive-foreground: var(--neutral-950);
-
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: var(--brand-400);
-
-  --shadow-panel: 0 1px 2px 0 oklch(0 0 0 / 0.4), 0 8px 24px -12px oklch(0 0 0 / 0.6);
-  --shadow-float: 0 2px 4px -2px oklch(0 0 0 / 0.5), 0 16px 32px -16px oklch(0 0 0 / 0.7);
+/*
+ * F43 — colour-blind palette (cookie `skeleton_vision=cb`): states move to
+ * blue, amber and purple, which stay apart for people who confuse red and
+ * green. States are also always said in words and drawn as a filling bubble.
+ */
+html[data-vision="cb"] {
+  --success: #0b5c8f;
+  --warning: #8a5a00;
+  --error: #8c2f6b;
+  --destructive: #8c2f6b;
+}
+html[data-vision="cb"].dark {
+  --success: #6cbcf0;
+  --warning: #f0b23c;
+  --error: #e59acb;
+  --destructive: #e59acb;
 }
 
 /* Expose the semantic layer to Tailwind's utilities. */
@@ -186,6 +183,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-bead: var(--bead);
+  --color-bead-foreground: var(--bead-foreground);
+  --color-field: var(--field);
 
   --radius-sm: calc(var(--radius) - 0.25rem);
   --radius-md: calc(var(--radius) - 0.125rem);
@@ -197,7 +197,7 @@
 
   --font-sans: var(--font-general-sans), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --font-display: var(--font-boska), ui-serif, Georgia, serif;
+  --font-display: var(--font-cabinet), var(--font-general-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 
@@ -349,7 +349,7 @@ html[data-eco] .eco-hide {
  * text gets a darker shade in the light theme only.
  */
 html:not(.dark) .text-warning {
-  color: oklch(0.52 0.12 65);
+  color: var(--warning);
 }
 
 /*
@@ -373,43 +373,44 @@ html[data-text-size="largest"] {
  * visible borders, underlined links and a thicker focus ring, in both themes.
  */
 html[data-contrast="high"] {
-  --background: oklch(1 0 0);
-  --foreground: var(--neutral-950);
-  --surface-muted: var(--neutral-200);
-  --muted: var(--neutral-200);
-  --muted-foreground: var(--neutral-800);
-  --card-foreground: var(--neutral-950);
-  --popover-foreground: var(--neutral-950);
-  --secondary-foreground: var(--neutral-950);
-  --primary: var(--brand-700);
-  --primary-hover: oklch(0.38 0.14 36);
-  --accent-foreground: oklch(0.38 0.14 36);
-  --error: oklch(0.45 0.2 27);
-  --destructive: oklch(0.45 0.2 27);
-  --border: var(--neutral-600);
-  --input: var(--neutral-700);
-  --ring: var(--neutral-950);
+  --ground: #ffffff;
+  --panel: #ffffff;
+  --panel-raised: #ffffff;
+  --well: #e9e7e3;
+  --ink: #0b0c0f;
+  --ink-soft: #2b2e35;
+  --line: #4a4d55;
+  --primary-hover: #000000;
+  --accent: #e3e0da;
+  --orange: #c44300;
+  --success: #1f4d2c;
+  --warning: #5e4500;
+  --error: #8a1f14;
+  --destructive: #8a1f14;
+  --input: #1a1c21;
+  --field: #f1efeb;
+  --ring: #0b0c0f;
 }
+/* Dark and high contrast: the same saturated orange as the logo, never a faded one. */
 html[data-contrast="high"].dark {
-  --background: oklch(0 0 0);
-  --foreground: oklch(1 0 0);
-  --surface: var(--neutral-950);
-  --surface-muted: var(--neutral-900);
-  --card: var(--neutral-950);
-  --popover: var(--neutral-950);
-  --muted: var(--neutral-900);
-  --muted-foreground: var(--neutral-200);
-  --card-foreground: oklch(1 0 0);
-  --popover-foreground: oklch(1 0 0);
-  --secondary-foreground: oklch(1 0 0);
-  --primary: var(--brand-200);
-  --primary-hover: var(--brand-50);
-  --accent-foreground: var(--brand-50);
-  --error: oklch(0.72 0.17 27);
-  --destructive: oklch(0.72 0.17 27);
-  --border: oklch(1 0 0 / 55%);
-  --input: oklch(1 0 0 / 70%);
-  --ring: oklch(1 0 0);
+  --ground: #000000;
+  --panel: #0b0c0f;
+  --panel-raised: #14161b;
+  --well: #14161b;
+  --ink: #ffffff;
+  --ink-soft: #e2e0dc;
+  --line: #a9acb4;
+  --primary-hover: #ffffff;
+  --accent: #23262e;
+  --orange: #ff7a2f;
+  --bead-foreground: #000000;
+  --success: #9be0ad;
+  --warning: #ffd36b;
+  --error: #ffa293;
+  --destructive: #ffa293;
+  --input: #ffffff;
+  --field: #14161b;
+  --ring: #ffffff;
 }
 /* High contrast (F23): links are underlined wherever they are, so a colour-only
  * distinction can never be the only thing telling a link from body text. The old
@@ -630,4 +631,200 @@ html[data-contrast="high"] .tn-landing [class*="text-white/"] {
     inset: 0;
     color: #000;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Bubble interface: shapes taken from the logo (round, one tight corner),
+ * titles in Cabinet Grotesk, fields as filled shapes with their name as a
+ * small tab, and one orange note per screen.
+ * ------------------------------------------------------------------------- */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.012em;
+}
+
+/* Two faint rings behind every page: the logo's bubbles, far away. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 92% 14%, transparent 0 239px, color-mix(in srgb, var(--ink) 7%, transparent) 240px 241.5px, transparent 242.5px),
+    radial-gradient(circle at 4% 92%, transparent 0 339px, color-mix(in srgb, var(--ink) 6%, transparent) 340px 341.5px, transparent 342.5px);
+}
+html[data-eco] body::before {
+  display: none;
+}
+
+/* Cards are bubbles: round, with the tight corner at the bottom left. */
+.rounded-2xl {
+  border-radius: var(--shape-bubble);
+}
+
+/* Main button: an ink pill ending in a round orange bead. */
+.btn-bead:not([data-size="icon"]) {
+  padding-right: 0.45rem;
+}
+.btn-bead:not([data-size="icon"])::after {
+  content: "";
+  flex: none;
+  width: 1.45em;
+  height: 1.45em;
+  margin-left: 0.15rem;
+  border-radius: 999px;
+  background: var(--bead);
+  transition: transform var(--duration-fast) var(--ease-out-soft);
+}
+.btn-bead:not([data-size="icon"]):hover::after {
+  transform: scale(1.12);
+}
+.btn-bead[data-size="sm"]::after {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/*
+ * Fields: a filled shape with a line under it (the 3:1 boundary of WCAG
+ * 1.4.11), no box outline. Focus turns the line orange and adds a soft halo.
+ */
+[data-slot="input"],
+[data-slot="textarea"],
+select {
+  background-color: var(--field);
+  border: 0;
+  border-bottom: 2px solid color-mix(in srgb, var(--input) 70%, transparent);
+  border-radius: 0.875rem;
+}
+[data-slot="input"]:focus-visible,
+[data-slot="textarea"]:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-bottom-color: var(--orange);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 24%, transparent);
+}
+[data-slot="input"][aria-invalid="true"],
+[data-slot="textarea"][aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-bottom-color: var(--error);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--error) 18%, transparent);
+}
+/* The field's name grows out of the field as a small tab. */
+[data-slot="label"]:has(+ [data-slot="input"], + [data-slot="textarea"], + select) {
+  align-self: flex-start;
+  margin-bottom: -0.375rem;
+  padding: 0.45rem 0.8rem 0.35rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+  background: var(--field);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+[data-slot="label"] + [data-slot="input"],
+[data-slot="label"] + [data-slot="textarea"],
+[data-slot="label"] + select {
+  border-top-left-radius: 0;
+}
+html[data-contrast="high"] [data-slot="input"],
+html[data-contrast="high"] [data-slot="textarea"],
+html[data-contrast="high"] select {
+  border: 2px solid var(--input);
+}
+
+/* Links in the interface: ink text, the underline carries the orange. */
+a.text-primary,
+a .text-primary {
+  text-decoration: underline;
+  text-decoration-color: var(--orange);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
+/* A notice drops from the top edge as a hanging tab. */
+.bubble-toast {
+  border-radius: 0 0 1.25rem 1.25rem !important;
+  padding: 0.85rem 1.1rem !important;
+}
+[data-sonner-toaster][data-y-position="top"] {
+  top: 0 !important;
+}
+
+/*
+ * States are drawn as a bubble filling up, never as a coloured dot:
+ * ring (not started), half (under way), full (done), full with a ring (closed).
+ */
+.state-bubble {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 0.72em;
+  height: 0.72em;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  overflow: hidden;
+}
+.state-bubble[data-fill="half"]::before,
+.state-bubble[data-fill="full"]::before,
+.state-bubble[data-fill="closed"]::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  background: currentColor;
+}
+.state-bubble[data-fill="half"]::before {
+  height: 50%;
+}
+.state-bubble[data-fill="full"]::before,
+.state-bubble[data-fill="closed"]::before {
+  height: 100%;
+}
+.state-bubble[data-fill="closed"] {
+  outline: 1.5px solid currentColor;
+  outline-offset: 1.5px;
+}
+
+/*
+ * The four places in the top bar. The current one is a tab cut into the bar:
+ * it takes the page's ground colour and its two bottom corners curve outward.
+ */
+.place-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  align-self: flex-end;
+  height: calc(100% - 0.6rem);
+  padding: 0 1.15rem 0.2rem;
+  border-radius: 1rem 1rem 0 0;
+  font-size: 0.9062rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  transition: color var(--duration-fast) var(--ease-out-soft), background-color var(--duration-fast) var(--ease-out-soft);
+}
+.place-tab:hover {
+  color: var(--foreground);
+}
+.place-tab-on {
+  background: var(--background);
+  color: var(--foreground);
+  font-weight: 600;
+}
+.place-tab-on::before,
+.place-tab-on::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: radial-gradient(circle at var(--at) 0%, transparent 0.84rem, var(--background) 0.875rem);
+}
+.place-tab-on::before {
+  right: 100%;
+  --at: 0%;
+}
+.place-tab-on::after {
+  left: 100%;
+  --at: 100%;
 }

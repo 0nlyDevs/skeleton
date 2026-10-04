@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
  */
 const buttonVariants = cva(
   [
-    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium",
+    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium",
     "transition-[transform,box-shadow,background-color,color,border-color] duration-[var(--duration-fast)] ease-[var(--ease-out-soft)]",
     "active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -27,10 +27,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary:
-          "bg-primary text-primary-foreground shadow-[0_1px_2px_0_var(--tw-shadow-color)] shadow-primary/25 hover:bg-primary-hover hover:shadow-md hover:shadow-primary/25",
+        // Ink pill; the round bead at its end is the one orange note (see globals.css).
+        primary: "btn-bead bg-primary text-primary-foreground hover:bg-primary-hover",
         secondary:
-          "border border-border bg-surface text-foreground hover:bg-surface-muted hover:border-primary/30",
+          "border border-border bg-surface text-foreground hover:bg-surface-muted",
         outline:
           "border border-border bg-transparent text-foreground hover:bg-surface-muted",
         ghost: "bg-transparent text-foreground hover:bg-surface-muted",
@@ -68,6 +68,7 @@ export function Button({
   return (
     <Component
       data-slot="button"
+      data-size={size ?? "md"}
       className={cn(buttonVariants({ variant, size }), className)}
       // `type` defaults to "submit" inside a form, which silently submits and
       // reloads. Every button is a button unless told otherwise.

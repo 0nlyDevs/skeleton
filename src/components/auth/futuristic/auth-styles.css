@@ -44,7 +44,7 @@
 
 /* Brand Typography */
 .fa-brand-terra {
-  font-family: var(--font-boska), ui-serif, Georgia, serif;
+  font-family: var(--font-cabinet), var(--font-general-sans), ui-sans-serif, system-ui, sans-serif;
   font-weight: 900;
   letter-spacing: -0.01em;
 }

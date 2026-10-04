@@ -1,20 +1,21 @@
 import {
-  Compass,
   Accessibility,
   BookOpen,
   Bookmark,
-  BusFront,
-  CalendarClock,
   Briefcase,
   Building2,
+  BusFront,
+  CalendarClock,
+  Compass,
   FileText,
   Globe2,
-  LayoutDashboard,
+  Home,
   Leaf,
-  Map as MapIcon,
   Megaphone,
   MessageCircle,
+  MessageSquareHeart,
   Newspaper,
+  Search,
   Send,
   ShieldCheck,
   Siren,
@@ -33,70 +34,73 @@ export interface ShellNavItem {
   readonly icon: LucideIcon;
   readonly badge?: "messages" | "notifications";
   readonly roles?: readonly Role[];
+  /** Needs an account: hidden from visitors. */
+  readonly member?: boolean;
 }
 
-export interface ShellNavGroup {
-  /** No label for the first group: "My space" stands on its own. */
-  readonly labelKey: MessageKey | null;
-  readonly items: readonly ShellNavItem[];
+export type PlaceId = "home" | "procedures" | "city" | "community";
+
+export interface Place {
+  readonly id: PlaceId;
+  /** Where the place opens. */
+  readonly href: string;
+  readonly labelKey: MessageKey;
+  readonly icon: LucideIcon;
+  /** The pages of the place, shown as a row under the top bar. */
+  readonly links: readonly ShellNavItem[];
 }
 
 /**
- * Navigation by intent, not by feature: the resident's hub first, then
- * "get something done", "know what is happening in my city" and the
- * community. Notifications and settings live in the top bar; the rarely used
- * pages sit under "More". The logo is the way home.
+ * The whole product in four places, named after what people come to do:
+ * home, get something done, know the city, meet the community. Each place
+ * lists its pages in one row; the account menu holds everything personal.
  */
-export const NAV_GROUPS: readonly ShellNavGroup[] = [
-  { labelKey: null, items: [{ href: "/space", labelKey: "tn.nav.my_space", icon: LayoutDashboard }] },
+export const PLACES: readonly Place[] = [
+  { id: "home", href: "/space", labelKey: "tn.place.home", icon: Home, links: [] },
   {
-    labelKey: "tn.nav.group.procedures",
-    items: [
-      { href: "/start", labelKey: "tn.start.nav", icon: Compass },
+    id: "procedures",
+    href: "/services",
+    labelKey: "tn.place.procedures",
+    icon: Building2,
+    links: [
       { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
       { href: "/contact", labelKey: "tn.nav.request", icon: Send },
-      { href: "/appointments", labelKey: "tn.appointments.nav", icon: CalendarClock },
+      { href: "/appointments", labelKey: "tn.appointments.nav", icon: CalendarClock, member: true },
+      { href: "/space/feedback", labelKey: "tn.feedback.mine.title", icon: MessageSquareHeart, member: true },
+      { href: "/start", labelKey: "tn.start.nav", icon: Compass },
     ],
   },
   {
-    labelKey: "tn.nav.group.city",
-    items: [
+    id: "city",
+    href: "/city-map",
+    labelKey: "tn.place.city",
+    icon: Globe2,
+    links: [
+      { href: "/city-map", labelKey: "tn.place.map", icon: Globe2 },
       { href: "/alerts", labelKey: "tn.nav.alerts", icon: Siren },
-      { href: "/city-map", labelKey: "tn.nav.city_map", icon: Globe2 },
       { href: "/transports", labelKey: "tn.nav.transports", icon: BusFront },
       { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
     ],
   },
   {
-    labelKey: "tn.nav.group.community",
-    items: [
+    id: "community",
+    href: "/feed",
+    labelKey: "tn.place.community",
+    icon: UsersRound,
+    links: [
       { href: "/feed", labelKey: "nav.feed", icon: Newspaper },
-      { href: "/messages", labelKey: "nav.messages", icon: MessageCircle, badge: "messages" },
+      { href: "/messages", labelKey: "nav.messages", icon: MessageCircle, badge: "messages", member: true },
       { href: "/groups", labelKey: "nav.groups", icon: UsersRound },
+      { href: "/pages", labelKey: "nav.pages", icon: FileText },
+      { href: "/saved", labelKey: "nav.saved", icon: Bookmark, member: true },
+      { href: "/search", labelKey: "tn.place.people", icon: Search },
     ],
   },
 ];
 
-/** Under "More": useful, but not where a resident starts. */
-export const MORE_NAV: readonly ShellNavItem[] = [
-  { href: "/assistant", labelKey: "nav.assistant", icon: Sparkles },
-  { href: "/pages", labelKey: "nav.pages", icon: FileText },
-  { href: "/saved", labelKey: "nav.saved", icon: Bookmark },
-  { href: "/map", labelKey: "nav.map", icon: MapIcon },
-  { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
-  { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
-  { href: "/eco", labelKey: "tn.eco.nav", icon: Leaf },
-];
-
-/** What a guest can open without an account. */
-export const GUEST_NAV: readonly ShellNavItem[] = [
-  { href: "/start", labelKey: "tn.start.nav", icon: Compass },
-  { href: "/services", labelKey: "tn.nav.services", icon: Building2 },
-  { href: "/alerts", labelKey: "tn.nav.alerts", icon: Siren },
-  { href: "/city-map", labelKey: "tn.nav.city_map", icon: Globe2 },
-  { href: "/transports", labelKey: "tn.nav.transports", icon: BusFront },
-  { href: "/announcements", labelKey: "tn.nav.announcements", icon: Megaphone },
-  { href: "/feed", labelKey: "nav.feed", icon: Newspaper },
+/** Help pages, listed in the account menu. */
+export const HELP_NAV: readonly ShellNavItem[] = [
+  { href: "/assistant", labelKey: "nav.assistant", icon: Sparkles, member: true },
   { href: "/glossary", labelKey: "tn.glossary.nav", icon: BookOpen },
   { href: "/accessibility", labelKey: "tn.a11y.nav", icon: Accessibility },
   { href: "/eco", labelKey: "tn.eco.nav", icon: Leaf },
@@ -108,13 +112,35 @@ export const STAFF_NAV: readonly ShellNavItem[] = [
   { href: "/admin", labelKey: "nav.admin", icon: ShieldCheck, roles: ["ADMIN"] },
 ];
 
-/** Every destination, for lookups by href. */
-export const ALL_NAV: readonly ShellNavItem[] = [...NAV_GROUPS.flatMap((group) => group.items), ...MORE_NAV, ...GUEST_NAV];
-
 export const PROFILE_ICON = UserRound;
 
 export function isActive(pathname: string, href: string): boolean {
-  if (href === "/feed") return pathname === "/feed" || pathname.startsWith("/feed/");
+  if (href === "/feed") return pathname === "/feed" || pathname.startsWith("/feed/") || pathname.startsWith("/posts");
   if (href === "/admin") return pathname.startsWith("/admin");
+  if (href === "/search") return pathname === "/search" || pathname.startsWith("/profile/") || pathname.startsWith("/u/");
+  if (href === "/city-map") return pathname === "/city-map" || pathname === "/map";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Pages that belong to a place without being one of its links. */
+const EXTRA: Readonly<Record<PlaceId, readonly string[]>> = {
+  home: ["/space", "/dashboard"],
+  procedures: [],
+  city: [],
+  community: ["/chat"],
+};
+
+/** The place a page belongs to, or null (settings, help pages, staff workspaces). */
+export function placeFor(pathname: string): Place | null {
+  // The longest match wins, so `/space/feedback` is "procedures", not "home".
+  let best: { place: Place; length: number } | null = null;
+  for (const place of PLACES) {
+    for (const link of place.links) {
+      if (isActive(pathname, link.href) && (!best || link.href.length > best.length)) best = { place, length: link.href.length };
+    }
+    for (const prefix of EXTRA[place.id]) {
+      if ((pathname === prefix || pathname.startsWith(`${prefix}/`)) && (!best || prefix.length > best.length)) best = { place, length: prefix.length };
+    }
+  }
+  return best?.place ?? null;
 }
