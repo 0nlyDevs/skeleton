@@ -1628,3 +1628,39 @@ model AppointmentRequest {
   @@index([decidedById])
   @@map("appointmentRequest")
 }
+
+enum PartnerProposalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+/// F99 — an outside partner (association, cooperative) offers a service to
+/// residents. City staff accept it (it then joins the catalogue as a partner
+/// service) or decline it with a reason.
+model PartnerProposal {
+  id           String                @id @default(cuid())
+  /// Given to the partner to follow the answer, e.g. PAR-482913.
+  reference    String                @unique @db.VarChar(20)
+  organisation String                @db.VarChar(120)
+  contactName  String                @db.VarChar(120)
+  email        String                @db.VarChar(160)
+  phone        String?               @db.VarChar(40)
+  serviceName  String                @db.VarChar(120)
+  summary      String                @db.VarChar(240)
+  description  String                @db.Text
+  address      String?               @db.VarChar(200)
+  hours        String?               @db.VarChar(160)
+  status       PartnerProposalStatus @default(PENDING)
+  /// The reason when declined, or a word when accepted.
+  answer       String?               @db.VarChar(300)
+  decidedById  String?
+  decidedAt    DateTime?
+  /// The catalogue entry created on acceptance.
+  serviceSlug  String?               @db.VarChar(80)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([status, createdAt])
+  @@map("partnerProposal")
+}
