@@ -211,6 +211,7 @@ export function ProfileForm({
           <input
             ref={fileInputRef}
             type="file"
+          aria-label={t("tn.a11y.choose_file")}
             accept={IMAGE_INPUT_ACCEPT}
             className="hidden"
             onChange={(event) => void handleAvatarSelected(event.target.files?.[0])}

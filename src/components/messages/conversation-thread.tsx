@@ -499,6 +499,7 @@ export function ConversationThread({
           <input
             ref={fileInput}
             type="file"
+          aria-label={t("tn.a11y.choose_file")}
             accept={IMAGE_INPUT_ACCEPT}
             hidden
             onChange={(event) => {
