@@ -110,6 +110,8 @@ export const auth = betterAuth({
       // Accepted at sign-up only; `authBeforeHook` validates them first.
       firstName: { type: "string", required: false, input: true },
       lastName: { type: "string", required: false, input: true },
+      // Where the resident lives, one of the Terra Nova districts; validated in `authBeforeHook`.
+      cityZone: { type: "string", required: false, input: true },
       // Set only by `authBeforeHook` from a validated birth date (the hook
       // overwrites anything a client sends), and never echoed back.
       birthDateEncrypted: { type: "string", required: false, input: true, returned: false },

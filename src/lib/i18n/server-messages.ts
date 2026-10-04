@@ -10,6 +10,7 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Choose the district where you live.": "Choisissez le quartier où vous habitez.",
   "Describe what you need in a few words.": "Décrivez votre besoin en quelques mots.",
   "There is nothing to explain.": "Il n'y a rien à expliquer.",
   "Only city agents can see the activity dashboard.": "Seuls les agents de la ville peuvent voir le tableau d'activité.",

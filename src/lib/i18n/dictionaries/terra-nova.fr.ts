@@ -1794,4 +1794,6 @@ export const frTerraNova = {
   "tn.plain.button": "Expliquer plus simplement",
   "tn.plain.title": "Version simple",
   "tn.plain.note": "Explication automatique pour aider à comprendre. Le texte officiel reste celui d'au-dessus.",
+  "auth.register.zone": "Votre quartier à Terra Nova",
+  "auth.register.zone_required": "Choisissez le quartier où vous habitez.",
 } as const;
