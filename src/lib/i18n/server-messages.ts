@@ -10,6 +10,18 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Give the name of your organisation.": "Indiquez le nom de votre organisation.",
+  "Give the name of the person to contact.": "Indiquez le nom de la personne à contacter.",
+  "Give a valid email address.": "Indiquez une adresse e-mail valide.",
+  "Say in one sentence what the service offers.": "Dites en une phrase ce que propose le service.",
+  "Describe the service in a few sentences.": "Décrivez le service en quelques phrases.",
+  "Only city staff can review partner proposals.": "Seul le personnel de la ville peut traiter les propositions des partenaires.",
+  "You already have proposals waiting for an answer.": "Vous avez déjà des propositions en attente de réponse.",
+  "That proposal does not exist.": "Cette proposition n'existe pas.",
+  "Give the partner a reason for declining.": "Donnez au partenaire la raison du refus.",
+  "This proposal has already been answered.": "Cette proposition a déjà reçu une réponse.",
+  "Only city staff can read security events.": "Seul le personnel de la ville peut lire les événements de sécurité.",
+  "Only city staff can read service usage.": "Seul le personnel de la ville peut lire l'utilisation des services.",
   "Choose a time at least half an hour from now.": "Choisissez une heure au moins une demi-heure à l'avance.",
   "Appointments can be requested at most 90 days ahead.": "Un rendez-vous se demande au plus 90 jours à l'avance.",
   "You already have five requests waiting. Wait for an answer or withdraw one.": "Vous avez déjà cinq demandes en attente. Attendez une réponse ou retirez-en une.",
