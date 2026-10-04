@@ -1,6 +1,9 @@
 "use client";
 
+<<<<<<< HEAD
 import { BubbleMark, BubbleWordmark } from "@/components/layout/bubble-logo";
+=======
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
 import { CITY_ZONE_IDS, cityZoneLabelKey } from "@/modules/alerts/city-zones";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";

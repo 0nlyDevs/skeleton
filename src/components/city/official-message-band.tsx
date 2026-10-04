@@ -80,11 +80,19 @@ export function OfficialMessageBand() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="relative z-[70] flex justify-center official-band border-b-4 border-bead px-3">
       <section
         role={fresh ? "alert" : "status"}
         aria-labelledby="official-title"
         className="flex w-full max-w-[1480px] flex-col gap-x-4 gap-y-2 px-1 py-2.5 sm:px-3 lg:flex-row lg:items-center"
+=======
+    <div className="relative z-[70] flex justify-center bg-card px-3">
+      <section
+        role={fresh ? "alert" : "status"}
+        aria-labelledby="official-title"
+        className="flex w-full max-w-[1180px] flex-col gap-2 px-1 pb-3 pt-3 sm:px-3"
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
       >
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground max-lg:hidden">
           <Landmark className="size-4" aria-hidden />

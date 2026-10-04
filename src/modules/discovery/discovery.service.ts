@@ -174,12 +174,17 @@ export async function searchEverything(q: string, viewer: AuthUser | null, optio
 async function matchingServices(term: string): Promise<{ slug: string; name: string; summary: string }[]> {
   const services = (await listServices({}, null, "fr")).filter((service) => service.active);
   const pool = services.map(({ slug, name, category, summary, description, howTo, emergency }) => ({ slug, name, category, summary, description, howTo, emergency }));
+<<<<<<< HEAD
   const scored = scoreServices(term, pool);
   const best = scored[0]?.score ?? 0;
   const second = scored[1]?.score ?? 0;
   if (best < 2.2 && !(best >= 1.3 && best >= second * 1.4)) return [];
   return scored
     .filter((entry) => entry.score >= Math.min(2.2, best * 0.6))
+=======
+  return scoreServices(term, pool)
+    .filter((entry) => entry.score >= 2.2)
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
     .slice(0, 3)
     .flatMap((entry) => services.filter((service) => service.slug === entry.slug).map(({ slug, name, summary }) => ({ slug, name, summary })));
 }

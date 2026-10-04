@@ -1798,6 +1798,7 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.search.go": "Search",
   "tn.search.services": "City services",
   "tn.search.total": "{count} people",
+<<<<<<< HEAD
   "tn.sender.open": "Open {name}'s menu",
   "tn.sender.profile": "See profile",
   "tn.sender.private": "Continue in private",
@@ -2042,4 +2043,6 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.eco.offer_action": "Turn on eco mode",
   "tn.a11y.choose_file": "Choose a file",
   "tn.landing.sponsors": "With the support of",
+=======
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
 };

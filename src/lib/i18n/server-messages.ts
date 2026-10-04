@@ -10,6 +10,7 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+<<<<<<< HEAD
   "Only administrators can create accounts with a role.": "Seuls les administrateurs peuvent créer un compte avec un rôle.",
   "An account already uses this e-mail address.": "Un compte utilise déjà cette adresse e-mail.",
   "Give the name of your organisation.": "Indiquez le nom de votre organisation.",
@@ -31,6 +32,8 @@ const FR: Readonly<Record<string, string>> = {
   "This time has already passed. Propose another time.": "Cet horaire est déjà passé. Proposez-en un autre.",
   "You or the resident already have an appointment at that time.": "Vous ou l'habitant avez déjà un rendez-vous à ce moment-là.",
   "Give the resident a reason.": "Donnez une raison à l'habitant.",
+=======
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
   "The file is too large.": "Le fichier est trop volumineux.",
   "The upload was refused.": "L'envoi a été refusé.",
   "Choose the district where you live.": "Choisissez le quartier où vous habitez.",

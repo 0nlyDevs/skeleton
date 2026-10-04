@@ -1803,6 +1803,7 @@ export const frTerraNova = {
   "tn.search.go": "Chercher",
   "tn.search.services": "Services de la ville",
   "tn.search.total": "{count} personnes",
+<<<<<<< HEAD
   "tn.sender.open": "Ouvrir le menu de {name}",
   "tn.sender.profile": "Voir le profil",
   "tn.sender.private": "Continuer en privé",
@@ -2047,4 +2048,6 @@ export const frTerraNova = {
   "tn.eco.offer_action": "Activer le mode éco",
   "tn.a11y.choose_file": "Choisir un fichier",
   "tn.landing.sponsors": "Avec le soutien de",
+=======
+>>>>>>> 0b9a35c (feat: put the landing's island on the city map, ask the district at sign-up, drop emoji, say real error reasons and fix people search)
 } as const;
