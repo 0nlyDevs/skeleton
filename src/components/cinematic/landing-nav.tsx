@@ -5,6 +5,7 @@ import { Menu, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { DisplayMenu } from "@/components/layout/display-menu";
+import { EcoToggle } from "@/components/layout/eco-toggle";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import Link from "@/components/ui/link";
@@ -76,6 +77,7 @@ export function LandingNav({
           </button>
           {/* F14/F23/F24: language, text size and contrast, as everywhere else in the portal. */}
           <LocaleToggle className="text-white/75 hover:bg-white/10 hover:text-white" />
+          <EcoToggle className="text-white/75 hover:bg-white/10 hover:text-white" />
           <DisplayMenu className="text-white/75 hover:bg-white/10 hover:text-white" />
           {account ? (
             <Link href={account.href} className="tn-btn tn-btn--solid ml-2 hidden py-2 sm:inline-flex">

@@ -46,7 +46,7 @@ export function AppShell({
   return (
     <div className="min-h-dvh">
       <TopBar viewer={viewer} zone={zone} />
-      <div className={cn("mx-auto grid w-full max-w-[1480px] gap-5 px-4 pb-28 pt-5 md:pb-12 lg:grid-cols-[248px_minmax(0,1fr)] lg:px-6", !wide && "xl:grid-cols-[248px_minmax(0,1fr)_300px]")}>
+      <div className={cn("mx-auto grid w-full max-w-[1480px] grid-cols-[minmax(0,1fr)] gap-5 px-4 pb-28 pt-5 md:pb-12 lg:grid-cols-[248px_minmax(0,1fr)] lg:px-6", !wide && "xl:grid-cols-[248px_minmax(0,1fr)_300px]")}>
         <aside aria-label={t("tn.side.label")} className="sticky top-[4.75rem] hidden max-h-[calc(100dvh-5.5rem)] flex-col gap-4 self-start overflow-y-auto lg:flex">
           {viewer ? <ProfileCard viewer={viewer} zone={zone} rail={rail} /> : null}
           <SideNav viewer={viewer} />

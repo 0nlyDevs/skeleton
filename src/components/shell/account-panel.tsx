@@ -14,7 +14,7 @@ import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { cityZoneLabelKey, type CityZoneId } from "@/modules/alerts/city-zones";
 
-import { HELP_NAV, PROFILE_ICON, type ShellNavItem } from "./nav-config";
+import { HELP_NAV, PROFILE_ICON, STAFF_NAV, type ShellNavItem } from "./nav-config";
 import type { ShellViewer } from "./shell-types";
 import { UserAvatar } from "./user-avatar";
 
@@ -108,6 +108,10 @@ export function AccountPanel({ viewer, zone }: { readonly viewer: ShellViewer; r
             <Compass className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             {t("tn.wizard.replay")}
           </Link>
+          {/* On a phone the top bar has no room for the workspace buttons: they live here. */}
+          {STAFF_NAV.filter((item) => item.roles?.includes(viewer.role)).map((item) => (
+            <Row key={item.href} item={item} label={t(item.labelKey)} className="sm:hidden" />
+          ))}
           <p className="px-3 pb-1 pt-3 text-[0.75rem] font-semibold text-muted-foreground">{t("tn.account.help")}</p>
           {HELP_NAV.map((item) => (
             // The assistant already sits in the side menu on a wide screen.
