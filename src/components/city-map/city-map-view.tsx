@@ -128,7 +128,7 @@ export function CityMapView({
   readonly signedIn: boolean;
   readonly services: readonly MapService[];
   /** Deep link: a service to open, or the emergency layer. */
-  readonly focus: { readonly service?: string; readonly layer?: "emergency" };
+  readonly focus: { readonly service?: string; readonly layer?: "emergency"; readonly zone?: CityZoneId };
 }) {
   const t = useTranslation();
   const { resolvedTheme } = useTheme();
@@ -136,7 +136,7 @@ export function CityMapView({
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CityMapScene | null>(null);
   const [statuses, setStatuses] = useState<readonly ZoneStatusDto[]>(initial);
-  const [selection, setSelection] = useState<Selection>(focus.service ? { type: "service", slug: focus.service } : null);
+  const [selection, setSelection] = useState<Selection>(focus.service ? { type: "service", slug: focus.service } : focus.zone ? { type: "zone", zone: focus.zone } : null);
   const [serviceLayer, setServiceLayer] = useState<ServiceLayer>(focus.layer === "emergency" ? "emergency" : "all");
   const serviceBySlug = useMemo(() => new Map(services.map((service) => [service.slug, service])), [services]);
   const [region, setRegion] = useState<CityRegionId | null>(null);

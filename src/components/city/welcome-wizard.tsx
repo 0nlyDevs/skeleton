@@ -233,7 +233,7 @@ export function WelcomeWizard({
         {current === "services" ? (
           <div className="flex flex-col gap-4">
             <DialogDescription id="wizard-body">{t("tn.wizard.services.body")}</DialogDescription>
-            <ul className="grid gap-2.5">
+            <ul className="grid grid-cols-[minmax(0,1fr)] gap-2.5">
               {services.map((service) => (
                 <li key={service.slug}>
                   <Link
@@ -242,10 +242,10 @@ export function WelcomeWizard({
                       setWelcomeCookie(WELCOME_SERVICE_COOKIE);
                       markDone();
                     }}
-                    className="flex items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:border-primary/40 hover:bg-surface-muted/50"
+                    className="flex min-w-0 items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:border-primary/40 hover:bg-surface-muted/50"
                   >
                     <ServiceIcon name={service.icon} className="size-9" />
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="block font-medium">{service.name}</span>
                       <span className="block truncate text-[0.8125rem] text-muted-foreground">{service.summary}</span>
                     </span>

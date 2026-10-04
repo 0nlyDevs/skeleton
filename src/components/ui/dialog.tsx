@@ -39,7 +39,7 @@ export function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4",
-          "max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-2xl border border-border/70 bg-card p-6 shadow-float",
+          "max-h-[calc(100dvh-3rem)] overflow-y-auto overflow-x-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-float",
           "data-[state=open]:animate-[rise-in_var(--duration-normal)_var(--ease-out-soft)]",
           className,
         )}
