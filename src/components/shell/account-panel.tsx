@@ -67,7 +67,7 @@ export function AccountPanel({ viewer, zone }: { readonly viewer: ShellViewer; r
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         aria-label={t("tn.account.open", { name: viewer.name })}
-        className="inline-flex items-center rounded-full p-0.5 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        className="inline-flex items-center rounded-full p-0.5 transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out-soft)] hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       >
         <UserAvatar userId={viewer.id} name={viewer.name} image={viewer.image} size="xs" className="size-8" />
       </PopoverTrigger>
