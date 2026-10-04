@@ -19,7 +19,7 @@ function Row({ item, active, badge, label }: { readonly item: ShellNavItem; read
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2.5 rounded-full px-3 py-2 text-[0.875rem] font-medium transition-colors",
+        "flex items-center gap-2.5 rounded-full px-3 py-2 text-[0.875rem] font-medium transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)]",
         active ? "bg-primary font-semibold text-primary-foreground" : "text-foreground/85 hover:bg-accent",
       )}
     >
