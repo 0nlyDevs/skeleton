@@ -11,6 +11,7 @@ import {
   History,
   Inbox,
   Landmark,
+  Vote,
   LayoutDashboard,
   Megaphone,
   MessageSquareHeart,
@@ -62,6 +63,7 @@ const GROUPS: readonly Group[] = [
       { href: "/agent/announcements", labelKey: "tn.agent.nav.news", icon: Megaphone },
       { href: "/agent/alerts/new", labelKey: "tn.nav.alerts", icon: Siren },
       { href: "/agent/official", labelKey: "tn.official.nav", icon: Landmark, adminOnly: true },
+      { href: "/agent/participation", labelKey: "tn.participate.admin.nav", icon: Vote, adminOnly: true },
     ],
   },
   {

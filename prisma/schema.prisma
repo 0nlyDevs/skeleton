@@ -246,6 +246,10 @@ model User {
   knownDevices        KnownDevice[]
   officialMessages    OfficialMessage[]
   serviceFeedback     ServiceFeedback[]       @relation("ServiceFeedbackAuthor")
+  projectOpinions     ProjectOpinion[]
+  decisionBallots     DecisionBallot[]
+  ideas               Idea[]                  @relation("IdeaAuthor")
+  ideaSupports        IdeaSupport[]
   feedbackReplies     ServiceFeedback[]       @relation("ServiceFeedbackReplier")
 
   /// Presence: written when the last socket of the user disconnects.
@@ -1434,4 +1438,147 @@ model ServiceFeedback {
   @@index([requestId])
   @@index([repliedById])
   @@map("serviceFeedback")
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+}
+
+/// F67 — a project of the city that residents can read about and give an opinion on.
+model CityProject {
+  id               String           @id @default(cuid())
+  slug             String           @unique @db.VarChar(100)
+  title            String           @db.VarChar(160)
+  summary          String           @db.VarChar(300)
+  body             String           @db.Text
+  zone             CityZone?
+  /// Budget in city credits; null while unknown.
+  budget           Int?
+  status           ProjectStatus    @default(PLANNED)
+  startsOn         DateTime?        @db.Date
+  endsOn           DateTime?        @db.Date
+  /// Percent done, 0 to 100.
+  progress         Int              @default(0) @db.TinyInt
+  /// F66 — residents may give their opinion while this is on.
+  consultationOpen Boolean          @default(true)
+  opinions         ProjectOpinion[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([status, createdAt])
+  @@map("cityProject")
+}
+
+enum OpinionStance {
+  FOR
+  AGAINST
+  NEUTRAL
+}
+
+/// F66 — one opinion per resident per project, changeable while the consultation is open.
+model ProjectOpinion {
+  id        String        @id @default(cuid())
+  projectId String
+  project   CityProject   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stance    OpinionStance
+  comment   String?       @db.VarChar(600)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("projectOpinion")
+}
+
+/// F65 — a decision submitted to the residents' vote.
+model Decision {
+  id          String           @id @default(cuid())
+  slug        String           @unique @db.VarChar(100)
+  question    String           @db.VarChar(200)
+  description String           @db.Text
+  opensAt     DateTime
+  closesAt    DateTime
+  options     DecisionOption[]
+  ballots     DecisionBallot[]
+  createdAt   DateTime         @default(now())
+
+  @@index([closesAt])
+  @@map("decision")
+}
+
+model DecisionOption {
+  id         String           @id @default(cuid())
+  decisionId String
+  decision   Decision         @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  label      String           @db.VarChar(120)
+  position   Int              @default(0) @db.TinyInt
+  ballots    DecisionBallot[]
+
+  @@index([decisionId])
+  @@map("decisionOption")
+}
+
+/// F65 — one ballot per resident per decision (unique in the database). The
+/// receipt proves the vote counted without saying what was chosen.
+model DecisionBallot {
+  id         String         @id @default(cuid())
+  decisionId String
+  decision   Decision       @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  optionId   String
+  option     DecisionOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  receipt    String         @unique @db.VarChar(20)
+  createdAt  DateTime       @default(now())
+
+  @@unique([decisionId, userId])
+  @@index([optionId])
+  @@index([userId])
+  @@map("decisionBallot")
+}
+
+enum IdeaStatus {
+  RECEIVED
+  STUDYING
+  KEPT
+  DECLINED
+  DONE
+}
+
+/// F68 — an idea from a resident to improve the colony, supported by others and answered by the city.
+model Idea {
+  id        String        @id @default(cuid())
+  reference String        @unique @db.VarChar(20)
+  title     String        @db.VarChar(140)
+  body      String        @db.VarChar(1500)
+  zone      CityZone?
+  status    IdeaStatus    @default(RECEIVED)
+  /// The city's answer, once it studied the idea.
+  answer    String?       @db.VarChar(1000)
+  authorId  String
+  author    User          @relation("IdeaAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  supports  IdeaSupport[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([authorId])
+  @@map("idea")
+}
+
+model IdeaSupport {
+  id        String   @id @default(cuid())
+  ideaId    String
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([ideaId, userId])
+  @@index([userId])
+  @@map("ideaSupport")
 }

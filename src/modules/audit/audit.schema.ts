@@ -67,6 +67,7 @@ export const auditActions = {
   webcupTriaged: "webcup.triaged",
   transportChanged: "transport.changed",
   backupVerified: "backup.verified",
+  participationChanged: "participation.changed",
   trackingExported: "export.created",
   pageCreated: "page.created",
   pageUpdated: "page.updated",
@@ -83,7 +84,7 @@ export type AuditAction = (typeof auditActions)[keyof typeof auditActions];
 export const ADMIN_ACTION_CATEGORIES = {
   requests: [auditActions.cityRequestChanged],
   appointments: [auditActions.appointmentChanged],
-  announcements: [auditActions.announcementChanged, auditActions.officialMessageChanged],
+  announcements: [auditActions.announcementChanged, auditActions.officialMessageChanged, auditActions.participationChanged],
   services: [auditActions.serviceChanged, auditActions.serviceFeedbackChanged],
   transports: [auditActions.transportChanged],
   accounts: [auditActions.assistedAccountCreated, auditActions.userBanned, auditActions.userUnbanned, auditActions.userRoleChanged, auditActions.userSessionsRevoked, auditActions.userDeleted],
