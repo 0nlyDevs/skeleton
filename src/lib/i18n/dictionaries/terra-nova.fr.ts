@@ -52,10 +52,10 @@ export const frTerraNova = {
   "tn.page_of": "Page {page} sur {count}",
 
   // --- Home ---
-  "tn.home.badge": "Première cité humaine hors de la Terre",
-  "tn.home.title": "Bienvenue à Terra Nova",
+  "tn.home.badge": "La plateforme de Terra Nova",
+  "tn.home.title": "Bienvenue sur Bubble",
   "tn.home.subtitle":
-    "Le portail des habitants : trouvez un service municipal, suivez vos démarches, lisez les annonces de la ville et écrivez à l'administration.",
+    "Bubble est la plateforme centrale de Terra Nova, la première cité humaine hors de la Terre : services, démarches, alertes, rendez-vous et vie de quartier, au même endroit.",
   "tn.home.cta_request": "Faire une demande",
   "tn.home.cta_services": "Découvrir les services",
   "tn.home.cta_join": "Créer mon compte",
@@ -1800,4 +1800,8 @@ export const frTerraNova = {
   "tn.search.go": "Chercher",
   "tn.search.services": "Services de la ville",
   "tn.search.total": "{count} personnes",
+  "tn.sender.open": "Ouvrir le menu de {name}",
+  "tn.sender.profile": "Voir le profil",
+  "tn.sender.private": "Continuer en privé",
+  "tn.request.reply_hint": "Entrée pour envoyer, Maj + Entrée pour une nouvelle ligne.",
 } as const;

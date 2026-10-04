@@ -50,10 +50,10 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.page_of": "Page {page} of {count}",
 
   // --- Home ---
-  "tn.home.badge": "The first human city beyond Earth",
-  "tn.home.title": "Welcome to Terra Nova",
+  "tn.home.badge": "The platform of Terra Nova",
+  "tn.home.title": "Welcome to Bubble",
   "tn.home.subtitle":
-    "The residents' portal: find a city service, follow your requests, read city announcements and write to the administration.",
+    "Bubble is the central platform of Terra Nova, the first human city beyond Earth: services, procedures, alerts, appointments and neighbourhood life, in one place.",
   "tn.home.cta_request": "Make a request",
   "tn.home.cta_services": "Browse services",
   "tn.home.cta_join": "Create my account",
@@ -1795,4 +1795,8 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.search.go": "Search",
   "tn.search.services": "City services",
   "tn.search.total": "{count} people",
+  "tn.sender.open": "Open {name}'s menu",
+  "tn.sender.profile": "See profile",
+  "tn.sender.private": "Continue in private",
+  "tn.request.reply_hint": "Enter to send, Shift + Enter for a new line.",
 };

@@ -72,7 +72,11 @@ export function RequestComposer({
         rows={3}
         maxLength={5000}
         onKeyDown={(event) => {
-          if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) void send();
+          // Enter sends; Shift+Enter adds a line.
+          if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            void send();
+          }
         }}
       />
       <div className="flex flex-wrap items-center justify-between gap-2">

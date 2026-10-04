@@ -1,5 +1,6 @@
 "use client";
 
+import { SenderMenu } from "./sender-menu";
 import { AlertCircle, Copy, CornerUpLeft, MoreHorizontal, Pencil, SmilePlus, Trash2, Undo2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -120,10 +121,18 @@ const editable = mine && !message.deleted && !message.pending && !message.failed
         </div>
       ) : (
         <>
-          {showAuthor && !mine ? <span className="mb-0.5 ml-11 text-[0.7188rem] font-medium text-muted-foreground">{message.sender.name}</span> : null}
+          {showAuthor && !mine ? (
+            <span className="mb-0.5 ml-11 text-[0.7188rem] font-medium text-muted-foreground">
+              <SenderMenu person={message.sender} mine={mine}>{message.sender.name}</SenderMenu>
+            </span>
+          ) : null}
           <div className={cn("flex max-w-[85%] items-end gap-2 sm:max-w-[70%]", mine && "flex-row-reverse")}>
             {!mine ? (
-              <span className="w-9 shrink-0">{showAvatar ? <UserAvatar userId={message.sender.id} name={message.sender.name} image={message.sender.image} size="sm" /> : null}</span>
+              <span className="w-9 shrink-0">{showAvatar ? (
+                  <SenderMenu person={message.sender} mine={mine} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+                    <UserAvatar userId={message.sender.id} name={message.sender.name} image={message.sender.image} size="sm" />
+                  </SenderMenu>
+                ) : null}</span>
             ) : null}
 
             <div className={cn("flex min-w-0 flex-col gap-1", mine ? "items-end" : "items-start")}>

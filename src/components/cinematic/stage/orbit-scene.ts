@@ -31,9 +31,8 @@ import { atmosphereFragment, atmosphereVertex, rimFragment } from "../planet-sha
 import { seeded } from "./noise";
 
 /**
- * The view from the ship before landing. It opens on the system's star (the
- * one the loader showed), then the planet swings in on its orbit and settles
- * in front of the ship, lit from the side, its thin air glowing on the edge,
+ * The view from the ship before landing: the planet swings in on its orbit
+ * and settles in front of the ship, lit from the side, its thin air glowing on the edge,
  * and a beacon where the island is, at the line of dawn. `dive` then flies the
  * camera down onto that beacon, with the dust of space streaking past.
  */
@@ -463,14 +462,13 @@ export class OrbitScene {
 
     // From the star to the planet, then down to the beacon.
     const wide = this.aspect > 1.05;
-    const look = view.arrive * view.arrive * (3 - 2 * view.arrive);
-    this.from.set(wide ? 1.35 : 0.2, wide ? 0.3 : -0.5, (wide ? 5.9 : 7.6) + (1 - look) * 1.4);
+    this.from.set(wide ? 1.35 : 0.2, wide ? 0.3 : -0.5, (wide ? 5.9 : 7.6) + (1 - view.arrive) * 1.2);
     this.to.copy(this.world).addScaledVector(this.normal, 0.05);
     const dive = view.dive;
     this.camera.position.copy(this.from).lerp(this.to, dive);
     this.camera.position.x += Math.sin(time * 0.13) * 0.05 * (1 - dive) + (Math.sin(time * 39) + Math.sin(time * 27)) * view.shake * 0.01;
     this.camera.position.y += Math.cos(time * 0.11) * 0.04 * (1 - dive) + Math.sin(time * 43) * view.shake * 0.01;
-    this.target.copy(this.from).addScaledVector(SUN, 10).lerp(this.ahead.set(wide ? -0.75 : 0, wide ? 0.05 : 0.9, 0), look).lerp(this.world, Math.min(1, dive * 1.8));
+    this.target.set(wide ? -0.75 : 0, wide ? 0.05 : 0.9, 0).lerp(this.world, Math.min(1, dive * 1.8));
     this.camera.lookAt(this.target);
     this.camera.rotateY(-view.pointerX * 0.03 * (1 - dive));
     this.camera.rotateX(-view.pointerY * 0.02 * (1 - dive));

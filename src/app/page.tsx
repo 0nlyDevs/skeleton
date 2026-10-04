@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { CinematicLanding, type LandingData, type RegistryRequest } from "@/components/cinematic/cinematic-landing";
 import { isStaff } from "@/lib/auth/guards";
 import { getAuthContext } from "@/lib/auth/session";
-import { env } from "@/lib/env";
 import { safeNextPath } from "@/lib/http/safe-redirect";
 import type { MessageKey } from "@/lib/i18n";
 import { getServerDictionary } from "@/lib/i18n/server";
@@ -82,5 +81,5 @@ export default async function LandingPage({
       }
     : null;
 
-  return <CinematicLanding data={data} registry={registry} oauth={{ google: env.googleOAuthEnabled, github: env.githubOAuthEnabled }} />;
+  return <CinematicLanding data={data} registry={registry} />;
 }
