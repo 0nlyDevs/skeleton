@@ -12,6 +12,7 @@ import {
   updateCityRequestSchema,
 } from "./city-requests.schema";
 import { listReports, similarReports, supportReport, withdrawReportSupport } from "./city-requests.reports";
+import { listSimilarGroups, similarTo } from "./city-requests.similar";
 import { checkReceipt } from "./city-requests.receipt";
 import { addCityRequestMessage, createCityRequest, getCityRequest, listCityRequests, updateCityRequest } from "./city-requests.service";
 
@@ -71,4 +72,17 @@ export const checkReceiptRoute = publicRoute({
   query: receiptCheckQuerySchema,
   rateLimit: { limit: 20, windowMs: 60_000 },
   handler: async ({ query }) => jsonOk({ data: await checkReceipt(query.reference, query.code) }),
+});
+
+/** F75 — groups of open requests about the same problem, for agents. */
+export const similarGroupsRoute = apiRoute({
+  roles: ["AGENT", "ADMIN"],
+  handler: async ({ auth }) => jsonOk({ data: await listSimilarGroups(auth.user) }),
+});
+
+/** F75 — the open requests that read like this one. */
+export const similarToRoute = apiRoute({
+  roles: ["AGENT", "ADMIN"],
+  params: cityRequestRefParamSchema,
+  handler: async ({ params, auth }) => jsonOk({ data: await similarTo(params.reference, auth.user) }),
 });

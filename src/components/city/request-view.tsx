@@ -18,6 +18,7 @@ import { SOCKET_EVENTS, type CityRequestUpdatedPayload } from "@/lib/socket/even
 import { cn } from "@/lib/utils";
 import type { CityRequestDto } from "@/modules/city-requests/city-requests.dto";
 
+import { SimilarRequests } from "@/components/agent/similar-requests";
 import { FeedbackForm } from "./feedback-form";
 import { TerraNovaMap } from "./terra-nova-map";
 import { NeedsActionBadge, RequestPriorityBadge, RequestStatusBadge } from "./request-badges";
@@ -244,6 +245,7 @@ export function RequestView({
 
         <aside className="flex flex-col gap-4">
           {agent ? <RequestControls request={request} viewerId={viewerId} onUpdated={setRequest} /> : null}
+          {agent ? <SimilarRequests reference={request.reference} /> : null}
           <section className="rounded-2xl border border-border/70 bg-card p-4 shadow-panel" aria-labelledby="history">
             <h2 id="history" className="mb-3 font-semibold">{t("tn.request.history")}</h2>
             <RequestTimeline events={request.events} />
