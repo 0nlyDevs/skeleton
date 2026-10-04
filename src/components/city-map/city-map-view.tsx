@@ -433,7 +433,7 @@ export function CityMapView({
             </ul>
           ) : null}
         </div>
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]" role="group" aria-label={t("alerts.map.categories")}>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("alerts.map.categories")}>
           <button
             type="button"
             aria-pressed={serviceLayer === "emergency"}
