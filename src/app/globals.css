@@ -970,57 +970,9 @@ select option:checked {
   --place: var(--orange);
   --place-ink: #0b0d12;
 }
-[data-place="procedures"] { --place: #0369a1; }
-[data-place="city"] { --place: #047857; }
-[data-place="community"] { --place: #6d28d9; }
-[data-place="staff"] { --place: #92400e; }
-.dark [data-place="procedures"] { --place: #5cc8ff; }
-.dark [data-place="city"] { --place: #4fe0a6; }
-.dark [data-place="community"] { --place: #b79bff; }
-.dark [data-place="staff"] { --place: #ffc857; }
-
-/* The sky is behind everything: the page itself is see-through in the dark theme. */
-html.dark:not([data-eco]):not([data-contrast="high"]) body {
-  background-color: transparent;
-}
-html.dark:not([data-eco]):not([data-contrast="high"]) {
-  --panel: rgb(27 31 43 / 0.7);
-  --well: rgb(13 16 24 / 0.55);
-  --field: rgb(10 12 19 / 0.6);
-  --accent: rgb(92 104 136 / 0.34);
-  --line: rgb(150 162 196 / 0.2);
-  --popover: rgb(24 28 39 / 0.92);
-}
-html.dark:not([data-eco]):not([data-contrast="high"]) :is(.bg-card, .bg-card\/90, .bg-popover) {
-  -webkit-backdrop-filter: blur(18px) saturate(1.35);
-  backdrop-filter: blur(18px) saturate(1.35);
-}
-html.dark:not([data-eco]):not([data-contrast="high"]) .shadow-panel {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.06),
-    inset 0 1px 0 rgb(255 255 255 / 0.1),
-    0 22px 44px -28px rgb(0 0 0 / 0.8);
-}
 .dark select option,
 .dark select optgroup {
   background-color: #1c202b;
-}
-
-/* Titles carry the colour of the place. */
-#content h1::after {
-  content: "";
-  display: block;
-  width: 2.75rem;
-  height: 4px;
-  margin-top: 0.55rem;
-  border-radius: 999px;
-  background: var(--place);
-}
-#content h2:not(:has(svg))::before {
-  background: var(--place);
-}
-.place-tab-on {
-  box-shadow: inset 0 3px 0 var(--place);
 }
 
 /* Urgent: a solid block with a slow halo, impossible to miss, still one line. */
@@ -1140,3 +1092,102 @@ html.dark:not([data-eco]):not([data-contrast="high"]) .shadow-panel {
   background: transparent;
 }
 
+
+
+/* ---------------------------------------------------------------------------
+ * The app's surface, in step with the landing: its ink (#0b0d12) and its
+ * paper (#f5f0e8) as grounds, clean cards on top, and one accent only (the
+ * landing's orange) for what is active or to be done.
+ * ------------------------------------------------------------------------- */
+:root {
+  --ground: #f5f0e8;
+  --panel: #ffffff;
+  --well: #f4f1ec;
+  --line: #e8e2d8;
+  --field: #f4f1ec;
+  --accent: #f6ebe1;
+  --ink: #14161c;
+  --ink-soft: #666a75;
+}
+.dark {
+  --ground: #0b0d12;
+  --panel: #151821;
+  --well: #1c202b;
+  --line: #262b38;
+  --field: #1c202b;
+  --accent: #262b38;
+  --ink: #f0ece5;
+  --ink-soft: #9a9eab;
+}
+body::before,
+html:not(.dark):not([data-contrast="high"]) body::after {
+  display: none;
+}
+.shadow-panel {
+  box-shadow: 0 1px 2px rgb(20 22 28 / 0.04), 0 10px 28px -18px rgb(20 22 28 / 0.18);
+}
+.dark .shadow-panel {
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.dark #content > div > header,
+.dark #content > div > h1 {
+  text-shadow: none;
+}
+#content h1::after {
+  display: none;
+}
+#content h2:not(:has(svg))::before {
+  background: var(--primary);
+}
+.place-tab-on {
+  box-shadow: inset 0 3px 0 var(--primary);
+}
+
+/* Round shortcuts on the home: an orange ring like a story, the icon inside. */
+.quick-circle {
+  color: var(--primary);
+  background: var(--panel);
+  box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px color-mix(in srgb, var(--orange) 75%, transparent);
+}
+.group:hover .quick-circle {
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+/* The map card of the right column: the landing's night sky and planet edge. */
+.rail-map {
+  background: linear-gradient(160deg, #0b0d12 0%, #131a2b 100%);
+  isolation: isolate;
+}
+.rail-map-globe {
+  position: absolute;
+  right: -3.5rem;
+  top: -4.5rem;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  z-index: -1;
+  background: radial-gradient(circle at 30% 30%, #cfe9ff 0%, #5fa8dc 16%, #1f5f94 38%, #0b2a47 60%, #04101d 80%);
+  box-shadow: 0 0 0 1.5px rgb(140 200 255 / 0.5), 0 0 36px 2px rgb(90 170 255 / 0.3), inset -26px -22px 44px rgb(0 0 0 / 0.85);
+  transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.rail-map:hover .rail-map-globe {
+  transform: scale(1.08) rotate(6deg);
+}
+
+/* Map pins: the icon only; the name shows on hover or keyboard focus, on a chip that never overlaps its neighbours' text. */
+.tn-map-pin-name {
+  display: none;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #14161c;
+  text-shadow: none;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}
+.tn-map-pin:hover .tn-map-pin-name,
+.tn-map-pin:focus-visible .tn-map-pin-name {
+  display: block;
+  position: relative;
+  z-index: 5;
+}

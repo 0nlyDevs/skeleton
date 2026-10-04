@@ -93,11 +93,11 @@ export function DisplayControls({ idPrefix = "display" }: { readonly idPrefix?: 
         <Switch id={`${idPrefix}-vision`} checked={vision} onCheckedChange={toggleVision} />
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+      <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3 sm:hidden">
         <span className="text-sm font-medium">{t("theme.toggle")}</span>
         <ThemeToggle />
       </div>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 sm:hidden">
         <span className="text-sm font-medium">{t("eco.label")}</span>
         <EcoToggle />
       </div>

@@ -1,148 +1,153 @@
 "use client";
 
-import { Lock, Search } from "lucide-react";
-import Link from "@/components/ui/link";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, CalendarDays, Globe2, Megaphone, MessageCircle, Siren } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
-import { useFormatters } from "@/hooks/use-formatters";
-import { FollowButton } from "@/components/social/follow-button";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { matchesSearch } from "@/lib/search";
-import { usePresence } from "@/hooks/use-presence";
+import Link from "@/components/ui/link";
 import { apiFetch } from "@/lib/api/client";
-import type { ContactDto, SuggestionsDto } from "@/modules/discovery/discovery.service";
+import { formatRelative } from "@/lib/format";
+import { useI18n } from "@/components/providers/i18n-provider";
+import { cn } from "@/lib/utils";
 
 import { UserAvatar } from "./user-avatar";
 
-function useRailData() {
-  const [contacts, setContacts] = useState<ContactDto[] | null>(null);
-  const [suggestions, setSuggestions] = useState<SuggestionsDto | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    void apiFetch<{ data: ContactDto[] }>("/api/discover/contacts")
-      .then((response) => !cancelled && setContacts(response.data))
-      .catch(() => !cancelled && setContacts([]));
-    void apiFetch<{ data: SuggestionsDto }>("/api/discover/suggestions")
-      .then((response) => !cancelled && setSuggestions(response.data))
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return { contacts, suggestions };
+interface AlertItem { readonly slug: string; readonly title: string; readonly alert: { readonly severity: "INFORMATION" | "WARNING" | "CRITICAL" } }
+interface RoomItem { readonly id: string; readonly name: string; readonly image: string | null; readonly unreadCount?: number; readonly lastMessage?: { readonly content?: string | null } | null; readonly targetUser?: { readonly id: string; readonly name: string; readonly image: string | null } | null }
+interface NewsItem { readonly slug: string; readonly title: string; readonly publishedAt: string | null }
+
+function Block({ title, icon, href, more, children }: { readonly title: string; readonly icon: ReactNode; readonly href: string; readonly more: string; readonly children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-2 rounded-2xl bg-card p-4 shadow-panel">
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-[0.9375rem] font-semibold">
+          {icon}
+          {title}
+        </p>
+        <Link href={href} aria-label={`${more} : ${title}`} className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-surface-muted hover:text-foreground">
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
+      {children}
+    </section>
+  );
 }
 
-/** Contacts with live presence, then people and groups to discover. */
-export function RightRail() {
-  const t = useTranslation();
-  const fmt = useFormatters();
-  const { contacts, suggestions } = useRailData();
-  const [filter, setFilter] = useState("");
-  const ids = useMemo(() => (contacts ?? []).map((contact) => contact.id), [contacts]);
-  const presence = usePresence(ids);
+const DOT = { CRITICAL: "bg-error", WARNING: "bg-warning", INFORMATION: "bg-info" } as const;
 
-  const visible = (contacts ?? [])
-    .filter((contact) => matchesSearch([contact.name], filter))
-    // Online people first: the list answers "who can I talk to now?".
-    .sort((a, b) => Number(presence.get(b.id)?.online ?? false) - Number(presence.get(a.id)?.online ?? false));
+/**
+ * The right column of the city's home: what is happening now (alerts), who
+ * wrote to me (messages), what the city just announced, and the map. Each
+ * block is a short list with one way in; it never repeats the menu.
+ */
+export function RightRail({ signedIn }: { readonly signedIn: boolean }) {
+  const t = useTranslation();
+  const { locale } = useI18n();
+  const [alerts, setAlerts] = useState<readonly AlertItem[] | null>(null);
+  const [rooms, setRooms] = useState<readonly RoomItem[] | null>(null);
+  const [news, setNews] = useState<readonly NewsItem[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const load = <T,>(url: string, set: (value: readonly T[]) => void) =>
+      apiFetch<{ data: T[] }>(url)
+        .then((response) => alive && set(response.data))
+        .catch(() => alive && set([]));
+    void load<AlertItem>("/api/alerts?limit=4", setAlerts);
+    void load<NewsItem>("/api/announcements?limit=4", setNews);
+    if (signedIn) void load<RoomItem>("/api/messages/rooms", setRooms);
+    return () => {
+      alive = false;
+    };
+  }, [signedIn]);
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[0.9375rem] font-semibold">{t("contacts.title")}</h2>
-        </div>
-        <label className="relative mt-3 block">
-          <span className="sr-only">{t("contacts.filter")}</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-            placeholder={t("contacts.filter")}
-            className="h-9 w-full rounded-full bg-surface-muted pl-8 pr-3 text-[0.8125rem] outline-none focus:ring-2 focus:ring-ring/25"
-          />
-        </label>
-        <ul className="mt-2 flex flex-col">
-          {contacts === null ? (
-            [0, 1, 2, 3].map((index) => <Skeleton key={index} className="my-1.5 h-9 w-full rounded-xl" />)
-          ) : visible.length === 0 ? (
-            <li className="px-1 py-3 text-[0.7812rem] leading-relaxed text-muted-foreground">{t("contacts.empty")}</li>
+      <Link href="/city-map" className="rail-map group relative flex min-h-32 flex-col justify-end gap-1 overflow-hidden rounded-2xl p-4 text-white shadow-panel">
+        <span aria-hidden className="rail-map-globe" />
+        <span className="relative flex items-center gap-2 text-[0.9375rem] font-semibold">
+          <Globe2 className="size-4" aria-hidden />
+          {t("tn.space.map_hero.title")}
+        </span>
+        <span className="relative text-[0.8125rem] text-white/80">{t("tn.rail.map_body")}</span>
+      </Link>
+
+      <Block title={t("tn.rail.alerts")} icon={<Siren className="size-4 text-error" aria-hidden />} href="/alerts" more={t("tn.rail.see_all")}>
+        {alerts === null ? (
+          <p className="text-[0.8125rem] text-muted-foreground">…</p>
+        ) : alerts.length === 0 ? (
+          <p className="text-[0.8125rem] text-muted-foreground">{t("tn.rail.no_alert")}</p>
+        ) : (
+          <ul className="flex flex-col">
+            {alerts.slice(0, 4).map((item) => (
+              <li key={item.slug}>
+                <Link href={`/alerts/${encodeURIComponent(item.slug)}`} className="flex items-start gap-2.5 rounded-xl px-2 py-2 text-[0.875rem] hover:bg-surface-muted">
+                  <span aria-hidden className={cn("mt-1.5 size-2 shrink-0 rounded-full", DOT[item.alert.severity])} />
+                  <span className="min-w-0">
+                    <span className="line-clamp-2 font-medium leading-snug">{item.title}</span>
+                    <span className="text-[0.75rem] text-muted-foreground">{t(`alerts.severity.${item.alert.severity}`)}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Block>
+
+      {signedIn ? (
+        <Block title={t("nav.messages")} icon={<MessageCircle className="size-4 text-primary" aria-hidden />} href="/messages" more={t("tn.rail.see_all")}>
+          {rooms === null ? (
+            <p className="text-[0.8125rem] text-muted-foreground">…</p>
+          ) : rooms.length === 0 ? (
+            <p className="text-[0.8125rem] text-muted-foreground">{t("tn.rail.no_message")}</p>
           ) : (
-            visible.map((contact) => {
-              const state = presence.get(contact.id);
-              const status = state?.online
-                ? t("contacts.online")
-                : state?.lastSeenAt
-                  ? t("contacts.last_seen", { time: fmt.relative(state.lastSeenAt) })
-                  : null;
-              return (
-                <li key={contact.id}>
-                  <Link
-                    href={`/messages?to=${encodeURIComponent(contact.id)}`}
-                    className="flex items-center gap-3 rounded-xl px-1.5 py-1.5 hover:bg-surface-muted"
-                  >
-                    <UserAvatar userId={contact.id} name={contact.name} image={contact.image} size="sm" online={state?.online ?? false} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[0.8438rem] font-medium">{contact.name}</span>
-                      {status ? (
-                        <span className={state?.online ? "block text-[0.7188rem] text-success" : "block text-[0.7188rem] text-muted-foreground"}>
-                          {status}
+            <ul className="flex flex-col">
+              {rooms.slice(0, 5).map((room) => {
+                const name = room.targetUser?.name ?? room.name;
+                return (
+                  <li key={room.id}>
+                    <Link href={`/messages?room=${encodeURIComponent(room.id)}`} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-surface-muted">
+                      <UserAvatar userId={room.targetUser?.id} name={name} image={room.targetUser?.image ?? room.image} size="sm" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[0.875rem] font-medium">{name}</span>
+                        {room.lastMessage?.content ? <span className="block truncate text-[0.75rem] text-muted-foreground">{room.lastMessage.content}</span> : null}
+                      </span>
+                      {room.unreadCount ? (
+                        <span className="grid min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[0.6875rem] font-bold leading-5 text-primary-foreground">
+                          <span aria-hidden>{room.unreadCount > 9 ? "9+" : room.unreadCount}</span>
+                          <span className="sr-only">{t("tn.rail.unread", { count: room.unreadCount })}</span>
                         </span>
                       ) : null}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </ul>
-      </Card>
+        </Block>
+      ) : null}
 
-      {suggestions && suggestions.people.length > 0 ? (
-        <Card className="p-4">
-          <h2 className="text-[0.9375rem] font-semibold">{t("suggest.people")}</h2>
-          <ul className="mt-2 flex flex-col gap-1">
-            {suggestions.people.map((person) => (
-              <li key={person.id} className="flex items-center gap-3 py-1">
-                <Link href={person.username ? `/profile/${person.username}` : "#"} className="flex min-w-0 flex-1 items-center gap-3">
-                  <UserAvatar name={person.name} image={person.image} size="sm" />
+      <Block title={t("tn.rail.news")} icon={<Megaphone className="size-4 text-primary" aria-hidden />} href="/announcements" more={t("tn.rail.see_all")}>
+        {news === null ? (
+          <p className="text-[0.8125rem] text-muted-foreground">…</p>
+        ) : news.length === 0 ? (
+          <p className="text-[0.8125rem] text-muted-foreground">{t("tn.rail.no_news")}</p>
+        ) : (
+          <ul className="flex flex-col">
+            {news.slice(0, 4).map((item) => (
+              <li key={item.slug}>
+                <Link href={`/announcements/${encodeURIComponent(item.slug)}`} className="flex items-start gap-2.5 rounded-xl px-2 py-2 hover:bg-surface-muted">
+                  <CalendarDays className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
                   <span className="min-w-0">
-                    <span className="block truncate text-[0.8125rem] font-medium">{person.name}</span>
-                    <span className="block truncate text-[0.7188rem] text-muted-foreground">@{person.username}</span>
-                  </span>
-                </Link>
-                <FollowButton userId={person.id} initialFollowing={false} compact />
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
-
-      {suggestions && suggestions.groups.length > 0 ? (
-        <Card className="p-4">
-          <h2 className="text-[0.9375rem] font-semibold">{t("suggest.groups")}</h2>
-          <ul className="mt-2 flex flex-col gap-1">
-            {suggestions.groups.map((group) => (
-              <li key={group.id}>
-                <Link href={`/groups/${group.slug}`} className="flex items-center gap-3 rounded-xl px-1 py-1.5 hover:bg-surface-muted">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary/80 to-[oklch(0.62_0.2_310)] text-[0.8125rem] font-bold text-primary-foreground">
-                    {group.name.slice(0, 1).toUpperCase()}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1 truncate text-[0.8125rem] font-medium">
-                      {group.name}
-                      {group.privacy === "PRIVATE" ? <Lock className="size-3 text-muted-foreground" aria-hidden /> : null}
-                    </span>
-                    <span className="block text-[0.7188rem] text-muted-foreground">{t("suggest.members", { count: group.memberCount })}</span>
+                    <span className="line-clamp-2 text-[0.875rem] font-medium leading-snug">{item.title}</span>
+                    {item.publishedAt ? <span className="text-[0.75rem] text-muted-foreground">{formatRelative(item.publishedAt, locale)}</span> : null}
                   </span>
                 </Link>
               </li>
             ))}
           </ul>
-        </Card>
-      ) : null}
+        )}
+      </Block>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/shell/app-shell";
 import { getAuthContext } from "@/lib/auth/session";
 import { viewerZone } from "@/modules/alerts/alerts.service";
+import { getShellRail } from "@/modules/discovery/discovery.service";
 import { needsSecretSetup } from "@/modules/users/users.service";
 
 /**
@@ -13,9 +14,9 @@ import { needsSecretSetup } from "@/modules/users/users.service";
 export default async function MainLayout({ children }: { readonly children: ReactNode }) {
   const context = await getAuthContext();
   const user = context?.user ?? null;
-  const [zone, mustSetSecret] = user
-    ? await Promise.all([viewerZone(user).catch(() => null), needsSecretSetup(user.id).catch(() => false)])
-    : [null, false];
+  const [zone, mustSetSecret, rail] = user
+    ? await Promise.all([viewerZone(user).catch(() => null), needsSecretSetup(user.id).catch(() => false), getShellRail(user.id).catch(() => null)])
+    : [null, false, null];
 
   return (
     <AppShell
@@ -25,6 +26,7 @@ export default async function MainLayout({ children }: { readonly children: Reac
           : null
       }
       zone={zone}
+      rail={rail}
     >
       {children}
     </AppShell>
