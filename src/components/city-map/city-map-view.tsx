@@ -1,5 +1,6 @@
 "use client";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Ambulance,
   Building2,
@@ -535,9 +536,14 @@ export function CityMapView({
       {/* Map controls, bottom right. */}
       <div className="absolute bottom-6 right-3 flex flex-col gap-2">
         {home ? (
-          <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")} title={t("alerts.map.home_here")}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => setSelection({ type: "zone", zone: home })} aria-label={t("alerts.map.home_here")}>
             <LocateFixed className="size-5 text-foreground" aria-hidden />
           </button>
+            </TooltipTrigger>
+            <TooltipContent>{t("alerts.map.home_here")}</TooltipContent>
+          </Tooltip>
         ) : null}
         {/* Camera controls only exist for the 3D view. */}
         {mode === "3d" ? (
@@ -554,9 +560,14 @@ export function CityMapView({
             >
               {flat ? "3D" : "2D"}
             </button>
-            <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => sceneRef.current?.resetNorth()} aria-label={t("alerts.map.north")} title={t("alerts.map.north")}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className={cn(control, "rounded-full shadow-[0_1px_4px_rgb(0_0_0/0.3)]")} onClick={() => sceneRef.current?.resetNorth()} aria-label={t("alerts.map.north")}>
               <Compass className="size-5" aria-hidden />
             </button>
+              </TooltipTrigger>
+              <TooltipContent>{t("alerts.map.north")}</TooltipContent>
+            </Tooltip>
             <div className="flex flex-col overflow-hidden rounded-xl shadow-[0_1px_4px_rgb(0_0_0/0.3)]">
               <button type="button" className={control} onClick={() => sceneRef.current?.zoom(0.7)} aria-label={t("alerts.map.zoom_in")}>
                 <Plus className="size-5" aria-hidden />

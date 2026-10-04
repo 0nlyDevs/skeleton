@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { ECO_AUTO_COOKIE, ECO_COOKIE } from "@/lib/eco";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,19 +32,23 @@ export function EcoToggle({ className }: { readonly className?: string }) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-pressed={on}
-      title={t(on ? "eco.on_hint" : "eco.off_hint")}
-      aria-label={`${t("eco.label")} : ${t(on ? "eco.on_hint" : "eco.off_hint")}`}
-      className={cn(
-        "grid size-9 place-items-center rounded-full transition-colors hover:bg-surface-muted",
-        on ? "bg-success text-success-foreground hover:bg-success" : "text-muted-foreground",
-        className,
-      )}
-    >
-      <Leaf className="size-[18px]" />
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-pressed={on}
+          aria-label={`${t("eco.label")} : ${t(on ? "eco.on_hint" : "eco.off_hint")}`}
+          className={cn(
+            "grid size-9 place-items-center rounded-full transition-colors hover:bg-surface-muted",
+            on ? "bg-success text-success-foreground hover:bg-success" : "text-muted-foreground",
+            className,
+          )}
+        >
+          <Leaf className="size-[18px]" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{t(on ? "eco.on_hint" : "eco.off_hint")}</TooltipContent>
+    </Tooltip>
   );
 }
