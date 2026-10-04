@@ -1871,4 +1871,5 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "notifications.type.ANNOUNCEMENT": "City announcement",
   "tn.transports.favorites_title": "My favourite lines",
   "tn.transports.all_lines": "All lines",
+  "tn.side.label": "All sections",
 };

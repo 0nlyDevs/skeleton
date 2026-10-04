@@ -10,6 +10,7 @@ import { LoadBanner } from "./load-banner";
 import { OfflineNotice } from "./offline-notice";
 import { MobileNav } from "./mobile-nav";
 import { PlaceNav } from "./place-nav";
+import { SideNav } from "./side-nav";
 import { SecretSetupGuard } from "./secret-setup-guard";
 import type { ShellViewer } from "./shell-types";
 import { TopBar } from "./top-bar";
@@ -33,9 +34,15 @@ export function AppShell({
   return (
     <div className="min-h-dvh">
       <TopBar viewer={viewer} zone={zone} />
-      <div className="mx-auto w-full max-w-[1180px] px-4 pb-28 pt-5 md:pb-12 lg:px-6">
-        <PlaceNav signedIn={viewer !== null} />
+      <div className="mx-auto grid w-full max-w-[1480px] gap-6 px-4 pb-28 pt-5 md:pb-12 lg:grid-cols-[236px_minmax(0,1fr)] lg:px-6">
+        {/* Wide screens: every destination in view. Narrow ones: the row of the current place. */}
+        <aside className="sticky top-[4.75rem] hidden max-h-[calc(100dvh-5.5rem)] self-start overflow-y-auto lg:block [scrollbar-width:thin]">
+          <SideNav viewer={viewer} />
+        </aside>
         <main id="content" className="min-w-0">
+          <div className="lg:hidden">
+            <PlaceNav signedIn={viewer !== null} />
+          </div>
           <OfflineNotice />
           <LoadBanner />
           {viewer ? <AlertWatcher /> : null}
