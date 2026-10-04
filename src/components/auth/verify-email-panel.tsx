@@ -2,7 +2,7 @@
 
 import { AlertCircle, CheckCircle2, MailCheck } from "lucide-react";
 import Link from "@/components/ui/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { FormField } from "@/components/forms/form-field";
@@ -13,46 +13,28 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth/client";
 
-type Phase = "idle" | "verifying" | "verified" | "failed";
+type Phase = "idle" | "verified" | "failed";
 
 /**
  * Email verification.
  *
  * Three states in one panel, because they are the same page to the user:
  *
- *  * arriving **with** a token verifies it immediately and reports the result;
+ *  * BetterAuth verifies token links in the page request and redirects back
+ *    with a result flag, so this flow does not depend on client hydration;
  *  * arriving **without** one — right after signing up — shows "check your inbox"
  *    and offers a resend;
  *  * an expired or already-used token offers the resend too, which is the only
  *    useful action at that point.
  *
- * The verification call is guarded by a ref so React's development double-mount
- * cannot consume the single-use token twice and show a spurious failure.
  */
-export function VerifyEmailPanel({ token }: { readonly token?: string }) {
+export function VerifyEmailPanel({ initialPhase = "idle" }: { readonly initialPhase?: Phase }) {
   const t = useTranslation();
 
-  const [phase, setPhase] = useState<Phase>(token ? "verifying" : "idle");
+  const phase = initialPhase;
   const [email, setEmail] = useState("");
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
-  const attempted = useRef(false);
-
-  useEffect(() => {
-    if (!token || attempted.current) return;
-    attempted.current = true;
-
-    const run = async () => {
-      try {
-        const result = await authClient.verifyEmail({ query: { token } });
-        setPhase(result.error ? "failed" : "verified");
-      } catch {
-        setPhase("failed");
-      }
-    };
-
-    void run();
-  }, [token]);
 
   const handleResend = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -76,15 +58,6 @@ export function VerifyEmailPanel({ token }: { readonly token?: string }) {
     },
     [email, resending, t],
   );
-
-  if (phase === "verifying") {
-    return (
-      <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <Spinner className="size-5" />
-        <p className="text-[0.875rem] text-muted-foreground">{t("auth.verify.checking")}</p>
-      </div>
-    );
-  }
 
   if (phase === "verified") {
     return (
