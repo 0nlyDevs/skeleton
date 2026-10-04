@@ -100,6 +100,23 @@ export function RequestView({
         </div>
       ) : null}
 
+      {/* F86 — a medical emergency is marked as such for the agents, above everything. */}
+      {agent && request.emergency ? (
+        <p role="alert" className="rounded-2xl border border-error/50 bg-error/10 px-4 py-3 font-semibold text-error">{t("tn.emergency.agent_banner")}</p>
+      ) : null}
+
+      {/* F83 — the proof of reception, one tap away. */}
+      {!agent && request.receiptCode ? (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm">
+          <span>
+            {t("tn.receipt.line")} <span className="font-mono font-semibold">{request.receiptCode}</span>
+          </span>
+          <Link href={`/space/requests/${request.reference}/receipt`} className="font-medium text-primary hover:underline">
+            {t("tn.receipt.open")}
+          </Link>
+        </p>
+      ) : null}
+
       {/* F49 — what the current state means and what to do, for the resident. */}
       {!agent ? <RequestStatusGuide status={request.status} /> : null}
 

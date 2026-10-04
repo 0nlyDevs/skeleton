@@ -13,7 +13,8 @@ import { randomInt } from "node:crypto";
 import { isStaff } from "@/lib/auth/guards";
 import { decryptField, encryptField } from "@/lib/crypto/field-encryption";
 import { prisma } from "@/lib/db/prisma";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { assertHumanForm } from "@/lib/security/form-guard";
 import { publishCityRequestUpdated } from "@/lib/socket/emit";
 import { RATE_LIMITS, enforceThenRecord, rateLimitKey } from "@/lib/rate-limit";
 import { zoneAt, type CityZoneId } from "@/modules/alerts/city-zones";
@@ -22,6 +23,8 @@ import type { AuthUser } from "@/types";
 import { auditActions } from "../audit/audit.schema";
 import { recordAudit } from "../audit/audit.service";
 import { createNotification, notifyInBackground } from "../notifications/notifications.service";
+import { isMedicalEmergency } from "./city-requests.emergency";
+import { receiptCode } from "./city-requests.receipt";
 import { statusNotice } from "./city-requests.status-notice";
 import { decryptBody, toSummaryDto, type CityRequestDto, type CityRequestSummaryDto } from "./city-requests.dto";
 import { reportSupporters } from "./city-requests.reports";
@@ -56,7 +59,24 @@ async function staffIds(): Promise<string[]> {
   return rows.map((row) => row.id);
 }
 
+/** F82 — the same request sent again within this window is refused, not stored twice. */
+const DUPLICATE_WINDOW_MS = 10 * 60_000;
+
+async function findDuplicate(citizenId: string, subject: string, message: string): Promise<string | null> {
+  const recent = await prisma.cityRequest.findMany({
+    where: { citizenId, subject, createdAt: { gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) } },
+    select: { reference: true, message: true },
+    take: 5,
+  });
+  return recent.find((row) => decryptField(row.message).trim() === message.trim())?.reference ?? null;
+}
+
 export async function createCityRequest(input: CreateCityRequestInput, actor: AuthUser, ip: string | null): Promise<CityRequestSummaryDto> {
+  // F81 — a form sent by a robot stops here, before anything is stored.
+  assertHumanForm("city-request", input.guard);
+  // F82 — a double click or a second send of the same form gives the first reference back.
+  const duplicate = await findDuplicate(actor.id, input.subject, input.message);
+  if (duplicate) throw new ConflictError(`You already sent this request a moment ago. Its reference is ${duplicate}.`);
   await enforceThenRecord([{ key: rateLimitKey("city-request:create", actor.id), rule: RATE_LIMITS.cityRequestCreate }]);
   let serviceId: string | null = null;
   if (input.serviceId) {
@@ -84,6 +104,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
         };
       })()
     : {};
+  const emergency = isMedicalEmergency(input.subject, input.message);
   const row = await prisma.cityRequest.create({
     data: {
       reference: await newReference(),
@@ -92,6 +113,8 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
       subject: input.subject,
       message: encryptField(input.message),
       ...report,
+      // F86 — a medical emergency goes straight to the top of the agents' list.
+      ...(emergency ? { priority: "URGENT" as const } : {}),
       events: { create: { actorId: actor.id, kind: "created", toValue: "NEW" } },
     },
     include: summaryInclude,
@@ -104,7 +127,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
         userId: actor.id,
         type: "CITY_REQUEST",
         title: `Demande ${row.reference} bien reçue`,
-        body: `Votre demande « ${row.subject} » a été transmise aux services de Terra Nova. Vous serez prévenu·e à chaque étape.`,
+        body: `Votre demande « ${row.subject} » a été transmise aux services de Terra Nova. Vous serez prévenu·e à chaque étape. Code de l'accusé de réception : ${receiptCode(row.reference, row.createdAt)}.`,
         link: `/space/requests/${row.reference}`,
         email: true,
       });
@@ -112,8 +135,8 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
         if (id === actor.id) continue;
         await createNotification({
           userId: id,
-          type: "CITY_REQUEST",
-          title: `Nouvelle demande ${row.reference} : ${row.subject.slice(0, 80)}`,
+          type: emergency ? "ALERT" : "CITY_REQUEST",
+          title: emergency ? `URGENCE MÉDICALE signalée — ${row.reference} : ${row.subject.slice(0, 70)}` : `Nouvelle demande ${row.reference} : ${row.subject.slice(0, 80)}`,
           link: `/agent/requests/${row.reference}`,
         });
       }
@@ -219,6 +242,9 @@ export async function getCityRequest(reference: string, actor: AuthUser): Promis
     mapY: row.mapY,
     zone: row.zone as CityZoneId | null,
     closedAt: row.closedAt?.toISOString() ?? null,
+    // F83 — only the resident who sent the request holds its receipt.
+    receiptCode: row.citizenId === actor.id ? receiptCode(row.reference, row.createdAt) : null,
+    emergency: row.priority === "URGENT" && isMedicalEmergency(row.subject, decryptBody(row.message)),
     feedback,
     messages: visible.map((message) => ({
       id: message.id,
