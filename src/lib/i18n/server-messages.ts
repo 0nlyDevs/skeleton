@@ -10,6 +10,8 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "Only administrators can create accounts with a role.": "Seuls les administrateurs peuvent créer un compte avec un rôle.",
+  "An account already uses this e-mail address.": "Un compte utilise déjà cette adresse e-mail.",
   "Give the name of your organisation.": "Indiquez le nom de votre organisation.",
   "Give the name of the person to contact.": "Indiquez le nom de la personne à contacter.",
   "Give a valid email address.": "Indiquez une adresse e-mail valide.",
