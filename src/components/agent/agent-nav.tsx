@@ -7,6 +7,7 @@ import {
   CalendarClock,
   ChevronDown,
   BarChart3,
+  ClipboardList,
   Handshake,
   ShieldAlert,
   Construction,
@@ -87,6 +88,7 @@ const GROUPS: readonly Group[] = [
     items: [
       { href: "/agent/feed", labelKey: "tn.agent.nav.feed", icon: Radio },
       { href: "/agent/history", labelKey: "tn.agent.nav.history", icon: History },
+      { href: "/agent/report", labelKey: "tn.report.nav", icon: ClipboardList },
       { href: "/agent/usage", labelKey: "tn.usage.nav", icon: BarChart3 },
       { href: "/agent/security", labelKey: "tn.security.nav", icon: ShieldAlert },
       { href: "/agent/exports", labelKey: "tn.export.nav", icon: FileDown },
