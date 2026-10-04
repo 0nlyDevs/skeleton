@@ -59,7 +59,7 @@ export function LightModeNotice() {
   return (
     <div
       role="status"
-      className="fixed inset-x-3 bottom-20 z-[80] mx-auto flex max-w-xl items-start gap-3 rounded-2xl border-2 border-success bg-card p-3.5 text-[0.875rem] text-foreground shadow-lg sm:inset-x-auto sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2"
+      className="eco-notice fixed inset-x-3 bottom-20 z-[80] mx-auto flex max-w-xl items-start gap-3 rounded-2xl border-2 border-success bg-card p-3.5 text-[0.875rem] text-foreground shadow-lg sm:inset-x-auto sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2"
     >
       <span className="grid size-9 shrink-0 place-items-center rounded-full bg-success text-success-foreground">
         <Leaf className="size-4" aria-hidden />
