@@ -36,10 +36,10 @@ export function EcoToggle({ className }: { readonly className?: string }) {
       onClick={toggle}
       aria-pressed={on}
       title={t(on ? "eco.on_hint" : "eco.off_hint")}
-      aria-label={t("eco.label")}
+      aria-label={`${t("eco.label")} : ${t(on ? "eco.on_hint" : "eco.off_hint")}`}
       className={cn(
         "grid size-9 place-items-center rounded-full transition-colors hover:bg-surface-muted",
-        on ? "text-success" : "text-muted-foreground",
+        on ? "bg-success text-success-foreground hover:bg-success" : "text-muted-foreground",
         className,
       )}
     >

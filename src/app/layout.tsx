@@ -12,26 +12,47 @@ import { publicEnv } from "@/lib/env.public";
 import { cabinetGrotesk, generalSans } from "./fonts";
 import "./globals.css";
 
+const DESCRIPTION =
+  "Bubble est la plateforme centrale des habitants de Terra Nova : services de la ville, démarches, alertes, carte, transports, participation et vie de quartier.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.appUrl),
   title: {
-    default: "Bubble",
+    default: "Bubble — la plateforme de Terra Nova",
     template: "%s · Bubble",
   },
-  description:
-    "Bubble — la plateforme des habitants de Terra Nova : services de la ville, annonces, démarches et échanges avec l'administration.",
+  description: DESCRIPTION,
   applicationName: "Bubble",
-  // The app is authenticated; there is nothing here for a crawler to index.
-  robots: { index: false, follow: false },
+  keywords: ["Bubble", "Terra Nova", "services municipaux", "démarches", "alertes", "carte de la ville", "transports", "participation citoyenne"],
+  authors: [{ name: "0nlyDevs" }],
+  creator: "0nlyDevs",
+  category: "government",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Bubble",
+    title: "Bubble — la plateforme de Terra Nova",
+    description: DESCRIPTION,
+    url: "/",
+    locale: "fr_FR",
+    alternateLocale: ["en_US"],
+  },
+  twitter: { card: "summary_large_image", title: "Bubble — la plateforme de Terra Nova", description: DESCRIPTION },
+  appleWebApp: { capable: true, title: "Bubble", statusBarStyle: "black-translucent" },
+  // Phone numbers on service pages are real links already; no automatic guessing.
+  formatDetection: { telephone: false, email: false, address: false },
+  // Public pages may be indexed; `robots.ts` keeps private areas and the API out.
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f1ed" },
-    { media: "(prefers-color-scheme: dark)", color: "#272b35" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f0e8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d12" },
   ],
   width: "device-width",
   initialScale: 1,
+  colorScheme: "light dark",
 };
 
 /**

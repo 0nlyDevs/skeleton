@@ -75,7 +75,7 @@ export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; 
                     aria-label={t(item.labelKey)}
                     title={t(item.labelKey)}
                     className={cn(
-                      "inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)] xl:px-3.5",
+                      "hidden h-9 shrink-0 items-center gap-2 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-colors duration-[var(--duration-normal)] ease-[var(--ease-out-soft)] sm:inline-flex xl:px-3.5",
                       on ? "bg-foreground text-background" : "bg-surface-muted text-foreground hover:bg-accent",
                     )}
                   >
