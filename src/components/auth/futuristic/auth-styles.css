@@ -1,16 +1,16 @@
 /* Futuristic Auth styles inspired by Linear Blue & adapted for Terra Nova */
 .futuristic-auth-root {
-  --fa-ink: #0b2a43;
-  --fa-ink-2: #5f768b;
-  --fa-ink-3: #98adbf;
-  --fa-azure: #2c7fb2;
-  --fa-teal: #22a1b6;
-  --fa-line: #dde8f1;
-  --fa-field: rgba(232, 242, 250, 0.65);
-  --fa-ok: #138a9a;
-  --fa-bad: #d9534f;
-  --fa-ground-a: #fbfdff;
-  --fa-ground-b: #e6f0f7;
+  --fa-ink: #23262e;
+  --fa-ink-2: #5c5f68;
+  --fa-ink-3: #8a8c93;
+  --fa-azure: #e65100;
+  --fa-teal: #b84300;
+  --fa-line: #d3cfc8;
+  --fa-field: rgba(225, 221, 214, 0.6);
+  --fa-ok: #41694b;
+  --fa-bad: #a94135;
+  --fa-ground-a: #f3f1ed;
+  --fa-ground-b: #e8e5e0;
   --fa-stage-shadow: rgba(9, 40, 70, 0.5);
   position: absolute;
   inset: 0;
@@ -20,26 +20,26 @@
   background:
     radial-gradient(55% 45% at 18% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 70%),
     radial-gradient(40% 40% at 60% 100%, rgba(190, 222, 238, 0.55) 0%, rgba(190, 222, 238, 0) 70%),
-    linear-gradient(120deg, var(--fa-ground-a) 0%, #eef5fa 55%, var(--fa-ground-b) 100%);
+    linear-gradient(120deg, var(--fa-ground-a) 0%, #eeebe6 55%, var(--fa-ground-b) 100%);
 }
 
 .dark .futuristic-auth-root {
-  --fa-ink: #f0f6fc;
-  --fa-ink-2: #94a3b8;
-  --fa-ink-3: #64748b;
-  --fa-azure: #38bdf8;
-  --fa-teal: #22d3ee;
-  --fa-line: rgba(255, 255, 255, 0.12);
-  --fa-field: rgba(255, 255, 255, 0.05);
-  --fa-ok: #34d399;
-  --fa-bad: #f87171;
-  --fa-ground-a: #02040b;
-  --fa-ground-b: #050b18;
+  --fa-ink: #e7e4de;
+  --fa-ink-2: #9b9ea8;
+  --fa-ink-3: #6f7380;
+  --fa-azure: #f26a1b;
+  --fa-teal: #f58a4b;
+  --fa-line: rgba(231, 228, 222, 0.14);
+  --fa-field: rgba(231, 228, 222, 0.06);
+  --fa-ok: #7fae8a;
+  --fa-bad: #de7a6c;
+  --fa-ground-a: #14161c;
+  --fa-ground-b: #1c1f27;
   --fa-stage-shadow: rgba(0, 0, 0, 0.85);
   background:
     radial-gradient(55% 45% at 18% 0%, rgba(14, 165, 233, 0.08) 0%, rgba(0, 0, 0, 0) 70%),
     radial-gradient(40% 40% at 60% 100%, rgba(34, 211, 238, 0.06) 0%, rgba(0, 0, 0, 0) 70%),
-    linear-gradient(120deg, var(--fa-ground-a) 0%, #030712 55%, var(--fa-ground-b) 100%);
+    linear-gradient(120deg, var(--fa-ground-a) 0%, #181b22 55%, var(--fa-ground-b) 100%);
 }
 
 /* Brand Typography */
@@ -446,9 +446,9 @@
   gap: 0.7rem;
   font-weight: 600;
   font-size: 1rem;
-  color: #fff;
-  background: linear-gradient(100deg, #2b76ab 0%, #2295b5 100%);
-  box-shadow: 0 18px 32px -16px rgba(35, 118, 170, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: var(--fa-ground-a);
+  background: var(--fa-ink);
+  box-shadow: 0 18px 32px -18px rgba(35, 38, 46, 0.7);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -737,4 +737,29 @@
   .fa-eyebrow {
     display: none;
   }
+}
+
+/* Bubble brand and buttons on the sign-in page. */
+.fa-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.fa-brand-mark {
+  height: 2.4rem;
+  width: auto;
+}
+.fa-brand-word {
+  height: 1.05rem;
+  width: auto;
+}
+/* The main button ends in the logo's orange bead. */
+.fa-btn > svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0.28rem;
+  box-sizing: content-box;
+  border-radius: 999px;
+  background: #e65100;
+  color: #fff7f0;
 }

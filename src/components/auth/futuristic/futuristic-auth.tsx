@@ -1,5 +1,6 @@
 "use client";
 
+import { BubbleMark, BubbleWordmark } from "@/components/layout/bubble-logo";
 import { CITY_ZONE_IDS, cityZoneLabelKey } from "@/modules/alerts/city-zones";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -244,11 +245,6 @@ export function FuturisticAuth({
   // View transition logic
   const goTo = (next: "login" | "s1" | "s2" | "done" | "forgot" | "2fa" | "reset" | "verify") => {
     if (busy || next === mode) return;
-    // Signing in and asking for an account happen at the citizens' registry, on the landing.
-    if (next === "login" || next === "s1") {
-      router.push(next === "login" ? "/login" : "/register");
-      return;
-    }
     setBusy(true);
 
     const prev = mode;
@@ -740,13 +736,9 @@ export function FuturisticAuth({
       {/* Main Glass Panel */}
       <main className="fa-panel" id="content" tabIndex={-1} ref={panelRef}>
         <header className="fa-bar">
-          <Link href="/" className="fa-brand" aria-label="Terra Nova">
-            <svg viewBox="0 0 32 32" aria-hidden="true">
-              <path d="M13 3.5a13 13 0 1 0 14.5 19.2A11.2 11.2 0 0 1 13 3.5z" fill="url(#moonGrad)" />
-            </svg>
-            <span>
-              <span className="fa-brand-terra">TERRA</span> <span className="fa-brand-nova">NOVA</span>
-            </span>
+          <Link href="/" className="fa-brand" aria-label="Bubble">
+            <BubbleMark className="fa-brand-mark" />
+            <BubbleWordmark className="fa-brand-word" />
           </Link>
 
           <div className="fa-controls">

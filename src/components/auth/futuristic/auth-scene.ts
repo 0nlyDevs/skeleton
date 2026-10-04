@@ -104,64 +104,50 @@ function haloTexture(rgb: string): THREE.CanvasTexture {
 }
 
 function buildRocket(): THREE.Group {
+  // Bubble's capsule ship: a rounded pod with the logo's round window, an orange band and short fins.
   const g = new THREE.Group();
-  const white = new THREE.MeshStandardMaterial({ color: 0xe8eef2, roughness: 0.42, metalness: 0.15 });
-  const tealM = new THREE.MeshStandardMaterial({
-    color: 0x78d0d6,
-    roughness: 0.32,
-    metalness: 0.2,
-    emissive: 0x0a3b44,
-    emissiveIntensity: 0.35,
-  });
-  const metal = new THREE.MeshStandardMaterial({ color: 0xdfe7ec, roughness: 0.25, metalness: 0.6 });
+  const hull = new THREE.MeshStandardMaterial({ color: 0xddd9d1, roughness: 0.38, metalness: 0.22 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.45, metalness: 0.5 });
+  const orange = new THREE.MeshStandardMaterial({ color: 0xe65100, roughness: 0.4, metalness: 0.15, emissive: 0x5a2000, emissiveIntensity: 0.45 });
   const P = THREE.Vector2;
 
   const body = new THREE.Mesh(
     new THREE.LatheGeometry(
-      [new P(0, -0.52), new P(0.1, -0.5), new P(0.15, -0.45), new P(0.19, -0.3), new P(0.2, -0.05), new P(0.19, 0.12)],
-      48,
+      [new P(0, -0.5), new P(0.11, -0.49), new P(0.18, -0.42), new P(0.215, -0.28), new P(0.225, -0.05), new P(0.21, 0.2), new P(0.16, 0.4), new P(0.08, 0.52), new P(0, 0.56)],
+      56,
     ),
-    white,
+    hull,
   );
-  const nose = new THREE.Mesh(
-    new THREE.LatheGeometry([new P(0.19, 0.12), new P(0.17, 0.25), new P(0.12, 0.4), new P(0.06, 0.52), new P(0, 0.58)], 48),
-    tealM,
-  );
-  const nozzle = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.09, 0.12, 0.07, 32),
-    new THREE.MeshStandardMaterial({ color: 0x5b6d79, roughness: 0.5, metalness: 0.5 }),
-  );
-  nozzle.position.y = -0.53;
-  const band = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.012, 12, 48), tealM);
+  const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.07, 32), dark);
+  nozzle.position.y = -0.52;
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.222, 0.014, 12, 56), orange);
   band.rotation.x = Math.PI / 2;
-  band.position.y = -0.22;
-  const win = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.02, 16, 40), metal);
-  win.position.set(0, 0.1, 0.195);
+  band.position.y = -0.24;
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.092, 0.024, 16, 48), dark);
+  rim.position.set(0, 0.12, 0.215);
   const glass = new THREE.Mesh(
-    new THREE.CircleGeometry(0.075, 32),
-    new THREE.MeshStandardMaterial({
-      color: 0xa6e3ea,
-      emissive: 0x2a8ea0,
-      emissiveIntensity: 0.5,
-      roughness: 0.15,
-      metalness: 0.3,
-    }),
+    new THREE.CircleGeometry(0.092, 40),
+    new THREE.MeshStandardMaterial({ color: 0xffd9b8, emissive: 0xff8a3d, emissiveIntensity: 0.55, roughness: 0.12, metalness: 0.25 }),
   );
-  glass.position.set(0, 0.1, 0.196);
-  g.add(body, nose, nozzle, band, win, glass);
+  glass.position.set(0, 0.12, 0.2155);
+  // The glint of the logo's bubble.
+  const glint = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.007, 8, 24, Math.PI / 2.4), new THREE.MeshBasicMaterial({ color: 0xfff3e6 }));
+  glint.position.set(0, 0.12, 0.2165);
+  glint.rotation.z = Math.PI * 0.62;
+  g.add(body, nozzle, band, rim, glass, glint);
 
   const fin = new THREE.Shape();
-  fin.moveTo(0, 0.12);
-  fin.bezierCurveTo(0.12, 0.05, 0.26, -0.12, 0.31, -0.36);
-  fin.lineTo(0.1, -0.31);
-  fin.lineTo(0, -0.26);
-  fin.lineTo(0, 0.12);
+  fin.moveTo(0, 0.0);
+  fin.quadraticCurveTo(0.2, -0.04, 0.24, -0.34);
+  fin.lineTo(0.06, -0.3);
+  fin.lineTo(0, -0.22);
+  fin.lineTo(0, 0.0);
   const fg = new THREE.ExtrudeGeometry(fin, { depth: 0.03, bevelEnabled: false });
   fg.translate(0, 0, -0.015);
-  [0, Math.PI, Math.PI / 2, -Math.PI / 2].forEach((a) => {
+  [0, Math.PI].forEach((a) => {
     const holder = new THREE.Group();
-    const m = new THREE.Mesh(fg, white);
-    m.position.x = 0.17;
+    const m = new THREE.Mesh(fg, dark);
+    m.position.x = 0.2;
     holder.add(m);
     holder.rotation.y = a;
     g.add(holder);
