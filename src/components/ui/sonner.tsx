@@ -25,7 +25,7 @@ export function Toaster(props: ToasterProps) {
       toastOptions={{
         classNames: {
           toast:
-            "bubble-toast border border-t-0 border-border shadow-float bg-popover text-popover-foreground text-sm",
+            "bubble-toast border-2 border-t-0 border-foreground/40 shadow-float bg-popover text-popover-foreground text-[0.9375rem]",
           description: "text-muted-foreground",
           actionButton: "rounded-full bg-primary text-primary-foreground",
           cancelButton: "rounded-full bg-surface-muted text-foreground",

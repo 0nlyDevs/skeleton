@@ -91,11 +91,11 @@ export function AlertWatcher() {
         <div
           role="alert"
           className={cn(
-            "mb-5 flex items-center gap-3 rounded-full border py-2 pl-4 pr-2 text-[0.875rem]",
-            urgent.severity === "CRITICAL" ? "border-error/40 bg-error/10" : "border-warning/50 bg-warning/10",
+            "mb-5 flex items-center gap-3 rounded-full border-2 py-2.5 pl-3 pr-2.5 text-[0.9375rem] shadow-float",
+            urgent.severity === "CRITICAL" ? "border-error bg-card" : "border-warning bg-card",
           )}
         >
-          {urgent.severity === "CRITICAL" ? <ShieldAlert className="size-5 shrink-0 text-error" aria-hidden /> : <TriangleAlert className="size-5 shrink-0 text-warning" aria-hidden />}
+          <span className={cn("grid size-9 shrink-0 place-items-center rounded-full", urgent.severity === "CRITICAL" ? "bg-error text-error-foreground" : "bg-warning text-warning-foreground")}>{urgent.severity === "CRITICAL" ? <ShieldAlert className="size-5" aria-hidden /> : <TriangleAlert className="size-5" aria-hidden />}</span>
           <div className="min-w-0 flex-1">
             <p className="truncate">
               <span className="font-semibold">{urgent.title}</span>

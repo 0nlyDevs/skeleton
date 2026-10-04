@@ -847,3 +847,28 @@ a .text-primary {
     display: none;
   }
 }
+
+/* The galaxy behind the app belongs to the dark theme; the light theme keeps its calm ground. */
+.space-backdrop {
+  display: none;
+}
+.dark .space-backdrop {
+  display: block;
+  opacity: 0.95;
+}
+.dark body::before {
+  display: none;
+}
+html[data-eco] .space-backdrop {
+  display: none;
+}
+@media (max-width: 640px) {
+  .dark .space-backdrop {
+    opacity: 0.7;
+  }
+}
+/* Titles and lead lines that sit straight on the sky stay readable over its brightest part. */
+.dark #content > div > header,
+.dark #content > div > h1 {
+  text-shadow: 0 1px 14px rgb(8 10 16 / 0.9), 0 0 2px rgb(8 10 16 / 0.8);
+}

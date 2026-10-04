@@ -80,7 +80,7 @@ export function OfficialMessageBand() {
   };
 
   return (
-    <div className="relative z-[70] flex justify-center bg-card px-3">
+    <div className="relative z-[70] flex justify-center border-b-4 border-bead bg-card px-3">
       <section
         role={fresh ? "alert" : "status"}
         aria-labelledby="official-title"
@@ -91,7 +91,7 @@ export function OfficialMessageBand() {
           {t("tn.official.label")}
           <span className="font-normal text-muted-foreground">· {formatRelative(message.publishedAt, locale)}</span>
         </p>
-        <h2 id="official-title" className="text-[1.0625rem] font-semibold leading-snug">
+        <h2 id="official-title" className="text-[1.25rem] font-semibold leading-snug">
           {message.title}
         </h2>
         <p className="text-[0.9062rem] leading-relaxed">{message.body}</p>
