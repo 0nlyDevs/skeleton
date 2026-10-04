@@ -79,11 +79,11 @@ export function OfficialMessageBand() {
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center px-3">
+    <div className="relative z-[70] flex justify-center bg-card px-3">
       <section
         role={fresh ? "alert" : "status"}
         aria-labelledby="official-title"
-        className="official-band pointer-events-auto flex w-full max-w-[640px] flex-col gap-2 rounded-b-[22px] border border-t-0 border-border bg-card px-5 pb-4 pt-3 shadow-float"
+        className="flex w-full max-w-[1180px] flex-col gap-2 px-1 pb-3 pt-3 sm:px-3"
       >
         <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.75rem] font-semibold text-primary">
           <Landmark className="size-3.5" aria-hidden />

@@ -31,7 +31,7 @@ export async function reactToPost(
 
   const change = await upsertReaction({ postId, userId: actor.id, type });
 
-  // Only the first reaction notifies: switching 👍 to ❤️ is not news.
+  // Only the first reaction notifies: switching one reaction for another is not news.
   if (change === "created" && post.userId !== actor.id) {
     notifyInBackground(
       notifyPostReaction({ userId: post.userId, actor, postId, postTitle: post.title }),

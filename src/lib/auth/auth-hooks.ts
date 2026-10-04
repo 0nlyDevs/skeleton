@@ -17,6 +17,7 @@
  * sign-ins never consume the budget and only failures accumulate.
  */
 
+import { CITY_ZONE_IDS } from "@/modules/alerts/city-zones";
 import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import type { BetterAuthOptions } from "better-auth";
 
@@ -207,6 +208,9 @@ function enforceSignUpProfile(ctx: unknown): void {
   if (lastNameError) badRequest("last_name", lastNameError);
   const birthDateError = birthDateViolation(birthDate);
   if (birthDateError) badRequest("birth_date", birthDateError);
+  // Where the resident lives: one of the Terra Nova districts, never free text.
+  const cityZone = typeof fields.cityZone === "string" ? fields.cityZone : "";
+  if (!(CITY_ZONE_IDS as readonly string[]).includes(cityZone)) badRequest("city_zone", "Choose the district where you live.");
 
   fields.firstName = firstName.trim().replace(/\s+/g, " ");
   fields.lastName = lastName.trim().replace(/\s+/g, " ");

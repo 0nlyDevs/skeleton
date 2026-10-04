@@ -5,6 +5,8 @@
  * visibility rules.
  */
 
+import { listServices } from "../city-services/city-services.service";
+import { scoreServices, wordMatch, wordsOf } from "../orientation/orientation.score";
 import { prisma } from "@/lib/db/prisma";
 import type { AuthUser } from "@/types";
 
@@ -92,44 +94,90 @@ export interface SearchResultsDto {
   readonly people: ContactDto[];
   readonly groups: GroupSummaryDto[];
   readonly posts: FeedItemDto[];
+  /** City services close to the words typed, mistakes tolerated. */
+  readonly services: { slug: string; name: string; summary: string }[];
+  readonly peopleTotal: number;
+  readonly page: number;
+  readonly pageCount: number;
 }
 
-export async function searchEverything(q: string, viewer: AuthUser | null, requestedRole?: "USER" | "AGENT" | "ADMIN"): Promise<SearchResultsDto> {
+const EMPTY_RESULTS: SearchResultsDto = { people: [], groups: [], posts: [], services: [], peopleTotal: 0, page: 1, pageCount: 1 };
+const PEOPLE_PAGE = 24;
+
+export interface SearchOptions {
+  readonly role?: "USER" | "AGENT" | "ADMIN" | undefined;
+  /** List everyone, a page at a time. */
+  readonly everyone?: boolean | undefined;
+  readonly page?: number | undefined;
+}
+
+/** Folded words of a name, for matching typed words that are slightly off. */
+function nameWords(text: string): string[] {
+  return wordsOf(text).concat(text.toLowerCase().split(/\W+/).filter((word) => word.length > 1));
+}
+
+export async function searchEverything(q: string, viewer: AuthUser | null, options: SearchOptions = {}): Promise<SearchResultsDto> {
   const term = q.trim();
   // Listing staff accounts by role is for signed-in residents only: an
   // anonymous visitor must not get a ready-made list of administrators.
-  const role = viewer ? requestedRole : undefined;
-  // A role on its own lists the people of that role ("show me the agents").
-  if (term.length < 2 && role) {
-    const people = await prisma.user.findMany({
-      where: { banned: false, username: { not: null }, role },
-      orderBy: { name: "asc" },
-      take: 30,
-      select: personSelect,
-    });
-    return { people, groups: [], posts: [] };
-  }
-  if (term.length < 2) return { people: [], groups: [], posts: [] };
+  const role = viewer ? options.role : undefined;
+  const everyone = viewer !== null && options.everyone === true;
+  const page = Math.max(1, Math.min(500, Math.floor(options.page ?? 1)));
+  const searching = term.length >= 2;
+  if (!searching && !role && !everyone) return EMPTY_RESULTS;
 
-  const [people, groups, keyword, semantic] = await Promise.all([
-    prisma.user.findMany({
-      where: {
-        banned: false,
-        username: { not: null },
-        ...(role ? { role } : {}),
-        OR: [{ name: { contains: term } }, { username: { contains: term.toLowerCase() } }],
-      },
-      take: role ? 30 : 6,
-      select: personSelect,
-    }),
-    listGroups({ scope: "discover", q: term, limit: 5 }, viewer),
-    listFeed({ q: term, limit: 8, scope: "all" }, viewer),
-    semanticSearch(term, viewer, 8).catch(() => [] as FeedItemDto[]),
+  const peopleWhere = {
+    banned: false,
+    username: { not: null },
+    ...(role ? { role } : {}),
+    ...(searching ? { OR: [{ name: { contains: term } }, { username: { contains: term.toLowerCase() } }, { displayUsername: { contains: term } }] } : {}),
+  } as const;
+  const pageSize = searching && !role && !everyone ? 6 : PEOPLE_PAGE;
+  const [people, peopleTotal, groups, keyword, semantic, services] = await Promise.all([
+    viewer || searching
+      ? prisma.user.findMany({ where: peopleWhere, orderBy: { name: "asc" }, skip: (page - 1) * pageSize, take: pageSize, select: personSelect })
+      : Promise.resolve([]),
+    viewer || searching ? prisma.user.count({ where: peopleWhere }) : Promise.resolve(0),
+    searching ? listGroups({ scope: "discover", q: term, limit: 5 }, viewer) : Promise.resolve([]),
+    searching ? listFeed({ q: term, limit: 8, scope: "all" }, viewer) : Promise.resolve({ data: [] as FeedItemDto[] }),
+    searching ? semanticSearch(term, viewer, 8).catch(() => [] as FeedItemDto[]) : Promise.resolve([] as FeedItemDto[]),
+    searching ? matchingServices(term) : Promise.resolve([]),
   ]);
+
+  let found = people;
+  let total = peopleTotal;
+  // A name typed with a mistake still finds the person: compare word by word, tolerating a slip.
+  if (searching && found.length === 0 && !role) {
+    const typed = wordsOf(term);
+    if (typed.length > 0) {
+      const pool = await prisma.user.findMany({ where: { banned: false, username: { not: null } }, take: 600, select: personSelect });
+      found = pool
+        .map((person) => {
+          const words = nameWords(`${person.name} ${person.username ?? ""}`);
+          const score = typed.reduce((sum, word) => sum + Math.max(0, ...words.map((target) => wordMatch(word, target))), 0);
+          return { person, score };
+        })
+        .filter((entry) => entry.score >= typed.length * 0.6)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6)
+        .map((entry) => entry.person);
+      total = found.length;
+    }
+  }
+
   // Exact matches first, then meaning-based neighbours ("vacances" finds "plage").
   const seen = new Set<string>();
   const posts = [...keyword.data, ...semantic].filter((post) => !seen.has(post.id) && seen.add(post.id)).slice(0, 12);
-  return { people, groups, posts };
+  return { people: found, groups, posts, services, peopleTotal: total, page, pageCount: Math.max(1, Math.ceil(total / pageSize)) };
+}
+
+async function matchingServices(term: string): Promise<{ slug: string; name: string; summary: string }[]> {
+  const services = (await listServices({}, null, "fr")).filter((service) => service.active);
+  const pool = services.map(({ slug, name, category, summary, description, howTo, emergency }) => ({ slug, name, category, summary, description, howTo, emergency }));
+  return scoreServices(term, pool)
+    .filter((entry) => entry.score >= 2.2)
+    .slice(0, 3)
+    .flatMap((entry) => services.filter((service) => service.slug === entry.slug).map(({ slug, name, summary }) => ({ slug, name, summary })));
 }
 
 export interface ShellRailDto {

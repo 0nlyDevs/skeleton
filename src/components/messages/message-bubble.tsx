@@ -16,9 +16,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReactorsDialog } from "@/components/social/reactors-dialog";
-import { REACTION_EMOJI, REACTION_LABEL } from "@/components/social/reactions";
+import { ReactionIcon, REACTION_LABEL } from "@/components/social/reactions";
 import { apiFetch } from "@/lib/api/client";
-import { describeApiError } from "@/lib/api/error-message";
+import { describeApiError, describeFailure } from "@/lib/api/error-message";
 import { cn } from "@/lib/utils";
 import type { MessageDto } from "@/modules/messages/messages.dto";
 import { REACTION_TYPES, type ReactionType } from "@/types";
@@ -94,7 +94,7 @@ export function MessageBubble({
     const response = await apiFetch<{ data: { type: ReactionType; user: { id: string; name: string; username: string | null; image: string | null } }[] }>(
       `/api/messages/${encodeURIComponent(message.id)}/reaction`,
     );
-    return response.data.map((row) => ({ emoji: REACTION_EMOJI[row.type], user: row.user }));
+    return response.data.map((row) => ({ type: row.type, user: row.user }));
   }, [message.id]);
 
 const editable = mine && !message.deleted && !message.pending && !message.failed && mountedAt - Date.parse(message.createdAt) < EDIT_WINDOW_MS;
@@ -150,7 +150,7 @@ const editable = mine && !message.deleted && !message.pending && !message.failed
                 >
                   <span className="block font-semibold">{message.replyTo.senderName}</span>
                   <span className="line-clamp-2 text-muted-foreground">
-                    {message.replyTo.deleted ? t("messages.deleted") : message.replyTo.preview || (message.replyTo.hasImage ? `📷 ${t("messages.photo")}` : "")}
+                    {message.replyTo.deleted ? t("messages.deleted") : message.replyTo.preview || (message.replyTo.hasImage ? t("messages.photo") : "")}
                   </span>
                 </button>
               ) : null}
@@ -188,7 +188,7 @@ const editable = mine && !message.deleted && !message.pending && !message.failed
                   onClick={() => void react(mineReaction === type ? null : type)}
                   className={cn("grid size-9 place-items-center rounded-full text-[1.25rem] transition-transform hover:scale-125", mineReaction === type && "bg-primary/15")}
                 >
-                  {REACTION_EMOJI[type]}
+                  <ReactionIcon type={type} className="size-[1.125rem]" />
                 </button>
               ))}
             </PopoverContent>
@@ -251,7 +251,7 @@ const editable = mine && !message.deleted && !message.pending && !message.failed
                 entry.userIds.includes(viewerId) ? "border-primary/60" : "border-border",
               )}
             >
-              <span aria-hidden>{REACTION_EMOJI[entry.type]}</span>
+              <ReactionIcon type={entry.type} className="size-3.5" />
               {entry.userIds.length > 1 ? <span className="tabular-nums text-muted-foreground">{entry.userIds.length}</span> : null}
             </button>
           ))}
@@ -263,7 +263,7 @@ const editable = mine && !message.deleted && !message.pending && !message.failed
         {message.failed ? (
           <button type="button" onClick={onDiscard} className="inline-flex items-center gap-1 text-error hover:underline">
             <AlertCircle className="size-3" />
-            {message.failed === "timeout" || message.failed === "error" ? t("errors.network") : message.failed}
+            {describeFailure(message.failed, t)}
           </button>
         ) : null}
         {message.editedAt && !message.deleted ? <span>{t("messages.edited")}</span> : null}

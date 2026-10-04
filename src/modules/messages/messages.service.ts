@@ -408,7 +408,7 @@ async function notifyRoomAboutMessage(message: MessageDto, sender: AuthUser): Pr
       if (member.userId === sender.id) continue;
       publishRoomUnread(member.userId, { roomId: message.roomId, increment: 1 });
 
-      const preview = message.content || "📷";
+      const preview = message.content || "Photo";
       if (mentioned.has(member.userId)) {
         await notifyMention({ userId: member.userId, senderName: sender.name, roomId: message.roomId, preview });
         continue;

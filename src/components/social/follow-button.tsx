@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -42,7 +43,7 @@ export function FollowButton({
 
   return (
     <Button type="button" variant={following ? "secondary" : "primary"} size={compact ? "sm" : "md"} disabled={busy} onClick={() => void toggle()}>
-      {following ? (compact ? "✓" : t("profile.public.unfollow")) : t("profile.public.follow")}
+      {following ? (compact ? <Check className="size-4" aria-label={t("profile.public.unfollow")} /> : t("profile.public.unfollow")) : t("profile.public.follow")}
     </Button>
   );
 }
