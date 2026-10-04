@@ -19,9 +19,23 @@ const PRIORITY_VARIANT: Readonly<Record<string, BadgeProps["variant"]>> = {
   URGENT: "error",
 };
 
+/** How far along a request is, as a bubble filling up. */
+const STATUS_FILL: Readonly<Record<string, "ring" | "half" | "full" | "closed">> = {
+  NEW: "ring",
+  IN_PROGRESS: "half",
+  WAITING_CITIZEN: "half",
+  RESOLVED: "full",
+  CLOSED: "closed",
+};
+
 export function RequestStatusBadge({ status }: { readonly status: string }) {
   const t = useTranslation();
-  return <Badge variant={STATUS_VARIANT[status] ?? "neutral"}>{t(`tn.status.${status}` as MessageKey)}</Badge>;
+  return (
+    <Badge variant={STATUS_VARIANT[status] ?? "neutral"}>
+      <span className="state-bubble" data-fill={STATUS_FILL[status] ?? "ring"} aria-hidden />
+      {t(`tn.status.${status}` as MessageKey)}
+    </Badge>
+  );
 }
 
 export function RequestPriorityBadge({ priority }: { readonly priority: string }) {
@@ -34,7 +48,7 @@ export function NeedsActionBadge() {
   const t = useTranslation();
   return (
     <Badge variant="error">
-      <span className="size-1.5 rounded-full bg-current" aria-hidden />
+      <span className="state-bubble" data-fill="ring" aria-hidden />
       {t("tn.needs_action")}
     </Badge>
   );

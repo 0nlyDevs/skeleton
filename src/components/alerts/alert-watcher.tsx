@@ -1,17 +1,15 @@
 "use client";
 
-import { ShieldAlert, Siren, TriangleAlert, X } from "lucide-react";
+import { ShieldAlert, TriangleAlert, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from "@/components/ui/link";
 import { useSocket } from "@/hooks/use-socket";
 import { apiFetch } from "@/lib/api/client";
-import type { MessageKey } from "@/lib/i18n";
 import { SOCKET_EVENTS } from "@/lib/socket/events";
 import { cn } from "@/lib/utils";
 import type { AlertsForViewerDto } from "@/modules/alerts/alerts.service";
@@ -39,17 +37,16 @@ function acknowledge(slug: string): void {
 }
 
 /**
- * Makes alerts impossible to miss for the people they concern. A warning or
- * a critical alert that reaches the viewer's district (or the whole city)
- * opens a dialog once, then stays as a banner until it is resolved; an
- * information notice is a toast. Everything refreshes on the realtime event.
+ * Makes alerts hard to miss without ever blocking the page. A warning or a
+ * critical alert that reaches the viewer's district (or the whole city) is
+ * one line above the page until it is resolved; an information notice is a
+ * notice dropping from the top. Everything refreshes on the realtime event.
  */
 export function AlertWatcher() {
   const t = useTranslation();
   const pathname = usePathname();
   const { socket } = useSocket();
   const [alerts, setAlerts] = useState<readonly ViewerAlert[]>([]);
-  const [popup, setPopup] = useState<ViewerAlert | null>(null);
   const [bannerHidden, setBannerHidden] = useState(false);
 
   const load = useCallback(async () => {
@@ -66,8 +63,7 @@ export function AlertWatcher() {
       toast(alert.title, { description: alert.summary, duration: 10_000 });
       acknowledge(alert.slug);
     }
-    const urgent = fresh.find((item) => item.severity !== "INFORMATION");
-    if (urgent) setPopup((current) => current ?? urgent);
+    // Urgent alerts never block the page: they stay as one line until resolved.
   }, []);
 
   useEffect(() => {
@@ -86,18 +82,8 @@ export function AlertWatcher() {
     };
   }, [socket, load]);
 
-  const close = () => {
-    if (popup) acknowledge(popup.slug);
-    setPopup(null);
-    // Another unacknowledged urgent alert, if any, comes next.
-    const seen = acknowledged();
-    const next = alerts.filter((item) => item.severity !== "INFORMATION" && !seen.has(item.slug)).sort((a, b) => RANK[b.severity] - RANK[a.severity])[0];
-    if (next) setTimeout(() => setPopup(next), 250);
-  };
-
   const urgent = [...alerts].filter((item) => item.severity !== "INFORMATION").sort((a, b) => RANK[b.severity] - RANK[a.severity])[0];
   const onAlertPage = urgent ? pathname === `/alerts/${urgent.slug}` : false;
-  const critical = popup?.severity === "CRITICAL";
 
   return (
     <>
@@ -105,14 +91,16 @@ export function AlertWatcher() {
         <div
           role="alert"
           className={cn(
-            "mb-4 flex items-center gap-3 rounded-2xl border px-4 py-3 text-[0.875rem]",
+            "mb-5 flex items-center gap-3 rounded-full border py-2 pl-4 pr-2 text-[0.875rem]",
             urgent.severity === "CRITICAL" ? "border-error/40 bg-error/10" : "border-warning/50 bg-warning/10",
           )}
         >
           {urgent.severity === "CRITICAL" ? <ShieldAlert className="size-5 shrink-0 text-error" aria-hidden /> : <TriangleAlert className="size-5 shrink-0 text-warning" aria-hidden />}
           <div className="min-w-0 flex-1">
-            <p className="font-semibold">{urgent.title}</p>
-            <p className="truncate text-[0.8125rem] text-muted-foreground">{urgent.summary}</p>
+            <p className="truncate">
+              <span className="font-semibold">{urgent.title}</span>
+              <span className="hidden text-muted-foreground sm:inline"> · {urgent.summary}</span>
+            </p>
           </div>
           <Button asChild size="sm" variant={urgent.severity === "CRITICAL" ? "destructive" : "secondary"}>
             <Link href={`/alerts/${encodeURIComponent(urgent.slug)}`}>{t("alerts.open")}</Link>
@@ -123,30 +111,6 @@ export function AlertWatcher() {
         </div>
       ) : null}
 
-      <Dialog open={popup !== null} onOpenChange={(open) => !open && close()}>
-        {popup ? (
-          <DialogContent className={cn("border-2", critical ? "border-error/60" : "border-warning/60")}>
-            <DialogHeader>
-              <span className={cn("mb-2 grid size-12 place-items-center rounded-2xl", critical ? "bg-error/12 text-error" : "bg-warning/14 text-warning")}>
-                <Siren className="size-6" aria-hidden />
-              </span>
-              <p className={cn("text-[0.75rem] font-semibold uppercase tracking-wide", critical ? "text-error" : "text-warning")}>
-                {t(`alerts.severity.${popup.severity}` as MessageKey)} · {popup.scope === "ALL" ? t("alerts.popup.everyone") : t("alerts.popup.title")}
-              </p>
-              <DialogTitle className="text-[1.25rem]">{popup.title}</DialogTitle>
-              <DialogDescription className="text-[0.9375rem]">{popup.summary}</DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:justify-between">
-              <Button variant="ghost" onClick={close}>
-                {t("alerts.popup.later")}
-              </Button>
-              <Button asChild variant={critical ? "destructive" : "primary"} onClick={close}>
-                <Link href={`/alerts/${encodeURIComponent(popup.slug)}`}>{t("alerts.popup.read")}</Link>
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        ) : null}
-      </Dialog>
     </>
   );
 }

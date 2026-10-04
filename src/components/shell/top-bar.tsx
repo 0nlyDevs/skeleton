@@ -1,89 +1,83 @@
 "use client";
 
-import { Compass, MessageCircle } from "lucide-react";
-import Link from "@/components/ui/link";
+import { Search } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
 import { Brand } from "@/components/layout/brand";
-import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { DisplayMenu } from "@/components/layout/display-menu";
-import { UserMenu } from "@/components/layout/user-menu";
+import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTranslation } from "@/components/providers/i18n-provider";
-import { useRealtime } from "@/components/providers/realtime-provider";
 import { Button } from "@/components/ui/button";
+import Link from "@/components/ui/link";
+import { cn } from "@/lib/utils";
+import type { CityZoneId } from "@/modules/alerts/city-zones";
 
+import { AccountPanel } from "./account-panel";
 import { GlobalSearch } from "./global-search";
+import { PLACES, placeFor } from "./nav-config";
 import type { ShellViewer } from "./shell-types";
 
-export function TopBar({ viewer }: { readonly viewer: ShellViewer | null }) {
+/**
+ * One bar: the logo, the four places, search, notifications, the account.
+ * The current place is a tab cut into the bar, so "where am I" is a shape,
+ * not a colour.
+ */
+export function TopBar({ viewer, zone }: { readonly viewer: ShellViewer | null; readonly zone: CityZoneId | null }) {
   const t = useTranslation();
-  const { messageUnreadTotal } = useRealtime();
+  const pathname = usePathname();
+  const current = placeFor(pathname);
 
   // F44 — on a short screen (strong zoom) the bar scrolls away instead of covering the page.
   return (
-    <header className="sticky top-0 z-40 [@media(max-height:30rem)]:static border-b border-border/60 bg-surface/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center gap-3 px-3 lg:px-6">
-        <Brand href="/" className="shrink-0" compact={false} />
+    <header className="sticky top-0 z-40 bg-card [@media(max-height:30rem)]:static">
+      <div className="mx-auto flex h-[3.75rem] w-full max-w-[1180px] items-stretch gap-3 px-4 lg:px-6">
+        <Brand href={viewer ? "/space" : "/"} className="shrink-0 self-center" />
 
-        <div className="mx-auto hidden flex-1 justify-center md:flex">
-          <Suspense fallback={<div className="h-10 w-full max-w-md rounded-full bg-surface-muted" />}>
-            <GlobalSearch />
-          </Suspense>
-        </div>
+        <nav aria-label={t("nav.label")} className="mx-auto hidden items-stretch gap-1 md:flex">
+          {PLACES.map((place) => {
+            const active = current?.id === place.id;
+            const href = place.id === "home" && !viewer ? "/start" : place.href;
+            return (
+              <Link key={place.id} href={href} aria-current={active ? "page" : undefined} className={cn("place-tab", active && "place-tab-on")}>
+                {t(place.labelKey)}
+              </Link>
+            );
+          })}
+        </nav>
 
         <div className="ml-auto flex items-center gap-1 md:ml-0">
-          <LocaleToggle className="hidden sm:inline-flex" />
-          <DisplayMenu />
+          <div className="hidden w-52 lg:block xl:w-60">
+            <Suspense fallback={<div className="h-9 w-full rounded-full bg-surface-muted" />}>
+              <GlobalSearch />
+            </Suspense>
+          </div>
+          <Link
+            href="/search"
+            aria-label={t("common.search")}
+            className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-surface-muted hover:text-foreground lg:hidden"
+          >
+            <Search className="size-[1.125rem]" aria-hidden />
+          </Link>
           {viewer ? (
             <>
-              {/* D12 — the welcome guide opens by itself once; here it can be replayed at will. */}
-              <Link
-                href="/space?guide=1"
-                aria-label={t("tn.wizard.replay")}
-                title={t("tn.wizard.replay")}
-                className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
-              >
-                <Compass className="size-[1.125rem]" aria-hidden />
-              </Link>
-              <Link
-                href="/messages"
-                aria-label={
-                  messageUnreadTotal > 0 ? `${t("nav.messages")} (${messageUnreadTotal})` : t("nav.messages")
-                }
-                className="relative inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
-              >
-                <MessageCircle className="size-[18px]" />
-                {messageUnreadTotal > 0 ? (
-                  <span
-                    aria-hidden
-                    className="absolute right-0.5 top-0.5 grid min-w-4 place-items-center rounded-full bg-error px-1 text-[0.625rem] font-bold leading-4 text-error-foreground"
-                  >
-                    {messageUnreadTotal > 9 ? "9+" : messageUnreadTotal}
-                  </span>
-                ) : null}
-              </Link>
               <NotificationBell />
-              <span className="ml-1">
-                <UserMenu id={viewer.id} username={viewer.username} name={viewer.name} email={viewer.email} image={viewer.image} role={viewer.role} />
-              </span>
+              <AccountPanel viewer={viewer} zone={zone} />
             </>
           ) : (
             <>
+              <LocaleToggle className="hidden sm:inline-flex" />
+              <DisplayMenu />
               <Button asChild variant="ghost" size="sm">
                 <Link href="/login">{t("nav.sign_in")}</Link>
               </Button>
               <Button asChild size="sm" className="hidden sm:inline-flex">
-                <Link href="/register">{t("nav.join")}</Link>
+                <Link href="/register">{t("tn.account.join")}</Link>
               </Button>
             </>
           )}
         </div>
-      </div>
-      <div className="px-3 pb-2.5 md:hidden">
-        <Suspense fallback={<div className="h-10 w-full rounded-full bg-surface-muted" />}>
-          <GlobalSearch className="max-w-none" />
-        </Suspense>
       </div>
     </header>
   );

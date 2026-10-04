@@ -166,6 +166,7 @@ export const en: Dictionary = {
   "auth.reset.missing_token": "This link is incomplete. Request a new one.",
   "auth.verify.title": "Email verification",
   "auth.verify.checking": "Verifying…",
+  "auth.verify.waiting": "Open the verification link we emailed you to activate your account.",
   "auth.verify.success": "Your address is confirmed. Welcome!",
   "auth.verify.failed": "That link is invalid or has expired.",
   "auth.verify.resend": "Resend the verification email",

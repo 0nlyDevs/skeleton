@@ -27,7 +27,7 @@ interface FuturisticAuthProps {
   readonly redirectTo?: string;
   readonly initialError?: string;
   readonly resetToken?: string;
-  readonly verifyToken?: string;
+  readonly verifyResult?: "waiting" | "success" | "failed";
   readonly oauth?: { google: boolean; github: boolean };
 }
 
@@ -75,7 +75,7 @@ export function FuturisticAuth({
   redirectTo = "/space",
   initialError,
   resetToken,
-  verifyToken,
+  verifyResult = "waiting",
   oauth = { google: true, github: true },
 }: FuturisticAuthProps) {
   const t = useTranslation();
@@ -1263,15 +1263,15 @@ export function FuturisticAuth({
                   <path d="m5 12.5 4.5 4.5L19 7.5" />
                 </svg>
               </div>
-              <span className="fa-eyebrow fa-anim">Compte activé</span>
+              <span className="fa-eyebrow fa-anim">{t("auth.register.success_title")}</span>
               <h1 className="fa-h1 fa-anim" id="h-done">
-                You&apos;re in orbit, {firstName || "explorer"}
+                {t("auth.register.success_title")}
               </h1>
               <p className="fa-sub fa-anim" style={{ display: "block" }}>
-                Votre compte a passé toutes les vérifications. Votre mission sur Terra Nova commence maintenant.
+                {t("auth.register.success_body", { email: signupEmail })}
               </p>
-              <button className="fa-btn fa-anim" type="button" onClick={() => router.push(redirectTo)}>
-                <span>Accéder à votre espace</span>
+              <button className="fa-btn fa-anim" type="button" onClick={() => router.push("/verify-email")}>
+                <span>{t("auth.verify.title")}</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
@@ -1478,13 +1478,13 @@ export function FuturisticAuth({
               <h1 className="fa-h1 fa-anim" id="h-verify">
                 {t("auth.verify.title")}
               </h1>
-              <p className="fa-sub fa-anim">{t("auth.verify.success")}</p>
-
-              {verifyToken ? (
-                <div className="p-4 mb-4 text-sm font-medium rounded-xl bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 fa-anim">
-                  {t("auth.verify.success")}
-                </div>
-              ) : null}
+              <p className="fa-sub fa-anim">
+                {verifyResult === "success"
+                  ? t("auth.verify.success")
+                  : verifyResult === "failed"
+                    ? t("auth.verify.failed")
+                    : t("auth.verify.waiting")}
+              </p>
 
               <button className="fa-btn fa-anim" type="button" onClick={() => goTo("login")}>
                 <span>{t("auth.register.sign_in")}</span>
