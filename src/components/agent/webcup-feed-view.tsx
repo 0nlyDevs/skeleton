@@ -32,7 +32,7 @@ export const FEED_STATUS_FILTERS = [
 
 export type FeedStatusFilter = (typeof FEED_STATUS_FILTERS)[number]["id"];
 
-const DIFFICULTY_FILTERS = ["all", "1", "2", "3", "unknown"] as const;
+const DIFFICULTY_FILTERS = ["all", "1", "2", "3", "4", "unknown"] as const;
 type DifficultyFilter = (typeof DIFFICULTY_FILTERS)[number];
 
 function parseDifficulty(value?: string | null): DifficultyFilter {
