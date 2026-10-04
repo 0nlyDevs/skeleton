@@ -1854,4 +1854,13 @@ export const frTerraNova = {
   "tn.history.appointment_changed.accept_request": "{actor} a accepté la demande {target}",
   "tn.history.appointment_changed.decline_request": "{actor} a refusé la demande {target}",
   "tn.history.appointment_changed.cancel_request": "{actor} a retiré la demande {target}",
+  "tn.datasafe.title": "Données : cohérence et sauvegarde",
+  "tn.datasafe.subtitle": "Charge de la plateforme, cohérence des données et sauvegarde vérifiée, à lancer à tout moment.",
+  "tn.concern.title": "Signaler une inquiétude sur mes données",
+  "tn.concern.hint": "Une donnée vous surprend, vous ne savez pas qui la voit ? Dites-le. Vous recevez une référence, une réponse écrite et voyez chaque étape ici.",
+  "tn.concern.subject": "En quelques mots",
+  "tn.concern.subject_hint": "Par exemple : qui voit ma date de naissance ?",
+  "tn.concern.message": "Ce qui vous inquiète",
+  "tn.concern.send": "Envoyer au service de protection des données",
+  "tn.concern.mine": "Mes inquiétudes et leurs réponses",
 } as const;

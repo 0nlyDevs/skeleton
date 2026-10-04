@@ -129,7 +129,26 @@ const PARTNERS = [
   },
 ] as const;
 
+/** F51 — where a resident's concern about how their data is used goes. */
+const DATA_SERVICE = {
+  slug: "donnees-personnelles",
+  name: "Protection des données personnelles",
+  category: "Vie privée",
+  icon: "shield",
+  summary: "Une question ou une inquiétude sur la façon dont vos données sont utilisées ? Écrivez-nous : vous suivez la réponse ici.",
+  description:
+    "Ce service répond aux habitants qui s'interrogent sur leurs données : ce qui est conservé, qui y accède, comment les corriger ou les supprimer. Chaque inquiétude reçoit une référence, une réponse écrite et reste consultable dans votre espace.",
+  howTo: "Depuis « Mes données », choisissez « Signaler une inquiétude » et décrivez ce qui vous gêne. Vous êtes prévenu à chaque étape.",
+  hours: "Réponse sous 3 jours ouvrés",
+  en: { name: "Personal data protection", category: "Privacy", summary: "A question or concern about how your data is used? Write to us: you follow the answer here.", hours: "Answer within 3 working days" },
+} as const;
+
 export async function seedPartners(prisma: Client): Promise<void> {
+  if (!(await prisma.municipalService.findUnique({ where: { slug: DATA_SERVICE.slug }, select: { id: true } }))) {
+    const { en, ...fields } = DATA_SERVICE;
+    await prisma.municipalService.create({ data: { ...fields, sortOrder: 300, translations: { en: { ...en } } } });
+  }
+
   let hours = 0;
   for (const [slug, openingHours] of Object.entries(CITY_HOURS)) {
     const service = await prisma.municipalService.findUnique({ where: { slug }, select: { id: true, openingHours: true } });
