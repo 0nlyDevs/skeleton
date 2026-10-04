@@ -10,6 +10,14 @@
 import type { Locale } from "./config";
 
 const FR: Readonly<Record<string, string>> = {
+  "That was very fast. Wait a few seconds, then send again.": "C'était très rapide. Attendez quelques secondes, puis envoyez à nouveau.",
+  "This form stayed open too long. Reload the page, then send again.": "Ce formulaire est resté ouvert trop longtemps. Rechargez la page, puis envoyez à nouveau.",
+  "We could not check this form. Reload the page, then send again.": "Nous n'avons pas pu vérifier ce formulaire. Rechargez la page, puis envoyez à nouveau.",
+  "Only administrators can run the data check.": "Seuls les administrateurs peuvent lancer la vérification des données.",
+  "Only administrators can run a backup.": "Seuls les administrateurs peuvent lancer une sauvegarde.",
+  "Only city staff can export follow-up data.": "Seuls les agents de la ville peuvent exporter des données de suivi.",
+  "Choose columns from the list.": "Choisissez des colonnes dans la liste.",
+  "Choose at least one column.": "Choisissez au moins une colonne.",
   "Could not allocate a feedback reference.": "Impossible d'attribuer une référence à l'avis. Réessayez.",
   "Choose how it went.": "Choisissez comment ça s'est passé.",
   "Write a few words about how it went.": "Écrivez quelques mots sur la façon dont ça s'est passé.",
@@ -305,6 +313,7 @@ const FR: Readonly<Record<string, string>> = {
 
 /** Sentences that carry a number. */
 const FR_PATTERNS: ReadonlyArray<readonly [RegExp, (match: RegExpMatchArray) => string]> = [
+  [/^You already sent this request a moment ago\. Its reference is (TN-\d{6})\.$/, (match) => `Vous avez déjà envoyé cette demande il y a un instant. Sa référence est ${match[1]}.`],
   [/^The (request body|query parameters|URL parameters|input) is invalid\.$/, () => "Certaines informations sont invalides."],
   [/^Use between (\d+) and (\d+) characters\.$/, (m) => `Utilisez entre ${m[1]} et ${m[2]} caractères.`],
   [/^You can change your username again on (\d{4})-(\d{2})-(\d{2})\.$/, (m) => `Vous pourrez changer de nom d'utilisateur le ${m[3]}/${m[2]}/${m[1]}.`],
