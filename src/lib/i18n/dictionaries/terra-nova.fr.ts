@@ -1243,7 +1243,7 @@ export const frTerraNova = {
   "tn.assisted.print": "Imprimer les fiches",
   "tn.assisted.no_email": "Sans e-mail",
   "tn.assisted.setup.title": "Choisissez votre propre accès",
-  "tn.assisted.setup.body": "Vous êtes connecté avec le code d'accès imprimé par un agent. Pour protéger votre compte, ajoutez une passkey (visage ou empreinte) ci-dessous, ou choisissez un nouveau mot de passe : votre mot de passe actuel est ce code.",
+  "tn.assisted.setup.body": "Vous êtes connecté avec le code d'accès remis par la ville. Pour protéger votre compte, choisissez maintenant votre propre mot de passe : votre mot de passe actuel est ce code. Vous pourrez ensuite ajouter une passkey (visage ou empreinte) si vous le souhaitez.",
   "tn.start.nav": "Par où commencer ?",
   "tn.start.title": "Par où commencer ?",
   "tn.start.subtitle": "Cochez ce qui vous concerne : la page vous indique les services utiles pour vous et la première démarche à faire. Rien à remplir, rien n'est enregistré sur votre compte.",

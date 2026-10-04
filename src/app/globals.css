@@ -1191,3 +1191,8 @@ html:not(.dark):not([data-contrast="high"]) body::after {
   position: relative;
   z-index: 5;
 }
+
+/* The welcome guide comes first: while it is open, alerts and notices step aside. */
+body[data-wizard="1"] :is(.official-band, .alert-live, .eco-notice) {
+  display: none;
+}

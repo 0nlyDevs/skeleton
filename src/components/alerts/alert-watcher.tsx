@@ -59,6 +59,8 @@ export function AlertWatcher() {
     setAlerts(data.alerts);
     const seen = acknowledged();
     const fresh = data.alerts.filter((alert) => !seen.has(alert.slug)).sort((a, b) => RANK[b.severity] - RANK[a.severity]);
+    // The welcome guide is open: keep the notices for the next page instead of covering it.
+    if (document.body.dataset.wizard === "1") return;
     for (const alert of fresh.filter((item) => item.severity === "INFORMATION")) {
       toast(alert.title, { description: alert.summary, duration: 10_000 });
       acknowledge(alert.slug);
