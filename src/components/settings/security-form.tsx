@@ -63,8 +63,10 @@ export function SecurityForm({
       {lockAlert ? (
         <FailedSignInsCard {...failedSignIns} highlight twoFactorEnabled={twoFactorEnabled} />
       ) : null}
+      {/* F71 — a first sign-in with a printed code chooses a password first; a passkey can come later. */}
+      {mustSetSecret ? <PasswordCard hasPassword={hasPassword} onCreated={() => router.refresh()} /> : null}
       <PasskeysCard />
-      <PasswordCard hasPassword={hasPassword} onCreated={() => router.refresh()} />
+      {mustSetSecret ? null : <PasswordCard hasPassword={hasPassword} onCreated={() => router.refresh()} />}
       <TwoFactorCard enabled={twoFactorEnabled} hasPassword={hasPassword} />
       <LinkedAccounts availability={oauth} />
       <DevicesCard />

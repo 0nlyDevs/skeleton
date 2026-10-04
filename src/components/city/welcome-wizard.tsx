@@ -68,6 +68,15 @@ export function WelcomeWizard({
     titleRef.current?.focus();
   }, [step]);
 
+  // While the guide is open, alerts and notices wait: nothing is drawn over it and no toast pops up.
+  useEffect(() => {
+    if (!open) return;
+    document.body.dataset.wizard = "1";
+    return () => {
+      delete document.body.dataset.wizard;
+    };
+  }, [open]);
+
   /** Saved on the account, so the guide does not open again on any device. */
   const markDone = () => {
     void apiFetch("/api/users/me/onboarding", { method: "POST" }).catch(() => undefined);
@@ -133,7 +142,8 @@ export function WelcomeWizard({
 
   return (
     <Dialog open={open} onOpenChange={(value) => (value ? setOpen(true) : close())}>
-      <DialogContent className="max-w-xl gap-5" aria-describedby="wizard-body">
+      {/* A toast, the alert line or the official message must never close the guide: only its own buttons or Escape do. */}
+      <DialogContent className="max-w-xl gap-5" aria-describedby="wizard-body" onInteractOutside={(event) => event.preventDefault()} onPointerDownOutside={(event) => event.preventDefault()} onFocusOutside={(event) => event.preventDefault()}>
         <div className="flex flex-col gap-3 pr-8">
           <p className="text-[0.8125rem] font-medium text-muted-foreground" aria-live="polite">
             {t("tn.wizard.step", { current: step + 1, total: STEPS.length })}

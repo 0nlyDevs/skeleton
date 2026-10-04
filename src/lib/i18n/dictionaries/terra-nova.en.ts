@@ -1235,7 +1235,7 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.assisted.print": "Print the sheets",
   "tn.assisted.no_email": "No email",
   "tn.assisted.setup.title": "Choose your own way in",
-  "tn.assisted.setup.body": "You signed in with the access code an agent printed. To protect your account, add a passkey (face or fingerprint) below, or choose a new password: your current password is that code.",
+  "tn.assisted.setup.body": "You are signed in with the access code given by the city. To protect your account, choose your own password now: your current password is that code. You can then add a passkey (face or fingerprint) if you wish.",
   "tn.start.nav": "Where do I start?",
   "tn.start.title": "Where do I start?",
   "tn.start.subtitle": "Tick what applies to you: the page shows the services that are useful to you and the first step to take. Nothing to fill in, nothing is saved to your account.",
