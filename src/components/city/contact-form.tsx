@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Term } from "@/components/ui/term";
+import { useFormGuard } from "@/hooks/use-form-guard";
 import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import type { MessageKey } from "@/lib/i18n";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { zoneAt } from "@/modules/alerts/city-zones";
 import type { ServiceAvailabilityDto } from "@/modules/city-services/service-availability";
 import type { ReportDto } from "@/modules/city-requests/city-requests.reports";
+import { EMERGENCY_PHONE, isMedicalEmergency } from "@/modules/city-requests/city-requests.emergency";
 import { ISSUE_TYPES, type IssueType } from "@/modules/city-requests/city-requests.schema";
 
 import { ServiceAvailabilityNotice } from "./service-availability-notice";
@@ -55,6 +57,10 @@ export function ContactForm({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
+  // F81 — quiet robot protection: a token asked when the form opens, and a hidden trap field.
+  const { guard, renew, trapField } = useFormGuard();
+  // F86 — words of a medical emergency: say to call first, before anything is sent.
+  const emergency = isMedicalEmergency(subject, message);
   // F52 — before sending a new report, show the open ones already nearby.
   const [similar, setSimilar] = useState<ReportDto[]>([]);
   const [similarDismissed, setSimilarDismissed] = useState(false);
@@ -111,6 +117,7 @@ export function ContactForm({
           serviceId: serviceId || null,
           subject: subject.trim(),
           message: message.trim(),
+          guard: guard(),
           ...(issue
             ? { issueType, location: location.trim() || null, mapX: point?.mapX ?? null, mapY: point?.mapY ?? null }
             : {}),
@@ -125,6 +132,7 @@ export function ContactForm({
         if (first) requestAnimationFrame(() => document.getElementById(`contact-${first}`)?.focus());
       }
       toast.error(describeApiError(error, t));
+      renew();
       setBusy(false);
     }
   };
@@ -290,10 +298,22 @@ export function ContactForm({
         </div>
       </div>
 
+      {emergency ? (
+        <div role="alert" className="flex flex-col gap-2 rounded-2xl border border-error/50 bg-error/10 p-4">
+          <p className="font-semibold text-error">{t("tn.emergency.title")}</p>
+          <p className="text-sm">{t("tn.emergency.body")}</p>
+          <a href={`tel:${EMERGENCY_PHONE.replace(/\s+/g, "")}`} className="w-fit rounded-full bg-error px-4 py-2 text-sm font-semibold text-error-foreground">
+            {t("tn.emergency.call", { phone: EMERGENCY_PHONE })}
+          </a>
+          <p className="text-[0.8125rem] text-muted-foreground">{t("tn.emergency.after")}</p>
+        </div>
+      ) : null}
+
+      {trapField}
       <p className="flex items-start gap-2 text-[0.7812rem] text-muted-foreground">
         <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         <span>
-          {t("tn.contact.privacy")} <Term id="encrypted">{t("tn.contact.privacy_term")}</Term>
+          {t("tn.contact.privacy")} <Term id="encrypted">{t("tn.contact.privacy_term")}</Term> {t("tn.guard.note")}
         </span>
       </p>
 

@@ -45,6 +45,10 @@ export interface CityRequestDto extends CityRequestSummaryDto {
   readonly messages: CityRequestMessageDto[];
   readonly events: CityRequestEventDto[];
   readonly closedAt: string | null;
+  /** F83 — the receipt's check code; null for anyone but the sender. */
+  readonly receiptCode: string | null;
+  /** F86 — the request describes a medical emergency. */
+  readonly emergency: boolean;
   /** F76 — the resident's comment on how this request went, once left. */
   readonly feedback: { readonly reference: string } | null;
 }

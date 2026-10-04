@@ -5,12 +5,14 @@ import {
   cityRequestMessageSchema,
   cityRequestRefParamSchema,
   createCityRequestSchema,
+  receiptCheckQuerySchema,
   listCityRequestsQuerySchema,
   listReportsQuerySchema,
   similarReportsQuerySchema,
   updateCityRequestSchema,
 } from "./city-requests.schema";
 import { listReports, similarReports, supportReport, withdrawReportSupport } from "./city-requests.reports";
+import { checkReceipt } from "./city-requests.receipt";
 import { addCityRequestMessage, createCityRequest, getCityRequest, listCityRequests, updateCityRequest } from "./city-requests.service";
 
 export const listCityRequestsRoute = apiRoute({
@@ -62,4 +64,11 @@ export const supportReportRoute = apiRoute({
 export const withdrawReportSupportRoute = apiRoute({
   params: cityRequestRefParamSchema,
   handler: async ({ params, auth }) => jsonOk({ data: await withdrawReportSupport(params.reference, auth.user) }),
+});
+
+/** F83 — anyone holding a receipt can check it; the answer carries nothing personal. */
+export const checkReceiptRoute = publicRoute({
+  query: receiptCheckQuerySchema,
+  rateLimit: { limit: 20, windowMs: 60_000 },
+  handler: async ({ query }) => jsonOk({ data: await checkReceipt(query.reference, query.code) }),
 });
