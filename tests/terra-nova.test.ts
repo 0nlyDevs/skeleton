@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { announcementInputSchema } from "@/modules/announcements/announcements.schema";
-import { cityRequestRefParamSchema, createCityRequestSchema, listCityRequestsQuerySchema, updateCityRequestSchema } from "@/modules/city-requests/city-requests.schema";
+import {
+  cityRequestRefParamSchema,
+  createCityRequestSchema,
+  listCityRequestsQuerySchema,
+  listReportsQuerySchema,
+  similarReportsQuerySchema,
+  updateCityRequestSchema,
+} from "@/modules/city-requests/city-requests.schema";
 import { toSummaryDto } from "@/modules/city-requests/city-requests.dto";
 import { statusChangeAllowed } from "@/modules/city-requests/city-requests.service";
 import { serviceInputSchema } from "@/modules/city-services/city-services.schema";
@@ -52,6 +59,15 @@ describe("city requests", () => {
     expect(updateCityRequestSchema.safeParse({}).success).toBe(false);
     expect(updateCityRequestSchema.safeParse({ assignee: "someone-else" }).success).toBe(false);
     expect(updateCityRequestSchema.safeParse({ assignee: "me" }).success).toBe(true);
+  });
+
+  it("validates the public report board filters (F52/F79)", () => {
+    expect(listReportsQuerySchema.safeParse({}).data?.sort).toBe("supported");
+    expect(listReportsQuerySchema.safeParse({ zone: "NOVA_PRIME", issueType: "water", status: "OPEN" }).success).toBe(true);
+    expect(listReportsQuerySchema.safeParse({ zone: "Atlantis" }).success).toBe(false);
+    expect(similarReportsQuerySchema.safeParse({ issueType: "roads" }).success).toBe(true);
+    expect(listCityRequestsQuerySchema.safeParse({ sort: "supported" }).success).toBe(true);
+    expect(listCityRequestsQuerySchema.safeParse({ sort: "oldest" }).success).toBe(false);
   });
 
   it("refuses a status change until the request is in someone's hands", () => {

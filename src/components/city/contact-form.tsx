@@ -2,7 +2,7 @@
 
 import { Loader2, Lock, MapPin, Send, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { useTranslation } from "@/components/providers/i18n-provider";
@@ -15,7 +15,9 @@ import { apiFetch, ApiRequestError } from "@/lib/api/client";
 import { describeApiError } from "@/lib/api/error-message";
 import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { zoneAt } from "@/modules/alerts/city-zones";
 import type { ServiceAvailabilityDto } from "@/modules/city-services/service-availability";
+import type { ReportDto } from "@/modules/city-requests/city-requests.reports";
 import { ISSUE_TYPES, type IssueType } from "@/modules/city-requests/city-requests.schema";
 
 import { ServiceAvailabilityNotice } from "./service-availability-notice";
@@ -53,6 +55,10 @@ export function ContactForm({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
+  // F52 — before sending a new report, show the open ones already nearby.
+  const [similar, setSimilar] = useState<ReportDto[]>([]);
+  const [similarDismissed, setSimilarDismissed] = useState(false);
+  const [supportingRef, setSupportingRef] = useState<string | null>(null);
 
   const applyTemplate = (template: "arrival" | "transport" | "issue" | "question") => {
     if (template === "issue") setKind("issue");
@@ -61,6 +67,36 @@ export function ContactForm({
   };
 
   const issue = kind === "issue";
+
+  useEffect(() => {
+    if (kind !== "issue" || issueType === "") {
+      setSimilar([]);
+      return;
+    }
+    const zone = point ? zoneAt(point.mapX, point.mapY) : null;
+    const params = new URLSearchParams({ issueType });
+    if (zone) params.set("zone", zone);
+    const controller = new AbortController();
+    apiFetch<{ data: ReportDto[] }>(`/api/city-reports/similar?${params.toString()}`, { signal: controller.signal })
+      .then((response) => setSimilar(response.data))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [kind, issueType, point]);
+
+  const supportSimilar = async (reference: string) => {
+    setSupportingRef(reference);
+    try {
+      await apiFetch(`/api/city-requests/${reference}/support`, { method: "POST" });
+      toast.success(t("tn.reports.support_thanks"));
+      setSimilar((current) =>
+        current.map((report) => (report.reference === reference ? { ...report, supportCount: report.supportCount + 1, supportedAt: new Date().toISOString() } : report)),
+      );
+    } catch (error) {
+      toast.error(describeApiError(error, t));
+    } finally {
+      setSupportingRef(null);
+    }
+  };
   const selectedService = services.find((service) => service.id === serviceId);
   const issueReady = !issue || (issueType !== "" && (location.trim().length > 0 || point !== null));
 
@@ -177,6 +213,31 @@ export function ContactForm({
             {fields.location ? <p id="contact-location-error" role="alert" className="text-[0.7812rem] text-error">{fields.location}</p> : null}
           </div>
           <TerraNovaPicker open={picking} onOpenChange={setPicking} onPick={setPoint} />
+          {similar.length > 0 && !similarDismissed ? (
+            <aside className="flex flex-col gap-2 rounded-xl border border-primary/30 bg-accent/40 p-3" aria-label={t("tn.contact.similar_title")}>
+              <p className="text-sm font-medium">{t("tn.contact.similar_title")}</p>
+              <p className="text-[0.8125rem] text-muted-foreground">{t("tn.contact.similar_body")}</p>
+              <ul className="flex flex-col gap-2">
+                {similar.map((report) => (
+                  <li key={report.reference} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-card px-3 py-2">
+                    <span className="min-w-0 flex-1 truncate text-[0.8438rem]">
+                      {report.subject} · {t("tn.reports.count", { count: report.supportCount })}
+                    </span>
+                    {report.supportedAt ? (
+                      <span className="text-[0.75rem] text-success">{t("tn.reports.support_thanks")}</span>
+                    ) : (
+                      <Button type="button" size="sm" variant="secondary" disabled={supportingRef === report.reference} onClick={() => void supportSimilar(report.reference)}>
+                        {t("tn.reports.support")}
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <button type="button" className="self-start text-[0.8125rem] text-muted-foreground hover:underline" onClick={() => setSimilarDismissed(true)}>
+                {t("tn.contact.similar_continue")}
+              </button>
+            </aside>
+          ) : null}
         </div>
       ) : null}
 

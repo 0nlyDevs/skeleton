@@ -39,7 +39,7 @@ export default async function CitizenSpacePage({ searchParams }: { readonly sear
   const raw = params.history;
   const history: HistoryFilter = raw === "open" || raw === "done" ? raw : "all";
   const [requests, stats, news, zone, zones, firstVisit] = await Promise.all([
-    listCityRequests({ scope: "mine", page: 1, limit: 50, status: HISTORY_FILTERS[history] }, user),
+    listCityRequests({ scope: "mine", page: 1, limit: 50, sort: "recent", status: HISTORY_FILTERS[history] }, user),
     cityRequestStats(user, "mine"),
     listAnnouncements({ page: 1, limit: 3 }, user),
     viewerZone(user),

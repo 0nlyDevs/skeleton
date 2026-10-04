@@ -81,6 +81,8 @@ const FR: Readonly<Record<string, string>> = {
   "Could not allocate a request reference.": "Impossible d'attribuer une référence à la demande. Réessayez.",
   "Only city agents can see every request.": "Seuls les agents municipaux voient toutes les demandes.",
   "This request does not exist.": "Cette demande n'existe pas.",
+  "This report does not exist.": "Ce signalement n'existe pas.",
+  "This report is closed.": "Ce signalement est fermé.",
   "Only city agents can write internal notes.": "Seuls les agents municipaux peuvent écrire des notes internes.",
   "This request is closed.": "Cette demande est fermée.",
   "Give the service a name.": "Donnez un nom au service.",
