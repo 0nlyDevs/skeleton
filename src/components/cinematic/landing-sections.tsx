@@ -61,10 +61,10 @@ function More({ href, children }: { readonly href: string; readonly children: st
 /** The contest's partners, shown in black and white in the footer. */
 const SPONSORS = [
   { file: "yas", name: "Yas" },
-  { file: "moneco", name: "Moneco" },
+  { file: "moneco", name: "Moneco", vector: true },
   { file: "hubera", name: "Hubera" },
   { file: "goticom", name: "GOTI.COM" },
-  { file: "hodi", name: "HODi, Host in Africa" },
+  { file: "hodi", name: "HODi" },
   { file: "softwell", name: "Softwell" },
 ] as const;
 
@@ -160,7 +160,7 @@ export function LandingSections({ data, onRegister }: { readonly data: LandingDa
                 <li key={sponsor.file} className="grid h-16 place-items-center rounded-2xl bg-white px-4">
                   {/* Black and white, as the partners' charter asks. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/sponsors/${sponsor.file}.png`} alt={sponsor.name} loading="lazy" decoding="async" className="h-11 w-auto object-contain mix-blend-multiply grayscale" />
+                  <img src={`/sponsors/${sponsor.file}.${"vector" in sponsor ? "svg" : "png"}`} alt={sponsor.name} loading="lazy" decoding="async" className="h-11 w-auto object-contain mix-blend-multiply grayscale" />
                 </li>
               ))}
             </ul>

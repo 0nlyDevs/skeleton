@@ -475,9 +475,6 @@ export function CinematicLanding({
               </span>
             </span>
           </p>
-          <p data-arrival="beacon" aria-hidden className="tn-tag">
-            {t("tn.arrival.beacon")}
-          </p>
           <button type="button" onClick={() => skipRef.current()} className="tn-btn tn-btn--line absolute bottom-6 right-6 z-[61] py-2 text-[0.8125rem]">
             {t("tn.arrival.skip")}
           </button>
