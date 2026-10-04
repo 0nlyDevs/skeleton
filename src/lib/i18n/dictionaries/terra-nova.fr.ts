@@ -287,6 +287,7 @@ export const frTerraNova = {
   "tn.agent.feed.difficulty_1": "Facile",
   "tn.agent.feed.difficulty_2": "Moyenne",
   "tn.agent.feed.difficulty_3": "Difficile",
+  "tn.agent.feed.difficulty_4": "Expert",
   "tn.agent.feed.difficulty_unknown": "Non précisée",
   "tn.agent.feed.search": "Rechercher par code, message, groupe…",
   "tn.agent.feed.filter_empty_title": "Aucune demande trouvée",

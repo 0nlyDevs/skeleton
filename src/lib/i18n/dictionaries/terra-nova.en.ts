@@ -282,6 +282,7 @@ export const enTerraNova: Record<keyof typeof frTerraNova, string> = {
   "tn.agent.feed.difficulty_1": "Easy",
   "tn.agent.feed.difficulty_2": "Medium",
   "tn.agent.feed.difficulty_3": "Hard",
+  "tn.agent.feed.difficulty_4": "Expert",
   "tn.agent.feed.difficulty_unknown": "Not specified",
   "tn.agent.feed.search": "Search by code, message, group…",
   "tn.agent.feed.filter_empty_title": "No feature found",
