@@ -1,6 +1,16 @@
 /**
  * Seed — test accounts per role and realistic demo data.
  *
+ * Two targets, chosen with `SEED_TARGET` (`npm run build:prod` and
+ * `npm run build:preprod` set it):
+ *   - `preprod` (default): everything below, including the developers'
+ *     fixtures (posts that explain the skeleton, drafts, an open report) used
+ *     to test moderation and access control;
+ *   - `prod`: the city only. The accounts for each role, services, alerts,
+ *     transport, partners, projects, appointments and the community of
+ *     residents; the developers' fixtures are left out, and removed if an
+ *     earlier build had created them.
+ *
  * The test password comes from `SEED_PASSWORD` (set it in `.env` locally and
  * in the host's environment), so it never lives in the repository. Legacy
  * `@webcup.demo` accounts from earlier seeds are removed.
@@ -19,11 +29,17 @@ import { prisma } from "../src/lib/db/prisma";
 
 import { seedAppointments } from "./seed-appointments";
 import { seedCityAlerts } from "./seed-city-alerts";
+import { seedCommunity } from "./seed-community";
+import { seedTransports } from "./seed-transports";
 import { seedServiceAvailability } from "./seed-service-availability";
 import { seedParticipation } from "./seed-participation";
 import { seedPartners } from "./seed-partners";
 import { seedServiceLocations } from "./seed-service-locations";
 import { seedTerraNova } from "./seed-terra-nova";
+
+/** `prod` seeds the city only; anything else seeds the test fixtures too. */
+const TARGET: "prod" | "preprod" = process.env.SEED_TARGET === "prod" ? "prod" : "preprod";
+const WITH_FIXTURES = TARGET === "preprod";
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "";
 if (SEED_PASSWORD.length < 10) {
@@ -179,8 +195,23 @@ async function upsertUser(account: (typeof ACCOUNTS)[number], passwordHash: stri
   });
 }
 
+/**
+ * Production shows the city, not the developers' notes: the fixtures an
+ * earlier build may have created are removed, matched by their exact text and
+ * by the seed accounts that own them. Nothing a person wrote is touched.
+ */
+async function removeFixtures(seedUserIds: readonly string[]): Promise<void> {
+  const owners = { in: [...seedUserIds] };
+  const posts = await prisma.post.deleteMany({ where: { userId: owners, title: { in: POSTS.map((post) => post.title) } } });
+  const messages = await prisma.message.deleteMany({ where: { senderId: owners, content: { in: MESSAGES.map((message) => message.content) } } });
+  const notifications = await prisma.notification.deleteMany({ where: { userId: owners, title: { in: ["Bienvenue sur Webcup Base", "Nouveau message dans Général", "Rôle confirmé"] } } });
+  const reports = await prisma.report.deleteMany({ where: { reason: "Signalement de démonstration : contenu à évaluer par la modération." } });
+  const removed = posts.count + messages.count + notifications.count + reports.count;
+  if (removed > 0) console.log(`  removed ${removed} developer fixture(s)`);
+}
+
 async function main() {
-  console.log("Seeding test accounts and demo data…");
+  console.log(`Seeding (${TARGET}): accounts and ${WITH_FIXTURES ? "city data with test fixtures" : "city data"}…`);
 
   const legacy = await prisma.user.deleteMany({ where: { email: { endsWith: "@webcup.demo" } } });
   if (legacy.count > 0) console.log(`  removed ${legacy.count} legacy demo account(s)`);
@@ -211,96 +242,100 @@ async function main() {
     update: { name: "Général" },
   });
 
-  // Posts.
-  const createdPostIds: string[] = [];
-  for (const [index, post] of POSTS.entries()) {
-    const existing = await prisma.post.findFirst({
-      where: { title: post.title, userId: users[post.author].id },
-      select: { id: true },
-    });
-
-    const row =
-      existing ??
-      (await prisma.post.create({
-        data: {
-          userId: users[post.author].id,
-          title: post.title,
-          body: post.body,
-          tags: post.tags,
-          published: post.published,
-        },
-      }));
-
-    createdPostIds.push(row.id);
-    void index;
-  }
-  console.log(`  posts: ${createdPostIds.length}`);
-
-  // Messages.
-  const messageCount = await prisma.message.count({ where: { roomId: room.id } });
-  if (messageCount === 0) {
-    for (const message of MESSAGES) {
-      await prisma.message.create({
-        data: {
-          roomId: room.id,
-          senderId: users[message.author].id,
-          content: message.content,
-        },
+  if (WITH_FIXTURES) {
+    // Posts.
+    const createdPostIds: string[] = [];
+    for (const [index, post] of POSTS.entries()) {
+      const existing = await prisma.post.findFirst({
+        where: { title: post.title, userId: users[post.author].id },
+        select: { id: true },
       });
+
+      const row =
+        existing ??
+        (await prisma.post.create({
+          data: {
+            userId: users[post.author].id,
+            title: post.title,
+            body: post.body,
+            tags: post.tags,
+            published: post.published,
+          },
+        }));
+
+      createdPostIds.push(row.id);
+      void index;
     }
-    console.log(`  messages: ${MESSAGES.length}`);
-  }
+    console.log(`  posts: ${createdPostIds.length}`);
 
-  // Notifications for the standard user.
-  const notificationCount = await prisma.notification.count({ where: { userId: users[2].id } });
-  if (notificationCount === 0) {
-    await prisma.notification.createMany({
-      data: [
-        {
-          userId: users[2].id,
-          type: "SYSTEM",
-          title: "Bienvenue sur Webcup Base",
-          body: "Explorez le tableau de bord, les publications et la messagerie.",
-          link: "/dashboard",
-          read: false,
-        },
-        {
-          userId: users[2].id,
-          type: "NEW_MESSAGE",
-          title: "Nouveau message dans Général",
-          body: "Un message vous attend dans le salon général.",
-          link: "/chat",
-          read: false,
-        },
-        {
-          userId: users[2].id,
-          type: "ROLE_CHANGED",
-          title: "Rôle confirmé",
-          body: "Votre compte de démonstration est un compte standard.",
-          link: "/settings/profile",
-          read: true,
-        },
-      ],
-    });
-    console.log("  notifications: 3");
-  }
+    // Messages.
+    const messageCount = await prisma.message.count({ where: { roomId: room.id } });
+    if (messageCount === 0) {
+      for (const message of MESSAGES) {
+        await prisma.message.create({
+          data: {
+            roomId: room.id,
+            senderId: users[message.author].id,
+            content: message.content,
+          },
+        });
+      }
+      console.log(`  messages: ${MESSAGES.length}`);
+    }
 
-  // One open report so the moderation queue has something to show.
-  const reportCount = await prisma.report.count({ where: { status: "OPEN" } });
-  if (reportCount === 0) {
-    const reportablePost = createdPostIds[4];
-    if (reportablePost) {
-      await prisma.report.create({
-        data: {
-          reporterId: users[3].id,
-          targetType: "POST",
-          targetId: reportablePost,
-          reason: "Signalement de démonstration : contenu à évaluer par la modération.",
-          status: "OPEN",
-        },
+    // Notifications for the standard user.
+    const notificationCount = await prisma.notification.count({ where: { userId: users[2].id } });
+    if (notificationCount === 0) {
+      await prisma.notification.createMany({
+        data: [
+          {
+            userId: users[2].id,
+            type: "SYSTEM",
+            title: "Bienvenue sur Webcup Base",
+            body: "Explorez le tableau de bord, les publications et la messagerie.",
+            link: "/dashboard",
+            read: false,
+          },
+          {
+            userId: users[2].id,
+            type: "NEW_MESSAGE",
+            title: "Nouveau message dans Général",
+            body: "Un message vous attend dans le salon général.",
+            link: "/chat",
+            read: false,
+          },
+          {
+            userId: users[2].id,
+            type: "ROLE_CHANGED",
+            title: "Rôle confirmé",
+            body: "Votre compte de démonstration est un compte standard.",
+            link: "/settings/profile",
+            read: true,
+          },
+        ],
       });
-      console.log("  report: 1 open");
+      console.log("  notifications: 3");
     }
+
+    // One open report so the moderation queue has something to show.
+    const reportCount = await prisma.report.count({ where: { status: "OPEN" } });
+    if (reportCount === 0) {
+      const reportablePost = createdPostIds[4];
+      if (reportablePost) {
+        await prisma.report.create({
+          data: {
+            reporterId: users[3].id,
+            targetType: "POST",
+            targetId: reportablePost,
+            reason: "Signalement de démonstration : contenu à évaluer par la modération.",
+            status: "OPEN",
+          },
+        });
+        console.log("  report: 1 open");
+      }
+    }
+  } else {
+    await removeFixtures(users.map((user) => user.id));
   }
 
   // Feature flags the admin panel can toggle out of the box.
@@ -323,6 +358,8 @@ async function main() {
   await seedPartners(prisma);
   await seedParticipation(prisma);
   await seedAppointments(prisma);
+  await seedTransports(prisma);
+  await seedCommunity(prisma, users);
 
   console.log("\nTest accounts (password: SEED_PASSWORD):");
   for (const account of ACCOUNTS) {
