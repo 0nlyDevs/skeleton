@@ -4,6 +4,7 @@ import { Inbox, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { SimilarGroups } from "./similar-groups";
 import { RequestList } from "@/components/city/request-list";
 import { PriorityPanel } from "./priority-panel";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -110,6 +111,7 @@ export function AgentInbox({
         <p className="text-sm text-muted-foreground">{t("tn.agent.inbox.subtitle")}</p>
       </header>
 
+      <SimilarGroups />
       <PriorityPanel />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
