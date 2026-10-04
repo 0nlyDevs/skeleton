@@ -23,7 +23,7 @@ export function ServiceLocationCard({
   const pin = emergency ? "#d93025" : "#1a73e8";
   return (
     <section className="overflow-hidden rounded-2xl border border-border/70 bg-card" aria-labelledby="where">
-      <svg viewBox="60 70 880 500" className="block w-full bg-[#a9d3e0] dark:bg-[#16303a]" role="img" aria-label={`${labels.title} — ${labels.zone}`}>
+      <svg viewBox="60 70 880 500" className="block w-full bg-[#a9d3e0] dark:bg-[#16303a]" role="img" aria-label={`${labels.title}, ${labels.zone}`}>
         {CITY_ZONES.map((zone) => (
           <polygon
             key={zone.id}

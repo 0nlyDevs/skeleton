@@ -4,7 +4,7 @@ import { withAgentAccess } from "@/components/agent/agent-guard";
 import { TransportLinesManager } from "@/components/agent/transport-lines-manager";
 import { getServerDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Transports — administration" };
+export const metadata: Metadata = { title: "Transports, administration" };
 
 export default async function AgentTransportsPage() {
   return withAgentAccess("/agent/transports", async () => {

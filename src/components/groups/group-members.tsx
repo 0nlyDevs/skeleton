@@ -89,7 +89,7 @@ export function GroupMembers({ group, viewerId, isPlatformAdmin }: { readonly gr
       {members === null ? (
         <div className="flex flex-col gap-2">{[0, 1, 2].map((index) => <Skeleton key={index} className="h-12 rounded-xl" />)}</div>
       ) : members.length === 0 ? (
-        <p className="py-6 text-center text-[0.8125rem] text-muted-foreground">{status === "PENDING" ? t("groups.no_requests") : "—"}</p>
+        <p className="py-6 text-center text-[0.8125rem] text-muted-foreground">{status === "PENDING" ? t("groups.no_requests") : "-"}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border/60">
           {members.map((member, index) => {

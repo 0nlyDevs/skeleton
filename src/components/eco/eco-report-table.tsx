@@ -70,7 +70,7 @@ export async function EcoReportTable({ report }: { readonly report: EcoReport })
                     {weight(page.before.sizeKb)}
                   </span>
                 ) : (
-                  "—"
+                  "-"
                 )}
               </td>
               <td className="px-1 py-2.5">

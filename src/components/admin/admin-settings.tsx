@@ -73,7 +73,7 @@ export function AdminSettingsView({ flags }: { readonly flags: FeatureFlagDto[] 
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <p className="py-4 text-[0.8438rem] text-muted-foreground">—</p>
+            <p className="py-4 text-[0.8438rem] text-muted-foreground">-</p>
           ) : (
             <ul className="divide-y divide-border/60">
               {rows.map((flag) => (

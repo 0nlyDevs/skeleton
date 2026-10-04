@@ -156,7 +156,7 @@ export function AdminOverview({ data, security }: { readonly data: AdminOverview
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-[0.8438rem] font-medium">{report.reason}</span>
                       <span className="text-[0.75rem] text-muted-foreground">
-                        {report.targetType} · {report.reporterName ?? "—"} ·{" "}
+                        {report.targetType} · {report.reporterName ?? "-"} ·{" "}
                         {fmt.relative(report.createdAt)}
                       </span>
                     </div>
@@ -175,7 +175,7 @@ export function AdminOverview({ data, security }: { readonly data: AdminOverview
             </CardHeader>
             <CardContent className="pt-0">
               {data.signups.length === 0 ? (
-                <p className="py-2 text-[0.8438rem] text-muted-foreground">—</p>
+                <p className="py-2 text-[0.8438rem] text-muted-foreground">-</p>
               ) : (
                 <div className="flex h-16 items-end gap-1" aria-hidden>
                   {data.signups.slice(-28).map((point) => {

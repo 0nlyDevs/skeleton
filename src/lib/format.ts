@@ -26,7 +26,7 @@ export function formatDate(
   options: { locale?: Locale; style?: keyof typeof DATE_STYLES; withTime?: boolean } = {},
 ): string {
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
 
   const style = options.style ?? "medium";
   const parts = new Intl.DateTimeFormat(resolveLocale(options.locale), {
@@ -56,7 +56,7 @@ export function formatLongDate(iso: string, locale?: Locale): string {
  */
 export function formatRelative(iso: string, locale?: Locale): string {
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
 
   const now = Date.now();
   const diffSeconds = Math.round((date.getTime() - now) / 1000);

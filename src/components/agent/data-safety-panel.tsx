@@ -110,7 +110,7 @@ export function DataSafetyPanel() {
               {report.checks.map((item) => (
                 <Line key={item.id} ok={item.ok}>
                   {t(`tn.integrity.check.${item.id}` as MessageKey)}
-                  {item.ok ? "" : ` — ${t("tn.integrity.found", { count: item.count })}`}
+                  {item.ok ? "" : `, ${t("tn.integrity.found", { count: item.count })}`}
                 </Line>
               ))}
             </ul>
@@ -156,7 +156,7 @@ export function DataSafetyPanel() {
             <ul className="flex flex-col divide-y divide-border/60">
               {backup.tables.map((item) => (
                 <Line key={item.table} ok={item.ok}>
-                  {t(`tn.backup.table.${item.table}` as MessageKey)} — {t("tn.backup.rows", { count: item.saved })}
+                  {t(`tn.backup.table.${item.table}` as MessageKey)}, {t("tn.backup.rows", { count: item.saved })}
                 </Line>
               ))}
             </ul>

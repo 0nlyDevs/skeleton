@@ -62,7 +62,7 @@ export function AppointmentRequestsInbox({ requests }: { readonly requests: read
           {requests.map((request) => (
             <li key={request.reference} className="flex flex-col gap-2 rounded-2xl bg-card p-4 shadow-panel">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-semibold">{request.citizen?.name ?? "—"}</p>
+                <p className="font-semibold">{request.citizen?.name ?? "-"}</p>
                 <span className="font-mono text-[0.75rem] text-muted-foreground">{request.reference}</span>
               </div>
               <p className="text-[0.9375rem]">

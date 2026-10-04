@@ -62,7 +62,7 @@ function keywordTitle(items: readonly Item[]): string {
   for (const item of items) for (const token of new Set(item.tokens)) counts.set(token, (counts.get(token) ?? 0) + 1);
   const top = [...counts.entries()].filter(([, n]) => n >= Math.max(2, Math.ceil(items.length / 2))).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([token]) => token);
   const title = top.join(" · ");
-  return title ? title.charAt(0).toUpperCase() + title.slice(1) : (items[0]?.subject ?? "—");
+  return title ? title.charAt(0).toUpperCase() + title.slice(1) : (items[0]?.subject ?? "-");
 }
 
 const titles = new Map<string, string>();

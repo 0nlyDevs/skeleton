@@ -203,7 +203,7 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">—</SelectItem>
+            <SelectItem value="all">-</SelectItem>
             {ROLES.map((role) => (
               <SelectItem key={role} value={role}>
                 {role}
@@ -335,7 +335,7 @@ export function UsersTable({ currentUserId }: { readonly currentUserId: string }
           <DialogHeader>
             <DialogTitle>{t("admin.users.ban_title")}</DialogTitle>
             <DialogDescription>
-              {banTarget?.email} — {t("settings.security.sessions_hint")}
+              {banTarget?.email}, {t("settings.security.sessions_hint")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">

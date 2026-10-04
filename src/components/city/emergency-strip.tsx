@@ -39,7 +39,7 @@ export function EmergencyStrip({
       </div>
       <ul className="mt-3 grid gap-2 sm:grid-cols-2">
         {entries.map((entry) => (
-          <li key={entry.slug} className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-3 py-2">
+          <li key={entry.slug} className="flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-card px-3 py-2">
             <Link href={`/services/${entry.slug}`} className="min-w-0 flex-1">
               <span className="block truncate text-[0.875rem] font-semibold hover:underline">{entry.name}</span>
               <span className="block truncate text-[0.75rem] text-muted-foreground">

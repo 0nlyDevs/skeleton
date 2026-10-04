@@ -1196,3 +1196,12 @@ html:not(.dark):not([data-contrast="high"]) body::after {
 body[data-wizard="1"] :is(.official-band, .alert-live, .eco-notice) {
   display: none;
 }
+
+/* A phone never scrolls sideways: a block wider than the screen is kept inside the page column. */
+#content {
+  overflow-x: clip;
+}
+#content > * {
+  min-width: 0;
+  max-width: 100%;
+}

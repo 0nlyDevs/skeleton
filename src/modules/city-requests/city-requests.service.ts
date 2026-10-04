@@ -136,7 +136,7 @@ export async function createCityRequest(input: CreateCityRequestInput, actor: Au
         await createNotification({
           userId: id,
           type: emergency ? "ALERT" : "CITY_REQUEST",
-          title: emergency ? `URGENCE MÉDICALE signalée — ${row.reference} : ${row.subject.slice(0, 70)}` : `Nouvelle demande ${row.reference} : ${row.subject.slice(0, 80)}`,
+          title: emergency ? `URGENCE MÉDICALE signalée, ${row.reference} : ${row.subject.slice(0, 70)}` : `Nouvelle demande ${row.reference} : ${row.subject.slice(0, 80)}`,
           link: `/agent/requests/${row.reference}`,
         });
       }

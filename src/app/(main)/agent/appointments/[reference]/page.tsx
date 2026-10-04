@@ -6,7 +6,7 @@ import { AppointmentView } from "@/components/appointments/appointment-view";
 import { getAppointment } from "@/modules/appointments/appointments.service";
 import { appointmentReferenceParamSchema } from "@/modules/appointments/appointments.schema";
 
-export const metadata: Metadata = { title: "Rendez-vous — agents" };
+export const metadata: Metadata = { title: "Rendez-vous, agents" };
 
 export default async function AgentAppointmentPage({ params }: { readonly params: Promise<{ reference: string }> }) {
   const parsed = appointmentReferenceParamSchema.safeParse(await params);

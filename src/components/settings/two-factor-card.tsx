@@ -124,7 +124,7 @@ export function TwoFactorCard({ enabled: initial, hasPassword }: { readonly enab
   };
 
   const download = () => {
-    const blob = new Blob([`Skeleton — backup codes\n\n${codes.join("\n")}\n`], { type: "text/plain" });
+    const blob = new Blob([`Skeleton, backup codes\n\n${codes.join("\n")}\n`], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

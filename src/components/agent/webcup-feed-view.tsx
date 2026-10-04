@@ -197,11 +197,11 @@ export function WebcupFeedView({
   const minutesLeft = minutesUntil(nextWaveAt(session?.minutes_until_next_wave, feed.lastSuccessAt), now);
 
   const stats = [
-    { label: t("tn.agent.feed.session"), value: session?.status ?? "—" },
-    { label: t("tn.agent.feed.wave"), value: session?.current_wave ?? "—" },
+    { label: t("tn.agent.feed.session"), value: session?.status ?? "-" },
+    { label: t("tn.agent.feed.wave"), value: session?.current_wave ?? "-" },
     {
       label: t("tn.agent.feed.next_wave"),
-      value: session?.next_wave_number != null ? `${session.next_wave_number}` : "—",
+      value: session?.next_wave_number != null ? `${session.next_wave_number}` : "-",
       hint: minutesLeft != null ? t("tn.agent.feed.next_in", { minutes: minutesLeft }) : null,
     },
     { label: t("tn.agent.feed.visible"), value: visible.length },

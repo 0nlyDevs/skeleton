@@ -231,7 +231,7 @@ export function GroupView({
       {tab === "about" ? (
         <Card className="flex flex-col gap-3 p-5">
           <h2 className="text-[1rem] font-semibold">{t("groups.about")}</h2>
-          <p className="whitespace-pre-line text-[0.9062rem] leading-relaxed">{group.description || "—"}</p>
+          <p className="whitespace-pre-line text-[0.9062rem] leading-relaxed">{group.description || "-"}</p>
           <p className="flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
             {group.privacy === "PRIVATE" ? <Lock className="size-4" /> : <Globe className="size-4" />}
             {group.privacy === "PRIVATE" ? t("groups.private_hint") : t("groups.public_hint")}

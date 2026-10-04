@@ -10,7 +10,7 @@ import { listAgentAppointments } from "@/modules/appointments/appointments.servi
 import { listMySlots } from "@/modules/appointments/appointments.slots";
 import { listServices } from "@/modules/city-services/city-services.service";
 
-export const metadata: Metadata = { title: "Rendez-vous — agents" };
+export const metadata: Metadata = { title: "Rendez-vous, agents" };
 
 /** F39 — agents open slots and follow their appointments. */
 export default async function AgentAppointmentsPage() {

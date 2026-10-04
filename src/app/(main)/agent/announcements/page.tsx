@@ -9,7 +9,7 @@ import Link from "@/components/ui/link";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { listAnnouncements } from "@/modules/announcements/announcements.service";
 
-export const metadata: Metadata = { title: "Annonces — espace agent" };
+export const metadata: Metadata = { title: "Annonces, espace agent" };
 
 /** Agents manage the city's announcements, drafts included. */
 export default async function AgentAnnouncementsPage() {

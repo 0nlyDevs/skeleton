@@ -41,7 +41,7 @@ const CURATED: ReadonlyArray<{ name: string; role: string }> = [
 
 /** Strip the range prefix so `^6.16.2` displays as `6.16.2`. */
 function cleanVersion(range: string | undefined): string {
-  if (!range) return "—";
+  if (!range) return "-";
   return range.replace(/^[\^~>=<\s]+/, "");
 }
 

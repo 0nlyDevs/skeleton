@@ -390,7 +390,7 @@ export function CinematicLanding({
                 </span>
               </h1>
               <p data-hero-item className="max-w-[46ch] text-[0.9688rem] leading-relaxed text-white [text-shadow:0_1px_14px_rgb(0_0_0/0.9)] sm:text-[1.0625rem]">
-                {data.viewer ? t("tn.home.hello", { name: data.viewer.firstName }) + " — " : ""}
+                {data.viewer ? t("tn.home.hello", { name: data.viewer.firstName }) + ", " : ""}
                 {t("tn.home.subtitle")}
               </p>
               {data.viewer && data.viewer.openRequests > 0 ? (

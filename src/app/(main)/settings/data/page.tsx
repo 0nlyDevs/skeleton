@@ -65,7 +65,7 @@ export default async function MyDataPage() {
     prisma.municipalService.findUnique({ where: { slug: "donnees-personnelles" }, select: { id: true } }),
     listCityRequests({ scope: "mine", service: "donnees-personnelles", sort: "recent", page: 1, limit: 10 }, user),
   ]);
-  const dash = "—";
+  const dash = "-";
   const date = (iso: string | null) => (iso ? formatLongDate(iso, locale) : dash);
   const labels = { why: t("tn.data.why"), who: t("tn.data.who"), howLong: t("tn.data.how_long") };
 

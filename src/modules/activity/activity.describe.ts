@@ -12,7 +12,7 @@ const str = (value: unknown): string | null => (typeof value === "string" && val
 
 function label(t: Translator, prefix: string, value: unknown): string {
   const raw = str(value);
-  if (!raw) return "—";
+  if (!raw) return "-";
   const key = `${prefix}.${prefix === "role" ? raw.toLowerCase() : raw}` as MessageKey;
   const translated = t(key);
   return translated === key ? raw : translated;
@@ -57,7 +57,7 @@ export function describeActivity(entry: ActivityEntryDto, t: Translator, formatD
         for (const change of d.changes as { kind?: unknown; from?: unknown; to?: unknown }[]) {
           if (change.kind === "status") details.push(t("tn.history.change.status", { from: label(t, "tn.status", change.from), to: label(t, "tn.status", change.to) }));
           else if (change.kind === "priority") details.push(t("tn.history.change.priority", { from: label(t, "tn.priority", change.from), to: label(t, "tn.priority", change.to) }));
-          else if (change.kind === "assignee") details.push(t("tn.history.change.assignee", { from: str(change.from) ?? "—", to: str(change.to) ?? t("tn.history.nobody") }));
+          else if (change.kind === "assignee") details.push(t("tn.history.change.assignee", { from: str(change.from) ?? "-", to: str(change.to) ?? t("tn.history.nobody") }));
         }
       }
       if (str(d.issueType)) details.push(t("tn.history.detail.issue", { type: label(t, "tn.issue", d.issueType) }));
@@ -75,7 +75,7 @@ export function describeActivity(entry: ActivityEntryDto, t: Translator, formatD
       break;
     case "webcup.triaged":
       sentence = sentenceFor("update");
-      if (str(d.triage)) details.push(t("tn.history.change.triage", { from: str(d.from) ? label(t, "tn.triage", d.from) : "—", to: label(t, "tn.triage", d.triage) }));
+      if (str(d.triage)) details.push(t("tn.history.change.triage", { from: str(d.from) ? label(t, "tn.triage", d.from) : "-", to: label(t, "tn.triage", d.triage) }));
       if (d.noteChanged === true) details.push(t("tn.history.detail.note"));
       break;
     case "feature_flag.toggled":
