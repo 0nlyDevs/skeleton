@@ -170,6 +170,7 @@ export const fr = {
   "auth.reset.missing_token": "Ce lien est incomplet. Demandez-en un nouveau.",
   "auth.verify.title": "Vérification de l'e-mail",
   "auth.verify.checking": "Vérification en cours…",
+  "auth.verify.waiting": "Ouvrez le lien de vérification reçu par e-mail pour activer votre compte.",
   "auth.verify.success": "Votre adresse est confirmée. Bienvenue !",
   "auth.verify.failed": "Ce lien est invalide ou a expiré.",
   "auth.verify.resend": "Renvoyer l'e-mail de vérification",
