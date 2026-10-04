@@ -9,6 +9,7 @@ import Link from "@/components/ui/link";
 import { useTranslation } from "@/components/providers/i18n-provider";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { Spinner } from "@/components/ui/spinner";
 import { authClient, resetPassword, signIn, signUp } from "@/lib/auth/client";
 import { checkPasswordRules, isPasswordAcceptable } from "@/lib/auth/password-policy";
 import {
@@ -872,7 +873,7 @@ export function FuturisticAuth({
                 </div>
 
                 <button className="fa-btn fa-anim" type="submit" disabled={loginSubmitting || loginProtection.paused}>
-                  <span>{loginSubmitting ? t("common.loading") : t("auth.login.submit")}</span>
+                  <span>{loginSubmitting ? <Spinner className="size-4" /> : t("auth.login.submit")}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
@@ -1266,7 +1267,7 @@ export function FuturisticAuth({
                     </svg>
                   </button>
                   <button className="fa-btn" type="submit" disabled={signupSubmitting}>
-                    <span>{signupSubmitting ? t("common.loading") : t("auth.register.submit")}</span>
+                    <span>{signupSubmitting ? <Spinner className="size-4" /> : t("auth.register.submit")}</span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M5 12h14M13 6l6 6-6 6" />
                     </svg>
@@ -1339,7 +1340,7 @@ export function FuturisticAuth({
                   </div>
 
                   <button className="fa-btn fa-anim" type="submit" disabled={forgotSubmitting}>
-                    <span>{forgotSubmitting ? t("common.loading") : "Envoyer le lien"}</span>
+                    <span>{forgotSubmitting ? <Spinner className="size-4" /> : "Envoyer le lien"}</span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M5 12h14M13 6l6 6-6 6" />
                     </svg>
@@ -1429,7 +1430,7 @@ export function FuturisticAuth({
                   </div>
 
                   <button className="fa-btn fa-anim" type="submit" disabled={resetSubmitting}>
-                    <span>{resetSubmitting ? t("common.loading") : t("auth.reset.submit")}</span>
+                    <span>{resetSubmitting ? <Spinner className="size-4" /> : t("auth.reset.submit")}</span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M5 12h14M13 6l6 6-6 6" />
                     </svg>
@@ -1477,7 +1478,7 @@ export function FuturisticAuth({
                 </div>
 
                 <button className="fa-btn fa-anim" type="submit" disabled={totpSubmitting || totpCode.length < 6}>
-                  <span>{totpSubmitting ? t("common.loading") : "Valider"}</span>
+                  <span>{totpSubmitting ? <Spinner className="size-4" /> : "Valider"}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>

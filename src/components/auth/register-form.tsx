@@ -291,8 +291,7 @@ export function RegisterForm({ oauth }: { readonly oauth: OAuthAvailability }) {
         size="lg"
         disabled={status === "submitting"}
       >
-        {status === "submitting" ? <Spinner className="size-4" /> : null}
-        {status === "submitting" ? t("common.loading") : t("auth.register.submit")}
+        {status === "submitting" ? <Spinner className="size-4" /> : t("auth.register.submit")}
       </Button>
 
       <OAuthButtons availability={oauth} callbackURL="/space" />

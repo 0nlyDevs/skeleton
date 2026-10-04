@@ -129,8 +129,7 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
         size="lg"
         disabled={pending || !isPasswordAcceptable(password) || mismatch || confirmation.length === 0}
       >
-        {pending ? <Spinner className="size-4" /> : null}
-        {pending ? t("common.loading") : t("auth.reset.submit")}
+        {pending ? <Spinner className="size-4" /> : t("auth.reset.submit")}
       </Button>
     </form>
   );

@@ -112,8 +112,7 @@ export function TwoFactorForm() {
       </FormField>
 
       <Button type="submit" size="lg" disabled={pending || code.trim().length === 0}>
-        {pending ? <Spinner className="size-4" /> : null}
-        {pending ? t("common.loading") : t("auth.twofa.submit")}
+        {pending ? <Spinner className="size-4" /> : t("auth.twofa.submit")}
       </Button>
 
       <div className="flex flex-col items-center gap-2 text-center">
