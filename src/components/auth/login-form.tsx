@@ -230,8 +230,7 @@ export function LoginForm({
 
       <div className="flex flex-col gap-2">
         <Button type="submit" size="lg" disabled={pending || paused || email.length === 0 || password.length === 0}>
-          {pending ? <Spinner className="size-4" /> : null}
-          {pending ? t("common.loading") : t("auth.login.submit")}
+          {pending ? <Spinner className="size-4" /> : t("auth.login.submit")}
         </Button>
         <ProtectedSignInNote />
       </div>

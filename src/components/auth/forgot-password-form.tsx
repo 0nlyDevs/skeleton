@@ -108,8 +108,7 @@ export function ForgotPasswordForm() {
       </FormField>
 
       <Button type="submit" size="lg" disabled={pending || email.trim().length === 0}>
-        {pending ? <Spinner className="size-4" /> : null}
-        {pending ? t("common.loading") : t("auth.forgot.submit")}
+        {pending ? <Spinner className="size-4" /> : t("auth.forgot.submit")}
       </Button>
     </form>
   );
