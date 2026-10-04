@@ -1085,16 +1085,18 @@ html.dark:not([data-eco]):not([data-contrast="high"]) .shadow-panel {
   height: 22rem;
   translate: 0 -50%;
   border-radius: 50%;
+  /* A planet lit from the upper left: sharp city lights on the night side, a thin blue air line. */
   background:
-    radial-gradient(circle at 34% 30%, rgb(255 255 255 / 0.5) 0 2%, transparent 16%),
-    radial-gradient(circle at 42% 44%, #6fd3a0 0 10%, transparent 24%),
-    radial-gradient(circle at 60% 58%, #e8a15a 0 8%, transparent 22%),
-    radial-gradient(circle at 36% 66%, #9fd8f5 0 7%, transparent 20%),
-    radial-gradient(circle at 50% 50%, #1e5f8f 0%, #0c2c4a 58%, #071726 100%);
+    radial-gradient(circle at 63% 61%, #ffd9a0 0 0.5%, transparent 0.9%),
+    radial-gradient(circle at 58% 68%, #ffc680 0 0.4%, transparent 0.8%),
+    radial-gradient(circle at 70% 55%, #ffe2b8 0 0.35%, transparent 0.7%),
+    radial-gradient(circle at 66% 72%, #ffb765 0 0.45%, transparent 0.85%),
+    radial-gradient(circle at 54% 60%, #ffd9a0 0 0.3%, transparent 0.6%),
+    radial-gradient(circle at 26% 24%, #cfe9ff 0%, #5fa8dc 14%, #1f5f94 34%, #0b2a47 56%, #04101d 78%);
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.1),
-    0 0 80px 10px rgb(90 170 255 / 0.28),
-    inset -34px -26px 70px rgb(0 0 0 / 0.7);
+    0 0 0 1.5px rgb(140 200 255 / 0.55),
+    0 0 46px 4px rgb(90 170 255 / 0.35),
+    inset -46px -38px 80px rgb(0 0 0 / 0.85);
   transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
   z-index: -1;
 }
