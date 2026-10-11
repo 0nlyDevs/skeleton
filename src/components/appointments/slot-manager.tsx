@@ -38,7 +38,7 @@ export function SlotManager({ slots, services }: { readonly slots: readonly Agen
     setBusy("open");
     setFields({});
     try {
-      const response = await apiFetch<{ data: { created: number; skipped: number } }>("/api/agent-slots", { method: "POST", body: JSON.stringify({ ...form, duration: Number(form.duration) }) });
+      const response = await apiFetch<{ data: { created: number; skipped: number } }>("/api/agent-slots", { method: "POST", body: { ...form, duration: Number(form.duration) } });
       toast.success(t("tn.appointments.slots_opened", { created: response.data.created, skipped: response.data.skipped }));
       router.refresh();
     } catch (error) {

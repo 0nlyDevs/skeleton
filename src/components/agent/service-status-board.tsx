@@ -28,7 +28,7 @@ export function ServiceStatusBoard({ services }: { readonly services: readonly S
   const restore = async (service: StatusService) => {
     setRestoring(service.slug);
     try {
-      await apiFetch(`/api/city-services/${encodeURIComponent(service.slug)}/availability`, { method: "PUT", body: JSON.stringify({ availability: "AVAILABLE" }) });
+      await apiFetch(`/api/city-services/${encodeURIComponent(service.slug)}/availability`, { method: "PUT", body: { availability: "AVAILABLE" } });
       toast.success(t("tn.availability.restored", { service: service.name }));
       router.refresh();
     } catch (error) {
