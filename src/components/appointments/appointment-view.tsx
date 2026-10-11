@@ -65,7 +65,7 @@ export function AppointmentView({
 
   const saveReminders = (next: typeof reminders) => {
     setReminders(next);
-    void run("reminders", () => apiFetch(`${base}/reminders`, { method: "PUT", body: JSON.stringify(next) }), t("tn.appointments.reminders_saved"));
+    void run("reminders", () => apiFetch(`${base}/reminders`, { method: "PUT", body: next }), t("tn.appointments.reminders_saved"));
   };
 
   const askAdvice = async () => {
@@ -146,10 +146,10 @@ export function AppointmentView({
           ) : null}
           {viewer === "agent" && appointment.status === "BOOKED" && appointment.started ? (
             <>
-              <Button size="sm" onClick={() => void run("done", () => apiFetch(`${base}/outcome`, { method: "POST", body: JSON.stringify({ status: "DONE" }) }), t("tn.appointments.outcome_saved"))} disabled={busy !== null}>
+              <Button size="sm" onClick={() => void run("done", () => apiFetch(`${base}/outcome`, { method: "POST", body: { status: "DONE" } }), t("tn.appointments.outcome_saved"))} disabled={busy !== null}>
                 {t("tn.appointments.mark_done")}
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => void run("missed", () => apiFetch(`${base}/outcome`, { method: "POST", body: JSON.stringify({ status: "MISSED" }) }), t("tn.appointments.outcome_saved"))} disabled={busy !== null}>
+              <Button size="sm" variant="secondary" onClick={() => void run("missed", () => apiFetch(`${base}/outcome`, { method: "POST", body: { status: "MISSED" } }), t("tn.appointments.outcome_saved"))} disabled={busy !== null}>
                 {t("tn.appointments.mark_missed")}
               </Button>
             </>
@@ -221,7 +221,7 @@ export function AppointmentView({
               variant="destructive"
               disabled={busy === "cancel"}
               onClick={() =>
-                void run("cancel", () => apiFetch(`${base}/cancel`, { method: "POST", body: JSON.stringify({ reason: cancelReason }) }), t("tn.appointments.cancelled")).then(() => setCancelOpen(false))
+                void run("cancel", () => apiFetch(`${base}/cancel`, { method: "POST", body: { reason: cancelReason } }), t("tn.appointments.cancelled")).then(() => setCancelOpen(false))
               }
             >
               {busy === "cancel" ? <Loader2 className="animate-spin" aria-hidden /> : null}

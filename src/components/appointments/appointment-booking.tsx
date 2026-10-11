@@ -81,7 +81,7 @@ export function AppointmentBooking({
     try {
       const response = await apiFetch<{ data: AppointmentDto }>("/api/appointments", {
         method: "POST",
-        body: JSON.stringify({ slotId: chosen.id, reason, remindDayBefore: remindDay, remindHourBefore: remindHour }),
+        body: { slotId: chosen.id, reason, remindDayBefore: remindDay, remindHourBefore: remindHour },
       });
       router.push(`/appointments/${response.data.reference}?booked=1`);
     } catch (error) {
